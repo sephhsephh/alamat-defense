@@ -11,19 +11,21 @@ as the source of truth for it.
 
 ## Places
 
-- **Game** ("Alamat Defense" in Studio) — the playable match Place. Healthy. Persistence
-  live (mock-verified in Studio; real-DataStore save/rejoin test still to do). Dev harness
-  (`MatchLifecycleSmokeTest`, Studio-gated) auto-starts Stage1_Act1 ~3s after join.
-- **Lobby** — DOES NOT EXIST YET. Next major build. See `places/lobby/CONTEXT.md` for the
-  planned scope and `docs/contracts/teleport.md` (draft v0) for the handoff contract.
+- **Game** (Studio: "Alamat Defense - Game") — the playable match Place. Healthy.
+  Persistence live; Studio saves go to the separate **PlayerData_Dev** store (verified
+  with API access ON, DataStoreState=Access). Dev harness (`MatchLifecycleSmokeTest`,
+  Studio-gated) auto-starts Stage1_Act1 ~3s after join.
+- **Lobby** (Studio: "Alamat Defense - Lobby") — place CREATED 2026-07-17, still empty.
+  First AD-Lobby session: follow `places/lobby/CONTEXT.md` + `docs/lobby/kickoff-steps.md`
+  (in `places/lobby/docs/`). Handoff contract: `docs/contracts/teleport.md` (draft v0).
 
 ## Open PENDINGs
 
 - **PENDING (Lobby, blocked-on-creation):** deploy shared modules v-current
   (ProfileTemplate 29a2e7b6, PlayerDataService d1d34aef, ProfileStore 1e3a6f3f) when the
   Lobby place is created.
-- **PENDING (Game):** real-DataStore persistence test — enable Studio API access, play,
-  rejoin, confirm profile round-trip.
+- **PENDING (Game):** persistence round-trip test — play, earn rewards, stop, play again,
+  confirm the PlayerData_Dev profile restored (API access already ON; writes verified).
 - **PENDING (Game):** in-Studio `ServerStorage.Documentation` is still the richer doc set;
   migrate its contents into `docs/systems/` progressively (doc-gardening sessions), then
   retire it to a pointer.

@@ -8,22 +8,43 @@ repo wins** — except live code in Studio, which is canon for Place-local runti
 **Canon model:** disk is canon for knowledge, contracts, and shared module source. Studio
 is canon for Place-local code and runtime. Git is the ledger.
 
-## Identity
+## Identity & Place binding
 
-Each chat is bound to ONE Place and this ONE repo:
-- **AD-Game** → Studio "Alamat Defense" (the Game place) + this repo
-- **AD-Lobby** → Studio Lobby place + this repo
-- **AD-Integration** → BOTH Studios (shared-module deploys and cross-Place testing only)
+Chats are bound to a SYSTEM, not to a Place. Core chats: **AD-Game** (match runtime),
+**AD-Lobby** (lobby scene/flow), **AD-Integration** (cross-Place only). Subsystem chats
+(AD-UI, AD-Gacha, AD-PlayerLevel, AD-TowerModels, AD-Enemies, AD-Traits, ...) own the
+systems listed in `docs/OWNERSHIP.md`. Every chat mounts this repo.
+
+**Place binding is resolved at every bootstrap, never assumed:**
+1. `list_roblox_studios` → open instances are named "Alamat Defense - Game" and
+   "Alamat Defense - Lobby".
+2. Decide which Place the task lives in (your system's home Place in OWNERSHIP.md, plus
+   the task itself). `set_active_studio`, then CONFIRM the returned name before ANY write.
+3. Needed Place not open? Ask the user to open it — never work on the wrong instance.
+4. Task spans both Places? Follow the Integration rules (`tools/checklists.md`).
 
 ## Bootstrap ritual (mandatory, in order)
 
 1. Read this file.
 2. Read `STATE.md` (project snapshot + open PENDINGs).
-3. Read `places/<my-place>/CONTEXT.md`.
-4. Read `CHANGELOG.md` entries newer than your last session.
+3. Resolve Place binding (above), then read `places/<place>/CONTEXT.md`.
+4. Read `CHANGELOG.md` entries newer than your last session — this is the event bus;
+   other chats' landings appear here. Adapt to anything that touches your system.
 5. **Drift check:** run `tools/hash_shared.luau` via `execute_luau` against your Place;
    compare with `shared/manifest.json`. Mismatch = STOP, reconcile before any work.
-6. If `STATE.md` lists a PENDING targeting your Place, do that first.
+6. If `STATE.md` lists a PENDING targeting your Place or system, do that first.
+
+## Multi-chat synchronization (many chats, one truth)
+
+- `CHANGELOG.md` is the event bus: APPEND-only, newest first, one entry per landing.
+- **Re-read `STATE.md` + the changelog tail immediately BEFORE landing** — a sibling chat
+  may have landed mid-session. Merge your entry on top; never overwrite theirs.
+- Single-writer: only the owner (OWNERSHIP.md) edits a system's code/docs/contracts.
+  Everyone else writes `docs/proposals/` + a PENDING.
+- Two chats must NOT live-edit the same Place at the same time unless their systems are
+  disjoint. Contract or shared-module changes: strictly ONE chat at a time, no exceptions.
+- On any git conflict or unexpected dirty state: stop, read `git status` + changelog,
+  reconcile, then land.
 
 Do not explore the game tree for orientation — the docs are the index. Explore only for
 the specific thing you're changing, or when a doc is flagged stale.
@@ -41,18 +62,12 @@ the specific thing you're changing, or when a doc is flagged stale.
 7. Mirror the essentials into the Place's `ServerStorage.Documentation` (AIState +
    RecentChanges) until that in-Studio doc set is fully retired.
 
-## Ownership (single writer per shared system)
+## Ownership (single writer per system)
 
-| System | Owner | Canon location |
-|---|---|---|
-| Save schema / ProfileTemplate | Game | `shared/src/ProfileTemplate.luau` + `docs/contracts/save-schema.md` |
-| PlayerDataService / ProfileStore | Game | `shared/src/` |
-| Teleport payload contract | Lobby | `docs/contracts/teleport.md` |
-| Economy constants, tower/progression configs | Game | Studio (Game) until exported to `shared/` |
-| Shop/banner catalog (future) | Lobby | TBD when built |
-
-Non-owners never edit shared canon. Need a change? Write `docs/proposals/<date>-<topic>.md`
-and add a PENDING to `STATE.md`; the owner picks it up next session.
+The full registry lives in `docs/OWNERSHIP.md` (system → owning chat → home Place →
+canon location). Non-owners never edit another system's canon. Need a change? Write
+`docs/proposals/<date>-<topic>.md` and add a PENDING to `STATE.md`; the owner picks it
+up next session. Unlisted new system → add it to OWNERSHIP.md as part of building it.
 
 ## Editing rules (hard-won; violating these has caused real data loss)
 

@@ -23,7 +23,8 @@ local PlayerDataService = {}
 PlayerDataService.ProfileLoaded = Signal.new()   -- (player, profile)
 PlayerDataService.ProfileReleased = Signal.new() -- (player)
 
-local PlayerStore = ProfileStore.New(ProfileTemplate.STORE_NAME, ProfileTemplate.Template)
+local STORE_NAME = ProfileTemplate.GetStoreName() -- "PlayerData" live, "PlayerData_Dev" in Studio
+local PlayerStore = ProfileStore.New(STORE_NAME, ProfileTemplate.Template)
 local profiles: { [number]: any } = {} -- userId -> Profile
 
 local function onPlayerAdded(player: Player)
@@ -61,7 +62,7 @@ local function onPlayerAdded(player: Player)
 	if player.Parent == Players then
 		profiles[player.UserId] = profile
 		print(string.format("[DATA] [CONTRACT] Profile v%d loaded for %s (store=%s, DataStoreState=%s)",
-			profile.Data.SchemaVersion, player.Name, ProfileTemplate.STORE_NAME, ProfileStore.DataStoreState))
+			profile.Data.SchemaVersion, player.Name, STORE_NAME, ProfileStore.DataStoreState))
 		PlayerDataService.ProfileLoaded:Fire(player, profile)
 	else
 		profile:EndSession() -- player left while the session was loading

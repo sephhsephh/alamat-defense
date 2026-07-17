@@ -1,5 +1,21 @@
 # Operational checklists (expanded from CLAUDE.md)
 
+## GitHub sync (backup remote)
+
+One-time setup is done by the user (see below). After that, ANY chat's landing checklist
+may end with `git push` — if it fails for auth reasons in the sandbox, leave the commit
+local and note "push pending" in the changelog entry; the user pushes via GitHub Desktop
+or terminal. Local commits are the ledger; the remote is backup, never a second canon.
+
+User one-time setup:
+1. github.com → New repository → name `alamat-defense`, **Private**, and do NOT add a
+   README/.gitignore/license (the repo already has history).
+2. Install git for Windows (git-scm.com) or GitHub Desktop if not installed.
+3. Terminal in `Documents\alamat-defense`:
+   `git remote add origin https://github.com/<your-username>/alamat-defense.git`
+   `git push -u origin main`  (browser sign-in prompt appears the first time)
+4. Thereafter: `git push` after sessions (or Push origin in GitHub Desktop).
+
 ## Deploying a shared module into a Place
 
 1. Read the canonical file from `shared/src/<Module>.luau` (Read tool — exact bytes).

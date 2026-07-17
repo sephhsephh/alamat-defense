@@ -17,7 +17,16 @@
 local ProfileTemplate = {}
 
 ProfileTemplate.SCHEMA_VERSION = 1
-ProfileTemplate.STORE_NAME = "PlayerData" -- one store for the whole Experience
+ProfileTemplate.STORE_NAME = "PlayerData" -- one store for the whole Experience (production)
+
+-- Live store name. In Studio ALL data goes to a separate dev store, so playtests and
+-- dev seeds can never touch production player data. Same rule in every Place.
+function ProfileTemplate.GetStoreName(): string
+	if game:GetService("RunService"):IsStudio() then
+		return ProfileTemplate.STORE_NAME .. "_Dev"
+	end
+	return ProfileTemplate.STORE_NAME
+end
 
 export type OwnedTower = {
 	MetaLevel: number,

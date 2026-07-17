@@ -3,8 +3,10 @@
 
 Canonical implementation: `shared/src/ProfileTemplate.luau` (deployed to
 `ReplicatedStorage.Shared.ProfileTemplate` in every Place). This doc explains it; the
-module IS the contract. Store name: **"PlayerData"**, key `u_<userId>`, one profile per
-player for the whole Experience.
+module IS the contract. Store name: **"PlayerData"** in production, **"PlayerData_Dev"**
+whenever `RunService:IsStudio()` (via `ProfileTemplate.GetStoreName()`), so playtests and
+dev seeds never touch live player data. Key `u_<userId>`, one profile per player for the
+whole Experience.
 
 ## v1 shape
 

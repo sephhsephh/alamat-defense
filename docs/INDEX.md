@@ -1,5 +1,8 @@
 # Doc index (one line each — read only what the task needs)
 
+## root-level
+- `OWNERSHIP.md` — system → owning chat → home Place → canon location (single-writer registry)
+
 ## contracts/
 - `save-schema.md` — Profile data shape, versions, migration rules (owner: Game). **v1**
 - `teleport.md` — Lobby→Game / Game→Lobby TeleportData payloads (owner: Lobby). **v0 draft**
