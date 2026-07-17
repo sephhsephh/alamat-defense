@@ -57,7 +57,8 @@ the specific thing you're changing, or when a doc is flagged stale.
 3. Contract changed? → bump its version, document old→new + migration, add PENDING
    in the contract doc AND in `STATE.md`.
 4. Append a `CHANGELOG.md` entry (date, place, what, contract impact, open threads).
-5. Refresh `STATE.md` if the project-level picture moved.
+5. Refresh `STATE.md` if the project-level picture moved; flip your rows in
+   `docs/ROADMAP.md` (the done/partial/planned status board).
 6. `git add -A && git commit -m "[<place>] <summary>"`.
 7. Mirror the essentials into the Place's `ServerStorage.Documentation` (AIState +
    RecentChanges) until that in-Studio doc set is fully retired.

@@ -2,6 +2,7 @@
 
 ## root-level
 - `OWNERSHIP.md` — system → owning chat → home Place → canon location (single-writer registry)
+- `ROADMAP.md` — one-glance feature status board: done / partial / planned / ideas (all chats update)
 
 ## contracts/
 - `save-schema.md` — Profile data shape, versions, migration rules (owner: Game). **v1**

@@ -20,17 +20,25 @@
 6. **Start a new Claude chat** (this is the AD-Lobby chat — keep it long-lived):
    - Connect the same `alamat-defense` folder to it.
    - Make sure the Roblox Studio MCP is available in that chat.
-7. **Paste this as the first message of the new chat:**
+7. **Paste this as the first message of the new chat** (updated 2026-07-17, post
+   constitution v2 — this is the canonical AD-Lobby kickoff prompt):
 
-   > You are the AD-Lobby chat for the Alamat Defense project. The connected folder
-   > `alamat-defense` is the project's source of truth. Follow the bootstrap ritual in
-   > `CLAUDE.md` exactly. Use `list_roblox_studios` + `set_active_studio` to bind to the
-   > "Alamat Defense - Lobby" Studio instance (NOT the Game instance — verify by name).
-   > Then execute the first-session steps in `places/lobby/CONTEXT.md`: deploy the shared
-   > modules from `shared/src/` (plus the Signal dependency), verify hashes against
-   > `shared/manifest.json`, update the manifest's `deployed.Lobby` column, build the
-   > minimal boot script, verify `[DATA]`/`[CONTRACT]` lines in Play mode, then land
-   > (changelog + commit) per the landing checklist.
+   > You are the **AD-Lobby** chat for the Alamat Defense project (owner of the Lobby
+   > scene/flow and the teleport contract — see docs/OWNERSHIP.md). The connected folder
+   > `alamat-defense` is the project's single source of truth. Follow the bootstrap
+   > ritual in `CLAUDE.md` EXACTLY, in order, before doing anything else. Resolve Place
+   > binding to the Studio instance named "Alamat Defense - Lobby" and confirm the name
+   > before any write. Then execute the first-session steps in `places/lobby/CONTEXT.md`:
+   > clear the PENDING in STATE.md by deploying the shared modules from `shared/src/`
+   > (plus the Signal dependency from the Game place — copy it via the repo, not by
+   > guessing), verify hashes with `tools/hash_shared.luau` against `shared/manifest.json`,
+   > update the manifest's `deployed.Lobby` column, build the minimal boot script, verify
+   > `[DATA] [CONTRACT]` lines in Play mode (expect store=PlayerData_Dev), then LAND
+   > (changelog + ROADMAP + commit) per the landing checklist. After landing, continue
+   > with Lobby v1 in this order from docs/ROADMAP.md: blockout spawn area → read-only
+   > collection screen (proves profile sharing end-to-end) → stage select + difficulty →
+   > teleport handoff (finalize docs/contracts/teleport.md v0→v1, coordinate the Game-side
+   > receiver as a PENDING for AD-Game). Ask me before any contract-affecting decision.
 
 ## What the AD-Lobby chat will do from there (no action from you)
 
