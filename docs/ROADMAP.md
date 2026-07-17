@@ -29,24 +29,28 @@ Status legend: ✅ done · 🟡 partial/placeholder · 🔲 planned · 💭 idea
 - 🔲 Persistence round-trip test (PENDING in STATE.md)
 - 💭 Spatial partitioning for enemy queries (only if 20-player counts demand it)
 
-## Lobby place (created 2026-07-17, empty)
+## Lobby place (booted 2026-07-17)
 
-- 🔲 v1: shared-module deploy + boot (FIRST session)
-- 🔲 v1: spawn area / blockout environment
-- 🔲 v1: collection screen (read-only: owned towers, level/XP/trait from profile)
-- 🔲 v1: stage select + difficulty slider
-- 🔲 v1: Play → teleport to Game (finalize teleport contract v0→v1)
+- ✅ v1: shared-module deploy + boot (Signal/ProfileTemplate/ProfileStore/PlayerDataService
+  deployed drift-free; `Server.Bootstrap` verified: schema v1 profile from PlayerData_Dev)
+- ✅ v1: spawn area / blockout environment (`Workspace.Lobby` hub)
+- ✅ v1: collection screen (read-only owned towers from the shared profile — proven end-to-end)
+- ✅ v1: stage select + difficulty slider (`StageRegistry` mirror)
+- 🟡 v1: Play → teleport to Game — teleport contract v1 + reserved-server-per-party done
+  Lobby-side; blocked on `LobbyConfig.GamePlaceId` (user) + Game receiver (AD-Game)
+- 🟡 v1: parties (invite/accept/leave, host launch, max 4) — in-memory, single-lobby-server;
+  cross-server/persisted parties are v2
 - 🔲 v2: gacha/banners (tickets in Items, GrantTower, pity — needs AD-Gacha design)
-- 🔲 v2: parties/matchmaking (party assembly, reserved servers)
 - 🔲 v2: player level display, currency shop
 - 💭 Trading hub, leaderboards, daily quests, battle pass
 
 ## Cross-Place
 
-- ✅ Save schema contract v1 shared by all Places (deploy to Lobby PENDING)
-- 🔲 Teleport handoff both directions (Game's ReturnToLobby currently only logs)
-- 🔲 Game-side production entry: read MatchLaunch TeleportData → StartMatch
-  (replaces the Studio-gated smoke test as the non-Studio path)
+- ✅ Save schema contract v1 shared by all Places (deployed to Game + Lobby)
+- 🟡 Teleport handoff: contract v1 finalized; Lobby→Game reserved-server launch built
+  (Lobby-side). Game→Lobby return + Game receiver still pending.
+- 🔲 Game-side production entry: read MatchLaunch TeleportData (v1) → StartMatch
+  (replaces the Studio-gated smoke test as the non-Studio path) — PENDING for AD-Game
 - 🔲 First Integration session: lobby → match → rewards → return, end-to-end
 - 💭 Tutorial place; event worlds
 

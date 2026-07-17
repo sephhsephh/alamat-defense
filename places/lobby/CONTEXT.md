@@ -1,32 +1,42 @@
-# CONTEXT — Lobby place (NOT YET CREATED)
+# CONTEXT — Lobby place (LIVE, booted 2026-07-17)
 <!-- owner: lobby | scope: lobby | last-verified: 2026-07-17 -->
 
 The social/meta Place: players land here, view their collection, roll banners, pick a
-stage + difficulty, form parties, and teleport into the Game place. This doc is the
-build plan until the place exists; it becomes a live CONTEXT after the first session.
+stage + difficulty, form parties, and teleport into the Game place.
 
-## First-session bootstrap (for the AD-Lobby chat)
+## Current live state
 
-1. Follow the constitution's bootstrap ritual (CLAUDE.md).
-2. Deploy shared modules from `shared/src/` (see PENDING in STATE.md): create
-   `ReplicatedStorage.Shared` (Signal must be copied from the Game place too — it's a
-   dependency of PlayerDataService), `ServerScriptService.Server.Data`, then write
-   ProfileTemplate / ProfileStore / PlayerDataService sources verbatim; run
-   `tools/hash_shared.luau`, confirm hashes match `shared/manifest.json`, update the
-   manifest's `deployed.Lobby` column.
-3. Build a minimal boot: `Server.Bootstrap` script calling `PlayerDataService.Init()`
-   and logging `[CONTRACT]` lines.
+- **Data layer deployed & drift-free.** `ReplicatedStorage.Shared.{Signal, ProfileTemplate}`,
+  `ServerScriptService.Server.Data.{ProfileStore, PlayerDataService}` — all four hashes match
+  `shared/manifest.json` (Signal 91becf7a, ProfileTemplate 376e717d, PlayerDataService
+  613f0d39, ProfileStore 1e3a6f3f). `Signal` was promoted into `shared/src` this session.
+- **Boot:** `Server.Bootstrap` asserts the save contract and runs `PlayerDataService.Init()`.
+  Schema v1 profile loads from **PlayerData_Dev** (DataStoreState=Access) — the Lobby shares
+  the Game place's profile.
+- **Scene:** `Workspace.Lobby` blockout hub (plaza + sun emblem, pillars, title wall,
+  COLLECTION/PLAY pedestals); spawn on the plaza.
+- **Flow (v1):**
+  - Collection (`Server.Lobby.LobbyServices` `GetCollection`, `StarterGui.CollectionScreen`) —
+    READ-ONLY owned towers from the profile.
+  - Stage select + difficulty (`RS.Configs.StageRegistry` mirror, `GetStages`,
+    `StarterGui.StageSelectScreen`) — captures (StageId, DifficultyPercent).
+  - Parties + reserved-server launch (`Server.Lobby.PartyService`, `RS.Configs.LobbyConfig`,
+    `StarterGui.PartyScreen`) — teleport contract **v1**. `GamePlaceId` is **stubbed 0**
+    (set it to enable real teleport); the launch path is otherwise complete and verified.
 
-## Planned scope (v1 — smallest useful Lobby)
+Run the constitution's bootstrap ritual + `tools/hash_shared.luau` at the start of every
+session; reconcile before any work if a shared hash drifts.
 
-- Spawn area + placeholder environment (blockout is fine).
-- Collection screen: read profile via PlayerDataService → show owned towers
-  (MetaLevel/XP/Trait). READ-ONLY first pass.
-- Stage select: StageRegistry data mirrored or exported; difficulty slider (1–1000%).
-- Play button → TeleportService → Game place with `MatchLaunch` payload
-  (`docs/contracts/teleport.md` — finalize it to v1 as part of this work; Lobby owns it).
-- Later: banners/gacha (uses `PlayerInventoryService.GrantTower` semantics + Items
-  tickets), parties, trading hub.
+## v2 candidates (not built)
+
+- Gacha/banners (uses `PlayerInventoryService.GrantTower` semantics + Items tickets).
+- Party polish: cross-server invites / persisted parties (v1 is single-lobby-server, in-memory).
+- Currency shop, player-level display, trading hub, `MatchReturn` handling on return.
+
+## Open PENDINGs (see STATE.md)
+
+- USER: set `RS.Configs.LobbyConfig.GamePlaceId` to the real Game place id.
+- AD-Game: build the `MatchLaunch` v1 receiver (`TeleportData.MatchLaunch` → StartMatch).
 
 ## Ownership notes
 

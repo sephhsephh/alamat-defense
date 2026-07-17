@@ -31,6 +31,7 @@ local MODULES = {
 	ProfileTemplate = "ReplicatedStorage.Shared.ProfileTemplate",
 	PlayerDataService = "ServerScriptService.Server.Data.PlayerDataService",
 	ProfileStore = "ServerScriptService.Server.Data.ProfileStore",
+	Signal = "ReplicatedStorage.Shared.Signal",
 }
 
 local out = {}

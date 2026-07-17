@@ -7,21 +7,29 @@
       "hash": "376e717d",
       "owner": "game",
       "deployPath": "ReplicatedStorage.Shared.ProfileTemplate",
-      "deployed": { "Game": "376e717d", "Lobby": null }
+      "deployed": { "Game": "376e717d", "Lobby": "376e717d" }
     },
     "PlayerDataService": {
       "file": "shared/src/PlayerDataService.luau",
       "hash": "613f0d39",
       "owner": "game",
       "deployPath": "ServerScriptService.Server.Data.PlayerDataService",
-      "deployed": { "Game": "613f0d39", "Lobby": null }
+      "deployed": { "Game": "613f0d39", "Lobby": "613f0d39" }
     },
     "ProfileStore": {
       "file": "shared/src/ProfileStore.luau",
       "hash": "1e3a6f3f",
       "owner": "vendor (loleris / MAD STUDIO)",
       "deployPath": "ServerScriptService.Server.Data.ProfileStore",
-      "deployed": { "Game": "1e3a6f3f", "Lobby": null }
+      "deployed": { "Game": "1e3a6f3f", "Lobby": "1e3a6f3f" }
+    },
+    "Signal": {
+      "file": "shared/src/Signal.luau",
+      "hash": "91becf7a",
+      "owner": "game",
+      "deployPath": "ReplicatedStorage.Shared.Signal",
+      "deployed": { "Game": "91becf7a", "Lobby": "91becf7a" },
+      "comment": "Lua-side pub/sub used by PlayerDataService. Promoted into shared canon 2026-07-17 (AD-Lobby session) from the verified live Game source; covered by the shared/src deploys row in OWNERSHIP.md (owner AD-Game)."
     }
   }
 }
