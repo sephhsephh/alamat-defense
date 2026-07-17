@@ -1,0 +1,27 @@
+{
+  "hashAlgorithm": "fnv1a32",
+  "comment": "Hashes are FNV-1a 32-bit over the exact module Source bytes. tools/hash_shared.luau computes the same hash inside Studio. 'deployed' records the hash last verified in each Place; null = not yet deployed. Any mismatch between file hash and a deployed hash = DRIFT: stop and reconcile before working on shared systems.",
+  "modules": {
+    "ProfileTemplate": {
+      "file": "shared/src/ProfileTemplate.luau",
+      "hash": "29a2e7b6",
+      "owner": "game",
+      "deployPath": "ReplicatedStorage.Shared.ProfileTemplate",
+      "deployed": { "Game": "29a2e7b6", "Lobby": null }
+    },
+    "PlayerDataService": {
+      "file": "shared/src/PlayerDataService.luau",
+      "hash": "d1d34aef",
+      "owner": "game",
+      "deployPath": "ServerScriptService.Server.Data.PlayerDataService",
+      "deployed": { "Game": "d1d34aef", "Lobby": null }
+    },
+    "ProfileStore": {
+      "file": "shared/src/ProfileStore.luau",
+      "hash": "1e3a6f3f",
+      "owner": "vendor (loleris / MAD STUDIO)",
+      "deployPath": "ServerScriptService.Server.Data.ProfileStore",
+      "deployed": { "Game": "1e3a6f3f", "Lobby": null }
+    }
+  }
+}
