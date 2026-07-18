@@ -104,6 +104,16 @@ up next session. Unlisted new system → add it to OWNERSHIP.md as part of build
   only: read data, clone templates, set text/visibility, wire events. Legacy script-built
   screens get converted opportunistically when next touched.
 
+## Blueprint discipline (how lesser sessions stay on the rails)
+
+- `docs/blueprints/` contains implementation blueprints. For any feature they cover,
+  the blueprint is LAW — like a contract. Read it BEFORE designing anything.
+- Implement exactly ONE blueprint session-task per session. Do not batch ahead.
+- Never improvise a different data shape, module name, or algorithm than the blueprint
+  specifies. Blocked or convinced it's wrong? STOP → `docs/proposals/` + ask the user.
+- Copy the cited reference modules' style. Prefer boring code. No refactors beyond the
+  task's scope. When uncertain, ask the user — never invent.
+
 ## Contract-change protocol
 
 1. Only the owner changes a contract, in a session where no sibling chat is active on it.

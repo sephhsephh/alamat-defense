@@ -1,5 +1,23 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-07-18 [repo] Implementation blueprints for all meta phases + blueprint discipline
+
+- NEW `docs/blueprints/phase-a-foundations.md`: schema v2 EXACT shape (unit instances,
+  Currencies, Counters, ...) + 1→2 migration steps + starter-seed removal folded in +
+  teleport v2 + TierConfig/StatGradeConfig/AscensionConfig/ItemCatalog shapes + base-stat
+  ranges & resolver formula (SPA inverted) + icon-kit templates/controller APIs + counters
+  pipeline + phase acceptance + session plan A1–A7 with owners.
+- NEW `docs/blueprints/phases-b-f-meta.md`: MetaMath (deterministic slot rotation),
+  GrantService (single grant pipeline), exact summon algorithm order, per-phase config
+  shapes + session plans (B1–F5) + cross-phase invariants checked at Integration.
+- Constitution: new "Blueprint discipline" section (blueprints are law; one session-task
+  per session; no improvisation; proposal when blocked). Feature prompt updated to match.
+- ROADMAP + INDEX link the blueprints.
+- **Contract impact:** none yet — blueprints PRE-authorize schema v2 & teleport v2 shapes;
+  the A1/A2 sessions execute them under the normal contract protocol.
+- **Open threads:** starter-seed PENDING is folded into blueprint task A1 (supersedes the
+  standalone proposal); persistence round-trip test still open.
+
 ## 2026-07-18 [lobby+repo] Constitution: no UI in scripts; StarterChoiceScreen rebuilt as instances
 
 - **New constitution rule (USER-ordered; recorded here as the authorization for an AD-Lobby

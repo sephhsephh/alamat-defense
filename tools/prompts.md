@@ -14,7 +14,9 @@
 >
 > Respect ownership (docs/OWNERSHIP.md): if any part belongs to another chat's system or
 > requires a contract change, stop and ask me before touching it (proposal + PENDING
-> instead). Verify live with [DIAG] prints + console before calling it done. Then land
+> instead). If this feature is covered by `docs/blueprints/`, follow the blueprint
+> EXACTLY (it is law — one session-task only; deviations need a proposal). Verify live
+> with [DIAG] prints + console before calling it done. Then land
 > per the landing checklist and give me the full user advisory — new PENDINGs and who
 > acts on them, other-Place staleness, git push status, anything I must do personally,
 > and whether my next session should be AD-Integration.

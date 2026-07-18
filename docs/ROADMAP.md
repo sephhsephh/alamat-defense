@@ -58,7 +58,12 @@ everything untradeable at launch).
 - 🔲 Counters pipeline: Game commits per-match counters (kills/uuid, clears, waves) →
   feeds quests, worthiness, evolution takedowns
 
-## Meta-systems (phased; each phase ships playable — see proposal doc for full spec)
+## Meta-systems (phased; each phase ships playable)
+
+**IMPLEMENTATION BLUEPRINTS (read before building anything below — they are law):**
+Phase A: `docs/blueprints/phase-a-foundations.md` (schema v2 exact shape, migration,
+catalog/configs, icon kit, session plan A1–A7). Phases B–F:
+`docs/blueprints/phases-b-f-meta.md` (algorithms, config shapes, session plans, invariants).
 
 ### Phase A — Foundations (first; everything depends on it)
 - 🔲 Schema v2 + teleport v2 (above)

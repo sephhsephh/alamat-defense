@@ -4,6 +4,12 @@
 - `OWNERSHIP.md` — system → owning chat → home Place → canon location (single-writer registry)
 - `ROADMAP.md` — one-glance feature status board: done / partial / planned / ideas (all chats update)
 
+## blueprints/ (implementation law for the meta systems — read before building)
+- `phase-a-foundations.md` — schema v2 exact shape + migration, ItemCatalog, Tier/StatGrade/
+  Ascension configs, base-stat ranges + resolver, icon kit, session plan A1–A7
+- `phases-b-f-meta.md` — gacha/rerolls/economy/seasonal/endgame: algorithms (summon order,
+  deterministic rotation, GrantService), config shapes, session plans, cross-phase invariants
+
 ## contracts/
 - `save-schema.md` — Profile data shape, versions, migration rules (owner: Game). **v1**
 - `teleport.md` — Lobby→Game / Game→Lobby TeleportData payloads (owner: Lobby). **v0 draft**
