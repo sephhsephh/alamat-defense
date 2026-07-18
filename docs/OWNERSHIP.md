@@ -17,7 +17,11 @@ task touches — resolved at bootstrap per the constitution.
 | Teleport payload contract | AD-Lobby | both | `docs/contracts/teleport.md` |
 | Lobby scene & flow (stage select, parties) | AD-Lobby | Lobby | Studio (Lobby) |
 | Shop / banner catalog (future) | AD-Gacha | Lobby | TBD when built |
-| Gacha / banners / pity (future) | AD-Gacha | Lobby | TBD when built |
+| Gacha / banners / pity / Ascension (future) | AD-Gacha | Lobby | TBD when built |
+| ItemCatalog / TierConfig / icon-UI kit (Phase A) | AD-UI | both | `shared/src/` when built |
+| Trait & stat rerolls / worthiness (future) | AD-Traits | Lobby | TBD when built |
+| Quests / login / codes / battlepass (future) | AD-Meta | Lobby | TBD when built |
+| Evolution / spirits (future) | AD-Gacha | Lobby | TBD when built |
 | UI (StarterGui screens, HUD, panels) | AD-UI | both | Studio (per Place) StarterGui + `docs/systems/ui.md` (when migrated) |
 | PlayerLevel / progression curves | AD-PlayerLevel | Game | Studio (Game) `RS.Configs.Global.TowerProgressionConfig`, `MetaScalingConfig` |
 | Tower models / rigs / animations | AD-TowerModels | Game | Studio (Game) `RS.TowerModels`, `ServerStorage.Archive` sources |

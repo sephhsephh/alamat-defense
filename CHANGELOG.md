@@ -1,5 +1,22 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-07-18 [repo] Meta-systems design approved + ROADMAP v2 + constitution advisory
+
+- Meta-systems proposal (docs/proposals/2026-07-18-meta-systems-design.md) reviewed and
+  APPROVED with decisions: apex tier **Bathala**; secret rate ~0.005%; dupes → **Ascension**
+  (1 dupe + artifacts, or sell for Silver); stat grades **D C B A S SS SSS + Apex**;
+  everything untradeable at launch.
+- ROADMAP.md rewritten: current Game/Lobby/Cross-Place status + phased meta roadmap
+  (A Foundations: schema v2/unit instances + ItemCatalog + icon kit → B Gacha → C Unit
+  depth → D Economy loops → E Seasonal → F Endgame/social).
+- OWNERSHIP.md: added AD-UI (ItemCatalog/TierConfig/icon kit), AD-Meta, expanded
+  AD-Gacha/AD-Traits rows.
+- CLAUDE.md landing checklist step 8: mandatory session-end USER ADVISORY (new PENDINGs +
+  which chat acts next, other-Place staleness, git push reminder, user personal actions).
+- **Contract impact:** none yet — but Phase A = schema v2 + teleport v2 (unit-instance
+  uuids); AD-Game owns that migration; no meta work may start before it lands.
+- **Open threads:** MatchLaunch receiver + GamePlaceId PENDINGs still open (unchanged).
+
 ## 2026-07-17 [lobby] Lobby v1 scene/flow: blockout, collection, stage select, party teleport
 
 - **Blockout:** `Workspace.Lobby` hub (gold plaza + "alamat" sun emblem, pillars, title wall,

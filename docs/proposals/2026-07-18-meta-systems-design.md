@@ -1,5 +1,5 @@
 # Proposal: Meta-systems design (gacha, evolution, rerolls, quests, BP, lobby UI)
-<!-- status: AWAITING USER APPROVAL — then fold into ROADMAP.md + spawn contract work -->
+<!-- status: APPROVED 2026-07-18 (decisions below) — folded into ROADMAP.md -->
 <!-- source: user design brief 2026-07-18 + AD-Game review -->
 
 ## 0. The two architectural decisions everything else depends on
@@ -199,10 +199,14 @@ screen, and summon results.
 - **F. Endgame/social:** evolution + spirits + endless + leaderboards + AFK + monetization
   store. (Evolution sits here because it needs challenges/crafting/counters mature.)
 
-## 5. Open decisions for the user
+## 5. Decisions (RESOLVED 2026-07-18)
 
-1. Apex tier name: **Bathala**? (and stat apex grade name)
-2. Secret rate: keep 0.5% or drop toward genre-typical ~0.005–0.01%?
-3. Dupes: limit-break system (recommended) or sell-only?
-4. Stat grade ladder: adopt D C B A S SS + apex, or keep Z?
-5. Everything tradeable=false at launch (recommended)?
+1. Apex tier name: **Bathala** (evolution-only, above Exclusive).
+2. Secret rate: **~0.005%** (config), 0/15000 pity.
+3. Dupes: **"Ascension" system** — ascending a unit consumes 1 duplicate of that unit +
+   artifact materials; dupes can also be sold for Silver. (Replaces the generic
+   limit-break idea; spec Ascension effects per tier — stat cap raise / bonus.)
+4. Stat grade ladder: **D C B A S SS SSS + Apex** (Apex = themed top grade; odds per
+   grade in StatGradeConfig).
+5. Tradeable flags: everything `Tradeable = false` at launch (default assumption; flip
+   per-item when trading ships).
