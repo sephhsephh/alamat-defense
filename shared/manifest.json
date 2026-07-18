@@ -4,10 +4,10 @@
   "modules": {
     "ProfileTemplate": {
       "file": "shared/src/ProfileTemplate.luau",
-      "hash": "376e717d",
+      "hash": "8ac5d3e9",
       "owner": "game",
       "deployPath": "ReplicatedStorage.Shared.ProfileTemplate",
-      "deployed": { "Game": "376e717d", "Lobby": "376e717d" }
+      "deployed": { "Game": "8ac5d3e9", "Lobby": "8ac5d3e9" }
     },
     "PlayerDataService": {
       "file": "shared/src/PlayerDataService.luau",

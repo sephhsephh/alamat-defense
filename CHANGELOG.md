@@ -1,5 +1,31 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-07-18 [game] ProfileTemplate: remove seeded starter Archer (Towers = {}) — starter choice unblocked
+
+- **Shared-module change (owner AD-Game):** `ProfileTemplate.Template.Towers` seed
+  `{ Archer = { MetaLevel = 1, XP = 0 } }` → `{}`, per proposal
+  `docs/proposals/2026-07-18-starter-choice-template.md`. Fresh accounts now own zero towers, so
+  the Lobby's first-join starter choice (eligibility = zero owned) actually fires.
+- **No `SCHEMA_VERSION` bump** — default-value change only, no shape change, no migration.
+  Existing profiles keep their `Towers.Archer` (`Reconcile()` only ADDS missing keys, never removes).
+- **Scope decision:** the blueprint (phase-a A1) had folded this into the schema-v2 session and
+  marked the standalone proposal "superseded"; **user explicitly chose the standalone unblock now**
+  (this session). A1 will re-touch `Towers` when it migrates to uuid `Units` — no conflict.
+- **Drift/deploy:** disk canon + `manifest.json` updated to new hash **`8ac5d3e9`**; source edited
+  byte-identical in both Places. Deployed to **BOTH Game and Lobby** (both live sources verified
+  `8ac5d3e9` via `.Source`; cache-free "no Archer seed / `Towers = {}`" source check on Game).
+  `manifest.json` `deployed` = both `8ac5d3e9`; drift-clean, no stale Place.
+  - **Place-binding note (process):** the Studio instances had restarted between sessions and the
+    active instance was **Lobby** at the start of this task; the first edit landed on the Lobby
+    before I re-resolved binding. Caught via the doc-mirror step, re-confirmed both instances by
+    name + PlaceId, then deployed the identical change to Game. Net result is a valid both-Places
+    deploy (AD-Game owns shared-module deploys to both), so no rework beyond correcting the manifest
+    `deployed` map. Lesson: re-resolve Place binding at the TOP of every task, not just first boot.
+- **Docs:** `save-schema.md` new-profile defaults + version history updated (still v1).
+- **Contract impact:** save schema stays **v1** (default change only).
+- **PENDINGs:** starter-seed PENDING CLEARED. No Lobby redeploy needed (already deployed).
+  USER: republish both Places + re-run the live loop (fresh-account picker + towers-in-match).
+
 ## 2026-07-18 [repo] Implementation blueprints for all meta phases + blueprint discipline
 
 - NEW `docs/blueprints/phase-a-foundations.md`: schema v2 EXACT shape (unit instances,

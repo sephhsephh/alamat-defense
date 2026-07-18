@@ -1,5 +1,5 @@
 # Contract: Save Schema
-<!-- owner: game | scope: global | version: 1 | last-verified: 2026-07-17 -->
+<!-- owner: game | scope: global | version: 1 | last-verified: 2026-07-18 -->
 
 Canonical implementation: `shared/src/ProfileTemplate.luau` (deployed to
 `ReplicatedStorage.Shared.ProfileTemplate` in every Place). This doc explains it; the
@@ -25,7 +25,11 @@ whole Experience.
 }
 ```
 
-New-profile defaults: template plus starter `Archer = { MetaLevel = 1, XP = 0 }`.
+New-profile defaults: `Towers = {}` (empty) — a fresh account owns NO towers. The Lobby's
+first-join starter choice grants the first tower (eligibility = zero owned), so the template
+must not seed one. (Was: starter `Archer = { MetaLevel = 1, XP = 0 }`, removed 2026-07-18 —
+default-value change only, no `SCHEMA_VERSION` bump; existing profiles keep their Archer since
+`Reconcile()` only ADDS missing keys.)
 
 ## Access rules
 
@@ -46,3 +50,6 @@ PENDING for other Places in `STATE.md`. Never edit or remove an existing migrati
 
 - **v1** (2026-07-17): initial adoption. Prior in-memory shape ported 1:1; no live players
   existed, so no migration from pre-ProfileStore data.
+- **v1 default change** (2026-07-18): removed the seeded starter `Towers.Archer` (now `{}`) so
+  the Lobby starter choice can trigger. Default-value only — shape unchanged, version stays **1**,
+  no migration. ProfileTemplate hash `376e717d → 8ac5d3e9`; deployed to both Places (drift-clean).

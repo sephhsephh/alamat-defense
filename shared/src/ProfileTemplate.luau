@@ -43,15 +43,15 @@ export type ProfileData = {
 	Settings: { [string]: any },
 }
 
--- New players start with a level-1 Archer so a fresh account can always field a loadout.
+-- New players start with NO towers. The Lobby's first-join starter choice grants the first
+-- tower (eligibility = profile owns zero towers), so this MUST stay empty or the picker never
+-- fires. See docs/proposals/2026-07-18-starter-choice-template.md (landed 2026-07-18).
 ProfileTemplate.Template = {
 	SchemaVersion = ProfileTemplate.SCHEMA_VERSION,
 	PlayerXP = 0,
 	Currency = 0,
 	Items = {},
-	Towers = {
-		Archer = { MetaLevel = 1, XP = 0 },
-	},
+	Towers = {},
 	Settings = {},
 }
 

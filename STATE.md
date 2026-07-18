@@ -32,10 +32,11 @@ as the source of truth for it.
 
 ## Open PENDINGs
 
-- **PENDING (Game / AD-Game):** remove the seeded starter Archer from `ProfileTemplate`
-  (`Towers = {}`) so the Lobby's first-join starter choice can trigger for fresh accounts —
-  see `docs/proposals/2026-07-18-starter-choice-template.md`. Shared-module protocol
-  (rehash + redeploy both Places) applies; Lobby picker is built and inert until this lands.
+- ~~PENDING (Game / AD-Game): remove the seeded starter Archer from `ProfileTemplate`.~~
+  **DONE 2026-07-18** — `Towers = {}` deployed to **BOTH Places** (hash `376e717d → 8ac5d3e9`,
+  verified byte-identical in Game + Lobby + `shared/src/`); no `SCHEMA_VERSION` bump
+  (default-value change, no migration). `manifest.json` `deployed` = both `8ac5d3e9`; drift-clean.
+  User chose the standalone unblock over folding into blueprint A1 (A1 re-touches this at schema v2).
 
 - ~~PENDING (Lobby): deploy shared modules on creation.~~ **DONE 2026-07-17** — all four
   shared modules deployed drift-free; manifest `deployed.Lobby` current.
@@ -59,7 +60,9 @@ as the source of truth for it.
 
 ## Contracts (current versions)
 
-- Save schema: **v1** (`shared/src/ProfileTemplate.luau`) — store "PlayerData"
+- Save schema: **v1** (`shared/src/ProfileTemplate.luau`) — store "PlayerData". Starter
+  `Towers.Archer` seed removed 2026-07-18 (`Towers = {}`); still v1 (default change, hash
+  `8ac5d3e9`, deployed to both Places, drift-clean).
 - Teleport payload: **v1** (`docs/contracts/teleport.md`) — implemented BOTH sides + BOTH
   directions: Lobby sends `MatchLaunch` and consumes `MatchReturn` (banner + next-act pre-select);
   Game receives `MatchLaunch` and returns `MatchReturn`. Config-complete BOTH sides and
@@ -67,9 +70,9 @@ as the source of truth for it.
 
 ## Current focus
 
-1. **AD-Game: land the ProfileTemplate starter-seed removal** (proposal 2026-07-18) so the
-   first-join starter choice goes live for fresh accounts. Then USER: republish both Places
-   and re-run the live loop — towers should now appear in-match (loadout fix).
+1. **USER: republish both Places** — the starter-seed removal LANDED to both Game + Lobby
+   (drift-clean, hash `8ac5d3e9`) 2026-07-18. Republish, then re-run the live loop: fresh
+   accounts get the starter picker, and towers should appear in-match (loadout fix).
 2. Lobby v2 candidates: gacha/banners (gated on Phase A schema v2), party polish, currency
    shop, player-level display, loadout picker UI (replaces the interim auto-loadout).
 3. Real art/anim asset ids for tower attacks (Game chat).
