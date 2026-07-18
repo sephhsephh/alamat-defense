@@ -1,5 +1,5 @@
 # CONTEXT — Lobby place (LIVE, booted 2026-07-17)
-<!-- owner: lobby | scope: lobby | last-verified: 2026-07-17 -->
+<!-- owner: lobby | scope: lobby | last-verified: 2026-07-18 -->
 
 The social/meta Place: players land here, view their collection, roll banners, pick a
 stage + difficulty, form parties, and teleport into the Game place.
@@ -21,22 +21,30 @@ stage + difficulty, form parties, and teleport into the Game place.
   - Stage select + difficulty (`RS.Configs.StageRegistry` mirror, `GetStages`,
     `StarterGui.StageSelectScreen`) — captures (StageId, DifficultyPercent).
   - Parties + reserved-server launch (`Server.Lobby.PartyService`, `RS.Configs.LobbyConfig`,
-    `StarterGui.PartyScreen`) — teleport contract **v1**. `GamePlaceId` is **stubbed 0**
-    (set it to enable real teleport); the launch path is otherwise complete and verified.
+    `StarterGui.PartyScreen`) — teleport contract **v1**. `GamePlaceId` = **125430066355564**
+    (real Game place id, set 2026-07-18); launch path complete and verified.
+  - **MatchReturn v1 handling (2026-07-18):** `Server.Lobby.MatchReturnService` reads
+    `TeleportData.MatchReturn` on join (validates PayloadVersion==1 / Outcome / stage; drops
+    unknown `SuggestNextActId` — stale mirror fails safe), serves it via `Remotes.GetMatchReturn`
+    (read-only). `StarterGui.ReturnScreen` = welcome-back banner (outcome + stage; CONTINUE on
+    Victory-with-successor fires `RS.ClientEvents.OpenStageSelect`). `StageSelectScreen` listens
+    and pre-selects the suggested next act (also silently on load). Studio harness: toggle the
+    `DevSimulateReturn` attribute on MatchReturnService (`[Test]` log).
 
 Run the constitution's bootstrap ritual + `tools/hash_shared.luau` at the start of every
 session; reconcile before any work if a shared hash drifts.
 
 ## v2 candidates (not built)
 
-- Gacha/banners (uses `PlayerInventoryService.GrantTower` semantics + Items tickets).
+- Gacha/banners (uses `PlayerInventoryService.GrantTower` semantics + Items tickets) —
+  gated on Phase A schema v2 (AD-Game).
 - Party polish: cross-server invites / persisted parties (v1 is single-lobby-server, in-memory).
-- Currency shop, player-level display, trading hub, `MatchReturn` handling on return.
+- Currency shop, player-level display, trading hub.
 
 ## Open PENDINGs (see STATE.md)
 
-- USER: set `RS.Configs.LobbyConfig.GamePlaceId` to the real Game place id.
-- AD-Game: build the `MatchLaunch` v1 receiver (`TeleportData.MatchLaunch` → StartMatch).
+- None targeting the Lobby. (Game side: user sets `GameConfig.LobbyPlaceId`; then run the
+  first AD-Integration session — lobby → reserved match → return.)
 
 ## Ownership notes
 

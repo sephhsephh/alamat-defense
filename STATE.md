@@ -22,16 +22,16 @@ as the source of truth for it.
   `Server.Bootstrap`. Scene: `Workspace.Lobby` blockout hub. Flow: read-only collection screen
   (`LobbyServices` GetCollection/GetStages), stage select + difficulty (`RS.Configs.StageRegistry`
   mirror), party system + reserved-server teleport (`PartyService`, `RS.Configs.LobbyConfig`,
-  teleport contract **v1**). Verified in Play: profile from PlayerData_Dev, collection shows owned
-  towers, launch validates + hits the GamePlaceId=0 guard.
+  teleport contract **v1**), **GamePlaceId set (125430066355564, 2026-07-18)**. **MatchReturn v1
+  handling built 2026-07-18** (`MatchReturnService` + `ReturnScreen` banner + StageSelect
+  pre-select of `SuggestNextActId`; verified via `[Test]` sim + `[DIAG]`).
 
 ## Open PENDINGs
 
 - ~~PENDING (Lobby): deploy shared modules on creation.~~ **DONE 2026-07-17** — all four
   shared modules deployed drift-free; manifest `deployed.Lobby` current.
-- **PENDING (Lobby, USER ACTION):** set `ReplicatedStorage.Configs.LobbyConfig.GamePlaceId`
-  to the real "Alamat Defense - Game" place id. While 0, launch logs `[Teleport]` + skips the
-  actual teleport (everything up to ReserveServer is exercised).
+- ~~PENDING (Lobby, USER ACTION): set `LobbyConfig.GamePlaceId`.~~ **DONE 2026-07-18** —
+  set to 125430066355564; real launches now reach ReserveServer + TeleportAsync.
 - ~~PENDING (Game / AD-Game): build the production entry receiver.~~ **DONE 2026-07-18** —
   `MatchEntryService` reads `TeleportData.MatchLaunch` v1 → validate → `MatchDirector.StartMatch`
   (smoke test now Studio fallback). `ReturnToLobby` sends `MatchReturn` v1 + teleports back.
@@ -48,16 +48,16 @@ as the source of truth for it.
 ## Contracts (current versions)
 
 - Save schema: **v1** (`shared/src/ProfileTemplate.luau`) — store "PlayerData"
-- Teleport payload: **v1** (`docs/contracts/teleport.md`) — implemented BOTH sides: Lobby sends
-  `MatchLaunch` (reserved server per party); Game receives it (`MatchEntryService`) and returns
-  `MatchReturn` (`ReturnToLobby`). End-to-end blocked only on the two place-id user actions.
+- Teleport payload: **v1** (`docs/contracts/teleport.md`) — implemented BOTH sides + BOTH
+  directions: Lobby sends `MatchLaunch` and consumes `MatchReturn` (banner + next-act pre-select);
+  Game receives `MatchLaunch` and returns `MatchReturn`. End-to-end blocked only on the Game-side
+  `LobbyPlaceId` user action.
 
 ## Current focus
 
-1. **Wire the teleport end-to-end:** both receivers now exist (Lobby send + Game receive/return).
-   Remaining = two USER place-id actions (`LobbyConfig.GamePlaceId` = 125430066355564;
-   `GameConfig.LobbyPlaceId` = the Lobby place id). Then first Integration session: lobby →
-   reserved match → return.
+1. **Wire the teleport end-to-end:** Lobby side fully done (send + return handling +
+   GamePlaceId set). Remaining = ONE user action (`GameConfig.LobbyPlaceId` = the Lobby place
+   id, Game side). Then first Integration session: lobby → reserved match → return → banner.
 2. Lobby v2 candidates: gacha/banners, real party polish, currency shop, player-level display.
 3. Real art/anim asset ids for tower attacks (Game chat).
 4. Progressive doc migration from Studio to this repo.

@@ -34,15 +34,15 @@ everything untradeable at launch).
 - ✅ v1: shared-module deploy + boot (drift-free; profile from PlayerData_Dev)
 - ✅ v1: blockout hub (`Workspace.Lobby`) · ✅ collection screen (read-only, end-to-end)
 - ✅ v1: stage select + difficulty slider
-- 🟡 v1: Play → teleport (contract v1, reserved-server-per-party, Lobby-side done;
-  Game receiver now done too — blocked only on `LobbyConfig.GamePlaceId` [user])
+- ✅ v1: Play → teleport (contract v1, reserved-server-per-party; `GamePlaceId` set 2026-07-18)
+- ✅ v1: MatchReturn handling (welcome-back banner + next-act pre-select in stage select)
 - 🟡 v1: parties (in-memory, single-server; cross-server/persisted = later phase)
 
 ## Cross-Place
 
 - ✅ Save schema v1 shared + deployed to both Places
-- 🟡 Teleport handoff: contract v1 done BOTH sides (Lobby send + Game receive/return);
-  blocked only on the two place-id user actions (GamePlaceId + LobbyPlaceId)
+- 🟡 Teleport handoff: contract v1 done BOTH sides + BOTH directions (Lobby send/return-consume
+  + Game receive/return-send); blocked only on `GameConfig.LobbyPlaceId` [user, Game side]
 - ✅ Game-side production entry: TeleportData.MatchLaunch → StartMatch (`MatchEntryService`)
 - ✅ Game→Lobby return: `ReturnToLobby` builds `MatchReturn` v1 + teleports (guarded on LobbyPlaceId)
 - 🔲 First Integration session: lobby → match → rewards → return end-to-end

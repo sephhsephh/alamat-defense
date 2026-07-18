@@ -1,5 +1,36 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-07-18 [lobby] MatchReturn v1 handling + GamePlaceId set (teleport loop Lobby-side complete)
+
+- **GamePlaceId set:** `RS.Configs.LobbyConfig.GamePlaceId = 125430066355564` (found already set
+  in Studio this session — stale STUB comment cleaned). The Lobby-side USER-ACTION PENDING is
+  **CLEARED**; real launches now go all the way through ReserveServer + TeleportAsync.
+- **MatchReturn v1 receiver:** new `SSS.Server.Lobby.MatchReturnService` (Script). Reads
+  `Player:GetJoinData().TeleportData.MatchReturn` on join, validates PayloadVersion==1 /
+  LastStageId / Outcome∈{Victory,Defeat,Abandoned} (`[CONTRACT]` warn + ignore on mismatch),
+  drops `SuggestNextActId` unknown to the Lobby's StageRegistry mirror (stale mirror fails
+  safe), serves per-player via new `Remotes.GetMatchReturn` RemoteFunction. Display-only:
+  never mutates the profile (rewards were committed Game-side per the contract).
+- **Welcome-back UI:** new `StarterGui.ReturnScreen` banner — outcome (Victory/Defeat/
+  Abandoned), stage name, CONTINUE button (only on Victory with a valid successor) + BACK TO
+  LOBBY. CONTINUE fires new client bus `RS.ClientEvents.OpenStageSelect` (BindableEvent).
+- **StageSelect pre-select:** `StageSelectScreen.Controller` now listens to `OpenStageSelect`
+  (opens panel + selects stage) and silently pre-selects `SuggestNextActId` after loading
+  stages, so the picker lands on "continue the campaign".
+- **Studio harness:** `DevSimulateReturn` attribute on MatchReturnService fabricates a
+  Victory/Stage1_Act1→Act2 payload in Studio (`[Test]` log) since real return teleports can't
+  happen in Studio. Left OFF.
+- **Verified live (Play):** with sim ON — `[Test]` + `[DATA] [CONTRACT] MatchReturn v1 accepted`,
+  `[DIAG] StageSelect: pre-selected suggested next act Stage1_Act2`, `[DIAG] ReturnScreen:
+  showing MatchReturn banner (Victory)`; CONTINUE path → `[DIAG] StageSelect: OpenStageSelect
+  pre-selecting Stage1_Act2`, panel visible, button text "CONTINUE: Rising Legend (Stage 1 -
+  Act 2)". With sim OFF — clean boot, no banner, no [DIAG] (silent path confirmed).
+- **Contract impact:** none — teleport stays **v1** (Lobby now consumes `MatchReturn`; no shape
+  change). No shared-module change; manifest untouched (drift check clean at bootstrap).
+- **PENDINGs:** Lobby GamePlaceId CLEARED. Remaining for end-to-end: USER sets
+  `GameConfig.LobbyPlaceId` (Game side), then the first AD-Integration session
+  (lobby → reserved match → return → banner).
+
 ## 2026-07-18 [game] Teleport handoff Game-side: MatchLaunch receiver + real ReturnToLobby
 
 - **Production entry receiver:** new `SSS.Server.MatchEntryService` (ModuleScript, booted by
