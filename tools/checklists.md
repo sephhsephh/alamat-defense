@@ -1,5 +1,30 @@
 # Operational checklists (expanded from CLAUDE.md)
 
+## Integration gate — evaluated by EVERY chat at bootstrap (constitution step 7)
+
+After the bootstrap ritual, the chat MUST tell the user one of, verbatim style:
+- **"Run an AD-Integration session BEFORE this task"** — if ANY trigger below fires and
+  the task depends on it, and the fix is not something this chat can do alone; or
+- **"No Integration needed — proceeding."**
+
+Triggers (any one is enough):
+1. `tools/hash_shared.luau` result mismatches `shared/manifest.json` for THIS Place
+   (drift), or the manifest shows another Place's `deployed` hash is stale/null and the
+   task touches that shared module or its consumers.
+2. `STATE.md` has an open PENDING that must be executed in the OTHER Place (or in both)
+   before this task's output would be consistent — e.g. an undeployed schema bump,
+   an unbuilt contract counterpart, an unset cross-place id.
+3. `CHANGELOG.md` shows a contract version bump or shared-module change newer than the
+   other Place's last landing (the other side has not adapted yet).
+4. The requested task itself spans both Places (build one side + verify the other):
+   route it as owner-chat work + an Integration follow-up, and say so.
+5. A cross-Place end-to-end flow (teleport loop, profile handoff) has changed since the
+   last Integration session and the task builds ON TOP of that flow.
+
+If a trigger fires but the task is fully independent of it (e.g. pure UI polish in this
+Place), the chat may proceed — but must still REPORT the pending Integration need in the
+bootstrap message AND repeat it in the landing advisory (step 8e).
+
 ## GitHub sync (backup remote)
 
 One-time setup is done by the user (see below). After that, ANY chat's landing checklist

@@ -33,6 +33,11 @@ systems listed in `docs/OWNERSHIP.md`. Every chat mounts this repo.
 5. **Drift check:** run `tools/hash_shared.luau` via `execute_luau` against your Place;
    compare with `shared/manifest.json`. Mismatch = STOP, reconcile before any work.
 6. If `STATE.md` lists a PENDING targeting your Place or system, do that first.
+7. **Integration gate (answer it out loud, every session):** after steps 1–6, tell the
+   user explicitly either "Run an AD-Integration session BEFORE this task" or "No
+   Integration needed — proceeding." Triggers in `tools/checklists.md`; the short form:
+   drift-check mismatch, a PENDING that needs the OTHER Place, an undeployed contract or
+   shared-module change in the changelog, or a task that spans both Places.
 
 ## Multi-chat synchronization (many chats, one truth)
 
@@ -66,7 +71,9 @@ the specific thing you're changing, or when a doc is flagged stale.
    (a) any NEW PENDINGs and exactly which chat/Place must act on them BEFORE dependent
    work continues; (b) whether the other Place is now stale and should be updated first;
    (c) that the commit is local — recommend `git push` (or note "push pending");
-   (d) anything the user must do personally (publish a Place, set an id, buy nothing).
+   (d) anything the user must do personally (publish a Place, set an id, buy nothing);
+   (e) whether the user's NEXT session should be AD-Integration — state it explicitly
+   either way ("run Integration next" / "no Integration needed yet").
    If a cross-Place dependency is discovered MID-session, surface it immediately — do
    not wait for landing.
 
