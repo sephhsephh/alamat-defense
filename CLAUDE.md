@@ -62,6 +62,13 @@ the specific thing you're changing, or when a doc is flagged stale.
 6. `git add -A && git commit -m "[<place>] <summary>"`.
 7. Mirror the essentials into the Place's `ServerStorage.Documentation` (AIState +
    RecentChanges) until that in-Studio doc set is fully retired.
+8. **User advisory (never skip):** end the session by telling the user, in plain terms:
+   (a) any NEW PENDINGs and exactly which chat/Place must act on them BEFORE dependent
+   work continues; (b) whether the other Place is now stale and should be updated first;
+   (c) that the commit is local — recommend `git push` (or note "push pending");
+   (d) anything the user must do personally (publish a Place, set an id, buy nothing).
+   If a cross-Place dependency is discovered MID-session, surface it immediately — do
+   not wait for landing.
 
 ## Ownership (single writer per system)
 
