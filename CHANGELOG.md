@@ -1,5 +1,34 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-07-18 [game] Teleport handoff Game-side: MatchLaunch receiver + real ReturnToLobby
+
+- **Production entry receiver:** new `SSS.Server.MatchEntryService` (ModuleScript, booted by
+  `ReplicationBridge` after the data services). Reads `TeleportData.MatchLaunch` (teleport
+  contract **v1**) off join data, validates PayloadVersion==1 / StageId∈StageRegistry / Players,
+  converts JSON string userId keys → numeric, sanitizes DifficultyPercent (`DifficultyConfig`),
+  resolves map/mode/difficulty from the stage, waits for the party to assemble (10s timeout),
+  and calls `MatchDirector.StartMatch` **exactly once**. Trust stance per contract: TeleportData
+  is a request — loadout ownership + host authority are re-checked downstream (LoadoutValidator /
+  MatchDirector). Pure `BuildRawConfig(payload)` exported + unit-tested (valid/reject/clamp cases).
+- **Smoke test → Studio fallback:** `MatchLifecycleSmokeTest` still auto-starts Stage1_Act1 in
+  Studio, but now stands down when a MatchLaunch payload is present, so the two never double-start.
+- **Real ReturnToLobby:** `MatchActionHandler` now builds the `MatchReturn` v1 payload
+  (PayloadVersion, LastStageId, Outcome, SuggestNextActId — next act only on a Victory with a
+  successor) and `TeleportService:TeleportAsync` back to the Lobby. Guarded on
+  `GameConfig.LobbyPlaceId==0` (logs `[Teleport]` + skips, mirroring the Lobby's GamePlaceId guard);
+  wrapped in pcall + listens to `TeleportInitFailed`.
+- **New `RS.Configs.Global.GameConfig`** — cross-Place counterpart to LobbyConfig:
+  `TeleportPayloadVersion=1`, `LobbyPlaceId=0` (stubbed), `HasLobbyPlace()`.
+- **Verified:** BuildRawConfig unit tests pass (string→numeric keys, [CONTRACT] rejects for bad
+  version / unknown stage / no players, difficulty clamp 999999→1000 & nil→100, MatchReturn
+  next-act rule). Play-test: `MatchEntryService` boots + stands down with no teleport data, smoke
+  fallback starts the match, single start, no warnings.
+- **This Game place id = `125430066355564`** (for the Lobby's `LobbyConfig.GamePlaceId`).
+- **Contract impact:** none — teleport stays **v1** (Game is the consumer; no shape change).
+- **PENDINGs:** receiver PENDING CLEARED. NEW (USER ACTION): set `GameConfig.LobbyPlaceId` to the
+  real Lobby place id. Still open: user sets `LobbyConfig.GamePlaceId=125430066355564` (Lobby side);
+  persistence round-trip test; Studio Documentation migration.
+
 ## 2026-07-18 [repo] Meta-systems design approved + ROADMAP v2 + constitution advisory
 
 - Meta-systems proposal (docs/proposals/2026-07-18-meta-systems-design.md) reviewed and

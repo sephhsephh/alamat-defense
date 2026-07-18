@@ -35,14 +35,16 @@ everything untradeable at launch).
 - ✅ v1: blockout hub (`Workspace.Lobby`) · ✅ collection screen (read-only, end-to-end)
 - ✅ v1: stage select + difficulty slider
 - 🟡 v1: Play → teleport (contract v1, reserved-server-per-party, Lobby-side done;
-  blocked on `LobbyConfig.GamePlaceId` [user] + Game receiver [AD-Game])
+  Game receiver now done too — blocked only on `LobbyConfig.GamePlaceId` [user])
 - 🟡 v1: parties (in-memory, single-server; cross-server/persisted = later phase)
 
 ## Cross-Place
 
 - ✅ Save schema v1 shared + deployed to both Places
-- 🟡 Teleport handoff: contract v1 done Lobby-side; Game receiver + Game→Lobby return 🔲
-- 🔲 Game-side production entry: TeleportData.MatchLaunch → StartMatch — PENDING AD-Game
+- 🟡 Teleport handoff: contract v1 done BOTH sides (Lobby send + Game receive/return);
+  blocked only on the two place-id user actions (GamePlaceId + LobbyPlaceId)
+- ✅ Game-side production entry: TeleportData.MatchLaunch → StartMatch (`MatchEntryService`)
+- ✅ Game→Lobby return: `ReturnToLobby` builds `MatchReturn` v1 + teleports (guarded on LobbyPlaceId)
 - 🔲 First Integration session: lobby → match → rewards → return end-to-end
 - 🔲 **Schema v2**: unit INSTANCES (uuid: TowerId/Trait/Shiny/StatRolls/Ascension/
   Worthiness/Locked/Spirit), Currencies map (Gold/Silver/rerolls/EventTokens), PlayerLevel, Pity,

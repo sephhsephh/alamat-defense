@@ -25,24 +25,35 @@ confirm profile load + schema version on every boot.
 
 ## Key paths
 
-- Server: `SSS.Server.{MatchDirector, Data, Towers, Enemies, Waves, Economy, Inventory,
-  Rewards, Stats, Networking, Map, GameSpeed, Summons, StatusEffects, Settings, Physics}`
+- Server: `SSS.Server.{MatchDirector, MatchEntryService, MatchActionHandler, Data, Towers,
+  Enemies, Waves, Economy, Inventory, Rewards, Stats, Networking, Map, GameSpeed, Summons,
+  StatusEffects, Settings, Physics}`
 - Shared: `RS.Shared.{Signal, Enums, Schema, ProfileTemplate, TowerStatResolver, AttackShapes}`
 - Configs: `RS.Configs.{Towers, Enemies, Waves, Stages, Maps, Traits, StatusEffects, Summons, Global}`
+  (`Global.GameConfig` = cross-Place ids: `LobbyPlaceId`, `TeleportPayloadVersion`)
 - Remotes: `RS.Remotes.{Placement, Towers, Match, Economy, Combat, Settings}`
 - Rich legacy docs: `ServerStorage.Documentation.*` (AIState, SystemIndex, HowTo, ...) —
   still valid; migrating to repo `docs/systems/` on touch.
 
-## Dev harness
+## Entry paths (how a match starts)
 
-`MatchLifecycleSmokeTest` (Studio-only) seeds 8 towers via `DevSetOwnedTowers` (writes into
-the profile — mock store unless Studio API access is on) and starts Stage1_Act1 ~3s after
-join. `AutoPlaceForEndScreenTest` / `MatchEndVerify` exist but are `ENABLED=false`.
+- **Production:** `MatchEntryService` (SSS.Server, booted by `ReplicationBridge`) reads
+  `TeleportData.MatchLaunch` (teleport contract v1), validates PayloadVersion/StageId/players
+  (resolves map/mode/difficulty from the stage; converts the JSON string userId keys → numeric;
+  sanitizes DifficultyPercent), and calls `MatchDirector.StartMatch` exactly once after the party
+  assembles. Loadout ownership + host authority are re-checked downstream — TeleportData is a
+  request, never truth. Its pure `BuildRawConfig(payload)` is exported for unit testing.
+- **Studio fallback:** `MatchLifecycleSmokeTest` (Studio-only) seeds 8 towers via
+  `DevSetOwnedTowers` and starts Stage1_Act1 ~3s after join — but stands down when a MatchLaunch
+  payload is present, so the two never double-start. `AutoPlaceForEndScreenTest` / `MatchEndVerify`
+  exist but are `ENABLED=false`.
 
 ## Current state / known gaps
 
 - Content: Stage 1 (3 acts), 1 map (TestMap), 8 towers, 2 enemies, Classic mode only.
 - Attack anim/VFX/sound asset ids are placeholders (slots exist and tolerate nil).
-- `ReturnToLobby` only logs — real teleport comes with the Lobby (contract: teleport.md v0).
+- `ReturnToLobby` (MatchActionHandler) now builds `MatchReturn` v1 and teleports to the Lobby
+  place; guarded on `GameConfig.LobbyPlaceId == 0` (logs `[Teleport]` + skips until the user
+  sets the real Lobby place id — mirrors the Lobby's GamePlaceId guard).
 - Enemies.Behaviors (Flying/Splitting/...) is an empty extension point.
 - Real-DataStore round-trip test still PENDING (mock verified only).
