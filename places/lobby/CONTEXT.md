@@ -30,6 +30,17 @@ stage + difficulty, form parties, and teleport into the Game place.
     Victory-with-successor fires `RS.ClientEvents.OpenStageSelect`). `StageSelectScreen` listens
     and pre-selects the suggested next act (also silently on load). Studio harness: toggle the
     `DevSimulateReturn` attribute on MatchReturnService (`[Test]` log).
+  - **Starter tower choice (2026-07-18):** dev-editable `RS.Configs.StarterTowerConfig`
+    (currently Archer/Knight/Mage — edit that file to change the offer),
+    `Server.Lobby.StarterChoiceService` + `Remotes.{GetStarterOffer,ChooseStarterTower}`,
+    modal `StarterGui.StarterChoiceScreen` (no dismiss). Eligibility = profile owns ZERO
+    towers → **inert until AD-Game removes the template's seeded Archer** (proposal
+    2026-07-18). Grants `{MetaLevel=1, XP=0}`; never clobbers; Studio harness =
+    `DevSimulateFirstJoin` attribute (adds a sim-only grant-path card, self-cleaning).
+  - **Auto-loadout at launch (2026-07-18):** `PartyService.buildLoadout` sends each player's
+    owned towers (highest MetaLevel first, cap `LobbyConfig.MaxLoadoutSize=6`, mirroring the
+    Game's LoadoutValidator) — replaces the `Loadout={}` bug that made matches towerless.
+    Interim until a loadout-picker UI; `[DIAG]` logs the sent loadout.
 
 Run the constitution's bootstrap ritual + `tools/hash_shared.luau` at the start of every
 session; reconcile before any work if a shared hash drifts.
@@ -39,12 +50,14 @@ session; reconcile before any work if a shared hash drifts.
 - Gacha/banners (uses `PlayerInventoryService.GrantTower` semantics + Items tickets) —
   gated on Phase A schema v2 (AD-Game).
 - Party polish: cross-server invites / persisted parties (v1 is single-lobby-server, in-memory).
-- Currency shop, player-level display, trading hub.
+- Currency shop, player-level display, trading hub, loadout picker UI (replaces the
+  interim auto-loadout).
 
 ## Open PENDINGs (see STATE.md)
 
-- None targeting the Lobby. (Both sides config-complete 2026-07-18; next: USER publishes
-  both Places and runs the first LIVE end-to-end — lobby → reserved match → return.)
+- None targeting the Lobby. LIVE e2e loop verified by user 2026-07-18 (production client).
+  Waiting on AD-Game: ProfileTemplate starter-seed removal (activates the starter picker);
+  after any Lobby change, USER republishes the Lobby place.
 
 ## Ownership notes
 

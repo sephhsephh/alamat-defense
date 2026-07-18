@@ -25,9 +25,17 @@ as the source of truth for it.
   mirror), party system + reserved-server teleport (`PartyService`, `RS.Configs.LobbyConfig`,
   teleport contract **v1**), **GamePlaceId set (125430066355564, 2026-07-18)**. **MatchReturn v1
   handling built 2026-07-18** (`MatchReturnService` + `ReturnScreen` banner + StageSelect
-  pre-select of `SuggestNextActId`; verified via `[Test]` sim + `[DIAG]`).
+  pre-select of `SuggestNextActId`; verified via `[Test]` sim + `[DIAG]`). **Starter tower
+  choice + launch-loadout fix 2026-07-18** (`StarterTowerConfig` [dev-editable] +
+  `StarterChoiceService` + modal picker, inert until the ProfileTemplate PENDING lands;
+  `PartyService` now sends up to 6 owned towers instead of `Loadout={}`).
 
 ## Open PENDINGs
+
+- **PENDING (Game / AD-Game):** remove the seeded starter Archer from `ProfileTemplate`
+  (`Towers = {}`) so the Lobby's first-join starter choice can trigger for fresh accounts —
+  see `docs/proposals/2026-07-18-starter-choice-template.md`. Shared-module protocol
+  (rehash + redeploy both Places) applies; Lobby picker is built and inert until this lands.
 
 - ~~PENDING (Lobby): deploy shared modules on creation.~~ **DONE 2026-07-17** — all four
   shared modules deployed drift-free; manifest `deployed.Lobby` current.
@@ -39,10 +47,10 @@ as the source of truth for it.
 - ~~PENDING (Game, USER ACTION): set `GameConfig.LobbyPlaceId`.~~ **DONE 2026-07-18
   (Integration)** — found set to 83342803778137, verified equal to the live Lobby
   instance's `game.PlaceId`; stale STUB comment cleaned. Teleport loop config-complete.
-- **PENDING (USER ACTION):** first LIVE end-to-end teleport test — publish BOTH Places,
-  then in the Roblox client: lobby → stage select → reserved match → play → return →
-  banner + next-act pre-select. Studio cannot run real teleports; both sides' harnesses
-  are verified (this session), so remaining risk is live-only (reserved servers, join data).
+- ~~PENDING (USER ACTION): first LIVE end-to-end teleport test.~~ **DONE 2026-07-18** —
+  user ran the full loop in the production client: lobby → reserved match → return →
+  Defeat banner shown. (The defeat itself exposed the empty-Loadout bug, fixed same day —
+  re-publish the Lobby and re-run to confirm towers appear in-match.)
 - **PENDING (Game):** persistence round-trip test — play, earn rewards, stop, play again,
   confirm the PlayerData_Dev profile restored (API access already ON; writes verified).
 - **PENDING (Game):** in-Studio `ServerStorage.Documentation` is still the richer doc set;
@@ -54,15 +62,16 @@ as the source of truth for it.
 - Save schema: **v1** (`shared/src/ProfileTemplate.luau`) — store "PlayerData"
 - Teleport payload: **v1** (`docs/contracts/teleport.md`) — implemented BOTH sides + BOTH
   directions: Lobby sends `MatchLaunch` and consumes `MatchReturn` (banner + next-act pre-select);
-  Game receives `MatchLaunch` and returns `MatchReturn`. Config-complete BOTH sides
-  (2026-07-18); awaiting the first LIVE end-to-end test (publish + client run, user action).
+  Game receives `MatchLaunch` and returns `MatchReturn`. Config-complete BOTH sides and
+  **LIVE-VERIFIED end-to-end in the production client (user, 2026-07-18)**.
 
 ## Current focus
 
-1. **First LIVE end-to-end teleport test:** all code + config done both sides; drift-free
-   and `[CONTRACT]`-verified in Studio (2026-07-18 Integration). USER: publish both Places,
-   run lobby → reserved match → return → banner in the client, report console output.
-2. Lobby v2 candidates: gacha/banners, real party polish, currency shop, player-level display.
+1. **AD-Game: land the ProfileTemplate starter-seed removal** (proposal 2026-07-18) so the
+   first-join starter choice goes live for fresh accounts. Then USER: republish both Places
+   and re-run the live loop — towers should now appear in-match (loadout fix).
+2. Lobby v2 candidates: gacha/banners (gated on Phase A schema v2), party polish, currency
+   shop, player-level display, loadout picker UI (replaces the interim auto-loadout).
 3. Real art/anim asset ids for tower attacks (Game chat).
 4. Progressive doc migration from Studio to this repo.
 

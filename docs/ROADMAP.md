@@ -36,16 +36,21 @@ everything untradeable at launch).
 - ✅ v1: stage select + difficulty slider
 - ✅ v1: Play → teleport (contract v1, reserved-server-per-party; `GamePlaceId` set 2026-07-18)
 - ✅ v1: MatchReturn handling (welcome-back banner + next-act pre-select in stage select)
+- ✅ v1: auto-loadout in launch payload (owned towers, cap 6; interim until loadout picker UI)
+- 🟡 First-join starter tower choice (built + verified 2026-07-18; INERT until AD-Game
+  removes the ProfileTemplate starter seed — proposal 2026-07-18)
 - 🟡 v1: parties (in-memory, single-server; cross-server/persisted = later phase)
+- 🔲 Loadout picker UI (player chooses their 6; replaces auto-loadout)
 
 ## Cross-Place
 
 - ✅ Save schema v1 shared + deployed to both Places
-- 🟡 Teleport handoff: contract v1 done BOTH sides + BOTH directions (Lobby send/return-consume
-  + Game receive/return-send); blocked only on `GameConfig.LobbyPlaceId` [user, Game side]
+- ✅ Teleport handoff: contract v1 done BOTH sides + BOTH directions; config-complete
+  (both place ids set) and LIVE-verified in the production client (user, 2026-07-18)
 - ✅ Game-side production entry: TeleportData.MatchLaunch → StartMatch (`MatchEntryService`)
 - ✅ Game→Lobby return: `ReturnToLobby` builds `MatchReturn` v1 + teleports (guarded on LobbyPlaceId)
-- 🔲 First Integration session: lobby → match → rewards → return end-to-end
+- ✅ First e2e run: lobby → reserved match → return → banner (Integration session in Studio
+  2026-07-18 + user's live production run same day)
 - 🔲 **Schema v2**: unit INSTANCES (uuid: TowerId/Trait/Shiny/StatRolls/Ascension/
   Worthiness/Locked/Spirit), Currencies map (Gold/Silver/rerolls/EventTokens), PlayerLevel, Pity,
   Quests, LoginStreak, ShopStock, Titles, Spirits, BP, Counters — one migration, tested

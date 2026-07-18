@@ -1,5 +1,37 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-07-18 [lobby] Starter tower choice (first join) + launch loadout fix; LIVE e2e confirmed by user
+
+- **LIVE e2e CONFIRMED (user, production client):** lobby → reserved match → return →
+  MatchReturn Defeat banner all worked. The Integration session's live-e2e USER PENDING is
+  **CLEARED**. The defeat exposed a real bug (below).
+- **Launch loadout fix:** `PartyService` sent `Loadout = {}` in every `MatchLaunch`, so
+  players entered matches with ZERO placeable towers (Game-side the loadout is the hotbar
+  cap — LoadoutValidator, max 6, read-only peek at Game). Now `buildLoadout(userId)` sends
+  owned towers (highest MetaLevel first, then alphabetical), capped by new
+  `LobbyConfig.MaxLoadoutSize = 6`. Interim until a loadout-picker UI lands. `[DIAG]` logs
+  each player's sent loadout at launch.
+- **Starter tower choice (first join):** new dev-editable `RS.Configs.StarterTowerConfig`
+  (Archer/Knight/Mage; edit that one file to change the offer), new
+  `SSS.Server.Lobby.StarterChoiceService` + `Remotes.{GetStarterOffer,ChooseStarterTower}`,
+  new modal `StarterGui.StarterChoiceScreen` (3 cards, select + confirm, no dismiss).
+  Eligibility = profile owns ZERO towers. Grants `{MetaLevel=1, XP=0}` straight into the
+  shared profile; never clobbers an existing record; rejects ineligible/unknown picks.
+- **[Test] harness:** `DevSimulateFirstJoin` attribute forces the offer in Studio + adds a
+  sim-only "SimTestTower" card to exercise the real grant path; leftover sim tower is
+  auto-removed on any non-sim boot. Left OFF.
+- **Verified live (Play, dev store):** sim ON — offer shown (4 cards), SimTestTower granted
+  (`[DATA] granted starter`), owned Archer pick skipped (no clobber), out-of-offer
+  Necromancer rejected, launch `[DIAG]` loadout = 6 towers (Archer first), real teleport
+  attempt failed handled in Studio (expected). Sim OFF — silent boot, leftover sim tower
+  auto-removed (`[Test]`).
+- **Contract impact:** none — teleport stays v1 (payload shape unchanged; Loadout now
+  actually populated). Save schema untouched THIS session, but see PENDING.
+- **PENDINGs:** NEW (AD-Game): remove seeded starter Archer from `ProfileTemplate`
+  (`docs/proposals/2026-07-18-starter-choice-template.md`) — until it lands, fresh accounts
+  auto-own Archer and the picker stays inert (by design, data-driven eligibility).
+  Integration live-e2e PENDING cleared (above).
+
 ## 2026-07-18 [integration] First Integration session: drift-clean both Places, LobbyPlaceId verified, teleport loop config-complete
 
 - **Drift check BOTH Places:** all four shared modules (ProfileTemplate, PlayerDataService,
