@@ -1,5 +1,24 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-07-18 [lobby+repo] Constitution: no UI in scripts; StarterChoiceScreen rebuilt as instances
+
+- **New constitution rule (USER-ordered; recorded here as the authorization for an AD-Lobby
+  session touching AD-Integration's repo canon):** NEVER generate UI in scripts. UI = real
+  Instances in StarterGui (Studio-editable); dynamic lists = designed `*Template` instance
+  (Visible=false) cloned by the controller; controllers do behavior only. Added to
+  CLAUDE.md editing rules. Legacy script-built screens are converted when next touched.
+- **StarterChoiceScreen converted first:** static tree now real instances —
+  `Root{Dim, Panel{Title, Subtitle, CardsRow{CardTemplate}, ConfirmButton}}`; CardTemplate
+  is the designed card (NameLabel/TaglineLabel/DescLabel/SelectButton + Sel stroke).
+  Controller rewritten to clone/fill/wire only (no Instance.new for visuals).
+- **Verified live (Play):** sim ON — Root visible, 4 cards cloned from template
+  (Archer/Knight/Mage/SimTestTower), grant path OK; sim OFF — silent boot, sim tower
+  auto-cleaned. Sim left OFF.
+- **Legacy screens still script-built** (convert when next touched): CollectionScreen,
+  StageSelectScreen, PartyScreen, ReturnScreen (Lobby); Game-place screens per AD-Game/AD-UI.
+- **Contract impact:** none. **PENDINGs:** unchanged (AD-Game ProfileTemplate starter-seed
+  removal still open — user confirmed live test still auto-grants Archer, as expected).
+
 ## 2026-07-18 [lobby] Starter tower choice (first join) + launch loadout fix; LIVE e2e confirmed by user
 
 - **LIVE e2e CONFIRMED (user, production client):** lobby → reserved match → return →

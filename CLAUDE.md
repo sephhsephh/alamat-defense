@@ -98,6 +98,11 @@ up next session. Unlisted new system → add it to OWNERSHIP.md as part of build
   the same session (landing checklist step 2). No exceptions.
 - Log prefixes: `[DIAG]` debugging, `[DATA]` persistence, `[CONTRACT]` schema/version
   assertions, `[Test]` dev harness. Keep them grep-able.
+- **NEVER generate UI in scripts** (user rule, 2026-07-18). Build ScreenGuis/Frames/labels
+  as REAL Instances in StarterGui so the user can edit them in Studio. Dynamic lists use a
+  designed `*Template` instance (Visible=false) that scripts clone and fill. Controllers
+  only: read data, clone templates, set text/visibility, wire events. Legacy script-built
+  screens get converted opportunistically when next touched.
 
 ## Contract-change protocol
 

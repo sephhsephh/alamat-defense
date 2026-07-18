@@ -33,7 +33,9 @@ stage + difficulty, form parties, and teleport into the Game place.
   - **Starter tower choice (2026-07-18):** dev-editable `RS.Configs.StarterTowerConfig`
     (currently Archer/Knight/Mage — edit that file to change the offer),
     `Server.Lobby.StarterChoiceService` + `Remotes.{GetStarterOffer,ChooseStarterTower}`,
-    modal `StarterGui.StarterChoiceScreen` (no dismiss). Eligibility = profile owns ZERO
+    modal `StarterGui.StarterChoiceScreen` (no dismiss; REAL instance tree per the
+    no-UI-in-scripts rule — `Root.Panel.CardsRow.CardTemplate` is the editable card design,
+    controller clones/fills/wires only). Eligibility = profile owns ZERO
     towers → **inert until AD-Game removes the template's seeded Archer** (proposal
     2026-07-18). Grants `{MetaLevel=1, XP=0}`; never clobbers; Studio harness =
     `DevSimulateFirstJoin` attribute (adds a sim-only grant-path card, self-cleaning).
@@ -52,6 +54,8 @@ session; reconcile before any work if a shared hash drifts.
 - Party polish: cross-server invites / persisted parties (v1 is single-lobby-server, in-memory).
 - Currency shop, player-level display, trading hub, loadout picker UI (replaces the
   interim auto-loadout).
+- Convert legacy script-built screens to instance trees when next touched (rule 2026-07-18):
+  CollectionScreen, StageSelectScreen, PartyScreen, ReturnScreen.
 
 ## Open PENDINGs (see STATE.md)
 
