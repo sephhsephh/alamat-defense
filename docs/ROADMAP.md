@@ -44,8 +44,8 @@ everything untradeable at launch).
 - 🟡 Teleport handoff: contract v1 done Lobby-side; Game receiver + Game→Lobby return 🔲
 - 🔲 Game-side production entry: TeleportData.MatchLaunch → StartMatch — PENDING AD-Game
 - 🔲 First Integration session: lobby → match → rewards → return end-to-end
-- 🔲 **Schema v2**: unit INSTANCES (uuid: TowerId/Trait/Shiny/StatGrades/Worthiness/
-  Locked/Spirit), Currencies map (Gold/Silver/rerolls/EventTokens), PlayerLevel, Pity,
+- 🔲 **Schema v2**: unit INSTANCES (uuid: TowerId/Trait/Shiny/StatRolls/Ascension/
+  Worthiness/Locked/Spirit), Currencies map (Gold/Silver/rerolls/EventTokens), PlayerLevel, Pity,
   Quests, LoginStreak, ShopStock, Titles, Spirits, BP, Counters — one migration, tested
   on dev store. **Gates all meta phases below.** Teleport v2 (uuid loadouts) rides along.
 - 🔲 Counters pipeline: Game commits per-match counters (kills/uuid, clears, waves) →
@@ -59,6 +59,8 @@ everything untradeable at launch).
   icon ref, tier, description, MaxOwned, Tradeable=false)
 - 🔲 TierConfig (Common→Legendary→Mythic→Secret→Exclusive→**Bathala**; border colors,
   animated borders slot in later) + tier assignment for the existing 8 towers
+- 🔲 Tower configs gain base-stat RANGES (DMG/RNG/SPA min–max) + TowerStatResolver reads
+  rolled StatRolls × Ascension multiplier (Game canon change, part of schema v2 work)
 - 🔲 Shared icon/UI kit (AD-UI): UnitIcon (viewport idle anim, tier border, level, cost,
   element/trait stack, shiny badge, hover card), ItemIcon, HoverCards, RewardPopup
   (obtainment grid), FilterPanel, ViewportPreview, CurrencyBar, NPCPrompt
@@ -81,8 +83,9 @@ everything untradeable at launch).
 - 🔲 Stat reroll NPC/UI (D C B A S SS SSS + Apex; StatGradeConfig odds/ranges/colors)
 - 🔲 Worthiness meter (kills → 100% = guaranteed A-floor + boosted top-grade odds;
   resets on reroll; shown on hover card)
-- 🔲 **Ascension**: 1 duplicate of the unit + artifact materials → ascend (per-tier
-  effects); dupes sellable for Silver; locked/favorited protection
+- 🔲 **Ascension**: Mythic+ only, max 3 levels; 1 duplicate + artifact materials per
+  level; per-level stat multipliers in AscensionConfig (e.g. A1 ×1.05 → A3 ×3);
+  dupes sellable for Silver; locked/favorited protection
 - 🔲 Feeding (per-stage exp food via catalog; mass-feed w/ protections)
 
 ### Phase D — Economy loops

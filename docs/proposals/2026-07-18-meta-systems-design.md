@@ -16,7 +16,9 @@ Units = { [uuid]: {
 	MetaLevel: number, XP: number,
 	Trait: string?,
 	Shiny: boolean,
-	StatGrades: { DMG: number, RNG: number, SPA: number }, -- roll % (grade letter derived)
+	StatRolls: { DMG: number, RNG: number, SPA: number }, -- 0..1 position within the tower's
+	                        -- config BASE-STAT RANGES (rolled at summon; grade letter derived)
+	Ascension: number,      -- 0..3 (Mythic+ only; see AscensionConfig)
 	Worthiness: number,     -- 0..100, resets on stat reroll
 	Locked: boolean, Favorited: boolean,
 	SpiritUuid: string?,    -- attached spirit
@@ -204,9 +206,17 @@ screen, and summon results.
 1. Apex tier name: **Bathala** (evolution-only, above Exclusive).
 2. Secret rate: **~0.005%** (config), 0/15000 pity.
 3. Dupes: **"Ascension" system** — ascending a unit consumes 1 duplicate of that unit +
-   artifact materials; dupes can also be sold for Silver. (Replaces the generic
-   limit-break idea; spec Ascension effects per tier — stat cap raise / bonus.)
+   artifact materials; dupes can also be sold for Silver.
+   **Clarified 2026-07-18:** Mythic-and-above units only; max **3 ascensions**; per-level
+   multipliers on base stats via `AscensionConfig` (example: A0 none, A1 dmg ×1.05,
+   A2 ×1.5, A3 ×3 — per-tower/per-stat overridable, all config).
 4. Stat grade ladder: **D C B A S SS SSS + Apex** (Apex = themed top grade; odds per
    grade in StatGradeConfig).
+   **Clarified 2026-07-18 — base stats ROLL at summon:** each tower config declares
+   base-stat RANGES (e.g. DMG 10–12, RNG 6–6.5, SPA 6–6.5); the summon rolls a position
+   in each range (stored as `StatRolls` 0..1); the grade letter is derived from that
+   position via StatGradeConfig. Stat reroll = reroll the positions. Effective in-match
+   base stat = lerp(range, roll) × Ascension multiplier → then existing meta-level/trait/
+   tier scaling applies (TowerStatResolver change, Game-side).
 5. Tradeable flags: everything `Tradeable = false` at launch (default assumption; flip
    per-item when trading ships).
