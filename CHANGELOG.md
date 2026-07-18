@@ -1,5 +1,29 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-07-18 [integration] First Integration session: drift-clean both Places, LobbyPlaceId verified, teleport loop config-complete
+
+- **Drift check BOTH Places:** all four shared modules (ProfileTemplate, PlayerDataService,
+  ProfileStore, Signal) hash-match `shared/manifest.json` in Game AND Lobby. Zero drift.
+- **PENDING cleared — `GameConfig.LobbyPlaceId`:** found already set to **83342803778137**
+  in the Game Place; verified equal to the live Lobby instance's `game.PlaceId`. Stale
+  "STUBBED 0" comment cleaned (comment-only edit, mirrors last session's Lobby cleanup).
+  Teleport loop is now CONFIG-COMPLETE on both sides (Game=125430066355564, Lobby=83342803778137).
+- **`[CONTRACT]` verification, Game (Play):** `[MatchEntry] Ready (waiting for MatchLaunch
+  teleport data)`, smoke-test fallback single-started Stage1_Act1, `[DATA] [CONTRACT] Profile
+  v1 loaded` (PlayerData_Dev, DataStoreState=Access), no contract warnings.
+- **`[CONTRACT]` verification, Lobby (Play, DevSimulateReturn ON→OFF):** `[CONTRACT] Lobby
+  boot: save-schema v1`, `[DATA] [CONTRACT] MatchReturn v1 accepted (Victory Stage1_Act1 →
+  suggest Stage1_Act2)`, ReturnScreen banner + StageSelect pre-select `[DIAG]`s all fired.
+  Sim attribute returned to OFF.
+- **Cross-Place e2e:** NOT run — real TeleportAsync is impossible in Studio. New USER-ACTION
+  PENDING: publish both Places, run the live loop in the Roblox client (lobby → reserved
+  match → return → banner).
+- **Note (Game, Studio Play):** with LobbyPlaceId set, pressing Lobby in Studio Play now
+  attempts a real teleport and fails handled (pcall + TeleportInitFailed) — expected.
+- **Contract impact:** none. Teleport stays v1; no shared-module changes; manifest untouched.
+- **Open threads:** live e2e (user, above); persistence round-trip test (Game); progressive
+  Studio-doc migration. Push pending (commit is local).
+
 ## 2026-07-18 [lobby] MatchReturn v1 handling + GamePlaceId set (teleport loop Lobby-side complete)
 
 - **GamePlaceId set:** `RS.Configs.LobbyConfig.GamePlaceId = 125430066355564` (found already set

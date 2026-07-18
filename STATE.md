@@ -16,7 +16,8 @@ as the source of truth for it.
   with API access ON, DataStoreState=Access). **Production entry receiver `MatchEntryService`
   built 2026-07-18** (reads `TeleportData.MatchLaunch` v1 → StartMatch); `MatchLifecycleSmokeTest`
   is now the Studio fallback (stands down when a MatchLaunch payload is present). `ReturnToLobby`
-  now sends `MatchReturn` v1 + teleports to the Lobby (guarded on `GameConfig.LobbyPlaceId==0`).
+  now sends `MatchReturn` v1 + teleports to the Lobby — **`GameConfig.LobbyPlaceId` set
+  (83342803778137, verified vs live Lobby PlaceId, 2026-07-18 Integration)**.
 - **Lobby** (Studio: "Alamat Defense - Lobby") — **v1 built 2026-07-17**. Data layer drift-free
   (`RS.Shared.{Signal,ProfileTemplate}`, `SSS.Server.Data.{ProfileStore,PlayerDataService}`) +
   `Server.Bootstrap`. Scene: `Workspace.Lobby` blockout hub. Flow: read-only collection screen
@@ -35,10 +36,13 @@ as the source of truth for it.
 - ~~PENDING (Game / AD-Game): build the production entry receiver.~~ **DONE 2026-07-18** —
   `MatchEntryService` reads `TeleportData.MatchLaunch` v1 → validate → `MatchDirector.StartMatch`
   (smoke test now Studio fallback). `ReturnToLobby` sends `MatchReturn` v1 + teleports back.
-- **PENDING (Game, USER ACTION):** set `ReplicatedStorage.Configs.Global.GameConfig.LobbyPlaceId`
-  to the real "Alamat Defense - Lobby" place id (counterpart to the Lobby's `GamePlaceId`). While
-  `0`, `ReturnToLobby` logs `[Teleport]` + skips the actual teleport (everything up to
-  `TeleportAsync` is exercised).
+- ~~PENDING (Game, USER ACTION): set `GameConfig.LobbyPlaceId`.~~ **DONE 2026-07-18
+  (Integration)** — found set to 83342803778137, verified equal to the live Lobby
+  instance's `game.PlaceId`; stale STUB comment cleaned. Teleport loop config-complete.
+- **PENDING (USER ACTION):** first LIVE end-to-end teleport test — publish BOTH Places,
+  then in the Roblox client: lobby → stage select → reserved match → play → return →
+  banner + next-act pre-select. Studio cannot run real teleports; both sides' harnesses
+  are verified (this session), so remaining risk is live-only (reserved servers, join data).
 - **PENDING (Game):** persistence round-trip test — play, earn rewards, stop, play again,
   confirm the PlayerData_Dev profile restored (API access already ON; writes verified).
 - **PENDING (Game):** in-Studio `ServerStorage.Documentation` is still the richer doc set;
@@ -50,14 +54,14 @@ as the source of truth for it.
 - Save schema: **v1** (`shared/src/ProfileTemplate.luau`) — store "PlayerData"
 - Teleport payload: **v1** (`docs/contracts/teleport.md`) — implemented BOTH sides + BOTH
   directions: Lobby sends `MatchLaunch` and consumes `MatchReturn` (banner + next-act pre-select);
-  Game receives `MatchLaunch` and returns `MatchReturn`. End-to-end blocked only on the Game-side
-  `LobbyPlaceId` user action.
+  Game receives `MatchLaunch` and returns `MatchReturn`. Config-complete BOTH sides
+  (2026-07-18); awaiting the first LIVE end-to-end test (publish + client run, user action).
 
 ## Current focus
 
-1. **Wire the teleport end-to-end:** Lobby side fully done (send + return handling +
-   GamePlaceId set). Remaining = ONE user action (`GameConfig.LobbyPlaceId` = the Lobby place
-   id, Game side). Then first Integration session: lobby → reserved match → return → banner.
+1. **First LIVE end-to-end teleport test:** all code + config done both sides; drift-free
+   and `[CONTRACT]`-verified in Studio (2026-07-18 Integration). USER: publish both Places,
+   run lobby → reserved match → return → banner in the client, report console output.
 2. Lobby v2 candidates: gacha/banners, real party polish, currency shop, player-level display.
 3. Real art/anim asset ids for tower attacks (Game chat).
 4. Progressive doc migration from Studio to this repo.

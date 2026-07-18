@@ -52,8 +52,9 @@ confirm profile load + schema version on every boot.
 
 - Content: Stage 1 (3 acts), 1 map (TestMap), 8 towers, 2 enemies, Classic mode only.
 - Attack anim/VFX/sound asset ids are placeholders (slots exist and tolerate nil).
-- `ReturnToLobby` (MatchActionHandler) now builds `MatchReturn` v1 and teleports to the Lobby
-  place; guarded on `GameConfig.LobbyPlaceId == 0` (logs `[Teleport]` + skips until the user
-  sets the real Lobby place id — mirrors the Lobby's GamePlaceId guard).
+- `ReturnToLobby` (MatchActionHandler) builds `MatchReturn` v1 and teleports to the Lobby;
+  `GameConfig.LobbyPlaceId` SET (83342803778137, 2026-07-18 Integration). NOTE: in Studio
+  Play, pressing Lobby now attempts a real TeleportAsync, which fails (pcall'd +
+  TeleportInitFailed handled) — expected; real teleports need the published client.
 - Enemies.Behaviors (Flying/Splitting/...) is an empty extension point.
 - Real-DataStore round-trip test still PENDING (mock verified only).

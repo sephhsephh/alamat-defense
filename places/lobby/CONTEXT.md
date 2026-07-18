@@ -43,8 +43,8 @@ session; reconcile before any work if a shared hash drifts.
 
 ## Open PENDINGs (see STATE.md)
 
-- None targeting the Lobby. (Game side: user sets `GameConfig.LobbyPlaceId`; then run the
-  first AD-Integration session — lobby → reserved match → return.)
+- None targeting the Lobby. (Both sides config-complete 2026-07-18; next: USER publishes
+  both Places and runs the first LIVE end-to-end — lobby → reserved match → return.)
 
 ## Ownership notes
 
