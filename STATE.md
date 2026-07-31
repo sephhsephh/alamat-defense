@@ -58,6 +58,22 @@ as the source of truth for it.
   migrate its contents into `docs/systems/` progressively (doc-gardening sessions), then
   retire it to a pointer.
 
+- **PENDING (AD-Game + USER, CRITICAL — split-brain risk):** store renamed
+  `PlayerData → Beta1_PlayerData` (dev `PlayerData_Dev → Beta1_PlayerDataDev1`) — intentional
+  beta reset (user, 2026-07-31), found via drift check in the Lobby. Disk canon + `manifest.json`
+  + Lobby now reconciled to hash **`184cdfad`** (byte-identical, verified). **The Game place was
+  NOT connected this session — its `ProfileTemplate` store name is UNVERIFIED.** AD-Game must
+  open the Game place, confirm/deploy the SAME store name, verify hash `184cdfad`, then set
+  `manifest.deployed.Game = 184cdfad`. Until then the two Places may read DIFFERENT stores.
+  No `SCHEMA_VERSION` bump (store target change only, no migration). `save-schema.md` updated
+  (owner AD-Game to formally re-verify).
+
+- **PENDING (AD-UI, USER REVIEW):** approve proposal `docs/proposals/2026-07-31-ui-kit-button-primitive.md`
+  (universal Button primitive + PlayerLevelBar into Phase A kit §5 + no-scripts-on-templates
+  rule). On approval AD-UI folds it into `phase-a-foundations.md`. **Blocked on A1→A2→A3**
+  before any build; the hotbar/exp-bar feature request maps to A4/A6. Studio was offline this
+  session — glow-bug hypothesis in the proposal is UNVERIFIED (confirm live before A6).
+
 ## Contracts (current versions)
 
 - Save schema: **v1** (`shared/src/ProfileTemplate.luau`) — store "PlayerData". Starter

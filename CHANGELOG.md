@@ -1,5 +1,31 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-07-31 [lobby] Drift reconcile: ProfileTemplate store rename (Beta1 reset) — Lobby+disk done, Game PENDING
+
+- **Bootstrap drift check (AD-UI session, Lobby active) caught a mismatch:** live Lobby
+  `ProfileTemplate` = `184cdfad`, disk/manifest = `8ac5d3e9`. STOPPED per constitution.
+- **Cause (user-confirmed):** intentional **beta data reset** — `STORE_NAME` changed
+  `"PlayerData" → "Beta1_PlayerData"` and the Studio dev suffix `"_Dev" → "Dev1"` (dev store
+  `PlayerData_Dev → Beta1_PlayerDataDev1`), done directly in the Lobby Studio. No other diff;
+  `SCHEMA_VERSION` stays 1, `Towers = {}` unchanged — store target change, no data-shape
+  change, no migration.
+- **Reconciled the ledger to reality:** disk `shared/src/ProfileTemplate.luau` edited to the
+  beta store name (re-hashed to **`184cdfad`**, python fnv1a32 == the Studio drift hash, i.e.
+  byte-identical to the live Lobby source). `manifest.json` hash → `184cdfad`,
+  `deployed.Lobby → 184cdfad`. `docs/contracts/save-schema.md` store-name line updated with a
+  dated note. `deployed.Game` LEFT at `8ac5d3e9` (stale) on purpose — see below.
+- **Ownership note:** `ProfileTemplate` is AD-Game canon; this reconcile was done by the AD-UI
+  chat under an explicit user directive ("do whatever prevents future problems") to correct a
+  stale/dangerous ledger. AD-Game still owns the formal contract re-verification.
+- **Contract impact:** save schema stays **v1** (store target only). **CRITICAL PENDING
+  (AD-Game + USER):** the Game place was NOT connected this session, so its store name is
+  UNVERIFIED. If Game still points at `PlayerData` while Lobby points at `Beta1_PlayerData`,
+  the two Places read DIFFERENT stores (split-brain — lobby and match see different profiles).
+  AD-Game must open the Game place, deploy the same store name, verify `184cdfad`, set
+  `manifest.deployed.Game = 184cdfad`.
+- **Open threads:** UI-kit Button/PlayerLevelBar proposal (2026-07-31) still FOR REVIEW.
+  Hotbar glow bug not yet investigated (read-only inspection to follow this reconcile).
+
 ## 2026-07-18 [game] ProfileTemplate: remove seeded starter Archer (Towers = {}) — starter choice unblocked
 
 - **Shared-module change (owner AD-Game):** `ProfileTemplate.Template.Towers` seed

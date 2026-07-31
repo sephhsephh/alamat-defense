@@ -3,10 +3,15 @@
 
 Canonical implementation: `shared/src/ProfileTemplate.luau` (deployed to
 `ReplicatedStorage.Shared.ProfileTemplate` in every Place). This doc explains it; the
-module IS the contract. Store name: **"PlayerData"** in production, **"PlayerData_Dev"**
+module IS the contract. Store name: **"Beta1_PlayerData"** in production, **"Beta1_PlayerDataDev1"**
 whenever `RunService:IsStudio()` (via `ProfileTemplate.GetStoreName()`), so playtests and
 dev seeds never touch live player data. Key `u_<userId>`, one profile per player for the
 whole Experience.
+
+> **2026-07-31 — store renamed (intentional beta reset, user).** Was `"PlayerData"` /
+> `"PlayerData_Dev"`. Reconciled on disk + Lobby (hash `184cdfad`) by AD-UI this session
+> after a drift check; **AD-Game must confirm/deploy the same rename in the Game place** or
+> the Places read different stores. Owner (AD-Game) to formally re-verify this contract doc.
 
 ## v1 shape
 

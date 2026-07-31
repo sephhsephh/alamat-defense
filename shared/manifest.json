@@ -4,10 +4,11 @@
   "modules": {
     "ProfileTemplate": {
       "file": "shared/src/ProfileTemplate.luau",
-      "hash": "8ac5d3e9",
+      "hash": "184cdfad",
       "owner": "game",
       "deployPath": "ReplicatedStorage.Shared.ProfileTemplate",
-      "deployed": { "Game": "8ac5d3e9", "Lobby": "8ac5d3e9" }
+      "deployed": { "Game": "8ac5d3e9", "Lobby": "184cdfad" },
+      "comment": "STORE_NAME changed PlayerData->Beta1_PlayerData (dev PlayerData_Dev->Beta1_PlayerDataDev1): intentional beta data reset (user, 2026-07-31). Verified live in Lobby (184cdfad, byte-identical to disk). Game 'deployed' is LAST-KNOWN 8ac5d3e9 and UNVERIFIED this session (Game instance was not connected). PENDING: AD-Game must confirm/deploy the SAME store name in the Game place or the two Places read different stores (split-brain). No SCHEMA_VERSION bump: store target change, no data-shape change, no migration."
     },
     "PlayerDataService": {
       "file": "shared/src/PlayerDataService.luau",

@@ -27,4 +27,6 @@
 - `ADR-0002-profilestore.md` — why ProfileStore, schema ownership, session-lock/teleport rules
 
 ## proposals/
-- (empty)
+- `2026-07-31-ui-kit-button-primitive.md` — AD-UI: add a universal Button primitive +
+  PlayerLevelBar to the Phase A kit (§5); no-scripts-on-templates rule; hotbar glow-bug
+  hypothesis. FOR REVIEW; gated on A1–A3.
