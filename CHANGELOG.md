@@ -1,5 +1,39 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-01 [game] Schema v2 (blueprint A1): uuid unit instances + Currencies map + migration
+
+- **Contract change — save schema v1 → v2** (owner AD-Game, `docs/blueprints/phase-a-foundations.md`
+  A1). `ProfileTemplate` (SCHEMA_VERSION=2): towerId-keyed `Towers` → uuid-keyed `Units`
+  (UnitInstance: TowerId/MetaLevel/XP/Trait/Shiny/StatRolls/Ascension/Worthiness/Locked/Favorited/
+  SpiritUuid/ObtainedAt); scalar `Currency` → `Currencies` map (Gold/Silver/TraitRerolls/StatRerolls/
+  EventTokens); added PlayerLevel/Loadout/Pity/Counters/Quests/LoginStreak/ShopStock/Titles/Spirits/
+  Battlepass. `Migrations[1]` converts v1→v2 (Currency→Gold, each Towers entry→a Units instance with
+  mid rolls 0.5, Loadout={}); Reconcile fills the rest; account XP/items/settings preserved. STORE_NAME
+  stays Beta1_PlayerData(Dev1).
+- **Game service uuid refactor (Studio canon):** `PlayerInventoryService` now Units/uuid-keyed
+  (`GetUnit`/`GetAllUnits`/`GrantUnit`/`GetFirstUnitId`, `Owns` by TowerId across instances,
+  `AddTowerXP(userId, uuid)`, `AddCurrency`→`Currencies.Gold`, `DevSetOwnedTowers` seeds instances +
+  returns a towerId→uuid map; back-compat `GetOwnedTower`/`GrantTower` shims kept). `LoadoutValidator`
+  validates **uuid** lists (entry now carries `Uuid`; `FindEntry` stays by TowerId). `RewardCalculator`
+  commits tower XP by **uuid** + reads `Currencies.Gold`. Smoke test + `MatchActionHandler` build uuid
+  loadouts; `MatchEndVerify` updated. **Combat / placement / MatchStatsTracker unchanged** (§7): stats
+  stay towerId-keyed and the uuid is resolved from the loadout at the commit boundary.
+- **NOT in A1 (later phases, by blueprint):** StatRolls resolver + BaseStats ranges (A3), teleport v2
+  uuid loadouts (A2), Counters/Worthiness increments + UI (later). StatRolls persist now but the
+  resolver ignores them until A3.
+- **Deploy/verify:** drift-clean before edit (Game+disk `184cdfad`). ProfileTemplate edited Studio +
+  `shared/src` byte-identical → new hash **`63a0c98a`** (python fnv1a == Studio). `manifest.json`:
+  hash + `deployed.Game` → `63a0c98a`; **`deployed.Lobby` left `184cdfad` (STALE)**. Verified:
+  migration unit test (Currency 80→Gold 80, 2 Towers→2 Units mid-rolls, Loadout={}, XP/items kept);
+  Play-test — `[DATA] PlayerDataService ready (schema v2)`, smoke seeded 8 Units, `[DIAG]` loadout
+  5 uuids → 5 validated / 0 rejected, `AddTowerXP` by uuid ok, match to Countdown, no errors. Temp
+  `[DIAG]` removed after.
+- **Contract impact:** save schema **v1 → v2** (migration shipped).
+- **PENDINGs:** NEW (A2 / AD-Integration): deploy ProfileTemplate v2 to Lobby (Lobby drift FAILS
+  until then), fix Lobby compile to read Units/Loadout, flip teleport v2 (uuid loadouts) both sides,
+  e2e. THEN USER republishes both Places. Note: Game service refactors are Studio-canon (not git) —
+  **USER must save/publish the Game place**.
+
 ## 2026-07-31 [lobby] AD-UI: reusable Button kit + hotbar preview + Units screen + Tier system
 
 - **`UIKit.Button`** (`ReplicatedStorage.Shared.UIKit.Button`, client) — ONE reusable button

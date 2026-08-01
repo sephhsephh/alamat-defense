@@ -37,8 +37,8 @@ everything untradeable at launch).
 - ✅ v1: Play → teleport (contract v1, reserved-server-per-party; `GamePlaceId` set 2026-07-18)
 - ✅ v1: MatchReturn handling (welcome-back banner + next-act pre-select in stage select)
 - ✅ v1: auto-loadout in launch payload (owned towers, cap 6; interim until loadout picker UI)
-- 🟡 First-join starter tower choice (built + verified 2026-07-18; INERT until AD-Game
-  removes the ProfileTemplate starter seed — proposal 2026-07-18)
+- ✅ First-join starter tower choice (starter seed removed from ProfileTemplate 2026-07-18;
+  picker now active for fresh accounts)
 - 🟡 v1: parties (in-memory, single-server; cross-server/persisted = later phase)
 - 🔲 Loadout picker UI (player chooses their 6; replaces auto-loadout)
 
@@ -51,10 +51,10 @@ everything untradeable at launch).
 - ✅ Game→Lobby return: `ReturnToLobby` builds `MatchReturn` v1 + teleports (guarded on LobbyPlaceId)
 - ✅ First e2e run: lobby → reserved match → return → banner (Integration session in Studio
   2026-07-18 + user's live production run same day)
-- 🔲 **Schema v2**: unit INSTANCES (uuid: TowerId/Trait/Shiny/StatRolls/Ascension/
-  Worthiness/Locked/Spirit), Currencies map (Gold/Silver/rerolls/EventTokens), PlayerLevel, Pity,
-  Quests, LoginStreak, ShopStock, Titles, Spirits, BP, Counters — one migration, tested
-  on dev store. **Gates all meta phases below.** Teleport v2 (uuid loadouts) rides along.
+- 🟡 **Schema v2**: GAME done (A1, 2026-08-01) — uuid unit `Units`, `Currencies` map, PlayerLevel,
+  Pity, Quests, LoginStreak, ShopStock, Titles, Spirits, BP, Counters; `Migrations[1]` v1→v2 verified
+  on dev store (hash `63a0c98a`). Remaining (A2): deploy v2 to Lobby + teleport v2 (uuid loadouts)
+  both sides. **Gates all meta phases below.**
 - 🔲 Counters pipeline: Game commits per-match counters (kills/uuid, clears, waves) →
   feeds quests, worthiness, evolution takedowns
 
@@ -66,7 +66,7 @@ catalog/configs, icon kit, session plan A1–A7). Phases B–F:
 `docs/blueprints/phases-b-f-meta.md` (algorithms, config shapes, session plans, invariants).
 
 ### Phase A — Foundations (first; everything depends on it)
-- 🔲 Schema v2 + teleport v2 (above)
+- 🟡 Schema v2 (A1 done, Game — hash `63a0c98a`) + teleport v2 (A2, pending) — see above
 - 🔲 ItemCatalog registry (every grantable: towers/items/currencies/spirits/titles/skins;
   icon ref, tier, description, MaxOwned, Tradeable=false)
 - 🔲 TierConfig (Common→Legendary→Mythic→Secret→Exclusive→**Bathala**; border colors,

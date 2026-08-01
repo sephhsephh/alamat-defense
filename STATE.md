@@ -5,7 +5,7 @@
 
 Data-driven Roblox tower defense (Filipino myth theme). ~70% of the core loop done as a
 single-Place vertical slice: full match lifecycle (Stage 1, Acts 1–3), 8 towers, passives/
-abilities/summons, progression + match-end rewards, **ProfileStore persistence (schema v1)**.
+abilities/summons, progression + match-end rewards, **ProfileStore persistence (schema v2: uuid unit instances)**.
 Multi-Place split (Lobby + Game) is the current initiative; this repo was created 2026-07-17
 as the source of truth for it.
 
@@ -17,7 +17,10 @@ as the source of truth for it.
   built 2026-07-18** (reads `TeleportData.MatchLaunch` v1 → StartMatch); `MatchLifecycleSmokeTest`
   is now the Studio fallback (stands down when a MatchLaunch payload is present). `ReturnToLobby`
   now sends `MatchReturn` v1 + teleports to the Lobby — **`GameConfig.LobbyPlaceId` set
-  (83342803778137, verified vs live Lobby PlaceId, 2026-07-18 Integration)**.
+  (83342803778137, verified vs live Lobby PlaceId, 2026-07-18 Integration)**. **Schema v2 landed
+  2026-08-01 (A1):** profile `Units` are uuid instances (was towerId `Towers`), `Currencies` map
+  (was scalar `Currency`); PlayerInventoryService / LoadoutValidator / RewardCalculator / DevSeed
+  refactored to uuids; v1→v2 migration verified. ProfileTemplate hash `63a0c98a`.
 - **Lobby** (Studio: "Alamat Defense - Lobby") — **v1 built 2026-07-17**. Data layer drift-free
   (`RS.Shared.{Signal,ProfileTemplate}`, `SSS.Server.Data.{ProfileStore,PlayerDataService}`) +
   `Server.Bootstrap`. Scene: `Workspace.Lobby` blockout hub. Flow: read-only collection screen
@@ -31,6 +34,12 @@ as the source of truth for it.
   `PartyService` now sends up to 6 owned towers instead of `Loadout={}`).
 
 ## Open PENDINGs
+
+- **PENDING (A2 / AD-Integration — schema v2 rollout):** deploy `ProfileTemplate` v2 (hash
+  `63a0c98a`) to the **Lobby** (currently STALE at `184cdfad` in `manifest.deployed.Lobby` — the
+  Lobby drift check FAILS until then); fix Lobby-side compile (LobbyServices / PartyService /
+  StarterChoiceService must read `Units` + `Loadout`, not `Towers`); flip the teleport payload to
+  **v2** (Loadout = unit uuids) on BOTH sides; e2e test. Blueprint `phase-a-foundations.md` §2, §9 A2.
 
 - ~~PENDING (Game / AD-Game): remove the seeded starter Archer from `ProfileTemplate`.~~
   **DONE 2026-07-18** — `Towers = {}` deployed to **BOTH Places** (hash `376e717d → 8ac5d3e9`,
@@ -85,9 +94,10 @@ as the source of truth for it.
 
 ## Contracts (current versions)
 
-- Save schema: **v1** (`shared/src/ProfileTemplate.luau`) — store "PlayerData". Starter
-  `Towers.Archer` seed removed 2026-07-18 (`Towers = {}`); still v1 (default change, hash
-  `8ac5d3e9`, deployed to both Places, drift-clean).
+- Save schema: **v2** (`shared/src/ProfileTemplate.luau`, hash `63a0c98a`) — store
+  "Beta1_PlayerData"/"Beta1_PlayerDataDev1". v2 (A1, 2026-08-01) = uuid unit `Units` +
+  `Currencies` map + meta fields; `Migrations[1]` converts v1→v2. Deployed + verified in **Game**;
+  **Lobby PENDING (A2)** — `deployed.Lobby` stale at `184cdfad`.
 - Teleport payload: **v1** (`docs/contracts/teleport.md`) — implemented BOTH sides + BOTH
   directions: Lobby sends `MatchLaunch` and consumes `MatchReturn` (banner + next-act pre-select);
   Game receives `MatchLaunch` and returns `MatchReturn`. Config-complete BOTH sides and
@@ -95,9 +105,11 @@ as the source of truth for it.
 
 ## Current focus
 
-1. **USER: republish both Places** — the starter-seed removal LANDED to both Game + Lobby
-   (drift-clean, hash `8ac5d3e9`) 2026-07-18. Republish, then re-run the live loop: fresh
-   accounts get the starter picker, and towers should appear in-match (loadout fix).
+1. **AD-Integration (A2): schema v2 rollout** — deploy `ProfileTemplate` v2 to the Lobby (Game
+   landed A1 2026-08-01), fix Lobby compile to read `Units`/`Loadout`, flip teleport v2 (uuid
+   loadouts) both sides, e2e. The Lobby drift check FAILS until its v2 deploy. THEN USER
+   republishes both Places. (A3 = TierConfig/StatGradeConfig/AscensionConfig/ItemCatalog +
+   BaseStats ranges + resolver, AD-Game.)
 2. Lobby v2 candidates: gacha/banners (gated on Phase A schema v2), party polish, currency
    shop, player-level display, loadout picker UI (replaces the interim auto-loadout).
 3. Real art/anim asset ids for tower attacks (Game chat).
