@@ -73,11 +73,15 @@ catalog/configs, icon kit, session plan A1–A7). Phases B–F:
   animated borders slot in later) + tier assignment for the existing 8 towers
 - 🔲 Tower configs gain base-stat RANGES (DMG/RNG/SPA min–max) + TowerStatResolver reads
   rolled StatRolls × Ascension multiplier (Game canon change, part of schema v2 work)
-- 🔲 Shared icon/UI kit (AD-UI): UnitIcon (viewport idle anim, tier border, level, cost,
-  element/trait stack, shiny badge, hover card), ItemIcon, HoverCards, RewardPopup
-  (obtainment grid), FilterPanel, ViewportPreview, CurrencyBar, NPCPrompt
-- 🔲 Hotbar rebuilt on kit (lobby + game) · 🔲 Units screen + Items screen rebuilt on kit
-  (separate screens, shared kit; filters: rarity/element/shiny/favorited/locked/trait)
+- 🟡 Shared icon/UI kit (AD-UI): **`UIKit.Button` primitive built (Lobby, 2026-07-31)** —
+  reusable hover/press/seamless-gradient controller, tag-based, attribute-driven; tier-coloured
+  borders via `TierConfig`. Still 🔲: UnitIcon/ItemIcon/HoverCards/RewardPopup/FilterPanel/
+  CurrencyPromo formalised + promotion to `shared/src`.
+- 🟡 Hotbar rebuilt on kit (lobby — glow + hover preview via one controller, 2026-07-31; game 🔲)
+- 🟡 **Units screen built on kit (Lobby, 2026-07-31)** — owned-units grid, tier-coloured
+  cards, hover preview, selected viewport + stats, sort (equipped>favourited>tier), search;
+  interim v1 data + placeholder model. Still 🔲: Items screen, real data/models, FilterPanel,
+  functional actions (all gated on schema v2 / A3).
 
 ### Phase B — Gacha
 - 🔲 Banner engine: one config file per banner (auto-scanned); Standard (3 mythics/hour,

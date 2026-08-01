@@ -60,12 +60,38 @@ record the modularization the section already implies as an explicit rule:
   §5 controllers-in-`Shared/UIKit` design; this proposal just makes the Button base and the
   no-scripts-on-templates rule explicit so A4 builds it that way.
 
-## Hotbar random-glow bug — NOT YET INVESTIGATED
+## Hotbar random-glow bug — live inspection findings (2026-07-31, Lobby Studio)
 
-Reported symptom only: "some hotbar slots glow their UIStroke on hover, some don't, randomly."
-No cause is recorded here — the live Lobby Studio was not connected this session, so nothing
-was inspected. When Studio is online, read the actual slot scripts + reproduce, then record the
-real cause and fix here. Do not act on any guess.
+VERIFIED by reading the live tree (`StarterGui.Hotbar`) + the slot script source, not guessed:
+
+1. **Every button embeds its own copy of the same 172-line `Unit/ItemIconTemplateLocalScript`.**
+   The live `Hotbar.Slots` contains SIX running copies: `Slot3, Slot4, Slot5, Slot6` plus TWO
+   leftover, still-`Visible`/`Active` copies literally named `Unit/ItemIconTemplate` (LayoutOrder
+   0 vs the slots' LayoutOrder 1). So the hotbar has six overlapping interactive buttons, each
+   independently running the hover logic. (This is the redundancy the user suspected — confirmed.)
+2. **All six are structurally identical and complete** — each has `Main.BG.UIStrokeWithGradient`
+   (+ its `UIGradient`), `Main.BG.UIGradient`, `Main.BG.UIStroke`, `Main.ViewportFrame`, etc. So
+   the glow failing is NOT a missing-instance / early-`return` case; the WaitForChild chain
+   resolves for all of them.
+3. **Hover is driven by `Button.MouseEnter` / `Button.MouseLeave`** (script lines 153/167), which
+   Roblox documents as best-effort: they can fail to fire when the cursor crosses BETWEEN
+   overlapping GUI objects or moves quickly. Six overlapping buttons (the two stray duplicates +
+   identical `LayoutOrder`) is exactly the overlap condition that makes enter/leave drop — the
+   topmost object at a given pixel eats the event, so some slots glow and some don't, per-hover,
+   looking "random."
+4. **Shared single preview:** all six scripts drive ONE `Hotbar.Templates.UnitPreviewTemplate`
+   (each sets its `.Visible`), so they fight over it — a related flicker bug, separate from glow.
+
+**Still to confirm in Play mode** (not yet done — no live hover test this session): watch which
+slots glow while hovering + whether enter/leave is the drop point. This is the one piece that
+should be reproduced live before the fix is called proven.
+
+**Fix direction (this proposal's whole point):** one `UIKit` controller owns a single robust
+hover routine (do not rely on bare MouseEnter/MouseLeave alone — add MouseMoved / hit-tracking or
+an InputChanged fallback), templates carry design only, and the leftover duplicate templates are
+removed from `Hotbar.Slots` (they belong in a Templates folder, `Visible=false`). Implemented in
+A6 (hotbar rebuild) on the kit; the duplicate-removal is a safe cleanup that can happen sooner
+with user approval.
 
 ## Sequencing / gating (why this can't be built yet)
 

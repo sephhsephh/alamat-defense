@@ -1,5 +1,38 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-07-31 [lobby] AD-UI: reusable Button kit + hotbar preview + Units screen + Tier system
+
+- **`UIKit.Button`** (`ReplicatedStorage.Shared.UIKit.Button`, client) — ONE reusable button
+  controller replacing per-button scripts. Hover (scale from centre via `centerAnchor`, stroke
+  thicken OR `HoverStrokeColor`, icon rotate), press animation, seamless (tiled) animated
+  gradient. Attribute-driven; API attach/create/onActivated/onHover/setHovered/setText/setIcon/
+  setStrokeColor/setEnabled. Tag-based bootstrap `StarterPlayerScripts.UIKitBootstrap` attaches
+  any `UIKitButton`-tagged GuiButton (tags copy to clones).
+- **Hotbar** rebuilt on the kit (`Hotbar.HotbarController`): single controller, old duplicated
+  per-slot scripts disabled; fixes the random-glow bug (root cause: N copied scripts + overlap).
+  Shows `Hotbar.Templates.UnitPreviewTemplate` on hover.
+- **Units screen** (`StarterGui.UnitsGUI.UnitsController`): opens from HUD Units; loads owned
+  units (v1 `GetCollection`); tier-coloured card border + BG (animated seamless); hover → white
+  border + centre-scale + right-side `UnitPreviewTemplate` popup (name/tier/DMG-RNG-SPA + model);
+  click → `SelectedUnitFrame` framed viewport + Stats (reusing the preview design); sort
+  equipped>favourited>tier(high→low)>name; live search; placeholder model
+  `ReplicatedStorage.UnitModels.Placeholder`. Action buttons animation-only.
+- **Tier system (editable):** `RS.Configs.Meta.TierConfig` (tier → colour list; one = solid,
+  many = seamless animated gradient — Mythic rainbow, Secret red→dark-red) + `UnitCatalog`
+  (towerId → Tier + placeholder DMG/RNG/SPA + optional Equipped/Favorited). Verified live in Play.
+- **HUD buttons** (`HUD.Left.Buttons.*`) tagged + animated; `Frame.BorderDesignInside` hidden;
+  hover = white stroke (no thicken).
+- **Constitution compliance:** all UI is REAL instances (Studio-editable); controllers only
+  clone/fill/wire. UI kit + configs are **Studio (Lobby) canon** for now (per hybrid model);
+  documented here + in `places/lobby/CONTEXT.md`. Proposal `docs/proposals/2026-07-31-ui-kit-button-primitive.md`
+  (Button primitive) is now IMPLEMENTED interim; user-directed (approved live).
+- **Contract impact:** none (no schema/teleport change; reads existing `GetCollection`).
+- **PENDINGs:** deferred to schema v2 / A3 — real per-unit models, resolved DMG/RNG/SPA, real
+  Loadout(equipped)+Favorited, functional action buttons; promote `UIKit`/`TierConfig`/`UnitCatalog`
+  to `shared/src` at Integration if the Game place needs them. **USER: save + republish the Lobby.**
+- **Open threads:** commit is LOCAL (push pending). Studio place must be saved by the user
+  (Studio-canon code is not in git).
+
 ## 2026-07-31 [lobby] Drift reconcile: ProfileTemplate store rename (Beta1 reset) — Lobby+disk done, Game PENDING
 
 - **Bootstrap drift check (AD-UI session, Lobby active) caught a mismatch:** live Lobby

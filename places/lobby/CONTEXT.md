@@ -8,11 +8,12 @@ stage + difficulty, form parties, and teleport into the Game place.
 
 - **Data layer deployed & drift-free.** `ReplicatedStorage.Shared.{Signal, ProfileTemplate}`,
   `ServerScriptService.Server.Data.{ProfileStore, PlayerDataService}` — all four hashes match
-  `shared/manifest.json` (Signal 91becf7a, ProfileTemplate 376e717d, PlayerDataService
+  `shared/manifest.json` (Signal 91becf7a, ProfileTemplate 184cdfad, PlayerDataService
   613f0d39, ProfileStore 1e3a6f3f). `Signal` was promoted into `shared/src` this session.
 - **Boot:** `Server.Bootstrap` asserts the save contract and runs `PlayerDataService.Init()`.
-  Schema v1 profile loads from **PlayerData_Dev** (DataStoreState=Access) — the Lobby shares
-  the Game place's profile.
+  Schema v1 profile loads from **Beta1_PlayerDataDev1** (prod store **Beta1_PlayerData**;
+  intentional beta reset 2026-07-31; DataStoreState=Access) — the Lobby shares the Game
+  place's profile (both Places verified at hash 184cdfad).
 - **Scene:** `Workspace.Lobby` blockout hub (plaza + sun emblem, pillars, title wall,
   COLLECTION/PLAY pedestals); spawn on the plaza.
 - **Flow (v1):**
@@ -47,6 +48,32 @@ stage + difficulty, form parties, and teleport into the Game place.
 Run the constitution's bootstrap ritual + `tools/hash_shared.luau` at the start of every
 session; reconcile before any work if a shared hash drifts.
 
+## UI kit + screens (AD-UI, 2026-07-31 — Studio canon; interim on v1 data)
+
+- **`UIKit.Button`** (`ReplicatedStorage.Shared.UIKit.Button`) — ONE reusable controller for
+  every button (no per-button scripts). Hover = scale from centre (`centerAnchor` fix) + stroke
+  thicken OR `HoverStrokeColor` (e.g. white) + icon rotate; press animation; seamless (tiled)
+  animated gradient. All attribute-driven (`HoverScale/HoverStrokeMult/HoverStrokeColor/
+  HoverIconRotation/PressScale/TweenTime/GradientAnimate/GradientSpeed/GlowStrokeName/
+  StrokeHiddenUntilHover`). API: attach/create/onActivated/onHover/setHovered/setText/setIcon/
+  setStrokeColor/setEnabled. **Tag any GuiButton `UIKitButton`** → `StarterPlayerScripts.UIKitBootstrap`
+  attaches it (tags copy to clones).
+- **Hotbar** (`StarterGui.Hotbar.HotbarController`) — single controller replaces the old
+  duplicated per-slot scripts (disabled); glow on hover + `Hotbar.Templates.UnitPreviewTemplate`
+  shown above the hovered slot.
+- **Units screen** (`StarterGui.UnitsGUI.UnitsController`) — opens from HUD `Left.Buttons.Units`.
+  Loads owned units (v1 `GetCollection`); each card's border **and** BG glow the unit's TIER
+  colour (animated seamless); hover → white border + scale + a `UITemplates.UnitPreviewTemplate`
+  popup on the right (name/tier/DMG-RNG-SPA + model); click → `SelectedUnitFrame` (framed
+  viewport + Stats reusing the preview design). Sort: equipped > favourited > tier high→low >
+  name. Live SearchBar. Placeholder model `ReplicatedStorage.UnitModels.Placeholder`. Action
+  buttons (Quick Sell/Unequip All/Upgrade/Lock/Equip/View Passives) are **animation-only**.
+- **Configs (editable, AD-UI):** `RS.Configs.Meta.TierConfig` (tier → colour list; one = solid,
+  many = animated gradient; Mythic rainbow, Secret red→dark-red) + `RS.Configs.Meta.UnitCatalog`
+  (towerId → Tier + placeholder DMG/RNG/SPA + optional Equipped/Favorited flags).
+- **HUD buttons** (`HUD.Left.Buttons.{Play,Units,Inventory,Areas,Summon,Shop}`) tagged +
+  animated; `Frame.BorderDesignInside` hidden; hover = white stroke (no thicken).
+
 ## v2 candidates (not built)
 
 - Gacha/banners (uses `PlayerInventoryService.GrantTower` semantics + Items tickets) —
@@ -59,9 +86,13 @@ session; reconcile before any work if a shared hash drifts.
 
 ## Open PENDINGs (see STATE.md)
 
-- None targeting the Lobby. LIVE e2e loop verified by user 2026-07-18 (production client).
-  Waiting on AD-Game: ProfileTemplate starter-seed removal (activates the starter picker);
-  after any Lobby change, USER republishes the Lobby place.
+- **AD-UI (deferred, gated on schema v2 / A3):** UnitsGUI + hotbar preview currently use a
+  placeholder model + interim `UnitCatalog` stats + shared-catalog Equipped/Favorited flags.
+  At v2 wire real per-unit models, resolved DMG/RNG/SPA, real Loadout(equipped)+Favorited, and
+  make the action buttons functional. `UIKit`/`TierConfig`/`UnitCatalog` promote to `shared/src`
+  at Integration (A7) if the Game place needs them.
+- USER: **save + republish the Lobby** after this session (all AD-UI work is in the Studio
+  Edit session). LIVE e2e loop verified 2026-07-18.
 
 ## Ownership notes
 

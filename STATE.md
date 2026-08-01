@@ -58,21 +58,30 @@ as the source of truth for it.
   migrate its contents into `docs/systems/` progressively (doc-gardening sessions), then
   retire it to a pointer.
 
-- **PENDING (AD-Game + USER, CRITICAL — split-brain risk):** store renamed
-  `PlayerData → Beta1_PlayerData` (dev `PlayerData_Dev → Beta1_PlayerDataDev1`) — intentional
-  beta reset (user, 2026-07-31), found via drift check in the Lobby. Disk canon + `manifest.json`
-  + Lobby now reconciled to hash **`184cdfad`** (byte-identical, verified). **The Game place was
-  NOT connected this session — its `ProfileTemplate` store name is UNVERIFIED.** AD-Game must
-  open the Game place, confirm/deploy the SAME store name, verify hash `184cdfad`, then set
-  `manifest.deployed.Game = 184cdfad`. Until then the two Places may read DIFFERENT stores.
-  No `SCHEMA_VERSION` bump (store target change only, no migration). `save-schema.md` updated
-  (owner AD-Game to formally re-verify).
+- ~~PENDING (AD-Game + USER, CRITICAL — split-brain risk): verify Game store name.~~
+  **RESOLVED 2026-07-31** — store renamed `PlayerData → Beta1_PlayerData` (dev `→ Beta1_PlayerDataDev1`),
+  intentional beta reset (user). Verified hash **`184cdfad`** live in **BOTH** Places + disk +
+  `manifest.deployed` (byte-identical) — no split-brain. No `SCHEMA_VERSION` bump. `save-schema.md`
+  note stands (owner AD-Game may formally re-verify the contract doc wording at leisure).
 
-- **PENDING (AD-UI, USER REVIEW):** approve proposal `docs/proposals/2026-07-31-ui-kit-button-primitive.md`
-  (universal Button primitive + PlayerLevelBar into Phase A kit §5 + no-scripts-on-templates
-  rule). On approval AD-UI folds it into `phase-a-foundations.md`. **Blocked on A1→A2→A3**
-  before any build; the hotbar/exp-bar feature request maps to A4/A6. Studio was offline this
-  session — glow-bug hypothesis in the proposal is UNVERIFIED (confirm live before A6).
+- **PENDING (AD-UI, DEFERRED — gated on schema v2 / A3):** the AD-UI kit shipped interim on v1
+  data (built + verified live 2026-07-31 — `UIKit.Button`, hotbar preview, UnitsGUI, TierConfig/
+  UnitCatalog; see CHANGELOG + `places/lobby/CONTEXT.md`). At v2 wire: real per-unit models
+  (replace `ReplicatedStorage.UnitModels.Placeholder`), resolved DMG/RNG/SPA (replace UnitCatalog
+  placeholders), real Loadout(equipped)+UnitInstance.Favorited (replace UnitCatalog interim flags
+  driving the grid sort + hotbar-preview data), and functional action buttons (Quick Sell/Unequip
+  All/Upgrade/Lock/Equip/View Passives). Promote `UIKit`/`TierConfig`/`UnitCatalog` to `shared/src`
+  at Integration (A7) if the Game place needs them.
+
+- **PENDING (USER):** save + republish the **Lobby** — all AD-UI work is Studio-canon (Lobby
+  Edit session), not in git; commit only covers the disk docs.
+
+- ~~PENDING (AD-UI, USER REVIEW): approve UI-kit Button proposal.~~ **IMPLEMENTED interim
+  2026-07-31** (user-directed). Proposal `docs/proposals/2026-07-31-ui-kit-button-primitive.md`
+  built as `UIKit.Button` (+ tag bootstrap); glow bug root-caused live (duplicated per-slot
+  scripts + overlap) and fixed by the single controller. PlayerLevelBar not yet needed (exp bar
+  already exists). Folding the extended kit spec into `phase-a-foundations.md` §5 stays for a
+  formal A-phase pass.
 
 ## Contracts (current versions)
 
