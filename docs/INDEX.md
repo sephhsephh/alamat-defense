@@ -27,6 +27,9 @@
 - `ADR-0002-profilestore.md` — why ProfileStore, schema ownership, session-lock/teleport rules
 
 ## proposals/
+- `2026-08-01-a4-promote-meta-and-tierconfig-multicolor.md` — AD-UI→AD-Integration: promote
+  resolver + Meta configs to shared, reconcile TierConfig (A3 shape + multi-colour), retire Lobby
+  interim UnitCatalog, spec LobbyServices unitView. BLOCKS A4/A5.
 - `2026-07-31-ui-kit-button-primitive.md` — AD-UI: add a universal Button primitive +
   PlayerLevelBar to the Phase A kit (§5); no-scripts-on-templates rule; hotbar glow-bug
   hypothesis. FOR REVIEW; gated on A1–A3.

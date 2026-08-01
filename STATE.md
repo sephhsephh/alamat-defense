@@ -61,13 +61,21 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
   `LobbyServices.GetCollection` once CollectionScreen + UnitsGUI are rebuilt on the kit — they
   are the only remaining readers.
 
-- **PENDING (AD-UI — A3 landed 2026-08-01, ready to wire):** the UI kit shipped interim on v1-shaped view data
-  (`UIKit.Button`, hotbar preview, UnitsGUI, TierConfig/UnitCatalog — built + live-verified
-  2026-07-31). At the A3 wire-up: real per-unit models (replace `UnitModels.Placeholder`),
-  resolved DMG/RNG/SPA (replace UnitCatalog placeholders), real `Loadout`(equipped) +
-  `UnitInstance.Favorited` (replace the interim flags driving grid sort + hotbar preview), and
-  functional action buttons (Quick Sell / Unequip All / Upgrade / Lock / Equip / View Passives).
-  Promote `UIKit`/`TierConfig`/`UnitCatalog` into `shared/src` at A7 if the Game place needs them.
+- **PENDING (AD-Integration, BLOCKS A4/A5):** promote `TowerStatResolver` + `StatGradeConfig` +
+  `AscensionConfig` + `ItemCatalog` + `TierConfig` from Game canon into `shared/src` (deploy BOTH
+  Places, drift-green); reconcile `TierConfig` to A3's shape **+ multi-colour** (Colors list +
+  colorSequence/seamlessSequence/isMultiColor + Mythic rainbow / Secret palettes — user-chosen
+  2026-08-01); **retire the Lobby interim `UnitCatalog` + interim `TierConfig`**; add the
+  `LobbyServices` unitView (resolved DMG/RNG/SPA + grades + tier + equipped/favorited per uuid) and
+  remove the interim `Towers`/`Currency` compat. Full spec:
+  `docs/proposals/2026-08-01-a4-promote-meta-and-tierconfig-multicolor.md`. Verified this session:
+  those 4 modules are ABSENT in the Lobby, so the Lobby cannot resolve stats until this lands.
+
+- **PENDING (AD-UI, AFTER the Integration promotion above):** A4/A5 wire `UnitsController` +
+  `HotbarController` to the `LobbyServices` unitView — real DMG/RNG/SPA + grades (replace
+  `UnitCatalog` placeholders), tier border from the shared multi-colour `TierConfig`, real
+  `Equipped`/`Favorited` driving the grid sort, real per-unit models (replace
+  `UnitModels.Placeholder`), and functional action buttons. Formalise kit templates (A5).
 
 - **PENDING (Game):** persistence round-trip test — play, earn rewards, stop, play again, confirm
   the dev profile restored (API access ON; writes verified).
