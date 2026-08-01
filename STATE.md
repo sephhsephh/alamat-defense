@@ -102,14 +102,24 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
 1. **USER: publish BOTH Places together** (A2 landed 2026-08-01 — schema v2 + teleport v2 are
    Studio-canon in both). The live cutover is atomic: v1 and v2 do not interoperate. Then run
    the live loop once (lobby → reserved match → return) and report the console.
-2. **A4 [AD-UI]:** icon-kit UnitIcon/ItemIcon/Hover controllers in the Lobby (view-model remotes
-   in `LobbyServices`); then A5 Units/Items screens on the kit. A3 landed 2026-08-01 — resolved
-   DMG/RNG/SPA + tiers/grades are available now; passing real rolls to the client also fixes the
-   interim flat stat previews.
-3. Lobby v2 candidates: gacha/banners (gated on Phase A schema v2), party polish, currency
-   shop, player-level display, loadout picker UI (replaces the interim auto-loadout).
-4. Real art/anim asset ids for tower attacks (Game chat).
-5. Progressive doc migration from Studio to this repo.
+2. **AD-INTEGRATION (next session — HARD PREREQUISITE for A4/A5):** execute
+   `docs/proposals/2026-08-01-a4-promote-meta-and-tierconfig-multicolor.md` — promote
+   `TowerStatResolver` + `StatGradeConfig` + `AscensionConfig` + `ItemCatalog` + `TierConfig`
+   into `shared/src`, deploy + drift-green BOTH Places; reconcile `TierConfig` to A3's shape
+   PLUS multi-colour (Mythic rainbow, Secret red+dark-red, `seamlessSequence` helper lifted from
+   the Lobby interim module); retire the Lobby's interim `TierConfig`/`UnitCatalog`; add the
+   `LobbyServices` unitView (resolved DMG/RNG/SPA + grades + tier + equipped/favorited per uuid).
+   **Open decision that session must settle with AD-Game** (proposal §1): whether the resolver
+   reads `BaseStats` from Lobby-readable tower configs, or a slim BaseStats table is promoted
+   alongside it.
+3. **A4/A5 [AD-UI]:** only AFTER the above — kit controllers + Units/Items screens consume the
+   unitView (real stats/grades/tier, real Equipped/Favorited), which also retires the interim
+   `Towers`/`Currency` compat fields.
+4. Lobby v2 candidates: gacha/banners (schema v2 + A3 configs have landed — now gated only on
+   the promotion above), party polish, currency shop, player-level display, loadout picker UI
+   (replaces the interim auto-loadout).
+5. Real art/anim asset ids for tower attacks (Game chat).
+6. Progressive doc migration from Studio to this repo.
 
 <!-- Shared canon note: Signal promoted to shared/src + manifest 2026-07-17 (AD-Lobby),
      byte-identical to the live Game module; drift check now covers all four shared modules. -->
