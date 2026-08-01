@@ -1,5 +1,35 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-01 [game] Schema v2 wiring (blueprint A3): Meta configs + BaseStats pilots + resolver reads StatRolls
+
+- **New `RS.Configs.Meta` (Game canon; promote to shared at A7):** `TierConfig` (Common→…→Bathala
+  order + colors/sortorder), `StatGradeConfig` (D C B A S SS SSS Apex thresholds + `RollStat`/`RollAll`),
+  `AscensionConfig` (MaxLevel 3, MinTier Mythic, absolute per-level DMG mults A1 ×1.05 → A3 ×3 +
+  `PerTower` override + `GetMult`/`GetCost`), `ItemCatalog` (13 entries: 8 towers tier-assigned +
+  Gold/Silver + BannerTicket/TraitRerollToken/GoldenSeed, `Tradeable=false`, `Validate()`).
+  New Studio-only `MetaConfigTest` runs `ItemCatalog.Validate()` at boot.
+- **BaseStats pilots:** Archer + Mage gain top-level `BaseStats = { DMG/RNG/SPA = {Min,Max} }`
+  quality-multiplier ranges (strength; higher = stronger). Other towers have none (flat 1.0).
+- **`TowerStatResolver` reads rolls (the A3 fix):** new optional `statRolls` + `ascension` params.
+  For DMG/RNG/SPA it folds a per-unit quality multiplier `rollStrength (Min+(Max-Min)*roll) ×
+  AscensionMult` into the existing tier×meta×trait pipeline — multiplied for normal stats, DIVIDED
+  for the inverted SPA (so roll 1.0 = fastest). Default (no BaseStats / nil roll / asc 0) = 1.0, so
+  scalar towers are byte-identical. Threaded: `LoadoutValidator` entry (+Uuid already; now +StatRolls
+  +Ascension from the unit) → `PlacementValidator` → `TowerManager.PlaceTower` → `TowerController`
+  (stored; re-resolved on upgrade). `ResolveNextTier` passes them through.
+- **Scope (blueprint-faithful):** compose model chosen with the user = quality multiplier (least
+  invasive, preserves balance). NOT in A3 (later phases): teleport/loadout already v2 (A2); Counters/
+  Worthiness increments; UI kit wiring (A4–A6) — so client stat PREVIEWS still resolve at rollMult 1.0
+  for now (server gameplay is roll-correct). Combat/placement/`MatchStatsTracker` unchanged (§7).
+- **Verified:** resolver unit tests — scalar tower (Knight) asc 0 byte-identical with/without rolls;
+  Archer roll 0.5 == old; roll 0/1 moves DMG ±15% and SPA (roll 1 faster); ascension 3 = ×3 DMG;
+  Necromancer asc 2 = ×1.5 DMG; `ItemCatalog.Validate` ok (0 errors). Play-test — `schema v2` boot,
+  `[Test] MetaConfig OK (13 entries, 8 tiers)`, profile v2 loaded, match to Countdown, no errors.
+- **Contract impact:** none — save schema stays **v2** (StatRolls already in the v2 shape; A3 only
+  reads them). No shared-module (manifest) change; all A3 code is Game Studio canon.
+- **PENDINGs:** A3 CLEARED. Next: A4/A5 (AD-UI) wire the kit to resolved stats + real rolls. The
+  BLOCKING user publish PENDING now also covers A3's Game changes (publish Game + Lobby together).
+
 ## 2026-08-01 [integration] A2: schema v2 to the Lobby + teleport contract v2 (uuid loadouts) — Phase A unblocked
 
 Blueprint `phase-a-foundations.md` §2 + §9 A2. Both Places driven in one session (AD-Integration).

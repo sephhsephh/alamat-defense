@@ -22,7 +22,9 @@ as the source of truth for it.
   (was scalar `Currency`); PlayerInventoryService / LoadoutValidator / RewardCalculator / DevSeed
   refactored to uuids; v1→v2 migration verified. ProfileTemplate hash `63a0c98a`. **Teleport v2
   (A2, 2026-08-01):** `GameConfig.TeleportPayloadVersion = 2` — MatchLaunch loadouts are unit
-  uuids; v1 payloads hard-rejected with `[CONTRACT]`.
+  uuids; v1 payloads hard-rejected with `[CONTRACT]`. **A3 (2026-08-01):** `RS.Configs.Meta.*`
+  (TierConfig / StatGradeConfig / AscensionConfig / ItemCatalog) + Archer/Mage `BaseStats` pilots +
+  `TowerStatResolver` reads `StatRolls` × `Ascension`.
 - **Lobby** (Studio: "Alamat Defense - Lobby") — **v1 built 2026-07-17**. Data layer drift-free
   (`RS.Shared.{Signal,ProfileTemplate}`, `SSS.Server.Data.{ProfileStore,PlayerDataService}`) +
   `Server.Bootstrap`. Scene: `Workspace.Lobby` blockout hub. Flow: read-only collection screen
@@ -48,15 +50,18 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
   v1/v2 do not interoperate (hard reject by design), so a partial publish breaks live launches
   with `[CONTRACT] PayloadVersion mismatch`.
 
-- **PENDING (A3 / AD-Game):** TierConfig + StatGradeConfig + AscensionConfig + ItemCatalog +
-  BaseStats ranges + `TowerStatResolver` reads `StatRolls`. Until A3, StatRolls persist but the
-  resolver ignores them (every unit plays at its scalar config stats). Blueprint §9 A3.
+- ~~PENDING (A3 / AD-Game): Meta configs + BaseStats + resolver reads StatRolls.~~ **DONE
+  2026-08-01** — `RS.Configs.Meta.{TierConfig, StatGradeConfig, AscensionConfig, ItemCatalog}`
+  created (Game canon; `ItemCatalog.Validate()` at boot via `MetaConfigTest`); Archer + Mage carry
+  `BaseStats` quality-range pilots; `TowerStatResolver` folds `StatRolls × Ascension` into
+  DMG/RNG/SPA (SPA inverted). Scalar/no-BaseStats towers byte-identical (regression verified).
+  Client stat previews still flat (rollMult 1.0) until the UI wire-up (A4–A6).
 
 - **PENDING (A5 / AD-UI):** remove the interim `Towers` / `Currency` compat fields from
   `LobbyServices.GetCollection` once CollectionScreen + UnitsGUI are rebuilt on the kit — they
   are the only remaining readers.
 
-- **PENDING (AD-UI, DEFERRED — gated on A3):** the UI kit shipped interim on v1-shaped view data
+- **PENDING (AD-UI — A3 landed 2026-08-01, ready to wire):** the UI kit shipped interim on v1-shaped view data
   (`UIKit.Button`, hotbar preview, UnitsGUI, TierConfig/UnitCatalog — built + live-verified
   2026-07-31). At the A3 wire-up: real per-unit models (replace `UnitModels.Placeholder`),
   resolved DMG/RNG/SPA (replace UnitCatalog placeholders), real `Loadout`(equipped) +
@@ -89,9 +94,10 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
 1. **USER: publish BOTH Places together** (A2 landed 2026-08-01 — schema v2 + teleport v2 are
    Studio-canon in both). The live cutover is atomic: v1 and v2 do not interoperate. Then run
    the live loop once (lobby → reserved match → return) and report the console.
-2. **A3 [AD-Game]:** TierConfig + StatGradeConfig + AscensionConfig + ItemCatalog + BaseStats
-   ranges + `TowerStatResolver` reads `StatRolls` (blueprint §9 A3). Rolls are dead data until
-   this lands.
+2. **A4 [AD-UI]:** icon-kit UnitIcon/ItemIcon/Hover controllers in the Lobby (view-model remotes
+   in `LobbyServices`); then A5 Units/Items screens on the kit. A3 landed 2026-08-01 — resolved
+   DMG/RNG/SPA + tiers/grades are available now; passing real rolls to the client also fixes the
+   interim flat stat previews.
 3. Lobby v2 candidates: gacha/banners (gated on Phase A schema v2), party polish, currency
    shop, player-level display, loadout picker UI (replaces the interim auto-loadout).
 4. Real art/anim asset ids for tower attacks (Game chat).

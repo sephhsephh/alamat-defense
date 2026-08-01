@@ -68,12 +68,16 @@ catalog/configs, icon kit, session plan A1–A7). Phases B–F:
 
 ### Phase A — Foundations (first; everything depends on it)
 - ✅ Schema v2 (A1 Game + A2 Lobby, hash `63a0c98a`) + teleport v2 (A2) — see above
-- 🔲 ItemCatalog registry (every grantable: towers/items/currencies/spirits/titles/skins;
-  icon ref, tier, description, MaxOwned, Tradeable=false)
-- 🔲 TierConfig (Common→Legendary→Mythic→Secret→Exclusive→**Bathala**; border colors,
-  animated borders slot in later) + tier assignment for the existing 8 towers
-- 🔲 Tower configs gain base-stat RANGES (DMG/RNG/SPA min–max) + TowerStatResolver reads
-  rolled StatRolls × Ascension multiplier (Game canon change, part of schema v2 work)
+- ✅ ItemCatalog registry (A3, 2026-08-01): `RS.Configs.Meta.ItemCatalog` — 13 entries (8 towers
+  tiered + Gold/Silver + BannerTicket/TraitRerollToken/GoldenSeed), `Tradeable=false`, `Validate()`
+  runs at boot (`MetaConfigTest`). Placeholder icon assetids until A4.
+- ✅ TierConfig (A3): `RS.Configs.Meta.TierConfig` — Common→…→**Bathala** order + colors +
+  tier assignment for the 8 towers. (+StatGradeConfig D..Apex, +AscensionConfig 3 levels.)
+  A Lobby interim TierConfig/UnitCatalog exists (2026-07-31) → reconcile at A7 promotion to shared.
+- ✅ Tower base-stat RANGES + resolver (A3): `BaseStats` quality ranges on the Archer + Mage
+  pilots; `TowerStatResolver` folds `StatRolls × Ascension` into DMG/RNG/SPA (SPA inverted).
+  Scalar/no-BaseStats towers byte-identical (regression verified). Client stat PREVIEWS still flat
+  (rollMult 1.0) until the UI wire-up (A4–A6); server gameplay is roll-correct.
 - 🟡 Shared icon/UI kit (AD-UI): **`UIKit.Button` primitive built (Lobby, 2026-07-31)** —
   reusable hover/press/seamless-gradient controller, tag-based, attribute-driven; tier-coloured
   borders via `TierConfig`. Still 🔲: UnitIcon/ItemIcon/HoverCards/RewardPopup/FilterPanel/

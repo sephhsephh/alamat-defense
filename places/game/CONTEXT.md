@@ -21,7 +21,9 @@ auto-scanning registries. UI is scale-based under StarterGui, one controller per
 `Server.Data.PlayerDataService` owns ProfileStore sessions; `PlayerInventoryService`
 (uuid-keyed `Units`/account/items, + `GrantUnit`) and `SettingsService` are profile-backed
 facades. Schema v2 (A1, 2026-08-01) = uuid unit instances + `Currencies` map; `Migrations[1]`
-converts v1 profiles on load.
+converts v1 profiles on load. Each unit carries `StatRolls` + `Ascension`; `TowerStatResolver`
+folds them into DMG/RNG/SPA (A3, 2026-08-01) as a per-unit quality multiplier over the
+tier×meta×trait pipeline.
 Boot order in `ReplicationBridge`: data services first. `[DATA]`/`[CONTRACT]` log lines
 confirm profile load + schema version on every boot.
 
@@ -31,8 +33,10 @@ confirm profile load + schema version on every boot.
   Enemies, Waves, Economy, Inventory, Rewards, Stats, Networking, Map, GameSpeed, Summons,
   StatusEffects, Settings, Physics}`
 - Shared: `RS.Shared.{Signal, Enums, Schema, ProfileTemplate, TowerStatResolver, AttackShapes}`
-- Configs: `RS.Configs.{Towers, Enemies, Waves, Stages, Maps, Traits, StatusEffects, Summons, Global}`
-  (`Global.GameConfig` = cross-Place ids: `LobbyPlaceId`, `TeleportPayloadVersion`)
+- Configs: `RS.Configs.{Towers, Enemies, Waves, Stages, Maps, Traits, StatusEffects, Summons, Global, Meta}`
+  (`Global.GameConfig` = cross-Place ids: `LobbyPlaceId`, `TeleportPayloadVersion`;
+  `Meta.{TierConfig, StatGradeConfig, AscensionConfig, ItemCatalog}` = A3 rarity / roll-grade /
+  ascension / grantable catalog — Game canon until A7 shared/src promotion)
 - Remotes: `RS.Remotes.{Placement, Towers, Match, Economy, Combat, Settings}`
 - Rich legacy docs: `ServerStorage.Documentation.*` (AIState, SystemIndex, HowTo, ...) —
   still valid; migrating to repo `docs/systems/` on touch.
@@ -63,5 +67,9 @@ confirm profile load + schema version on every boot.
   TeleportInitFailed handled) — expected; real teleports need the published client.
 - Enemies.Behaviors (Flying/Splitting/...) is an empty extension point.
 - Real-DataStore round-trip test still PENDING (mock verified only).
-- **USER (BLOCKING):** the A1 service refactors + A2's version flip are Studio-canon — publish
-  this Place together with the Lobby (v1/v2 do not interoperate).
+- **Stat rolls live (A3, 2026-08-01):** `TowerStatResolver` reads each unit's `StatRolls` +
+  `Ascension`; Archer + Mage are the `BaseStats` quality-range pilots (other towers flat until
+  ranges are authored). Client stat PREVIEWS still resolve at rollMult 1.0 until the UI wire-up
+  (A4–A6), so a rolled tower's ghost range ring can be slightly off — server gameplay is roll-correct.
+- **USER (BLOCKING):** the A1 service refactors, A2 version flip, and A3 Meta configs + resolver
+  are all Studio-canon — publish this Place together with the Lobby (v1/v2 do not interoperate).
