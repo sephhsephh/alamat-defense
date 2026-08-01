@@ -51,10 +51,11 @@ everything untradeable at launch).
 - ✅ Game→Lobby return: `ReturnToLobby` builds `MatchReturn` v1 + teleports (guarded on LobbyPlaceId)
 - ✅ First e2e run: lobby → reserved match → return → banner (Integration session in Studio
   2026-07-18 + user's live production run same day)
-- 🟡 **Schema v2**: GAME done (A1, 2026-08-01) — uuid unit `Units`, `Currencies` map, PlayerLevel,
-  Pity, Quests, LoginStreak, ShopStock, Titles, Spirits, BP, Counters; `Migrations[1]` v1→v2 verified
-  on dev store (hash `63a0c98a`). Remaining (A2): deploy v2 to Lobby + teleport v2 (uuid loadouts)
-  both sides. **Gates all meta phases below.**
+- ✅ **Schema v2**: done BOTH Places — uuid unit `Units`, `Currencies` map, PlayerLevel, Pity,
+  Quests, LoginStreak, ShopStock, Titles, Spirits, BP, Counters; `Migrations[1]` v1→v2 verified
+  (hash `63a0c98a`, drift-green in Game + Lobby). Game A1 2026-08-01, Lobby A2 2026-08-01.
+- ✅ **Teleport v2** (A2, 2026-08-01): `Loadout` carries unit uuids, `PayloadVersion = 2` both
+  sides, hard cutover (v1 rejected). Studio-verified; live re-run pending the user's republish.
 - 🔲 Counters pipeline: Game commits per-match counters (kills/uuid, clears, waves) →
   feeds quests, worthiness, evolution takedowns
 
@@ -66,7 +67,7 @@ catalog/configs, icon kit, session plan A1–A7). Phases B–F:
 `docs/blueprints/phases-b-f-meta.md` (algorithms, config shapes, session plans, invariants).
 
 ### Phase A — Foundations (first; everything depends on it)
-- 🟡 Schema v2 (A1 done, Game — hash `63a0c98a`) + teleport v2 (A2, pending) — see above
+- ✅ Schema v2 (A1 Game + A2 Lobby, hash `63a0c98a`) + teleport v2 (A2) — see above
 - 🔲 ItemCatalog registry (every grantable: towers/items/currencies/spirits/titles/skins;
   icon ref, tier, description, MaxOwned, Tradeable=false)
 - 🔲 TierConfig (Common→Legendary→Mythic→Secret→Exclusive→**Bathala**; border colors,

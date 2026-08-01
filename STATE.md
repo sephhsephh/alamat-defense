@@ -1,5 +1,5 @@
 # STATE — Alamat Defense
-<!-- owner: all | scope: global | last-verified: 2026-07-18 -->
+<!-- owner: all | scope: global | last-verified: 2026-08-01 -->
 
 ## Snapshot
 
@@ -14,106 +14,88 @@ as the source of truth for it.
 - **Game** (Studio: "Alamat Defense - Game") — the playable match Place. Healthy.
   Persistence live; Studio saves go to the separate **PlayerData_Dev** store (verified
   with API access ON, DataStoreState=Access). **Production entry receiver `MatchEntryService`
-  built 2026-07-18** (reads `TeleportData.MatchLaunch` v1 → StartMatch); `MatchLifecycleSmokeTest`
+  built 2026-07-18** (reads `TeleportData.MatchLaunch` → StartMatch); `MatchLifecycleSmokeTest`
   is now the Studio fallback (stands down when a MatchLaunch payload is present). `ReturnToLobby`
   now sends `MatchReturn` v1 + teleports to the Lobby — **`GameConfig.LobbyPlaceId` set
   (83342803778137, verified vs live Lobby PlaceId, 2026-07-18 Integration)**. **Schema v2 landed
   2026-08-01 (A1):** profile `Units` are uuid instances (was towerId `Towers`), `Currencies` map
   (was scalar `Currency`); PlayerInventoryService / LoadoutValidator / RewardCalculator / DevSeed
-  refactored to uuids; v1→v2 migration verified. ProfileTemplate hash `63a0c98a`.
+  refactored to uuids; v1→v2 migration verified. ProfileTemplate hash `63a0c98a`. **Teleport v2
+  (A2, 2026-08-01):** `GameConfig.TeleportPayloadVersion = 2` — MatchLaunch loadouts are unit
+  uuids; v1 payloads hard-rejected with `[CONTRACT]`.
 - **Lobby** (Studio: "Alamat Defense - Lobby") — **v1 built 2026-07-17**. Data layer drift-free
   (`RS.Shared.{Signal,ProfileTemplate}`, `SSS.Server.Data.{ProfileStore,PlayerDataService}`) +
   `Server.Bootstrap`. Scene: `Workspace.Lobby` blockout hub. Flow: read-only collection screen
   (`LobbyServices` GetCollection/GetStages), stage select + difficulty (`RS.Configs.StageRegistry`
   mirror), party system + reserved-server teleport (`PartyService`, `RS.Configs.LobbyConfig`,
-  teleport contract **v1**), **GamePlaceId set (125430066355564, 2026-07-18)**. **MatchReturn v1
+  teleport contract **v2**), **GamePlaceId set (125430066355564, 2026-07-18)**. **MatchReturn
   handling built 2026-07-18** (`MatchReturnService` + `ReturnScreen` banner + StageSelect
   pre-select of `SuggestNextActId`; verified via `[Test]` sim + `[DIAG]`). **Starter tower
   choice + launch-loadout fix 2026-07-18** (`StarterTowerConfig` [dev-editable] +
-  `StarterChoiceService` + modal picker, inert until the ProfileTemplate PENDING lands;
-  `PartyService` now sends up to 6 owned towers instead of `Loadout={}`).
+  `StarterChoiceService` + modal picker). **Schema v2 + teleport v2 landed 2026-08-01 (A2):**
+  `ProfileTemplate` v2 deployed (`63a0c98a`, drift-green); `LobbyServices` serves uuid `Units` +
+  `Loadout` + `Currencies` (interim `Towers`/`Currency` compat for the not-yet-rebuilt screens,
+  remove at A5); `StarterChoiceService` grants uuid UnitInstances; `PartyService.buildLoadout`
+  sends uuids (saved `Loadout` first, else auto by MetaLevel).
 
 ## Open PENDINGs
 
-- **PENDING (A2 / AD-Integration — schema v2 rollout):** deploy `ProfileTemplate` v2 (hash
-  `63a0c98a`) to the **Lobby** (currently STALE at `184cdfad` in `manifest.deployed.Lobby` — the
-  Lobby drift check FAILS until then); fix Lobby-side compile (LobbyServices / PartyService /
-  StarterChoiceService must read `Units` + `Loadout`, not `Towers`); flip the teleport payload to
-  **v2** (Loadout = unit uuids) on BOTH sides; e2e test. Blueprint `phase-a-foundations.md` §2, §9 A2.
+Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
 
-- ~~PENDING (Game / AD-Game): remove the seeded starter Archer from `ProfileTemplate`.~~
-  **DONE 2026-07-18** — `Towers = {}` deployed to **BOTH Places** (hash `376e717d → 8ac5d3e9`,
-  verified byte-identical in Game + Lobby + `shared/src/`); no `SCHEMA_VERSION` bump
-  (default-value change, no migration). `manifest.json` `deployed` = both `8ac5d3e9`; drift-clean.
-  User chose the standalone unblock over folding into blueprint A1 (A1 re-touches this at schema v2).
+- **PENDING (USER ACTION, BLOCKING — before any live play):** save + publish **BOTH** Places
+  together. The Game's A1 service refactors and all of A2's Lobby work are Studio-canon, not in
+  git. **The live game is mid-cutover:** published servers still run schema v1 + teleport v1, and
+  v1/v2 do not interoperate (hard reject by design), so a partial publish breaks live launches
+  with `[CONTRACT] PayloadVersion mismatch`.
 
-- ~~PENDING (Lobby): deploy shared modules on creation.~~ **DONE 2026-07-17** — all four
-  shared modules deployed drift-free; manifest `deployed.Lobby` current.
-- ~~PENDING (Lobby, USER ACTION): set `LobbyConfig.GamePlaceId`.~~ **DONE 2026-07-18** —
-  set to 125430066355564; real launches now reach ReserveServer + TeleportAsync.
-- ~~PENDING (Game / AD-Game): build the production entry receiver.~~ **DONE 2026-07-18** —
-  `MatchEntryService` reads `TeleportData.MatchLaunch` v1 → validate → `MatchDirector.StartMatch`
-  (smoke test now Studio fallback). `ReturnToLobby` sends `MatchReturn` v1 + teleports back.
-- ~~PENDING (Game, USER ACTION): set `GameConfig.LobbyPlaceId`.~~ **DONE 2026-07-18
-  (Integration)** — found set to 83342803778137, verified equal to the live Lobby
-  instance's `game.PlaceId`; stale STUB comment cleaned. Teleport loop config-complete.
-- ~~PENDING (USER ACTION): first LIVE end-to-end teleport test.~~ **DONE 2026-07-18** —
-  user ran the full loop in the production client: lobby → reserved match → return →
-  Defeat banner shown. (The defeat itself exposed the empty-Loadout bug, fixed same day —
-  re-publish the Lobby and re-run to confirm towers appear in-match.)
-- **PENDING (Game):** persistence round-trip test — play, earn rewards, stop, play again,
-  confirm the PlayerData_Dev profile restored (API access already ON; writes verified).
-- **PENDING (Game):** in-Studio `ServerStorage.Documentation` is still the richer doc set;
-  migrate its contents into `docs/systems/` progressively (doc-gardening sessions), then
-  retire it to a pointer.
+- **PENDING (A3 / AD-Game):** TierConfig + StatGradeConfig + AscensionConfig + ItemCatalog +
+  BaseStats ranges + `TowerStatResolver` reads `StatRolls`. Until A3, StatRolls persist but the
+  resolver ignores them (every unit plays at its scalar config stats). Blueprint §9 A3.
 
-- ~~PENDING (AD-Game + USER, CRITICAL — split-brain risk): verify Game store name.~~
-  **RESOLVED 2026-07-31** — store renamed `PlayerData → Beta1_PlayerData` (dev `→ Beta1_PlayerDataDev1`),
-  intentional beta reset (user). Verified hash **`184cdfad`** live in **BOTH** Places + disk +
-  `manifest.deployed` (byte-identical) — no split-brain. No `SCHEMA_VERSION` bump. `save-schema.md`
-  note stands (owner AD-Game may formally re-verify the contract doc wording at leisure).
+- **PENDING (A5 / AD-UI):** remove the interim `Towers` / `Currency` compat fields from
+  `LobbyServices.GetCollection` once CollectionScreen + UnitsGUI are rebuilt on the kit — they
+  are the only remaining readers.
 
-- **PENDING (AD-UI, DEFERRED — gated on schema v2 / A3):** the AD-UI kit shipped interim on v1
-  data (built + verified live 2026-07-31 — `UIKit.Button`, hotbar preview, UnitsGUI, TierConfig/
-  UnitCatalog; see CHANGELOG + `places/lobby/CONTEXT.md`). At v2 wire: real per-unit models
-  (replace `ReplicatedStorage.UnitModels.Placeholder`), resolved DMG/RNG/SPA (replace UnitCatalog
-  placeholders), real Loadout(equipped)+UnitInstance.Favorited (replace UnitCatalog interim flags
-  driving the grid sort + hotbar-preview data), and functional action buttons (Quick Sell/Unequip
-  All/Upgrade/Lock/Equip/View Passives). Promote `UIKit`/`TierConfig`/`UnitCatalog` to `shared/src`
-  at Integration (A7) if the Game place needs them.
+- **PENDING (AD-UI, DEFERRED — gated on A3):** the UI kit shipped interim on v1-shaped view data
+  (`UIKit.Button`, hotbar preview, UnitsGUI, TierConfig/UnitCatalog — built + live-verified
+  2026-07-31). At the A3 wire-up: real per-unit models (replace `UnitModels.Placeholder`),
+  resolved DMG/RNG/SPA (replace UnitCatalog placeholders), real `Loadout`(equipped) +
+  `UnitInstance.Favorited` (replace the interim flags driving grid sort + hotbar preview), and
+  functional action buttons (Quick Sell / Unequip All / Upgrade / Lock / Equip / View Passives).
+  Promote `UIKit`/`TierConfig`/`UnitCatalog` into `shared/src` at A7 if the Game place needs them.
 
-- **PENDING (USER):** save + republish the **Lobby** — all AD-UI work is Studio-canon (Lobby
-  Edit session), not in git; commit only covers the disk docs.
+- **PENDING (Game):** persistence round-trip test — play, earn rewards, stop, play again, confirm
+  the dev profile restored (API access ON; writes verified).
 
-- ~~PENDING (AD-UI, USER REVIEW): approve UI-kit Button proposal.~~ **IMPLEMENTED interim
-  2026-07-31** (user-directed). Proposal `docs/proposals/2026-07-31-ui-kit-button-primitive.md`
-  built as `UIKit.Button` (+ tag bootstrap); glow bug root-caused live (duplicated per-slot
-  scripts + overlap) and fixed by the single controller. PlayerLevelBar not yet needed (exp bar
-  already exists). Folding the extended kit spec into `phase-a-foundations.md` §5 stays for a
-  formal A-phase pass.
+- **PENDING (Game):** in-Studio `ServerStorage.Documentation` is still the richer doc set; migrate
+  it into `docs/systems/` progressively (doc-gardening), then retire it to a pointer.
 
 ## Contracts (current versions)
 
 - Save schema: **v2** (`shared/src/ProfileTemplate.luau`, hash `63a0c98a`) — store
   "Beta1_PlayerData"/"Beta1_PlayerDataDev1". v2 (A1, 2026-08-01) = uuid unit `Units` +
-  `Currencies` map + meta fields; `Migrations[1]` converts v1→v2. Deployed + verified in **Game**;
-  **Lobby PENDING (A2)** — `deployed.Lobby` stale at `184cdfad`.
-- Teleport payload: **v1** (`docs/contracts/teleport.md`) — implemented BOTH sides + BOTH
+  `Currencies` map + meta fields; `Migrations[1]` converts v1→v2. **Deployed + drift-green in
+  BOTH Places** (Game A1, Lobby A2 — both `63a0c98a`).
+- Teleport payload: **v2** (`docs/contracts/teleport.md`) — implemented BOTH sides + BOTH
   directions: Lobby sends `MatchLaunch` and consumes `MatchReturn` (banner + next-act pre-select);
-  Game receives `MatchLaunch` and returns `MatchReturn`. Config-complete BOTH sides and
-  **LIVE-VERIFIED end-to-end in the production client (user, 2026-07-18)**.
+  Game receives `MatchLaunch` and returns `MatchReturn`. v2 (A2, 2026-08-01) = `Loadout` carries
+  unit uuids; **hard cutover, no migration** — v1 is rejected with `[CONTRACT]`. Version lives in
+  `LobbyConfig.MatchLaunchVersion` == `GameConfig.TeleportPayloadVersion` (must always be equal).
+  Verified in Studio both sides; **live re-verification pending the user's republish of both
+  Places** (v1 was live-verified end-to-end 2026-07-18).
 
 ## Current focus
 
-1. **AD-Integration (A2): schema v2 rollout** — deploy `ProfileTemplate` v2 to the Lobby (Game
-   landed A1 2026-08-01), fix Lobby compile to read `Units`/`Loadout`, flip teleport v2 (uuid
-   loadouts) both sides, e2e. The Lobby drift check FAILS until its v2 deploy. THEN USER
-   republishes both Places. (A3 = TierConfig/StatGradeConfig/AscensionConfig/ItemCatalog +
-   BaseStats ranges + resolver, AD-Game.)
-2. Lobby v2 candidates: gacha/banners (gated on Phase A schema v2), party polish, currency
+1. **USER: publish BOTH Places together** (A2 landed 2026-08-01 — schema v2 + teleport v2 are
+   Studio-canon in both). The live cutover is atomic: v1 and v2 do not interoperate. Then run
+   the live loop once (lobby → reserved match → return) and report the console.
+2. **A3 [AD-Game]:** TierConfig + StatGradeConfig + AscensionConfig + ItemCatalog + BaseStats
+   ranges + `TowerStatResolver` reads `StatRolls` (blueprint §9 A3). Rolls are dead data until
+   this lands.
+3. Lobby v2 candidates: gacha/banners (gated on Phase A schema v2), party polish, currency
    shop, player-level display, loadout picker UI (replaces the interim auto-loadout).
-3. Real art/anim asset ids for tower attacks (Game chat).
-4. Progressive doc migration from Studio to this repo.
+4. Real art/anim asset ids for tower attacks (Game chat).
+5. Progressive doc migration from Studio to this repo.
 
 <!-- Shared canon note: Signal promoted to shared/src + manifest 2026-07-17 (AD-Lobby),
      byte-identical to the live Game module; drift check now covers all four shared modules. -->

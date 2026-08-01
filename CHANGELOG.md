@@ -1,5 +1,52 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-01 [integration] A2: schema v2 to the Lobby + teleport contract v2 (uuid loadouts) — Phase A unblocked
+
+Blueprint `phase-a-foundations.md` §2 + §9 A2. Both Places driven in one session (AD-Integration).
+
+- **ProfileTemplate v2 → Lobby:** deployed verbatim from `shared/src` (`184cdfad → 63a0c98a`,
+  hash computed in-Studio == manifest == Game). `manifest.deployed.Lobby` updated;
+  **drift check now GREEN in BOTH Places** for all four shared modules.
+- **Lobby v2 reads (Studio canon):**
+  - `LobbyServices.GetCollection` serves uuid-keyed `Units` (TowerId/MetaLevel/XP/Trait/Shiny/
+    StatRolls/Ascension/Worthiness/Locked/Favorited/ObtainedAt), `Loadout`, `Currencies` and
+    `PlayerLevel`. **Interim compat:** it also still returns `Towers` (collapsed to the highest-
+    MetaLevel instance per TowerId) and `Currency` (= Gold) so the not-yet-rebuilt CollectionScreen
+    + UnitsGUI keep working — **remove both at A5** (new PENDING; they are the only readers).
+  - `StarterChoiceService`: eligibility is now `Units` empty; the grant writes a uuid
+    `UnitInstance` mirroring the Game's `PlayerInventoryService.GrantUnit` (mid rolls 0.5 until
+    A3), returns the `Uuid`, and the sim-tower self-heal scans by `TowerId`.
+  - `PartyService.buildLoadout`: returns **uuids** — the saved profile `Loadout` filtered to
+    still-owned uuids (deduped, capped at `MaxLoadoutSize`), else auto-loadout by MetaLevel desc.
+- **Teleport contract v1 → v2** (`docs/contracts/teleport.md`, version history + shapes updated).
+  Only change: `Players[uid].Loadout` carries unit uuids. `LobbyConfig.MatchLaunchVersion = 2`
+  and `GameConfig.TeleportPayloadVersion = 2`; `MatchReturnService` now READS its expected version
+  from `LobbyConfig` instead of a hardcoded `1` (one integer covers both directions).
+  **Hard cutover, no migration:** both Places deploy together, so v1 is rejected, never fallen back
+  to. Game-side code needed no logic change — `MatchEntryService` already passed `Loadout` through
+  to `LoadoutValidator` (uuid-aware since A1); only the version constant + comments moved.
+- **Verified (Studio, both Places):**
+  - Game boot: `[DATA] PlayerDataService ready (schema v2)`, `[CONTRACT] Profile v2 loaded`
+    (Beta1_PlayerDataDev1, Access), `[MatchEntry] Ready`, match reaches Countdown, no errors.
+  - `BuildRawConfig` unit tests: v2 accepted (uuids preserved, string→numeric userId keys), **v1
+    rejected** (`[CONTRACT] PayloadVersion mismatch: got 1, expected 2`), unknown stage rejected,
+    difficulty 999999 → 1000.
+  - Lobby boot: `[CONTRACT] Lobby boot: save-schema v2`, `MatchReturn v2 receiver`, `teleport
+    contract v2`, UI kit + hotbar + Units controllers all init clean, no compile errors.
+  - Live remote reads: `GetCollection` → 8 uuid Units (rolls present) + compat layer intact;
+    real `RequestLaunch` → `[DIAG] Launch loadout: [6 uuids]` then `[Teleport] launch failed:
+    HTTP 403` (expected — Studio cannot ReserveServer).
+  - Starter grant path (`DevSimulateFirstJoin`): offer eligible → granted uuid
+    `945f74d5-…` with the exact GrantUnit field set; next clean boot self-healed the sim unit
+    (`[Test] removed leftover SimTestTower`) and correctly reported ineligible. Sim attribute OFF.
+- **Contract impact:** teleport **v1 → v2** (no migration — atomic cutover). Save schema
+  unchanged at v2; shared module deployed, not edited (manifest `deployed.Lobby` only).
+- **PENDINGs:** A2 CLEARED. NEW — **USER must publish BOTH Places together** (live is mid-cutover;
+  a partial publish breaks launches with a version mismatch). NEW — A5 removes the compat fields.
+  Carried: A3 (resolver reads StatRolls), persistence round-trip, Studio-doc migration.
+- **Note:** STATE.md was over its 100-line cap; resolved PENDINGs were trimmed out (history lives
+  here) — now 102 lines.
+
 ## 2026-08-01 [game] Schema v2 (blueprint A1): uuid unit instances + Currencies map + migration
 
 - **Contract change — save schema v1 → v2** (owner AD-Game, `docs/blueprints/phase-a-foundations.md`
