@@ -44,11 +44,16 @@ as the source of truth for it.
 
 Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
 
-- **PENDING (USER ACTION, BLOCKING — before any live play):** save + publish **BOTH** Places
-  together. The Game's A1 service refactors and all of A2's Lobby work are Studio-canon, not in
-  git. **The live game is mid-cutover:** published servers still run schema v1 + teleport v1, and
-  v1/v2 do not interoperate (hard reject by design), so a partial publish breaks live launches
-  with `[CONTRACT] PayloadVersion mismatch`.
+- ~~PENDING (USER, BLOCKING): publish BOTH Places together.~~ **DONE 2026-08-01** — user
+  published both. Live is now on schema v2 + teleport v2 (A1+A2+A3 Studio canon shipped
+  together), so the cutover window is closed.
+
+- **PENDING (USER, verification):** run the live loop once in the Roblox client — lobby → stage
+  select → reserved match → play → return → banner — and report the console. This is the first
+  live exercise of **teleport v2** (uuid loadouts); v1 was the last version live-verified
+  (2026-07-18). Watch for `[CONTRACT] MatchLaunch v2 accepted` (Game) and `[DATA] [CONTRACT]
+  MatchReturn v2 accepted` (Lobby), and confirm towers actually appear in the match (the uuid
+  loadout path has only been exercised in Studio).
 
 - ~~PENDING (A3 / AD-Game): Meta configs + BaseStats + resolver reads StatRolls.~~ **DONE
   2026-08-01** — `RS.Configs.Meta.{TierConfig, StatGradeConfig, AscensionConfig, ItemCatalog}`
@@ -94,14 +99,14 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
   Game receives `MatchLaunch` and returns `MatchReturn`. v2 (A2, 2026-08-01) = `Loadout` carries
   unit uuids; **hard cutover, no migration** — v1 is rejected with `[CONTRACT]`. Version lives in
   `LobbyConfig.MatchLaunchVersion` == `GameConfig.TeleportPayloadVersion` (must always be equal).
-  Verified in Studio both sides; **live re-verification pending the user's republish of both
-  Places** (v1 was live-verified end-to-end 2026-07-18).
+  Verified in Studio both sides; both Places **published 2026-08-01** — live re-verification of
+  the v2 loop is the open user action (v1 was live-verified end-to-end 2026-07-18).
 
 ## Current focus
 
-1. **USER: publish BOTH Places together** (A2 landed 2026-08-01 — schema v2 + teleport v2 are
-   Studio-canon in both). The live cutover is atomic: v1 and v2 do not interoperate. Then run
-   the live loop once (lobby → reserved match → return) and report the console.
+1. **USER: live-verify teleport v2** — both Places published 2026-08-01 (cutover done). Run the
+   loop once in the client (lobby → reserved match → return → banner), confirm towers appear
+   in-match, and report the console. First live run of the uuid-loadout path.
 2. **AD-INTEGRATION (next session — HARD PREREQUISITE for A4/A5):** execute
    `docs/proposals/2026-08-01-a4-promote-meta-and-tierconfig-multicolor.md` — promote
    `TowerStatResolver` + `StatGradeConfig` + `AscensionConfig` + `ItemCatalog` + `TierConfig`
