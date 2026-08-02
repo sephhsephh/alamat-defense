@@ -1,5 +1,50 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-01 [integration/hotfix] LIVE BUG: empty hotbar in production matches — profile-load race before loadout validation
+
+**Symptom (user, first live teleport-v2 run):** teleported into the match with NO units in any
+hotbar slot, could not place anything, lost the match.
+
+**Root cause — a race, not bad data.** `MatchEntryService` waited only for the party to be
+*present* (`Players:GetPlayerByUserId`) and then called `MatchDirector.StartMatch`, which
+validates loadouts SYNCHRONOUSLY via `LoadoutValidator` → `PlayerInventoryService.GetUnit` →
+`getData(userId)`. When a profile has not finished loading, `getData` returns a deep copy of the
+EMPTY `ProfileTemplate.Template` (`Units = {}`) — indistinguishable from "this player owns
+nothing". So every loadout uuid was dropped as `NotOwned` and the player entered with an empty
+hotbar. In a **reserved server the players are already present when the service boots**, while
+ProfileStore still needs a DataStore round-trip — so losing this race is the DEFAULT live
+outcome, not an edge case.
+
+**Why Studio never caught it (A1/A2/A3 all passed):** the Studio entry path is
+`MatchLifecycleSmokeTest`, which calls `DevSetOwnedTowers` — that populates the in-memory
+stand-in synchronously *before* starting, so the profile is never actually raced. Every Studio
+verification exercised a pre-seeded path. The production path had never once run with a real
+cold profile. Note this is the SECOND live-only failure of the same symptom (2026-07-18 was
+`Loadout={}` from the Lobby); both were invisible to Studio for the same structural reason.
+
+- **Fix (`MatchEntryService`):** new `waitForProfiles(userIds)` runs AFTER `waitForParty` and
+  BEFORE `StartMatch`, awaiting `PlayerDataService.WaitForData` per player
+  (`PROFILE_LOAD_TIMEOUT = 20`). Logs `[MatchEntry] [DATA] All N profile(s) loaded (waited Xs)`.
+  On timeout it does NOT wedge the match — it starts anyway but `warn`s loudly with the affected
+  userIds (old behavior, now audible).
+- **Fix (`PlayerInventoryService.getData`):** the silent empty-template fallback now `warn`s
+  once per userId outside Studio (`profile NOT loaded … ownership check WILL report zero units`),
+  so this failure class can never be invisible again. Diagnostic only — no behavior change; the
+  Studio dev-seed path deliberately still uses the fallback.
+- **Verified (Studio):** Game boots clean, `MetaConfig OK`, smoke-test path unchanged (the new
+  wait is only on the MatchLaunch entry path), match reaches Countdown, no errors. **The real
+  proof is the next live run** — Studio structurally cannot reproduce the race.
+- **OWNERSHIP NOTE:** `MatchEntryService` + `PlayerInventoryService` are **AD-Game** canon
+  (`Match lifecycle` row). Edited from the AD-Integration chat on explicit user instruction
+  ("fix that") because the bug was blocking live play and was surfaced by the v2 rollout this
+  chat landed. **PENDING for AD-Game: review this hotfix.** Design question left open for the
+  owner: whether the wait belongs in `MatchDirector.StartMatch` itself (protecting every caller)
+  rather than only the production entry path.
+- **Contract impact:** none. No schema, payload, or shared-module change; manifest untouched.
+- **Studio noise seen once:** client `WaitForChild` "Infinite yield possible" lines on one Play
+  start; all ten StarterGui screens verified present + Enabled — Studio replication lag, not a
+  regression.
+
 ## 2026-08-01 [game] Schema v2 wiring (blueprint A3): Meta configs + BaseStats pilots + resolver reads StatRolls
 
 - **New `RS.Configs.Meta` (Game canon; promote to shared at A7):** `TierConfig` (Common→…→Bathala

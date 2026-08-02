@@ -48,12 +48,21 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
   published both. Live is now on schema v2 + teleport v2 (A1+A2+A3 Studio canon shipped
   together), so the cutover window is closed.
 
-- **PENDING (USER, verification):** run the live loop once in the Roblox client — lobby → stage
-  select → reserved match → play → return → banner — and report the console. This is the first
-  live exercise of **teleport v2** (uuid loadouts); v1 was the last version live-verified
-  (2026-07-18). Watch for `[CONTRACT] MatchLaunch v2 accepted` (Game) and `[DATA] [CONTRACT]
-  MatchReturn v2 accepted` (Lobby), and confirm towers actually appear in the match (the uuid
-  loadout path has only been exercised in Studio).
+- **PENDING (USER, BLOCKING — republish Game + re-run):** the 2026-08-01 live run FAILED —
+  empty hotbar, no units placeable (profile-load race; see CHANGELOG hotfix). Fixed in
+  `MatchEntryService` + `PlayerInventoryService` (**Studio canon — republish the GAME place**;
+  the Lobby is unchanged by the hotfix). Then re-run the loop and report the console. Look for
+  `[MatchEntry] [DATA] All N profile(s) loaded (waited Xs)` — that line appearing, followed by
+  units in the hotbar, is the fix confirmed. Also still unverified live: `[CONTRACT] MatchLaunch
+  v2 accepted` (Game), `[DATA] [CONTRACT] MatchReturn v2 accepted` (Lobby).
+
+- **PENDING (AD-Game, review):** the hotfix above touched AD-Game canon from the AD-Integration
+  chat (user-directed, live-blocking). Review it, and decide whether the profile wait belongs in
+  `MatchDirector.StartMatch` (protecting every caller) rather than only the entry path.
+  **Structural lesson worth acting on:** every Studio verification runs through
+  `MatchLifecycleSmokeTest`, which pre-seeds units synchronously — so the production cold-profile
+  path is never exercised before a live run. Two live-only failures have now come from exactly
+  that blind spot. Consider a Studio harness that starts a match WITHOUT dev-seeding.
 
 - ~~PENDING (A3 / AD-Game): Meta configs + BaseStats + resolver reads StatRolls.~~ **DONE
   2026-08-01** — `RS.Configs.Meta.{TierConfig, StatGradeConfig, AscensionConfig, ItemCatalog}`
@@ -104,9 +113,10 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
 
 ## Current focus
 
-1. **USER: live-verify teleport v2** — both Places published 2026-08-01 (cutover done). Run the
-   loop once in the client (lobby → reserved match → return → banner), confirm towers appear
-   in-match, and report the console. First live run of the uuid-loadout path.
+1. **USER: republish the GAME place, then re-run the live loop.** The first live v2 run failed
+   with an empty hotbar (profile-load race, hotfixed 2026-08-01 — Studio canon, not yet
+   published). Confirm `[MatchEntry] [DATA] All N profile(s) loaded` + units actually in the
+   hotbar, then report the console. The Lobby needs no republish for this fix.
 2. **AD-INTEGRATION (next session — HARD PREREQUISITE for A4/A5):** execute
    `docs/proposals/2026-08-01-a4-promote-meta-and-tierconfig-multicolor.md` — promote
    `TowerStatResolver` + `StatGradeConfig` + `AscensionConfig` + `ItemCatalog` + `TierConfig`
