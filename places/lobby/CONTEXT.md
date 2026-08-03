@@ -17,6 +17,12 @@ stage + difficulty, form parties, and teleport into the Game place.
 - **Scene:** `Workspace.Lobby` blockout hub (plaza + sun emblem, pillars, title wall,
   COLLECTION/PLAY pedestals); spawn on the plaza.
 - **Flow:**
+  - **`GetUnitViews` (2026-08-01, the A4/A5 contract):** per owned uuid the server sends
+    `Uuid, TowerId, Name, Tier` (both from the shared `ItemCatalog`), `Level, XP, Trait, Shiny,
+    Ascension, Worthiness, Locked, Favorited, Equipped` (uuid in `Loadout`), raw `StatRolls` and
+    `Grades = {DMG,RNG,SPA}` letters from `StatGradeConfig` — plus `Loadout`, `Currencies`,
+    `PlayerXP/PlayerLevel`, `MaxLoadout`. **No resolved DMG/RNG/SPA and no XpPct** (deferred —
+    see STATE PENDINGs). Clients never read profiles; render this view only.
   - Collection (`Server.Lobby.LobbyServices` `GetCollection`, `StarterGui.CollectionScreen`) —
     READ-ONLY owned units from the profile. **Schema v2 (A2):** serves uuid-keyed `Units` +
     `Loadout` + `Currencies` + `PlayerLevel`; ALSO returns interim `Towers` (highest-MetaLevel
@@ -76,9 +82,11 @@ session; reconcile before any work if a shared hash drifts.
   viewport + Stats reusing the preview design). Sort: equipped > favourited > tier high→low >
   name. Live SearchBar. Placeholder model `ReplicatedStorage.UnitModels.Placeholder`. Action
   buttons (Quick Sell/Unequip All/Upgrade/Lock/Equip/View Passives) are **animation-only**.
-- **Configs (editable, AD-UI):** `RS.Configs.Meta.TierConfig` (tier → colour list; one = solid,
-  many = animated gradient; Mythic rainbow, Secret red→dark-red) + `RS.Configs.Meta.UnitCatalog`
-  (towerId → Tier + placeholder DMG/RNG/SPA + optional Equipped/Favorited flags).
+- **Configs:** `RS.Configs.Meta.TierConfig` is now **SHARED CANON** (`shared/src`, deployed both
+  Places, drift-checked) — 8 tiers, per-tier `Colors` list, Mythic rainbow + Secret red→dark-red,
+  helpers `get`/`colorSequence`/`seamlessSequence`/`isMultiColor`. `ItemCatalog` (also shared) is
+  the authority on a unit's Name + Tier. `RS.Configs.Meta.UnitCatalog` is **RETIRED IN PLACE** —
+  only its placeholder DMG/RNG/SPA are still read; delete it at A4/A5.
 - **HUD buttons** (`HUD.Left.Buttons.{Play,Units,Inventory,Areas,Summon,Shop}`) tagged +
   animated; `Frame.BorderDesignInside` hidden; hover = white stroke (no thicken).
 

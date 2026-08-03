@@ -1,5 +1,75 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-01 [integration] Meta configs promoted to shared canon + TierConfig multi-colour reconcile + LobbyServices unitView — A4/A5 unblocked
+
+Executes `docs/proposals/2026-08-01-a4-promote-meta-and-tierconfig-multicolor.md` §1–§4, with one
+scoped decision and two scope corrections (below). Hotfix from earlier today confirmed live by the
+user first (empty-hotbar bug gone), so this session started from a healthy live game.
+
+- **Promoted to `shared/src` + deployed byte-identical to BOTH Places** (all hashes verified
+  in-Studio == disk == manifest, drift GREEN in both):
+  `TierConfig a0d6e3a3` · `StatGradeConfig 49a6edfd` · `AscensionConfig 59aa8e15` ·
+  `ItemCatalog 789dca4b`. `tools/hash_shared.luau` now covers all EIGHT shared modules.
+- **TierConfig reconciled** (A3 shape as base + the Lobby's multi-colour, per §2): 8-tier `Order`
+  with `SortOrder` and the PascalCase API from A3; `Colors` LIST per tier plus
+  `get`/`colorSequence`/`seamlessSequence`/`isMultiColor` lifted verbatim from the Lobby interim
+  module. **Mythic rainbow (6 colours) and Secret red→dark-red preserved**; Common..Secret keep the
+  Lobby's tuned on-screen values, Exclusive + Bathala keep A3's. `.Color` is DERIVED from
+  `Colors[1]` so there is one authored source per tier and A3's `GetColor` contract still holds.
+  Verified live: `isMultiColor("Mythic")=true` (6 colours), `seamlessSequence` returns 13
+  keypoints with first == last (the seamless scroll wrap intact).
+- **`LobbyServices.GetUnitViews`** (new RemoteFunction) — the A4/A5 contract. Per owned uuid:
+  `Uuid, TowerId, Name, Tier` (both from ItemCatalog), `Level, XP, Trait, Shiny, Ascension,
+  Worthiness, Locked, Favorited, Equipped` (uuid ∈ `Loadout`), raw `StatRolls`, and
+  `Grades = {DMG,RNG,SPA}` letters from `StatGradeConfig`. Plus `Loadout`, `Currencies`,
+  `PlayerXP/PlayerLevel`, `MaxLoadout`. Clients never read profiles (blueprint §5).
+  Verified live: 8 units returned with correct tiers/levels/grades.
+
+**DECISION (user, this session) — resolved stat NUMBERS deferred.** §1 assumed promoting
+`TowerStatResolver` was a one-module move. It is not: `Resolve()` takes a whole **towerConfig**
+(`Upgrades[tier]`, `BaseStats`, `Attack`) and internally requires `MetaScalingConfig` +
+`TraitRegistry` + `TraitDefinitions` — so making the Lobby resolve numbers means putting ~12
+modules including all 8 tower configs (AD-Game's most-tuned files) under drift control. Options
+put to the user were (a) full stat stack, (b) a Game-generated slim stats catalog + boot
+validator, (c) ship grades now / decide numbers at A6. **User chose (c).** Grades need nothing
+but the roll, so A4/A5 get tiers, grades, borders and equipped state with ZERO new drift surface.
+`TowerStatResolver` was therefore NOT promoted and stays Game canon.
+
+**Scope corrections vs the proposal:**
+1. **`UnitCatalog` was NOT deleted** (§3 said delete). Its deletion was contingent on §4 supplying
+   real stats; with numbers deferred it is still the only source of the Units-screen DMG/RNG/SPA
+   placeholders, so deleting it would have blanked that panel. It is **retired in place**: header
+   rewritten to mark Name/Tier as duplicates of ItemCatalog (do not edit), delete outright at
+   A4/A5. The interim Lobby `TierConfig` WAS fully replaced as specified.
+2. **`ItemCatalog` needed a code change to be shareable** — it hard-required
+   `TowerConfigRegistry`, which does not exist in the Lobby and would have failed to load there.
+   That require is now lazy + optional; `Validate()` returns `(ok, errors, notes)` and reports the
+   skipped Tower→TowerConfig cross-check in Places without tower configs. The Game still runs the
+   full check — verified: `[Test] MetaConfig OK: ItemCatalog valid (13 entries), 8 tiers`.
+   Also added `GetName`/`GetTier`.
+- **`XpPct` not served:** the Lobby has no `TowerProgressionConfig`, so the XP curve is unknown
+  there. Raw `XP` + `Level` are sent instead. Promoting that config (owner **AD-PlayerLevel**) is
+  a small follow-up if a real XP bar is wanted — new PENDING.
+
+**TWO INERT-SYSTEM FINDINGS (surfaced by verification, not fixed here):**
+1. **Nothing ever calls `StatGradeConfig.RollAll`/`RollStat`.** Every unit in existence has
+   hardcoded `StatRolls = {0.5, 0.5, 0.5}` — from the v1→v2 migration, `GrantUnit`'s default,
+   `DevSetOwnedTowers`, and the Lobby starter grant. So **every grade in the game is "C"** and
+   every quality multiplier is exactly the midpoint. A3 built the roller; no grant path wired it
+   in. Until that lands, grades and BaseStats ranges are decorative. → PENDING (AD-Game).
+2. **Nothing ever writes `Data.Loadout`.** Template inits it `{}`, migration sets `{}`, the Lobby
+   only READS it. So `Equipped` is always false and `buildLoadout` always falls through to
+   auto-loadout (top 6 by MetaLevel). **Equipping does not exist yet** — the unitView now carries
+   the flag, but nothing can set it. → needs scheduling (see STATE).
+
+- **Contract impact:** none — no save-schema or teleport change. Four NEW shared modules under
+  drift control (manifest 4 → 8 entries); `OWNERSHIP.md` row for ItemCatalog/TierConfig (AD-UI)
+  now points at `shared/src`.
+- **PENDINGs:** A2-followup Integration promotion CLEARED. NEW: numbers decision at A6 (AD-Game +
+  Integration), stat-roll wiring (AD-Game), `Data.Loadout` writer / equip UI (needs scheduling),
+  TowerProgressionConfig promotion for XpPct (AD-PlayerLevel), UnitCatalog deletion at A4/A5.
+  **USER: republish BOTH Places** — all of this is Studio canon.
+
 ## 2026-08-01 [integration/hotfix] LIVE BUG: empty hotbar in production matches — profile-load race before loadout validation
 
 **Symptom (user, first live teleport-v2 run):** teleported into the match with NO units in any

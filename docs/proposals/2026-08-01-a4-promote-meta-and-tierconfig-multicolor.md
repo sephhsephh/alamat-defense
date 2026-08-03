@@ -1,6 +1,22 @@
 # Proposal: promote Meta configs + resolver to shared, reconcile TierConfig (multi-color) — unblocks A4/A5
 <!-- from: AD-UI | to: AD-Integration (execute) + AD-Game (owns resolver/StatGrade/BaseStats) | 2026-08-01 -->
-<!-- status: FOR THE AD-INTEGRATION SESSION. A4/A5 (AD-UI) is BLOCKED until this lands. -->
+<!-- status: EXECUTED 2026-08-01 (AD-Integration). A4/A5 UNBLOCKED. See CHANGELOG for the landing. -->
+
+> **EXECUTED 2026-08-01 — with three deviations, all recorded in the CHANGELOG entry:**
+> 1. **`TowerStatResolver` was NOT promoted.** §1 assumed a one-module move; `Resolve()` actually
+>    takes a whole towerConfig and pulls in MetaScaling/Traits, so Lobby-side numbers would put
+>    ~12 modules (incl. all 8 tower configs) under drift control. User chose to **ship grades now
+>    and defer the numbers decision to A6** — grades need only the roll. The other 4 modules were
+>    promoted and are drift-green in both Places.
+> 2. **`UnitCatalog` was retired in place, not deleted** (§3). Its deletion assumed §4 replaced the
+>    stat numbers; with numbers deferred it is still the only source of the Units-screen
+>    placeholders. Name/Tier there are now dead duplicates of ItemCatalog. Delete at A4/A5.
+> 3. **`ItemCatalog` needed a code change to be shareable** — its `TowerConfigRegistry` require is
+>    now lazy + optional (that module exists only in the Game), and `Validate()` returns
+>    `(ok, errors, notes)`.
+>
+> §4's unitView shipped as `LobbyServices.GetUnitViews`, minus resolved DMG/RNG/SPA (above) and
+> minus `XpPct` (the Lobby has no `TowerProgressionConfig` — raw XP + Level are sent instead).
 
 ## Why
 

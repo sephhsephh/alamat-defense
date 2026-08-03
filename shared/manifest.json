@@ -43,6 +43,50 @@
         "Lobby": "91becf7a"
       },
       "comment": "Lua-side pub/sub used by PlayerDataService. Promoted into shared canon 2026-07-17 (AD-Lobby session) from the verified live Game source; covered by the shared/src deploys row in OWNERSHIP.md (owner AD-Game)."
+    },
+    "TierConfig": {
+      "file": "shared/src/TierConfig.luau",
+      "hash": "a0d6e3a3",
+      "owner": "ui",
+      "deployPath": "ReplicatedStorage.Configs.Meta.TierConfig",
+      "deployed": {
+        "Game": "a0d6e3a3",
+        "Lobby": "a0d6e3a3"
+      },
+      "comment": "Promoted to shared canon 2026-08-01 (A-phase Integration). RECONCILED from two predecessors: the Game's A3 TierConfig (Order/SortOrder + PascalCase API) and the Lobby's interim TierConfig (multi-colour palettes + ColorSequence helpers, incl. Mythic rainbow / Secret red+dark-red). Every tier authors a Colors LIST; .Color is derived from Colors[1]. Both predecessors are REPLACED."
+    },
+    "StatGradeConfig": {
+      "file": "shared/src/StatGradeConfig.luau",
+      "hash": "49a6edfd",
+      "owner": "game",
+      "deployPath": "ReplicatedStorage.Configs.Meta.StatGradeConfig",
+      "deployed": {
+        "Game": "49a6edfd",
+        "Lobby": "49a6edfd"
+      },
+      "comment": "Promoted to shared canon 2026-08-01 (A-phase Integration), byte-identical to the A3 original. Maps a 0..1 roll to D..Apex. The Lobby needs it to grade rolls WITHOUT tower configs - grades come from the roll alone."
+    },
+    "AscensionConfig": {
+      "file": "shared/src/AscensionConfig.luau",
+      "hash": "59aa8e15",
+      "owner": "game",
+      "deployPath": "ReplicatedStorage.Configs.Meta.AscensionConfig",
+      "deployed": {
+        "Game": "59aa8e15",
+        "Lobby": "59aa8e15"
+      },
+      "comment": "Promoted to shared canon 2026-08-01 (A-phase Integration), byte-identical to the A3 original. Required by the Game's TowerStatResolver; the Lobby displays ascension level."
+    },
+    "ItemCatalog": {
+      "file": "shared/src/ItemCatalog.luau",
+      "hash": "789dca4b",
+      "owner": "ui",
+      "deployPath": "ReplicatedStorage.Configs.Meta.ItemCatalog",
+      "deployed": {
+        "Game": "789dca4b",
+        "Lobby": "789dca4b"
+      },
+      "comment": "Promoted to shared canon 2026-08-01 (A-phase Integration). THE authority on a grantable's Name/Tier/Icon; replaces the Lobby's interim UnitCatalog for name+tier. CHANGED at promotion: the TowerConfigRegistry require is now LAZY + OPTIONAL so the module loads in the Lobby (which has no tower configs); Validate() returns (ok, errors, notes) and reports the skipped Tower->TowerConfig cross-check. Added GetName/GetTier convenience readers."
     }
   }
 }

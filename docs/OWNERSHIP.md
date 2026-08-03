@@ -18,7 +18,9 @@ task touches — resolved at bootstrap per the constitution.
 | Lobby scene & flow (stage select, parties) | AD-Lobby | Lobby | Studio (Lobby) |
 | Shop / banner catalog (future) | AD-Gacha | Lobby | TBD when built |
 | Gacha / banners / pity / Ascension (future) | AD-Gacha | Lobby | TBD when built |
-| ItemCatalog / TierConfig / icon-UI kit (Phase A) | AD-UI | both | `shared/src/` when built |
+| ItemCatalog / TierConfig / icon-UI kit (Phase A) | AD-UI | both | `shared/src/{ItemCatalog,TierConfig}.luau` (SHARED since 2026-08-01) + kit in Studio |
+| StatGradeConfig / AscensionConfig | AD-Game | both | `shared/src/` (SHARED since 2026-08-01) |
+| TowerStatResolver (+ MetaScaling, Traits) | AD-Game | Game | Studio (Game) `RS.Shared.TowerStatResolver` — NOT shared; see the numbers PENDING in STATE.md |
 | Trait & stat rerolls / worthiness (future) | AD-Traits | Lobby | TBD when built |
 | Quests / login / codes / battlepass (future) | AD-Meta | Lobby | TBD when built |
 | Evolution / spirits (future) | AD-Gacha | Lobby | TBD when built |

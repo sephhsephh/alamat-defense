@@ -11,91 +11,67 @@ as the source of truth for it.
 
 ## Places
 
-- **Game** (Studio: "Alamat Defense - Game") — the playable match Place. Healthy.
-  Persistence live; Studio saves go to the separate **PlayerData_Dev** store (verified
-  with API access ON, DataStoreState=Access). **Production entry receiver `MatchEntryService`
-  built 2026-07-18** (reads `TeleportData.MatchLaunch` → StartMatch); `MatchLifecycleSmokeTest`
-  is now the Studio fallback (stands down when a MatchLaunch payload is present). `ReturnToLobby`
-  now sends `MatchReturn` v1 + teleports to the Lobby — **`GameConfig.LobbyPlaceId` set
-  (83342803778137, verified vs live Lobby PlaceId, 2026-07-18 Integration)**. **Schema v2 landed
-  2026-08-01 (A1):** profile `Units` are uuid instances (was towerId `Towers`), `Currencies` map
-  (was scalar `Currency`); PlayerInventoryService / LoadoutValidator / RewardCalculator / DevSeed
-  refactored to uuids; v1→v2 migration verified. ProfileTemplate hash `63a0c98a`. **Teleport v2
-  (A2, 2026-08-01):** `GameConfig.TeleportPayloadVersion = 2` — MatchLaunch loadouts are unit
-  uuids; v1 payloads hard-rejected with `[CONTRACT]`. **A3 (2026-08-01):** `RS.Configs.Meta.*`
-  (TierConfig / StatGradeConfig / AscensionConfig / ItemCatalog) + Archer/Mage `BaseStats` pilots +
-  `TowerStatResolver` reads `StatRolls` × `Ascension`.
-- **Lobby** (Studio: "Alamat Defense - Lobby") — **v1 built 2026-07-17**. Data layer drift-free
-  (`RS.Shared.{Signal,ProfileTemplate}`, `SSS.Server.Data.{ProfileStore,PlayerDataService}`) +
-  `Server.Bootstrap`. Scene: `Workspace.Lobby` blockout hub. Flow: read-only collection screen
-  (`LobbyServices` GetCollection/GetStages), stage select + difficulty (`RS.Configs.StageRegistry`
-  mirror), party system + reserved-server teleport (`PartyService`, `RS.Configs.LobbyConfig`,
-  teleport contract **v2**), **GamePlaceId set (125430066355564, 2026-07-18)**. **MatchReturn
-  handling built 2026-07-18** (`MatchReturnService` + `ReturnScreen` banner + StageSelect
-  pre-select of `SuggestNextActId`; verified via `[Test]` sim + `[DIAG]`). **Starter tower
-  choice + launch-loadout fix 2026-07-18** (`StarterTowerConfig` [dev-editable] +
-  `StarterChoiceService` + modal picker). **Schema v2 + teleport v2 landed 2026-08-01 (A2):**
-  `ProfileTemplate` v2 deployed (`63a0c98a`, drift-green); `LobbyServices` serves uuid `Units` +
-  `Loadout` + `Currencies` (interim `Towers`/`Currency` compat for the not-yet-rebuilt screens,
-  remove at A5); `StarterChoiceService` grants uuid UnitInstances; `PartyService.buildLoadout`
-  sends uuids (saved `Loadout` first, else auto by MetaLevel).
+- **Game** (Studio: "Alamat Defense - Game") — the match Place. Healthy, live.
+  Persistence on **Beta1_PlayerData** (Studio: `Beta1_PlayerDataDev1`, API access ON).
+  `MatchEntryService` is the production entry (reads `TeleportData.MatchLaunch`, waits for
+  profiles, then `StartMatch`); `MatchLifecycleSmokeTest` is the Studio fallback and stands down
+  when a payload is present. `ReturnToLobby` sends `MatchReturn`. Cross-place ids set both ways
+  (`LobbyPlaceId` 83342803778137). Owns tower configs, combat, the stat resolver, match runtime.
+- **Lobby** (Studio: "Alamat Defense - Lobby") — the social/meta Place, live.
+  Scene `Workspace.Lobby`; flow = collection → stage select + difficulty → party →
+  reserved-server launch, plus `MatchReturn` welcome-back banner + next-act pre-select and the
+  first-join starter picker. Serves `GetCollection` (legacy + interim compat) and
+  **`GetUnitViews`** (the A4/A5 per-uuid contract: tier, level, grades, equipped, favorited).
+  `PartyService.buildLoadout` sends unit uuids.
+- **Shared canon** (`shared/src` + `manifest.json`, drift-checked by `tools/hash_shared.luau`):
+  8 modules — `ProfileTemplate`, `PlayerDataService`, `ProfileStore`, `Signal`, and since
+  2026-08-01 `TierConfig`, `StatGradeConfig`, `AscensionConfig`, `ItemCatalog`.
+  **Drift GREEN in both Places** as of 2026-08-01.
 
 ## Open PENDINGs
 
 Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
 
-- ~~PENDING (USER, BLOCKING): publish BOTH Places together.~~ **DONE 2026-08-01** — user
-  published both. Live is now on schema v2 + teleport v2 (A1+A2+A3 Studio canon shipped
-  together), so the cutover window is closed.
+- **PENDING (USER, BLOCKING):** republish **BOTH** Places — the entire A-phase promotion
+  (4 shared Meta configs, the reconciled multi-colour `TierConfig`, `GetUnitViews`) is Studio
+  canon and not in git. Live currently runs the pre-promotion build.
 
-- **PENDING (USER, BLOCKING — republish Game + re-run):** the 2026-08-01 live run FAILED —
-  empty hotbar, no units placeable (profile-load race; see CHANGELOG hotfix). Fixed in
-  `MatchEntryService` + `PlayerInventoryService` (**Studio canon — republish the GAME place**;
-  the Lobby is unchanged by the hotfix). Then re-run the loop and report the console. Look for
-  `[MatchEntry] [DATA] All N profile(s) loaded (waited Xs)` — that line appearing, followed by
-  units in the hotbar, is the fix confirmed. Also still unverified live: `[CONTRACT] MatchLaunch
-  v2 accepted` (Game), `[DATA] [CONTRACT] MatchReturn v2 accepted` (Lobby).
+- **PENDING (AD-Game, review):** the 2026-08-01 empty-hotbar hotfix touched AD-Game canon
+  (`MatchEntryService`, `PlayerInventoryService`) from the AD-Integration chat — user-directed,
+  live-blocking; fix confirmed working live. Review it and decide whether the profile wait
+  belongs in `MatchDirector.StartMatch` (protecting every caller) rather than only the entry
+  path. **Structural lesson:** every Studio verification runs through `MatchLifecycleSmokeTest`,
+  which pre-seeds units synchronously, so the production cold-profile path is never exercised
+  before a live run — two live-only failures have come from that blind spot. Add a Studio
+  harness that starts a match WITHOUT dev-seeding, ideally before A6.
 
-- **PENDING (AD-Game, review):** the hotfix above touched AD-Game canon from the AD-Integration
-  chat (user-directed, live-blocking). Review it, and decide whether the profile wait belongs in
-  `MatchDirector.StartMatch` (protecting every caller) rather than only the entry path.
-  **Structural lesson worth acting on:** every Studio verification runs through
-  `MatchLifecycleSmokeTest`, which pre-seeds units synchronously — so the production cold-profile
-  path is never exercised before a live run. Two live-only failures have now come from exactly
-  that blind spot. Consider a Studio harness that starts a match WITHOUT dev-seeding.
+- **PENDING (AD-Game — the grade/roll system is INERT):** nothing calls
+  `StatGradeConfig.RollAll`/`RollStat`. Every unit has hardcoded `StatRolls = {0.5,0.5,0.5}`
+  (v1->v2 migration, `GrantUnit` default, `DevSetOwnedTowers`, Lobby starter grant), so **every
+  grade in the game reads "C"** and every quality multiplier is the exact midpoint. Wire the
+  roller into the grant paths or A3's rolls + BaseStats ranges stay decorative.
 
-- ~~PENDING (A3 / AD-Game): Meta configs + BaseStats + resolver reads StatRolls.~~ **DONE
-  2026-08-01** — `RS.Configs.Meta.{TierConfig, StatGradeConfig, AscensionConfig, ItemCatalog}`
-  created (Game canon; `ItemCatalog.Validate()` at boot via `MetaConfigTest`); Archer + Mage carry
-  `BaseStats` quality-range pilots; `TowerStatResolver` folds `StatRolls × Ascension` into
-  DMG/RNG/SPA (SPA inverted). Scalar/no-BaseStats towers byte-identical (regression verified).
-  Client stat previews still flat (rollMult 1.0) until the UI wire-up (A4–A6).
+- **PENDING (NEEDS SCHEDULING — equipping does not exist):** nothing ever WRITES `Data.Loadout`.
+  The template inits it `{}`, the migration sets `{}`, the Lobby only reads it. So `Equipped` is
+  always false and launches always fall through to auto-loadout (top 6 by MetaLevel). The
+  unitView carries the flag, but a loadout picker (the writer) is not scheduled anywhere.
 
-- **PENDING (A5 / AD-UI):** remove the interim `Towers` / `Currency` compat fields from
-  `LobbyServices.GetCollection` once CollectionScreen + UnitsGUI are rebuilt on the kit — they
-  are the only remaining readers.
+- **PENDING (AD-Game + AD-Integration — deferred NUMBERS decision, due at A6):** the Lobby serves
+  grades but NOT resolved DMG/RNG/SPA. `TowerStatResolver.Resolve` needs a whole towerConfig plus
+  MetaScalingConfig/TraitRegistry/TraitDefinitions, so Lobby-side numbers mean ~12 modules (incl.
+  all 8 tower configs) under drift control. Deferred by the user 2026-08-01. When A6 needs real
+  numbers pick: (a) promote the full stat stack, or (b) AD-Game exports a slim generated
+  `UnitStatsCatalog` + a boot validator asserting it matches live configs. **(b) recommended.**
 
-- **PENDING (AD-Integration, BLOCKS A4/A5):** promote `TowerStatResolver` + `StatGradeConfig` +
-  `AscensionConfig` + `ItemCatalog` + `TierConfig` from Game canon into `shared/src` (deploy BOTH
-  Places, drift-green); reconcile `TierConfig` to A3's shape **+ multi-colour** (Colors list +
-  colorSequence/seamlessSequence/isMultiColor + Mythic rainbow / Secret palettes — user-chosen
-  2026-08-01); **retire the Lobby interim `UnitCatalog` + interim `TierConfig`**; add the
-  `LobbyServices` unitView (resolved DMG/RNG/SPA + grades + tier + equipped/favorited per uuid) and
-  remove the interim `Towers`/`Currency` compat. Full spec:
-  `docs/proposals/2026-08-01-a4-promote-meta-and-tierconfig-multicolor.md`. Verified this session:
-  those 4 modules are ABSENT in the Lobby, so the Lobby cannot resolve stats until this lands.
+- **PENDING (A4/A5, cleanup):** delete Lobby `RS.Configs.Meta.UnitCatalog` and the interim
+  `Towers`/`Currency` compat fields on `GetCollection` once the screens move to `GetUnitViews`.
+  UnitCatalog is retired in place — its Name/Tier duplicate ItemCatalog and must not be edited.
 
-- **PENDING (AD-UI, AFTER the Integration promotion above):** A4/A5 wire `UnitsController` +
-  `HotbarController` to the `LobbyServices` unitView — real DMG/RNG/SPA + grades (replace
-  `UnitCatalog` placeholders), tier border from the shared multi-colour `TierConfig`, real
-  `Equipped`/`Favorited` driving the grid sort, real per-unit models (replace
-  `UnitModels.Placeholder`), and functional action buttons. Formalise kit templates (A5).
+- **PENDING (AD-PlayerLevel, small):** promote `TowerProgressionConfig` to shared so the Lobby can
+  compute `XpPct` for a real XP bar. The unitView sends raw `XP` + `Level` only.
 
-- **PENDING (Game):** persistence round-trip test — play, earn rewards, stop, play again, confirm
-  the dev profile restored (API access ON; writes verified).
-
-- **PENDING (Game):** in-Studio `ServerStorage.Documentation` is still the richer doc set; migrate
-  it into `docs/systems/` progressively (doc-gardening), then retire it to a pointer.
+- **PENDING (Game):** persistence round-trip test (never run; profile shape has changed since it
+  was raised) and progressive `ServerStorage.Documentation` → `docs/systems/` migration.
 
 ## Contracts (current versions)
 
@@ -113,28 +89,19 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
 
 ## Current focus
 
-1. **USER: republish the GAME place, then re-run the live loop.** The first live v2 run failed
-   with an empty hotbar (profile-load race, hotfixed 2026-08-01 — Studio canon, not yet
-   published). Confirm `[MatchEntry] [DATA] All N profile(s) loaded` + units actually in the
-   hotbar, then report the console. The Lobby needs no republish for this fix.
-2. **AD-INTEGRATION (next session — HARD PREREQUISITE for A4/A5):** execute
-   `docs/proposals/2026-08-01-a4-promote-meta-and-tierconfig-multicolor.md` — promote
-   `TowerStatResolver` + `StatGradeConfig` + `AscensionConfig` + `ItemCatalog` + `TierConfig`
-   into `shared/src`, deploy + drift-green BOTH Places; reconcile `TierConfig` to A3's shape
-   PLUS multi-colour (Mythic rainbow, Secret red+dark-red, `seamlessSequence` helper lifted from
-   the Lobby interim module); retire the Lobby's interim `TierConfig`/`UnitCatalog`; add the
-   `LobbyServices` unitView (resolved DMG/RNG/SPA + grades + tier + equipped/favorited per uuid).
-   **Open decision that session must settle with AD-Game** (proposal §1): whether the resolver
-   reads `BaseStats` from Lobby-readable tower configs, or a slim BaseStats table is promoted
-   alongside it.
-3. **A4/A5 [AD-UI]:** only AFTER the above — kit controllers + Units/Items screens consume the
-   unitView (real stats/grades/tier, real Equipped/Favorited), which also retires the interim
-   `Towers`/`Currency` compat fields.
-4. Lobby v2 candidates: gacha/banners (schema v2 + A3 configs have landed — now gated only on
-   the promotion above), party polish, currency shop, player-level display, loadout picker UI
-   (replaces the interim auto-loadout).
-5. Real art/anim asset ids for tower attacks (Game chat).
-6. Progressive doc migration from Studio to this repo.
+1. **USER: republish both Places** (A-phase promotion is Studio canon). Live is fine on the
+   previous build — the hotfix run was confirmed working — so this is not urgent, but nothing
+   from this session reaches players until it happens.
+2. **A4 [AD-UI] — unblocked:** wire `UnitsController` + `HotbarController` to `GetUnitViews`:
+   tier borders from the shared multi-colour `TierConfig`, D..Apex grade badges, real
+   Equipped/Favorited driving the sort. Caveats to expect: every grade reads "C" until the roll
+   PENDING is fixed, `Equipped` is always false until something writes `Loadout`, and absolute
+   stat numbers are deliberately absent.
+3. **A5 [AD-UI]:** Units/Items screens on the kit; delete UnitCatalog + the compat fields.
+4. **A6 [AD-UI/AD-Game]:** hotbar rebuild in the Game place — settle the numbers decision first,
+   and land the no-dev-seed Studio harness before this.
+5. Then A7 (full Phase A acceptance, Integration) → Phase B gacha.
+6. Unscheduled but wanted: loadout picker (equipping), stat-roll wiring, real art/anim asset ids.
 
 <!-- Shared canon note: Signal promoted to shared/src + manifest 2026-07-17 (AD-Lobby),
      byte-identical to the live Game module; drift check now covers all four shared modules. -->
