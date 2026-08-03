@@ -29,6 +29,8 @@
 ## decisions/
 - `ADR-0001-hybrid-canon.md` — why disk-canon for shared/contracts but Studio-canon for Place code
 - `ADR-0002-profilestore.md` — why ProfileStore, schema ownership, session-lock/teleport rules
+- `ADR-0003-lobby-stat-numbers.md` — the Lobby gets resolved DMG/RNG/SPA from a GENERATED
+  `UnitStatsCatalog` + boot validator, not by promoting the full stat stack (user, 2026-08-03)
 
 ## proposals/
 - `2026-08-03-drop-getcollection-compat.md` — AD-UI→AD-Lobby: delete the now-unread

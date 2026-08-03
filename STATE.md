@@ -60,12 +60,13 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
     therefore shows every catalog item at count 0. Correct, but the screen is inert until an
     item economy exists.
 
-- **PENDING (AD-Game + AD-Integration — deferred NUMBERS decision, due at A6):** the Lobby serves
-  grades but NOT resolved DMG/RNG/SPA (`TowerStatResolver.Resolve` needs a whole towerConfig plus
-  MetaScaling/Traits — ~12 modules incl. all 8 tower configs under drift control). Deferred by the
-  user 2026-08-01; the A5 Units stat rows show `--` in the number slot until this lands. Pick then:
-  (a) promote the full stat stack, or (b) AD-Game exports a slim generated `UnitStatsCatalog` +
-  a boot validator. **(b) recommended.**
+- **PENDING (AD-Game — build the generated `UnitStatsCatalog`, due at A6):** the NUMBERS question is
+  **SETTLED — user chose (b) 2026-08-03**, see `docs/decisions/ADR-0003-lobby-stat-numbers.md`.
+  AD-Game exports a slim generated `UnitStatsCatalog` into `shared/src` **plus a boot validator
+  that fails loudly in the Game place when it no longer matches the live tower configs** (the
+  validator is the load-bearing part — a stale cache lying about damage is worse than showing `--`).
+  The full-stat-stack promotion is rejected. Until this lands the A5 Units stat rows show `--` in
+  the number slot; the `Grade` labels beside them are unaffected.
 
 - **PENDING (AD-PlayerLevel, small):** promote `TowerProgressionConfig` to shared so the Lobby can
   compute `XpPct` for a real XP bar. The unitView sends raw `XP` + `Level` only.
