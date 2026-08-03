@@ -1,5 +1,43 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-03 [game] A6 (AD-Game): UnitStatsCatalog + load-bearing validator, profile-wait moved to StartMatch, cold-profile harness
+
+Bootstrap drift **GREEN 8/8** at start. Integration gate: **No Integration needed — proceeding**
+(the new shared module deploys to Game now; the Lobby deploy is a follow-up PENDING). Three items,
+per the session brief.
+
+- **`UnitStatsCatalog` (new, 9th shared module; ADR-0003).** `shared/src/UnitStatsCatalog.luau` →
+  `RS.Configs.Meta.UnitStatsCatalog`, hash **`3bb9b140`**, `deployed.Game` only (**Lobby=null**).
+  A GENERATED cache of each tower's resolver-PRODUCED base DMG/RNG/SPA at the reference tier 1 /
+  ML 1 / no-trait / mid-roll (0.5) / asc 0 — SPA inverted, not raw BaseStats. Lets the Lobby fill
+  the A5 Units `Stats.BaseStatsFrame.{DMG,RNG,SPA}` number slots WITHOUT the ~12-module full stat
+  stack. `manifest.json` + `tools/hash_shared.luau` now cover **9** modules. Values (Archer 15/20/6,
+  Knight 35/10/1.4, Mage 30/18/2, Farm –/18/–, Babaylan 20/22/2.5, Meteor 30/24/1.4, Warchief
+  25/18/1, Necromancer 28/22/1.1).
+- **Load-bearing validator** `SSS.Server.UnitStatsCatalogValidate` (Game canon, runs in ALL contexts):
+  regenerates from the live tower configs at boot and `error()`s LOUDLY on any drift (a stale cache
+  lying about damage is worse than `--`; ADR-0003). Verified: green when correct, and it caught an
+  injected `Archer.DMG 15→99` with a red boot error that did NOT brick the runtime.
+- **Empty-hotbar hotfix review → wait moved to the choke point.** The profile-wait that guarded the
+  cold-profile race MOVED from `MatchEntryService` into `MatchDirector.StartMatch` (the one place
+  that validates loadouts), so it now protects EVERY caller — teleport entry, restart/next-act, the
+  harness, and any future relaunch — not just the entry path. `StartMatch` claims `isRunning` before
+  yielding so a second concurrent start can't slip through the wait; `MatchEntryService` simplified
+  (its `waitForProfiles` + `PlayerDataService` require removed). No circular require (MatchDirector
+  already reaches PlayerDataService via LoadoutValidator→PlayerInventoryService).
+- **No-dev-seed Studio harness** `ColdProfileMatchTest` (Studio-only, attribute `Enabled` default OFF;
+  the smoke test stands down when it is on): waits for the REAL profile and builds the loadout from
+  the player's ACTUAL owned units (no `DevSetOwnedTowers`), then `StartMatch`. Closes the blind spot
+  behind two live-only failures. Verified: read the real profile (8 units), built a 6-uuid loadout,
+  match started with **no dev-seed line** and no empty hotbar; smoke test stood down.
+- **Contract impact:** none (save/teleport unchanged). **Shared-module ADD** — Lobby must deploy
+  `UnitStatsCatalog` (below). All other A6 code (validator, harness, MatchDirector, MatchEntryService,
+  smoke test) is Game Studio canon.
+- **PENDINGs:** the 3 A6-Game PENDINGs CLEARED (UnitStatsCatalog, hotfix review, cold harness). NEW
+  (AD-Lobby / AD-Integration): **deploy `UnitStatsCatalog` `3bb9b140` to the Lobby** — its drift check
+  FAILS until then — after which AD-UI fills the Units `--` number slots. USER republish PENDING now
+  also covers this session's Game changes.
+
 ## 2026-08-03 [lobby] A5: Items screen + FilterPanel on the kit, CollectionScreen rebuilt on the view-model, kit moved to RS.UITemplates.Kit
 
 Blueprint phase-a §9 A5 (AD-UI). Bootstrap drift **GREEN 8/8**, unchanged at landing (no shared

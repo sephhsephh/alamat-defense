@@ -35,8 +35,9 @@ confirm profile load + schema version on every boot.
 - Shared: `RS.Shared.{Signal, Enums, Schema, ProfileTemplate, TowerStatResolver, AttackShapes}`
 - Configs: `RS.Configs.{Towers, Enemies, Waves, Stages, Maps, Traits, StatusEffects, Summons, Global, Meta}`
   (`Global.GameConfig` = cross-Place ids: `LobbyPlaceId`, `TeleportPayloadVersion`;
-  `Meta.{TierConfig, StatGradeConfig, AscensionConfig, ItemCatalog}` = rarity / roll-grade /
-  ascension / grantable catalog — **shared canon since 2026-08-01** (drift-checked, both Places))
+  `Meta.{TierConfig, StatGradeConfig, AscensionConfig, ItemCatalog, UnitStatsCatalog}` = rarity /
+  roll-grade / ascension / grantable catalog / generated resolved-stat cache — **shared canon**
+  (drift-checked). `UnitStatsCatalog` (A6) is Game-deployed only until the Lobby deploys it.)
 - Remotes: `RS.Remotes.{Placement, Towers, Match, Economy, Combat, Settings}`
 - Rich legacy docs: `ServerStorage.Documentation.*` (AIState, SystemIndex, HowTo, ...) —
   still valid; migrating to repo `docs/systems/` on touch.
@@ -52,8 +53,13 @@ confirm profile load + schema version on every boot.
   request, never truth. Its pure `BuildRawConfig(payload)` is exported for unit testing.
 - **Studio fallback:** `MatchLifecycleSmokeTest` (Studio-only) seeds 8 towers via
   `DevSetOwnedTowers` and starts Stage1_Act1 ~3s after join — but stands down when a MatchLaunch
-  payload is present, so the two never double-start. `AutoPlaceForEndScreenTest` / `MatchEndVerify`
-  exist but are `ENABLED=false`.
+  payload is present, or when `ColdProfileMatchTest` is enabled, so the paths never double-start.
+- **Cold-profile harness:** `ColdProfileMatchTest` (Studio-only, attribute `Enabled` default OFF)
+  starts a match from the REAL loaded profile's units — **no dev seed** — to exercise the production
+  cold path the synchronous smoke test hides (two live-only empty-hotbar failures came from that
+  blind spot). `MatchDirector.StartMatch` now waits for every player's profile BEFORE validating
+  loadouts (moved from `MatchEntryService` 2026-08-03), so the empty-hotbar guard covers every
+  caller. `AutoPlaceForEndScreenTest` / `MatchEndVerify` exist but are `ENABLED=false`.
 
 ## Current state / known gaps
 

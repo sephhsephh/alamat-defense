@@ -37,6 +37,8 @@ local MODULES = {
 	StatGradeConfig = "ReplicatedStorage.Configs.Meta.StatGradeConfig",
 	AscensionConfig = "ReplicatedStorage.Configs.Meta.AscensionConfig",
 	ItemCatalog = "ReplicatedStorage.Configs.Meta.ItemCatalog",
+	-- Added A6 2026-08-03 (owner AD-Game): generated resolved-stat cache (ADR-0003).
+	UnitStatsCatalog = "ReplicatedStorage.Configs.Meta.UnitStatsCatalog",
 }
 
 local out = {}

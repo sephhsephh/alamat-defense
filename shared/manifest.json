@@ -87,6 +87,17 @@
         "Lobby": "789dca4b"
       },
       "comment": "Promoted to shared canon 2026-08-01 (A-phase Integration). THE authority on a grantable's Name/Tier/Icon; replaces the Lobby's interim UnitCatalog for name+tier. CHANGED at promotion: the TowerConfigRegistry require is now LAZY + OPTIONAL so the module loads in the Lobby (which has no tower configs); Validate() returns (ok, errors, notes) and reports the skipped Tower->TowerConfig cross-check. Added GetName/GetTier convenience readers."
+    },
+    "UnitStatsCatalog": {
+      "file": "shared/src/UnitStatsCatalog.luau",
+      "hash": "3bb9b140",
+      "owner": "game",
+      "deployPath": "ReplicatedStorage.Configs.Meta.UnitStatsCatalog",
+      "deployed": {
+        "Game": "3bb9b140",
+        "Lobby": null
+      },
+      "comment": "GENERATED cache of per-tower RESOLVED base stats (DMG/RNG/SPA at tier1/ML1/no-trait/mid-roll/asc0) so the Lobby fills the Units-screen number slots without the full stat stack (ADR-0003). Added A6 2026-08-03 (owner AD-Game). Load-bearing validator SSS.Server.UnitStatsCatalogValidate regenerates from the live tower configs at boot in the Game place and errors LOUD on drift. deployed.Lobby=null (never deployed) -> AD-Lobby/Integration must deploy before the Lobby reads it. Regenerate + rehash whenever a tower's Damage/Range/SPA or BaseStats changes."
     }
   }
 }

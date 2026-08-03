@@ -25,9 +25,10 @@ as the source of truth for it.
   `Items` counts since A5). `PartyService.buildLoadout` sends unit uuids. UI: Units + Items +
   Collection screens all on the kit / view-model (A4+A5) — see `docs/systems/lobby-ui.md`.
 - **Shared canon** (`shared/src` + `manifest.json`, drift-checked by `tools/hash_shared.luau`):
-  8 modules — `ProfileTemplate`, `PlayerDataService`, `ProfileStore`, `Signal`, and since
-  2026-08-01 `TierConfig`, `StatGradeConfig`, `AscensionConfig`, `ItemCatalog`.
-  **Drift GREEN in both Places** as of 2026-08-01.
+  **9 modules** — `ProfileTemplate`, `PlayerDataService`, `ProfileStore`, `Signal`, `TierConfig`,
+  `StatGradeConfig`, `AscensionConfig`, `ItemCatalog` (2026-08-01), and `UnitStatsCatalog`
+  (A6, 2026-08-03 — `deployed.Game` only, **Lobby deploy PENDING**, `deployed.Lobby=null`).
+  First 8 drift GREEN in both Places.
 
 ## Open PENDINGs
 
@@ -37,14 +38,12 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
   (4 shared Meta configs, the reconciled multi-colour `TierConfig`, `GetUnitViews`) is Studio
   canon and not in git. Live currently runs the pre-promotion build.
 
-- **PENDING (AD-Game, review):** the 2026-08-01 empty-hotbar hotfix touched AD-Game canon
-  (`MatchEntryService`, `PlayerInventoryService`) from the AD-Integration chat — user-directed,
-  live-blocking; fix confirmed working live. Review it and decide whether the profile wait
-  belongs in `MatchDirector.StartMatch` (protecting every caller) rather than only the entry
-  path. **Structural lesson:** every Studio verification runs through `MatchLifecycleSmokeTest`,
-  which pre-seeds units synchronously, so the production cold-profile path is never exercised
-  before a live run — two live-only failures have come from that blind spot. Add a Studio
-  harness that starts a match WITHOUT dev-seeding, ideally before A6.
+- ~~PENDING (AD-Game, review): empty-hotbar hotfix + no-dev-seed harness.~~ **DONE 2026-08-03 (A6)**
+  — the profile-wait MOVED from `MatchEntryService` into `MatchDirector.StartMatch` (the one place
+  that validates loadouts), so it now guards EVERY caller (entry, restart/next-act, harness, future
+  relaunch); `MatchEntryService` simplified. New Studio-only `ColdProfileMatchTest` (attribute
+  `Enabled`, default OFF; smoke test stands down when on) starts a match from the REAL loaded
+  profile's units — NO dev seed — closing the cold-path blind spot. Both verified live.
 
 - **PENDING (AD-Lobby, A5 handoff):** `docs/proposals/2026-08-03-drop-getcollection-compat.md` —
   (a) delete the `Towers`/`Currency` compat fields from `GetCollection`; as of A5 they have
@@ -60,13 +59,14 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
     therefore shows every catalog item at count 0. Correct, but the screen is inert until an
     item economy exists.
 
-- **PENDING (AD-Game — build the generated `UnitStatsCatalog`, due at A6):** the NUMBERS question is
-  **SETTLED — user chose (b) 2026-08-03**, see `docs/decisions/ADR-0003-lobby-stat-numbers.md`.
-  AD-Game exports a slim generated `UnitStatsCatalog` into `shared/src` **plus a boot validator
-  that fails loudly in the Game place when it no longer matches the live tower configs** (the
-  validator is the load-bearing part — a stale cache lying about damage is worse than showing `--`).
-  The full-stat-stack promotion is rejected. Until this lands the A5 Units stat rows show `--` in
-  the number slot; the `Grade` labels beside them are unaffected.
+- ~~PENDING (AD-Game — build the generated `UnitStatsCatalog`, A6).~~ **DONE 2026-08-03** — shared
+  `UnitStatsCatalog` (hash `3bb9b140`) carries per-tower resolved base DMG/RNG/SPA; load-bearing
+  validator `SSS.Server.UnitStatsCatalogValidate` errors loudly in the Game place on drift
+  (verified — caught an injected `Archer.DMG 15→99`). ADR-0003 implemented.
+- **PENDING (AD-Lobby / AD-Integration — deploy `UnitStatsCatalog` to the Lobby):** the new 9th
+  shared module (`3bb9b140`) is `deployed.Game` only (`deployed.Lobby=null`) — the Lobby drift check
+  FAILS until it deploys. THEN AD-UI fills the A5 Units `--` slots from `UnitStatsCatalog.Get`
+  (`Stats.BaseStatsFrame.{DMG,RNG,SPA}`); the `Grade` labels beside them already work from the roll.
 
 - **PENDING (AD-PlayerLevel, small):** promote `TowerProgressionConfig` to shared so the Lobby can
   compute `XpPct` for a real XP bar. The unitView sends raw `XP` + `Level` only.
@@ -97,8 +97,9 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
    the kit + `GetUnitViews`; `UIKit.ItemIcon` + `UIKit.FilterPanel` added; templates consolidated
    into `RS.UITemplates.Kit`; `UnitCatalog` and `StarterGui.UITemplates` deleted. Details in
    `docs/systems/lobby-ui.md`. Compat-field removal handed to AD-Lobby (PENDING above).
-3. **A6 [AD-UI/AD-Game]:** resolved stat NUMBERS + hotbar rebuild in the Game place — settle the
-   numbers decision first, and land the no-dev-seed Studio harness before this.
+3. **A6:** AD-Game portion DONE 2026-08-03 (UnitStatsCatalog + validator, hotfix review,
+   cold-profile harness). Remaining: **deploy `UnitStatsCatalog` to the Lobby** (PENDING), then
+   AD-UI fills the Units `--` number slots from it + rebuilds the hotbar on the kit.
 4. Then A7 (full Phase A acceptance, Integration) → Phase B gacha.
 5. Unscheduled but wanted: loadout picker (equipping), an item economy that writes `Data.Items`,
    real art/anim asset ids.

@@ -92,8 +92,10 @@ catalog/configs, icon kit, session plan A1–A7). Phases B–F:
 - ✅ **Units screen on kit + view-model (Lobby; A4 2026-08-03, A5 filters 2026-08-03)** —
   uuid cards from `GetUnitViews`, shared multi-colour tier borders, per-stat GRADE letters in
   the designed `Grade` labels, real Level/XP, sort (equipped>favourited>tier>name), live search,
-  and the shared FilterPanel (tier + equipped/favourited/locked). Resolved stat NUMBERS still
-  🔲 (A6, deferred by user decision); real per-unit models + functional action buttons still 🔲.
+  and the shared FilterPanel (tier + equipped/favourited/locked). Resolved stat NUMBERS: the
+  **AD-Game half is DONE (A6, 2026-08-03 — shared `UnitStatsCatalog` `3bb9b140` + load-bearing
+  validator, ADR-0003)**; 🔲 the Lobby deploys it, then AD-UI fills the `--` slots. Real per-unit
+  models + functional action buttons still 🔲.
 - ✅ **Items screen on kit (Lobby, A5 2026-08-03)** — `UIKit.ItemIcon` cards (flat ImageLabel,
   no viewport), QtyBadge, tier borders, hover card, selected panel, search + FilterPanel
   (tier/kind/owned-only). Counts come from `GetUnitViews.Items`. 🔲 blocked on there being an

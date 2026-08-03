@@ -1,6 +1,14 @@
 # ADR-0003: the Lobby gets resolved stat numbers from a generated UnitStatsCatalog
 
-**Date:** 2026-08-03 · **Status:** Accepted (user decision) · **Implementer:** AD-Game, due at A6
+**Date:** 2026-08-03 · **Status:** IMPLEMENTED (AD-Game, A6, 2026-08-03) · **Implementer:** AD-Game
+
+> **Implemented 2026-08-03:** `shared/src/UnitStatsCatalog.luau` (hash `3bb9b140`, deployed to Game;
+> Lobby PENDING) carries per-tower resolved DMG/RNG/SPA at the reference tier 1 / ML 1 / no-trait /
+> mid-roll / asc 0 (i.e. the Units screen's BASE numbers). Load-bearing validator
+> `SSS.Server.UnitStatsCatalogValidate` regenerates from the live configs at boot in the Game place
+> and `error()`s loudly on any mismatch — verified: green when correct, and it caught an injected
+> `Archer.DMG 15→99` drift with a red boot error. AD-UI fills `Stats.BaseStatsFrame.{DMG,RNG,SPA}`
+> from `UnitStatsCatalog.Get(towerId)` once the Lobby deploys it.
 
 ## Context
 
