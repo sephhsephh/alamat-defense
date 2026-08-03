@@ -1,5 +1,36 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-03 [game] Stat rolls actually roll: GrantUnit + DevSetOwnedTowers call StatGradeConfig.RollAll
+
+- **The fix:** `PlayerInventoryService` (Game canon) now requires shared `StatGradeConfig` and rolls
+  real per-unit `StatRolls` instead of the hardcoded `{0.5,0.5,0.5}`. `GrantUnit` uses
+  `o.StatRolls or StatGradeConfig.RollAll(statRng)` — an explicit `opts.StatRolls` still wins, so
+  deterministic tests and the future gacha (which inherits this canonical entry point) keep working.
+  `DevSetOwnedTowers` rolls each seeded unit too (with an optional per-tower `value.StatRolls`
+  override for deterministic Studio tests). Both draw from ONE module-level `Random` (`statRng`) —
+  `Random.new()` per grant can correlate within a frame and hand out identical rolls; the shared
+  `StatGradeConfig` is left untouched (rng passed in).
+- **Left alone (correct):** `Migrations[1]` (append-only; already ran live — existing units stay
+  grandfathered at 0.5), `GetUnit`'s defensive `record.StatRolls or {0.5..}` read-guard.
+- **Not mine — handed off:** the Lobby's `StarterChoiceService` still writes 0.5 (AD-Lobby canon).
+  Wrote `docs/proposals/2026-08-03-starter-grant-rolls.md` + a STATE PENDING; `StatGradeConfig` is
+  shared, so that chat calls `RollAll(rng)` directly.
+- **Verified live** (real `[Test]` Script + `get_console_output`, NOT execute_luau — grants mutate
+  the profile): 6 Archers + 3 Mages rolled distinct values in 0..1 (0.027–0.997), grade spread
+  D/C/B/A/SSS (no longer all "C"), explicit override returned exactly `{1,0,0.5}`, and two Archer
+  instances at ML50 resolved to different DMG/SPA/RNG (37.8/32.4 DMG) — the quality multiplier doing
+  something for the first time. Temp harness removed after.
+- **Balance note (flagged, not silently shipped):** with real rolls the BaseStats pilots vary
+  unit-to-unit. Estimated single-unit DPS swing (DMG × SPA-inversion): **Archer ≈ 0.78×–1.24×**
+  (~1.6× best/worst), **Mage ≈ 0.72×–1.32×** (~1.83× best/worst, from its wider ±20% DMG range).
+  Not broken — worst-roll units are still functional — but Mage's spread is on the wide side with no
+  stat-reroll system yet (phase C). Recommend tightening Mage `BaseStats.DMG` (e.g. {0.88,1.12})
+  or revisit at reroll balancing; left as-is pending the user's call.
+- **Contract impact:** none. `PlayerInventoryService` is Game Studio canon (no shared-module/manifest
+  change); it only *requires* the already-shared, drift-green `StatGradeConfig`. No Integration needed.
+- **PENDINGs:** AD-Game roll wiring CLEARED; NEW AD-Lobby starter-grant PENDING (above). USER
+  republish PENDING now also covers this `PlayerInventoryService` change (Studio canon, not git).
+
 ## 2026-08-01 [integration] Meta configs promoted to shared canon + TierConfig multi-colour reconcile + LobbyServices unitView — A4/A5 unblocked
 
 Executes `docs/proposals/2026-08-01-a4-promote-meta-and-tierconfig-multicolor.md` §1–§4, with one

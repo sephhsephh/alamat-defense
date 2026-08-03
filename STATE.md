@@ -45,11 +45,15 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
   before a live run — two live-only failures have come from that blind spot. Add a Studio
   harness that starts a match WITHOUT dev-seeding, ideally before A6.
 
-- **PENDING (AD-Game — the grade/roll system is INERT):** nothing calls
-  `StatGradeConfig.RollAll`/`RollStat`. Every unit has hardcoded `StatRolls = {0.5,0.5,0.5}`
-  (v1->v2 migration, `GrantUnit` default, `DevSetOwnedTowers`, Lobby starter grant), so **every
-  grade in the game reads "C"** and every quality multiplier is the exact midpoint. Wire the
-  roller into the grant paths or A3's rolls + BaseStats ranges stay decorative.
+- ~~PENDING (AD-Game — grade/roll system INERT).~~ **DONE 2026-08-03 (AD-Game grant paths)** —
+  `PlayerInventoryService.GrantUnit` (explicit `opts.StatRolls` wins) and `DevSetOwnedTowers` now
+  call `StatGradeConfig.RollAll(rng)` off one persistent `Random`. Verified live: rolls differ per
+  unit, land in 0..1, spread of grades, override wins, two same-tower instances resolve to different
+  DMG/RNG/SPA. Existing units + the v1→v2 migration stay grandfathered at 0.5 (append-only).
+- **PENDING (AD-Lobby — starter grant still writes 0.5):** `StarterChoiceService` is the one grant
+  path left on hardcoded midpoints, so a fresh player's FIRST unit is always grade "C". Fix per
+  `docs/proposals/2026-08-03-starter-grant-rolls.md` — `StatGradeConfig` is shared canon, so call
+  `RollAll(rng)` directly (one module-level `Random`, NOT `Random.new()` per grant).
 
 - **PENDING (NEEDS SCHEDULING — equipping does not exist):** nothing ever WRITES `Data.Loadout`.
   The template inits it `{}`, the migration sets `{}`, the Lobby only reads it. So `Equipped` is
