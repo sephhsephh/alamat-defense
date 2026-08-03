@@ -1,5 +1,36 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-03 [lobby] A4: Units screen wired to the GetUnitViews view-model (real tiers/grades) + UnitCatalog deleted
+
+Blueprint phase-a §9 A4 (AD-UI). Re-bootstrapped onto the post-A1/A2/A3 world (drift GREEN 8/8,
+`ProfileTemplate 63a0c98a`, schema v2).
+
+- **`UnitsController` now consumes `LobbyServices.GetUnitViews`** (was `GetCollection` + the
+  interim `UnitCatalog`). Cards are keyed by **uuid** (one per unit instance). Each card renders
+  from the view: `Name`+`Tier` (ItemCatalog), tier border + BG from the shared multi-colour
+  `TierConfig`, per-stat **GRADE** letters (`view.Grades`, from `StatGradeConfig`) in the Stats
+  panel + hover preview, real `Level`/`XP` on the preview level bar, `Favorited`/`Equipped`
+  driving the sort (equipped > favourited > tier high→low > name), search by `Name`.
+- **`fillStats` hardened:** stat rows resolve by `DMG/RNG/SPA` OR the template's
+  `Attack/Element/MaxPlacement` names (the hover preview kept the original template names, so it
+  showed stale `99.9k` defaults until now); the preview's fake element chips (`InformationFrame`)
+  are hidden until real element data exists.
+- **`RS.Configs.Meta.UnitCatalog` DELETED** — the retired-in-place interim config (A2 left it as
+  the only placeholder source) has no readers left. Confirmed via `script_grep` before deleting.
+- **Resolved DMG/RNG/SPA NUMBERS still deferred to A6** (per the 2026-08-01 user decision —
+  `TowerStatResolver` is not in the Lobby). A4 ships **grades**, which need only the roll.
+- **Verified live (Play, dev store):** 8 units load via `GetUnitViews`, no errors; grades vary
+  per unit and stat (e.g. Mage D/SS/C, Knight A/C/C, Necromancer B/B/B — no longer flat); tier
+  sort puts Necromancer (Mythic) first (auto-previewed on open); hover preview shows the unit's
+  grades + real `LVL: 20`, element chips hidden; rainbow/Legendary/etc. borders render.
+- **Contract impact:** none (read-only consumer of the existing `GetUnitViews`; no shared-module
+  or schema change; drift surface unchanged).
+- **PENDINGs:** UnitCatalog-deletion PENDING CLEARED. Remaining for A5/A6: rebuild CollectionScreen
+  on the view-model so `LobbyServices.GetCollection`'s interim `Towers`/`Currency` compat can be
+  removed (AD-Lobby); Items screen + FilterPanel (A5); resolved stat NUMBERS + hotbar rebuild (A6);
+  `Data.Loadout` writer / equip UI so `Equipped` is ever true; real per-unit models. **USER: republish
+  both Places** (Studio canon).
+
 ## 2026-08-03 [lobby] Starter grant rolls real quality: StarterChoiceService calls StatGradeConfig.RollAll
 
 - **PENDING (AD-Lobby starter rolls) CLEARED** — per AD-Game's proposal

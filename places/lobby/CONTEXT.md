@@ -64,7 +64,7 @@ stage + difficulty, form parties, and teleport into the Game place.
 Run the constitution's bootstrap ritual + `tools/hash_shared.luau` at the start of every
 session; reconcile before any work if a shared hash drifts.
 
-## UI kit + screens (AD-UI, 2026-07-31 — Studio canon; interim view data until A3/A5)
+## UI kit + screens (AD-UI, 2026-07-31; A4 wired to the view-model 2026-08-03 — Studio canon)
 
 - **`UIKit.Button`** (`ReplicatedStorage.Shared.UIKit.Button`) — ONE reusable controller for
   every button (no per-button scripts). Hover = scale from centre (`centerAnchor` fix) + stroke
@@ -77,18 +77,21 @@ session; reconcile before any work if a shared hash drifts.
 - **Hotbar** (`StarterGui.Hotbar.HotbarController`) — single controller replaces the old
   duplicated per-slot scripts (disabled); glow on hover + `Hotbar.Templates.UnitPreviewTemplate`
   shown above the hovered slot.
-- **Units screen** (`StarterGui.UnitsGUI.UnitsController`) — opens from HUD `Left.Buttons.Units`.
-  Loads owned units (`GetCollection` compat `Towers` field — moves to `Units` at A5); each card's border **and** BG glow the unit's TIER
-  colour (animated seamless); hover → white border + scale + a `UITemplates.UnitPreviewTemplate`
-  popup on the right (name/tier/DMG-RNG-SPA + model); click → `SelectedUnitFrame` (framed
-  viewport + Stats reusing the preview design). Sort: equipped > favourited > tier high→low >
-  name. Live SearchBar. Placeholder model `ReplicatedStorage.UnitModels.Placeholder`. Action
-  buttons (Quick Sell/Unequip All/Upgrade/Lock/Equip/View Passives) are **animation-only**.
-- **Configs:** `RS.Configs.Meta.TierConfig` is now **SHARED CANON** (`shared/src`, deployed both
-  Places, drift-checked) — 8 tiers, per-tier `Colors` list, Mythic rainbow + Secret red→dark-red,
-  helpers `get`/`colorSequence`/`seamlessSequence`/`isMultiColor`. `ItemCatalog` (also shared) is
-  the authority on a unit's Name + Tier. `RS.Configs.Meta.UnitCatalog` is **RETIRED IN PLACE** —
-  only its placeholder DMG/RNG/SPA are still read; delete it at A4/A5.
+- **Units screen** (`StarterGui.UnitsGUI.UnitsController`) — **A4 (2026-08-03): now reads the
+  `LobbyServices.GetUnitViews` view-model**, keyed by **uuid** (one card per unit instance).
+  Per card from the view: `Name`+`Tier` (ItemCatalog), tier-coloured border **and** BG (shared
+  `TierConfig`, seamless multi-colour), per-stat **GRADE** letters in the Stats panel + hover
+  preview (`view.Grades` from `StatGradeConfig`), real `Level`/`XP` on the preview level bar, and
+  `Favorited`/`Equipped` driving the sort (equipped > favourited > tier high→low > name). Hover =
+  white border + scale + `UITemplates.UnitPreviewTemplate` popup (fake element chips hidden);
+  click → `SelectedUnitFrame`. Live SearchBar (by name). **Resolved DMG/RNG/SPA NUMBERS deferred
+  to A6** (grades only for now — TowerStatResolver not in the Lobby). Placeholder model
+  `UnitModels.Placeholder` (real models later). Action buttons still **animation-only**.
+- **Configs:** `RS.Configs.Meta.TierConfig` + `ItemCatalog` + `StatGradeConfig` + `AscensionConfig`
+  are **SHARED CANON** (`shared/src`, deployed both Places, drift-checked). `TierConfig` = 8 tiers,
+  per-tier `Colors` list (Mythic rainbow + Secret red→dark-red), helpers
+  `get`/`colorSequence`/`seamlessSequence`/`isMultiColor`. `ItemCatalog` = authority on Name+Tier.
+  **`UnitCatalog` DELETED at A4 (2026-08-03)** — the Units screen no longer reads any placeholder.
 - **HUD buttons** (`HUD.Left.Buttons.{Play,Units,Inventory,Areas,Summon,Shop}`) tagged +
   animated; `Frame.BorderDesignInside` hidden; hover = white stroke (no thicken).
 

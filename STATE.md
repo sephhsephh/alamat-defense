@@ -67,9 +67,11 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
   numbers pick: (a) promote the full stat stack, or (b) AD-Game exports a slim generated
   `UnitStatsCatalog` + a boot validator asserting it matches live configs. **(b) recommended.**
 
-- **PENDING (A4/A5, cleanup):** delete Lobby `RS.Configs.Meta.UnitCatalog` and the interim
-  `Towers`/`Currency` compat fields on `GetCollection` once the screens move to `GetUnitViews`.
-  UnitCatalog is retired in place — its Name/Tier duplicate ItemCatalog and must not be edited.
+- **PENDING (A5, cleanup):** remove the interim `Towers`/`Currency` compat fields on
+  `LobbyServices.GetCollection` (AD-Lobby canon) once **CollectionScreen** is rebuilt on the
+  view-model. ~~UnitCatalog deletion~~ **DONE (A4, 2026-08-03)** — the Units screen reads
+  `GetUnitViews`; `UnitCatalog` deleted (no readers). CollectionScreen is now the only
+  `Towers`/`Currency` reader left.
 
 - **PENDING (AD-PlayerLevel, small):** promote `TowerProgressionConfig` to shared so the Lobby can
   compute `XpPct` for a real XP bar. The unitView sends raw `XP` + `Level` only.
@@ -96,12 +98,12 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
 1. **USER: republish both Places** (A-phase promotion is Studio canon). Live is fine on the
    previous build — the hotfix run was confirmed working — so this is not urgent, but nothing
    from this session reaches players until it happens.
-2. **A4 [AD-UI] — unblocked:** wire `UnitsController` + `HotbarController` to `GetUnitViews`:
-   tier borders from the shared multi-colour `TierConfig`, D..Apex grade badges, real
-   Equipped/Favorited driving the sort. Caveats to expect: pre-2026-08-03 units read "C"
-   (grandfathered 0.5; all grant paths now roll), `Equipped` is always false until something
-   writes `Loadout`, and absolute stat numbers are deliberately absent.
-3. **A5 [AD-UI]:** Units/Items screens on the kit; delete UnitCatalog + the compat fields.
+2. ~~**A4 [AD-UI]**~~ **DONE 2026-08-03** — `UnitsController` reads `GetUnitViews` (uuid cards,
+   shared multi-colour `TierConfig` borders, D..Apex grade letters, real Equipped/Favorited sort,
+   real Level/XP); `UnitCatalog` deleted; live-verified (varied grades). Absolute stat NUMBERS
+   still absent by design (A6). `HotbarController` view-model wire deferred to the A6 hotbar rebuild.
+3. **A5 [AD-UI]:** Items screen on the kit + FilterPanel; rebuild CollectionScreen on the
+   view-model so `GetCollection`'s `Towers`/`Currency` compat can be removed (AD-Lobby).
 4. **A6 [AD-UI/AD-Game]:** hotbar rebuild in the Game place — settle the numbers decision first,
    and land the no-dev-seed Studio harness before this.
 5. Then A7 (full Phase A acceptance, Integration) → Phase B gacha.
