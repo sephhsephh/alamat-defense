@@ -1,5 +1,78 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-03 [lobby] A5: Items screen + FilterPanel on the kit, CollectionScreen rebuilt on the view-model, kit moved to RS.UITemplates.Kit
+
+Blueprint phase-a §9 A5 (AD-UI). Bootstrap drift **GREEN 8/8**, unchanged at landing (no shared
+module touched). Integration gate answered "No Integration needed — proceeding."
+
+- **Kit relocated to the blueprint §5 home.** `ReplicatedStorage.UITemplates.Kit` now holds every
+  editable template: the moved `Button` / `UnitPreviewTemplate` / `Unit/ItemIconTemplate` plus the
+  new `ItemIcon`, `ItemHoverCard`, `FilterPanel`. **`StarterGui.UITemplates` emptied and deleted.**
+  `UIKit.Button` already probed the Kit path first, so nothing needed rewiring. *(User chose this
+  over keeping the split — it follows the blueprint literally.)*
+- **`UIKit.ItemIcon`** (new, `RS.Shared.UIKit.ItemIcon`) — flat `IconImage` ImageLabel, **no
+  ViewportFrame** (items have no model), `QtyBadge` that hides at qty 0 and dims the icon, tier
+  border + BG from the shared multi-colour `TierConfig`, hover/press scale + white border.
+  `create/attach/onHover/onActivated/setQty/setSelected/destroy` + `ImageFor(id)` (falls back to
+  the Studio placeholder while every catalog icon is still `rbxassetid://0`).
+- **`UIKit.FilterPanel`** (new) — the reusable component the blueprint specifies: `GroupTemplate`
+  + `ToggleTemplate` + Apply/Reset/Cancel, pending-vs-applied state, `handle.selected(groupId)`
+  returning nil for an unconstrained group. **Used by BOTH screens**: Units (tier + equipped/
+  favourited/locked) and Items (tier/kind/owned-only).
+- **Items screen** (`StarterGui.ItemsGUI` + `ItemsController`) — chrome cloned from the Units
+  screen so the design language matches. Lists every `ItemCatalog` entry of `Kind` Item/Currency;
+  counts from `GetUnitViews`. Hover card, selected panel, search, filters; sort owned→tier→name.
+- **CollectionScreen REBUILT on real instances** (`Panel.Grid.CardTemplate`, editable in Studio)
+  reading `GetUnitViews` — uuid cards, tier border/BG, `Lv N`, the three GRADE letters, a status
+  line, and a meta line with Gold/Silver/account level. The old script-built UI is gone
+  (convert-on-touch rule). **It was the LAST reader of `GetCollection`'s `Towers`/`Currency`.**
+- **Units stat rows are now dual-slot** (user added a `Grade` TextLabel to `DMG/RNG/SPA`
+  mid-session): the GRADE letter goes in `Grade`, the NUMBER slot shows `--` instead of the
+  template's stale `99.9k`, and A6 fills it with real values. Rows WITHOUT a `Grade` child
+  (the hover preview's Attack/Element/MaxPlacement) keep the A4 behaviour.
+- **`LobbyServices.GetUnitViews` now also returns `Items`** — the profile's `{ [itemId] = count }`
+  map, copied and defensive if absent. **This is AD-Lobby canon edited by AD-UI**, done only
+  because the user explicitly authorised it this session when told the alternative; flagged for
+  AD-Lobby review in the proposal below. Additive + read-only, so **no contract bump**.
+- **Fixed en route:** the legacy `Unit/ItemIconTemplateLocalScript` had a **syntax error on line
+  30** (`ocal Preview = ...`) and had been erroring every time that template replicated into
+  PlayerGui. Deleted — superseded by `UIKit.Button`.
+- **Docs:** `places/lobby/CONTEXT.md` passed its 150-line cap → the UI section split out to the
+  new **`docs/systems/lobby-ui.md`** (AD-UI canon, the doc `OWNERSHIP.md` already anticipated),
+  registered in `docs/INDEX.md`. CONTEXT is back to 112 lines. Also corrected a long-standing doc
+  error: the sixth HUD button is `Store`, not `Shop`.
+
+**Verified live (Play, dev store, Lobby):** `VirtualInputManager` is blocked for tooling
+(no `RobloxScript` capability) and `user_mouse_input` / `get_console_output` / `screen_capture`
+kept routing to the GAME Studio window mid-session, so verification ran through a new
+`DevAutoOpen` **attribute harness** on each screen (same pattern as `DevSimulateReturn`) plus
+place-asserted property reads in the Client datamodel:
+
+- Items: 5 cards (BannerTicket/Gold/GoldenSeed/Silver/TraitRerollToken), every qty 0 → badges
+  hidden + icons dimmed (correct — nothing writes `Data.Items`); selected = Golden Seed,
+  Legendary, "Owned: 0 / 9999", description filled.
+- FilterPanel: built from the templates, 4 tier + 2 kind + 1 show toggles on Items, 8 tier + 3
+  show on Units, **no stray `GroupTemplate` left in the layout** on either.
+- Collection: 8 uuid cards, first = Necromancer / Mythic / Lv 20 / DMG B RNG B SPA B, meta line
+  "8 unit(s) | Gold: 0 | Silver: 0 | Account Lv 1 (0 XP)", no stray template.
+- Units: `Grade` labels read B/B/B (matching Necromancer) with the number slot at `--`.
+- `applyFilters` exercised end-to-end via the search path: ""→8, "mage"→1, "necro"→1, "zzz"→0, ""→8.
+- Boot clean: `[DIAG] ItemsController ready`, `[DIAG] CollectionScreen ready`, no errors;
+  `UIKitBootstrap` picked up 33 tagged buttons. Harness attributes left **OFF** on all three.
+
+**NOT verified:** hover-card *positioning* (the flip-left-on-overflow maths) — it is copied
+verbatim from the working A4 Units preview, but no synthetic hover was possible. Worth an eyeball.
+
+- **Contract impact:** none. No shared module, schema or teleport change; drift surface unchanged
+  (GREEN 8/8 at both bootstrap and landing). `GetUnitViews` gained one additive read-only field.
+- **PENDINGs:** A5 cleanup PENDING **handed to AD-Lobby** —
+  `docs/proposals/2026-08-03-drop-getcollection-compat.md` covers both deleting the now-unread
+  `Towers`/`Currency` compat fields AND reviewing AD-UI's `Items` addition. Unchanged: **USER
+  republish both Places** (this session is Studio canon too), A6 numbers decision + hotbar,
+  `Data.Loadout` writer (`Equipped` always false), **no `Data.Items` writer** (every item count
+  is 0 by design until an item economy exists), `TowerProgressionConfig` promotion for `XpPct`,
+  Game round-trip test + no-dev-seed harness.
+
 ## 2026-08-03 [lobby] A4: Units screen wired to the GetUnitViews view-model (real tiers/grades) + UnitCatalog deleted
 
 Blueprint phase-a §9 A4 (AD-UI). Re-bootstrapped onto the post-A1/A2/A3 world (drift GREEN 8/8,

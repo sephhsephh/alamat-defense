@@ -1,5 +1,5 @@
 # CONTEXT — Lobby place (LIVE, booted 2026-07-17)
-<!-- owner: lobby | scope: lobby | last-verified: 2026-08-01 -->
+<!-- owner: lobby | scope: lobby | last-verified: 2026-08-03 -->
 
 The social/meta Place: players land here, view their collection, roll banners, pick a
 stage + difficulty, form parties, and teleport into the Game place.
@@ -23,11 +23,16 @@ stage + difficulty, form parties, and teleport into the Game place.
     `Grades = {DMG,RNG,SPA}` letters from `StatGradeConfig` — plus `Loadout`, `Currencies`,
     `PlayerXP/PlayerLevel`, `MaxLoadout`. **No resolved DMG/RNG/SPA and no XpPct** (deferred —
     see STATE PENDINGs). Clients never read profiles; render this view only.
+  - **`GetUnitViews.Items` (A5, 2026-08-03):** the same remote also returns the profile's
+    `{ [itemId] = count }` map (copied, defensive if absent) for the Items screen. Additive and
+    read-only; no contract bump. **Nothing WRITES `Data.Items` in either Place**, so it is
+    legitimately empty today. Added by AD-UI with the user's authorisation — it is AD-Lobby
+    canon, flagged for review in `docs/proposals/2026-08-03-drop-getcollection-compat.md`.
   - Collection (`Server.Lobby.LobbyServices` `GetCollection`, `StarterGui.CollectionScreen`) —
-    READ-ONLY owned units from the profile. **Schema v2 (A2):** serves uuid-keyed `Units` +
-    `Loadout` + `Currencies` + `PlayerLevel`; ALSO returns interim `Towers` (highest-MetaLevel
-    instance per TowerId) + `Currency` (= Gold) for CollectionScreen/UnitsGUI — **delete both
-    at A5** when those screens move to the kit.
+    READ-ONLY owned units. **Schema v2 (A2):** serves uuid-keyed `Units` + `Loadout` +
+    `Currencies` + `PlayerLevel`. It ALSO still returns interim `Towers` + `Currency`, but as of
+    **A5 those have ZERO readers** (UnitsGUI moved at A4, CollectionScreen at A5) — deleting them
+    is AD-Lobby's call, see the proposal above + the PENDING in STATE.md.
   - Stage select + difficulty (`RS.Configs.StageRegistry` mirror, `GetStages`,
     `StarterGui.StageSelectScreen`) — captures (StageId, DifficultyPercent).
   - Parties + reserved-server launch (`Server.Lobby.PartyService`, `RS.Configs.LobbyConfig`,
@@ -64,36 +69,16 @@ stage + difficulty, form parties, and teleport into the Game place.
 Run the constitution's bootstrap ritual + `tools/hash_shared.luau` at the start of every
 session; reconcile before any work if a shared hash drifts.
 
-## UI kit + screens (AD-UI, 2026-07-31; A4 wired to the view-model 2026-08-03 — Studio canon)
+## UI kit + screens (AD-UI)
 
-- **`UIKit.Button`** (`ReplicatedStorage.Shared.UIKit.Button`) — ONE reusable controller for
-  every button (no per-button scripts). Hover = scale from centre (`centerAnchor` fix) + stroke
-  thicken OR `HoverStrokeColor` (e.g. white) + icon rotate; press animation; seamless (tiled)
-  animated gradient. All attribute-driven (`HoverScale/HoverStrokeMult/HoverStrokeColor/
-  HoverIconRotation/PressScale/TweenTime/GradientAnimate/GradientSpeed/GlowStrokeName/
-  StrokeHiddenUntilHover`). API: attach/create/onActivated/onHover/setHovered/setText/setIcon/
-  setStrokeColor/setEnabled. **Tag any GuiButton `UIKitButton`** → `StarterPlayerScripts.UIKitBootstrap`
-  attaches it (tags copy to clones).
-- **Hotbar** (`StarterGui.Hotbar.HotbarController`) — single controller replaces the old
-  duplicated per-slot scripts (disabled); glow on hover + `Hotbar.Templates.UnitPreviewTemplate`
-  shown above the hovered slot.
-- **Units screen** (`StarterGui.UnitsGUI.UnitsController`) — **A4 (2026-08-03): now reads the
-  `LobbyServices.GetUnitViews` view-model**, keyed by **uuid** (one card per unit instance).
-  Per card from the view: `Name`+`Tier` (ItemCatalog), tier-coloured border **and** BG (shared
-  `TierConfig`, seamless multi-colour), per-stat **GRADE** letters in the Stats panel + hover
-  preview (`view.Grades` from `StatGradeConfig`), real `Level`/`XP` on the preview level bar, and
-  `Favorited`/`Equipped` driving the sort (equipped > favourited > tier high→low > name). Hover =
-  white border + scale + `UITemplates.UnitPreviewTemplate` popup (fake element chips hidden);
-  click → `SelectedUnitFrame`. Live SearchBar (by name). **Resolved DMG/RNG/SPA NUMBERS deferred
-  to A6** (grades only for now — TowerStatResolver not in the Lobby). Placeholder model
-  `UnitModels.Placeholder` (real models later). Action buttons still **animation-only**.
-- **Configs:** `RS.Configs.Meta.TierConfig` + `ItemCatalog` + `StatGradeConfig` + `AscensionConfig`
-  are **SHARED CANON** (`shared/src`, deployed both Places, drift-checked). `TierConfig` = 8 tiers,
-  per-tier `Colors` list (Mythic rainbow + Secret red→dark-red), helpers
-  `get`/`colorSequence`/`seamlessSequence`/`isMultiColor`. `ItemCatalog` = authority on Name+Tier.
-  **`UnitCatalog` DELETED at A4 (2026-08-03)** — the Units screen no longer reads any placeholder.
-- **HUD buttons** (`HUD.Left.Buttons.{Play,Units,Inventory,Areas,Summon,Shop}`) tagged +
-  animated; `Frame.BorderDesignInside` hidden; hover = white stroke (no thicken).
+Full detail moved to **`docs/systems/lobby-ui.md`** at A5 (2026-08-03) — this file hit its
+150-line cap. Short version: REAL instance templates in `ReplicatedStorage.UITemplates.Kit`
+(`Button`, `ItemIcon`, `ItemHoverCard`, `FilterPanel`, `UnitPreviewTemplate`,
+`Unit/ItemIconTemplate`); controllers in `ReplicatedStorage.Shared.UIKit`
+(`Button`, `ItemIcon`, `FilterPanel`). Screens: **Units** (uuid cards + grades + filters),
+**Items** (catalog + counts + filters, A5), **Collection** (rebuilt on real instances, A5),
+**Hotbar**. `StarterGui.UITemplates` was emptied into the Kit and deleted.
+Each screen honours a `DevAutoOpen` attribute as a Studio harness (all left OFF).
 
 ## v2 candidates (not built)
 
@@ -103,17 +88,18 @@ session; reconcile before any work if a shared hash drifts.
 - Currency shop, player-level display, trading hub, loadout picker UI (replaces the
   interim auto-loadout).
 - Convert legacy script-built screens to instance trees when next touched (rule 2026-07-18):
-  CollectionScreen, StageSelectScreen, PartyScreen, ReturnScreen.
+  ~~CollectionScreen~~ (done A5), StageSelectScreen, PartyScreen, ReturnScreen.
 
 ## Open PENDINGs (see STATE.md)
 
-- **AD-UI (deferred, gated on A3):** UnitsGUI + hotbar preview currently use a placeholder
-  model + interim `UnitCatalog` stats + shared-catalog Equipped/Favorited flags. At the A3
-  wire-up: real per-unit models, resolved DMG/RNG/SPA, real Loadout(equipped)+Favorited, and
-  functional action buttons. `UIKit`/`TierConfig`/`UnitCatalog` promote to `shared/src`
-  at Integration (A7) if the Game place needs them.
-- **A5 (AD-UI):** rebuild CollectionScreen + UnitsGUI on uuid `Units` and DELETE the interim
-  `Towers`/`Currency` compat fields from `LobbyServices.GetCollection`.
+- **AD-UI (A6):** resolved DMG/RNG/SPA NUMBERS (the Units stat rows' number slot shows `--`),
+  real per-unit models (everything uses `UnitModels.Placeholder`), functional Units action
+  buttons, hotbar rebuild. Kit promotion to `shared/src` at Integration (A7).
+- **AD-Lobby (A5 handoff):** delete the now-unread `Towers`/`Currency` compat fields from
+  `GetCollection`, and review the `Items` field AD-UI added to `GetUnitViews` —
+  `docs/proposals/2026-08-03-drop-getcollection-compat.md`.
+- **Unscheduled:** no writer for `Data.Items` (Items screen shows all zeroes) and none for
+  `Data.Loadout` (`Equipped` is always false).
 - **USER (BLOCKING):** save + republish **BOTH** Places together — schema v2 + teleport v2 are
   Studio-canon on both sides and v1/v2 do not interoperate. A partial publish breaks live
   launches with `[CONTRACT] PayloadVersion mismatch`. (LIVE v1 loop was verified 2026-07-18.)

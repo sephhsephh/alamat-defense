@@ -39,8 +39,12 @@ everything untradeable at launch).
 - ✅ v1: auto-loadout in launch payload (owned towers, cap 6; interim until loadout picker UI)
 - ✅ First-join starter tower choice (starter seed removed from ProfileTemplate 2026-07-18;
   picker now active for fresh accounts)
+- ✅ Collection screen rebuilt on real instances + the `GetUnitViews` view-model (A5, 2026-08-03)
+- ✅ Items screen (A5, 2026-08-03) — catalog-driven; real counts land when an item economy does
 - 🟡 v1: parties (in-memory, single-server; cross-server/persisted = later phase)
-- 🔲 Loadout picker UI (player chooses their 6; replaces auto-loadout)
+- 🔲 Loadout picker UI (player chooses their 6; replaces auto-loadout) — also the missing
+  `Data.Loadout` WRITER, so `Equipped` is false everywhere until it exists
+- 🔲 Item economy: nothing writes `Data.Items` in either Place (no drop/grant/shop path yet)
 
 ## Cross-Place
 
@@ -78,15 +82,27 @@ catalog/configs, icon kit, session plan A1–A7). Phases B–F:
   pilots; `TowerStatResolver` folds `StatRolls × Ascension` into DMG/RNG/SPA (SPA inverted).
   Scalar/no-BaseStats towers byte-identical (regression verified). Client stat PREVIEWS still flat
   (rollMult 1.0) until the UI wire-up (A4–A6); server gameplay is roll-correct.
-- 🟡 Shared icon/UI kit (AD-UI): **`UIKit.Button` primitive built (Lobby, 2026-07-31)** —
-  reusable hover/press/seamless-gradient controller, tag-based, attribute-driven; tier-coloured
-  borders via `TierConfig`. Still 🔲: UnitIcon/ItemIcon/HoverCards/RewardPopup/FilterPanel/
-  CurrencyPromo formalised + promotion to `shared/src`.
+- 🟡 Shared icon/UI kit (AD-UI): **`UIKit.Button` (2026-07-31) + `UIKit.ItemIcon` and
+  `UIKit.FilterPanel` (A5, 2026-08-03)**, all in `RS.Shared.UIKit`, cloning REAL instance
+  templates from **`RS.UITemplates.Kit`** (the blueprint §5 home — `StarterGui.UITemplates`
+  was emptied into it at A5). Tier-coloured borders via the shared `TierConfig`.
+  Still 🔲: UnitIcon formalised as a kit controller, UnitHoverCard, RewardPopup, CurrencyBar,
+  ViewportPreview, NPCPrompt; promotion of the kit to `shared/src` (A7).
 - 🟡 Hotbar rebuilt on kit (lobby — glow + hover preview via one controller, 2026-07-31; game 🔲)
-- 🟡 **Units screen built on kit (Lobby, 2026-07-31)** — owned-units grid, tier-coloured
-  cards, hover preview, selected viewport + stats, sort (equipped>favourited>tier), search;
-  interim v1 data + placeholder model. Still 🔲: Items screen, real data/models, FilterPanel,
-  functional actions (all gated on schema v2 / A3).
+- ✅ **Units screen on kit + view-model (Lobby; A4 2026-08-03, A5 filters 2026-08-03)** —
+  uuid cards from `GetUnitViews`, shared multi-colour tier borders, per-stat GRADE letters in
+  the designed `Grade` labels, real Level/XP, sort (equipped>favourited>tier>name), live search,
+  and the shared FilterPanel (tier + equipped/favourited/locked). Resolved stat NUMBERS still
+  🔲 (A6, deferred by user decision); real per-unit models + functional action buttons still 🔲.
+- ✅ **Items screen on kit (Lobby, A5 2026-08-03)** — `UIKit.ItemIcon` cards (flat ImageLabel,
+  no viewport), QtyBadge, tier borders, hover card, selected panel, search + FilterPanel
+  (tier/kind/owned-only). Counts come from `GetUnitViews.Items`. 🔲 blocked on there being an
+  item economy at all: **nothing writes `Data.Items`**, so every count is legitimately 0.
+- ✅ **FilterPanel kit component (A5)** — GroupTemplate + ToggleTemplate + Apply/Reset/Cancel,
+  pending-vs-applied state; shared by the Units and Items screens.
+- ✅ **CollectionScreen converted to real instances (A5)** — was script-built, now
+  `Panel.Grid.CardTemplate` + a controller on `GetUnitViews`. This removed the last reader of
+  `GetCollection`'s interim `Towers`/`Currency` compat fields.
 
 ### Phase B — Gacha
 - 🔲 Banner engine: one config file per banner (auto-scanned); Standard (3 mythics/hour,

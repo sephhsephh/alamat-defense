@@ -1,5 +1,5 @@
 # STATE — Alamat Defense
-<!-- owner: all | scope: global | last-verified: 2026-08-01 -->
+<!-- owner: all | scope: global | last-verified: 2026-08-03 -->
 
 ## Snapshot
 
@@ -20,9 +20,10 @@ as the source of truth for it.
 - **Lobby** (Studio: "Alamat Defense - Lobby") — the social/meta Place, live.
   Scene `Workspace.Lobby`; flow = collection → stage select + difficulty → party →
   reserved-server launch, plus `MatchReturn` welcome-back banner + next-act pre-select and the
-  first-join starter picker. Serves `GetCollection` (legacy + interim compat) and
-  **`GetUnitViews`** (the A4/A5 per-uuid contract: tier, level, grades, equipped, favorited).
-  `PartyService.buildLoadout` sends unit uuids.
+  first-join starter picker. Serves `GetCollection` (compat fields now UNREAD) and
+  **`GetUnitViews`** (the A4/A5 contract: per-uuid tier/level/grades/equipped/favorited, plus
+  `Items` counts since A5). `PartyService.buildLoadout` sends unit uuids. UI: Units + Items +
+  Collection screens all on the kit / view-model (A4+A5) — see `docs/systems/lobby-ui.md`.
 - **Shared canon** (`shared/src` + `manifest.json`, drift-checked by `tools/hash_shared.luau`):
   8 modules — `ProfileTemplate`, `PlayerDataService`, `ProfileStore`, `Signal`, and since
   2026-08-01 `TierConfig`, `StatGradeConfig`, `AscensionConfig`, `ItemCatalog`.
@@ -45,33 +46,26 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
   before a live run — two live-only failures have come from that blind spot. Add a Studio
   harness that starts a match WITHOUT dev-seeding, ideally before A6.
 
-- ~~PENDING (AD-Game — grade/roll system INERT).~~ **DONE 2026-08-03 (AD-Game grant paths)** —
-  `PlayerInventoryService.GrantUnit` (explicit `opts.StatRolls` wins) and `DevSetOwnedTowers` now
-  call `StatGradeConfig.RollAll(rng)` off one persistent `Random`. Verified live: rolls differ per
-  unit, land in 0..1, spread of grades, override wins, two same-tower instances resolve to different
-  DMG/RNG/SPA. Existing units + the v1→v2 migration stay grandfathered at 0.5 (append-only).
-- ~~PENDING (AD-Lobby — starter grant still writes 0.5).~~ **DONE 2026-08-03** —
-  `StarterChoiceService` rolls via shared `StatGradeConfig.RollAll` off one module-level
-  `Random`, shape re-checked against `GrantUnit`. Verified live: varied rolls run-to-run
-  (D/C/B spread). ALL grant paths now roll; only pre-existing units stay grandfathered at 0.5.
+- **PENDING (AD-Lobby, A5 handoff):** `docs/proposals/2026-08-03-drop-getcollection-compat.md` —
+  (a) delete the `Towers`/`Currency` compat fields from `GetCollection`; as of A5 they have
+  **zero readers** (UnitsGUI moved at A4, CollectionScreen rebuilt at A5). (b) Review the
+  `Items` field **AD-UI added to `GetUnitViews`** — AD-Lobby canon, edited by AD-UI with the
+  user's explicit authorisation because the Items screen had no other count source. Additive,
+  read-only, no contract bump.
 
-- **PENDING (NEEDS SCHEDULING — equipping does not exist):** nothing ever WRITES `Data.Loadout`.
-  The template inits it `{}`, the migration sets `{}`, the Lobby only reads it. So `Equipped` is
-  always false and launches always fall through to auto-loadout (top 6 by MetaLevel). The
-  unitView carries the flag, but a loadout picker (the writer) is not scheduled anywhere.
+- **PENDING (NEEDS SCHEDULING — two profile fields have no WRITER):**
+  - `Data.Loadout` — nothing ever writes it, so `Equipped` is always false and launches always
+    fall through to auto-loadout (top 6 by MetaLevel). Needs a loadout picker UI.
+  - `Data.Items` — nothing writes it either (no drop/grant/shop path). The A5 Items screen
+    therefore shows every catalog item at count 0. Correct, but the screen is inert until an
+    item economy exists.
 
 - **PENDING (AD-Game + AD-Integration — deferred NUMBERS decision, due at A6):** the Lobby serves
-  grades but NOT resolved DMG/RNG/SPA. `TowerStatResolver.Resolve` needs a whole towerConfig plus
-  MetaScalingConfig/TraitRegistry/TraitDefinitions, so Lobby-side numbers mean ~12 modules (incl.
-  all 8 tower configs) under drift control. Deferred by the user 2026-08-01. When A6 needs real
-  numbers pick: (a) promote the full stat stack, or (b) AD-Game exports a slim generated
-  `UnitStatsCatalog` + a boot validator asserting it matches live configs. **(b) recommended.**
-
-- **PENDING (A5, cleanup):** remove the interim `Towers`/`Currency` compat fields on
-  `LobbyServices.GetCollection` (AD-Lobby canon) once **CollectionScreen** is rebuilt on the
-  view-model. ~~UnitCatalog deletion~~ **DONE (A4, 2026-08-03)** — the Units screen reads
-  `GetUnitViews`; `UnitCatalog` deleted (no readers). CollectionScreen is now the only
-  `Towers`/`Currency` reader left.
+  grades but NOT resolved DMG/RNG/SPA (`TowerStatResolver.Resolve` needs a whole towerConfig plus
+  MetaScaling/Traits — ~12 modules incl. all 8 tower configs under drift control). Deferred by the
+  user 2026-08-01; the A5 Units stat rows show `--` in the number slot until this lands. Pick then:
+  (a) promote the full stat stack, or (b) AD-Game exports a slim generated `UnitStatsCatalog` +
+  a boot validator. **(b) recommended.**
 
 - **PENDING (AD-PlayerLevel, small):** promote `TowerProgressionConfig` to shared so the Lobby can
   compute `XpPct` for a real XP bar. The unitView sends raw `XP` + `Level` only.
@@ -98,17 +92,13 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
 1. **USER: republish both Places** (A-phase promotion is Studio canon). Live is fine on the
    previous build — the hotfix run was confirmed working — so this is not urgent, but nothing
    from this session reaches players until it happens.
-2. ~~**A4 [AD-UI]**~~ **DONE 2026-08-03** — `UnitsController` reads `GetUnitViews` (uuid cards,
-   shared multi-colour `TierConfig` borders, D..Apex grade letters, real Equipped/Favorited sort,
-   real Level/XP); `UnitCatalog` deleted; live-verified (varied grades). Absolute stat NUMBERS
-   still absent by design (A6). `HotbarController` view-model wire deferred to the A6 hotbar rebuild.
-3. **A5 [AD-UI]:** Items screen on the kit + FilterPanel; rebuild CollectionScreen on the
-   view-model so `GetCollection`'s `Towers`/`Currency` compat can be removed (AD-Lobby).
-4. **A6 [AD-UI/AD-Game]:** hotbar rebuild in the Game place — settle the numbers decision first,
-   and land the no-dev-seed Studio harness before this.
-5. Then A7 (full Phase A acceptance, Integration) → Phase B gacha.
-6. Unscheduled but wanted: loadout picker (equipping), stat-roll wiring, real art/anim asset ids.
-
-<!-- Shared canon note: Signal promoted to shared/src + manifest 2026-07-17 (AD-Lobby),
-     byte-identical to the live Game module; drift check now covers all four shared modules. -->
+2. ~~**A4 + A5 [AD-UI]**~~ **DONE 2026-08-03** — Units, Items and Collection screens all run on
+   the kit + `GetUnitViews`; `UIKit.ItemIcon` + `UIKit.FilterPanel` added; templates consolidated
+   into `RS.UITemplates.Kit`; `UnitCatalog` and `StarterGui.UITemplates` deleted. Details in
+   `docs/systems/lobby-ui.md`. Compat-field removal handed to AD-Lobby (PENDING above).
+3. **A6 [AD-UI/AD-Game]:** resolved stat NUMBERS + hotbar rebuild in the Game place — settle the
+   numbers decision first, and land the no-dev-seed Studio harness before this.
+4. Then A7 (full Phase A acceptance, Integration) → Phase B gacha.
+5. Unscheduled but wanted: loadout picker (equipping), an item economy that writes `Data.Items`,
+   real art/anim asset ids.
 

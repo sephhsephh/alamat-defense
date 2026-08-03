@@ -18,7 +18,11 @@
 - (empty — design pillars/economy docs migrate here from Studio progressively)
 
 ## systems/
-- (empty — richer system docs still live in the Game place's `ServerStorage.Documentation`
+- `lobby-ui.md` — AD-UI canon for the Lobby's UI kit (`RS.UITemplates.Kit` templates +
+  `RS.Shared.UIKit` controllers: Button/ItemIcon/FilterPanel) and its screens (Units, Items,
+  Collection, Hotbar, HUD buttons) + the `DevAutoOpen` Studio harness. Split out of
+  `places/lobby/CONTEXT.md` at A5 when that file passed its 150-line cap.
+- (otherwise — richer system docs still live in the Game place's `ServerStorage.Documentation`
   [Architecture, SystemIndex, GameplaySystems, Networking, GameFlow, HowTo, CodingStandards,
   MCPWorkflow]; migrate on touch: whenever a session works on a system, move its doc here)
 
@@ -27,6 +31,9 @@
 - `ADR-0002-profilestore.md` — why ProfileStore, schema ownership, session-lock/teleport rules
 
 ## proposals/
+- `2026-08-03-drop-getcollection-compat.md` — AD-UI→AD-Lobby: delete the now-unread
+  `Towers`/`Currency` compat fields from `GetCollection`, and review the `Items` field AD-UI
+  added to `GetUnitViews` (user-authorised edit to AD-Lobby canon). OPEN.
 - `2026-08-01-a4-promote-meta-and-tierconfig-multicolor.md` — AD-UI→AD-Integration: promote
   resolver + Meta configs to shared, reconcile TierConfig (A3 shape + multi-colour), retire Lobby
   interim UnitCatalog, spec LobbyServices unitView. BLOCKS A4/A5.
