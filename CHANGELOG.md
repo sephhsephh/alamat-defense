@@ -60,8 +60,24 @@ place-asserted property reads in the Client datamodel:
 - Boot clean: `[DIAG] ItemsController ready`, `[DIAG] CollectionScreen ready`, no errors;
   `UIKitBootstrap` picked up 33 tagged buttons. Harness attributes left **OFF** on all three.
 
-**NOT verified:** hover-card *positioning* (the flip-left-on-overflow maths) — it is copied
-verbatim from the working A4 Units preview, but no synthetic hover was possible. Worth an eyeball.
+**Hover geometry — closed same session (follow-up pass).** Verified by deriving the real
+viewport from a full-screen probe rect (`CurrentCamera.ViewportSize` reads `1,1` from the
+tooling VM) and replaying the placement maths against every real card rect. Three findings, all
+fixed:
+
+- **A4's `showPreview` assumed the preview was `0.2 × 0.36` of the viewport.** The Units preview
+  is really ~`0.19 × 0.19`, so the flip-to-left triggered about twice as early as needed and the
+  vertical clamp reserved double the margin. Both controllers now **measure** `AbsoluteSize`
+  (scale constants kept as the zero fallback).
+- **`math.clamp` errors when max < min** — reachable whenever the preview is taller than the
+  viewport, and hit for real during verification. Now guarded (falls back to vertical centre);
+  the horizontal position is clamped on-screen too.
+- **Template/instance size drift:** `ItemsGUI.HoverPreview` was cloned from `ItemHoverCard`
+  *before* that template was resized, so the deployed copy kept the old ~38%-of-screen footprint
+  while the template said 20%. Re-synced; a sweep confirmed both `FilterPanel` clones match.
+
+Re-verified at 1920×1078: Items preview 384×367 (20%×34%), Units 368×201 (19%×19%), **0 flips,
+0 off-screen** across all 13 cards, well inside the viewport. Harness attributes left OFF.
 
 - **Contract impact:** none. No shared module, schema or teleport change; drift surface unchanged
   (GREEN 8/8 at both bootstrap and landing). `GetUnitViews` gained one additive read-only field.

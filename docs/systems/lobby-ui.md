@@ -21,6 +21,15 @@ Removed at the move: the legacy per-slot `Unit/ItemIconTemplateLocalScript`, whi
   hides at qty 0 (and dims the icon), tier border + BG from the shared multi-colour `TierConfig`,
   hover/press scale + white border, `onHover`/`onActivated`/`setQty`/`setSelected`/`destroy`.
   `ItemIcon.ImageFor(id)` falls back to the Studio placeholder while catalog art is `rbxassetid://0`.
+**Hover-card placement (both screens, hardened A5).** `showPreview` anchors the card at
+`(0, 0.5)` beside the hovered card, flipping to the LEFT when it would overflow right. It
+**measures `hoverPreview.AbsoluteSize`** rather than assuming a scale — A4 assumed `0.2 × 0.36`
+of the viewport when the real frame is ~`0.19 × 0.19`, which made the flip fire twice as early
+as needed. The vertical `math.clamp` is guarded because it ERRORS when max < min (preview taller
+than the viewport, or a degenerate `ViewportSize`), falling back to vertical centre.
+**When you resize a Kit template, re-sync any already-deployed clone** — `ItemsGUI.HoverPreview`
+silently kept an old footprint this way until it was caught.
+
 - **`UIKit.FilterPanel`** (A5) — reusable filter panel, used by BOTH the Units and Items screens.
   Clones `GroupTemplate` / `ToggleTemplate`; Apply commits pending→applied and fires `OnApply`,
   Cancel reverts, Reset clears. `handle.selected(groupId)` returns nil when a group is
