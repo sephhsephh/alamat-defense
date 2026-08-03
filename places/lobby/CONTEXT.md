@@ -51,9 +51,11 @@ stage + difficulty, form parties, and teleport into the Game place.
     no-UI-in-scripts rule — `Root.Panel.CardsRow.CardTemplate` is the editable card design,
     controller clones/fills/wires only). Eligibility = profile owns ZERO **units** (v2 template
     ships no starter, so fresh accounts always see it). Grants a uuid `UnitInstance` mirroring
-    the Game's `PlayerInventoryService.GrantUnit` (MetaLevel/XP from config, mid rolls 0.5 until
-    A3) and returns its `Uuid`; never clobbers an existing instance; Studio harness =
-    `DevSimulateFirstJoin` attribute (sim-only grant-path card, self-cleaning by TowerId).
+    the Game's `PlayerInventoryService.GrantUnit` (MetaLevel/XP from config; **StatRolls via
+    shared `StatGradeConfig.RollAll` off one module-level Random, 2026-08-03** — grant log
+    prints rolls + grades) and returns its `Uuid`; never clobbers an existing instance;
+    Studio harness = `DevSimulateFirstJoin` attribute (sim-only grant-path card,
+    self-cleaning by TowerId).
   - **Loadout at launch (v2 since A2):** `PartyService.buildLoadout` sends unit **uuids** —
     the saved profile `Loadout` (filtered to still-owned uuids, deduped) if any, else
     auto-loadout by MetaLevel desc, capped at `LobbyConfig.MaxLoadoutSize=6`. Auto is interim

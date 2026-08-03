@@ -1,5 +1,29 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-03 [lobby] Starter grant rolls real quality: StarterChoiceService calls StatGradeConfig.RollAll
+
+- **PENDING (AD-Lobby starter rolls) CLEARED** — per AD-Game's proposal
+  (`docs/proposals/2026-08-03-starter-grant-rolls.md`): `StarterChoiceService.newUnitInstance`
+  now writes `StatRolls = StatGradeConfig.RollAll(statRng)` instead of the hardcoded
+  `{0.5,0.5,0.5}` midpoints. `StatGradeConfig` required from its shared deploy path
+  (`RS.Configs.Meta.StatGradeConfig`, drift-green 49a6edfd); ONE module-level `Random`
+  (same rationale + pattern as `PlayerInventoryService` — per-grant `Random.new()` can
+  correlate same-frame). Every other UnitInstance field byte-matches `GrantUnit`'s shape
+  (re-read from Game canon this session). Grant log now prints rolls + grades.
+- **Verified live (Play, dev store, DevSimulateFirstJoin harness):** two grants across
+  separate runs rolled DMG=0.370/D RNG=0.652/B SPA=0.341/D then DMG=0.764/B RNG=0.598/C
+  SPA=0.509/C — varied run-to-run, all in 0..1, grade spread D/C/B, boundary case correct
+  (0.652 → B, just past C's 0.65 max). Sim tower auto-cleaned on the non-sim boot; sim left
+  OFF; dev profile clean.
+- **A4 caveat lifted:** "every grade reads C" no longer applies to any grant path — all
+  paths (GrantUnit, DevSetOwnedTowers, starter) now roll. Only pre-existing/migrated units
+  remain grandfathered at 0.5 by design.
+- **Contract impact:** none — value-only change inside the v2 `UnitInstance`; no schema
+  bump, no shared-module edit, no drift surface. Drift GREEN 8/8 at bootstrap.
+- **PENDINGs:** starter-rolls PENDING cleared. Unchanged: USER republish both Places (this
+  change is Studio canon too and joins that publish), Loadout writer, A6 numbers decision,
+  A4/A5 cleanup, TowerProgressionConfig promotion, Game round-trip test.
+
 ## 2026-08-03 [game] Stat rolls actually roll: GrantUnit + DevSetOwnedTowers call StatGradeConfig.RollAll
 
 - **The fix:** `PlayerInventoryService` (Game canon) now requires shared `StatGradeConfig` and rolls

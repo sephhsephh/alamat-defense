@@ -50,10 +50,10 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
   call `StatGradeConfig.RollAll(rng)` off one persistent `Random`. Verified live: rolls differ per
   unit, land in 0..1, spread of grades, override wins, two same-tower instances resolve to different
   DMG/RNG/SPA. Existing units + the v1→v2 migration stay grandfathered at 0.5 (append-only).
-- **PENDING (AD-Lobby — starter grant still writes 0.5):** `StarterChoiceService` is the one grant
-  path left on hardcoded midpoints, so a fresh player's FIRST unit is always grade "C". Fix per
-  `docs/proposals/2026-08-03-starter-grant-rolls.md` — `StatGradeConfig` is shared canon, so call
-  `RollAll(rng)` directly (one module-level `Random`, NOT `Random.new()` per grant).
+- ~~PENDING (AD-Lobby — starter grant still writes 0.5).~~ **DONE 2026-08-03** —
+  `StarterChoiceService` rolls via shared `StatGradeConfig.RollAll` off one module-level
+  `Random`, shape re-checked against `GrantUnit`. Verified live: varied rolls run-to-run
+  (D/C/B spread). ALL grant paths now roll; only pre-existing units stay grandfathered at 0.5.
 
 - **PENDING (NEEDS SCHEDULING — equipping does not exist):** nothing ever WRITES `Data.Loadout`.
   The template inits it `{}`, the migration sets `{}`, the Lobby only reads it. So `Equipped` is
@@ -98,9 +98,9 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
    from this session reaches players until it happens.
 2. **A4 [AD-UI] — unblocked:** wire `UnitsController` + `HotbarController` to `GetUnitViews`:
    tier borders from the shared multi-colour `TierConfig`, D..Apex grade badges, real
-   Equipped/Favorited driving the sort. Caveats to expect: every grade reads "C" until the roll
-   PENDING is fixed, `Equipped` is always false until something writes `Loadout`, and absolute
-   stat numbers are deliberately absent.
+   Equipped/Favorited driving the sort. Caveats to expect: pre-2026-08-03 units read "C"
+   (grandfathered 0.5; all grant paths now roll), `Equipped` is always false until something
+   writes `Loadout`, and absolute stat numbers are deliberately absent.
 3. **A5 [AD-UI]:** Units/Items screens on the kit; delete UnitCatalog + the compat fields.
 4. **A6 [AD-UI/AD-Game]:** hotbar rebuild in the Game place — settle the numbers decision first,
    and land the no-dev-seed Studio harness before this.
