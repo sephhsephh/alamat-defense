@@ -1,6 +1,6 @@
 # ROADMAP — feature status for the whole Experience
 <!-- owner: all (any chat updates its own system's rows at landing) | scope: global -->
-<!-- last-verified: 2026-07-18 -->
+<!-- last-verified: 2026-08-06 -->
 
 Status legend: ✅ done · 🟡 partial/placeholder · 🔲 planned · 💭 idea (not committed)
 Meta-systems detail + rationale: `docs/proposals/2026-07-18-meta-systems-design.md`
@@ -94,7 +94,8 @@ catalog/configs, icon kit, session plan A1–A7). Phases B–F:
   the designed `Grade` labels, real Level/XP, sort (equipped>favourited>tier>name), live search,
   and the shared FilterPanel (tier + equipped/favourited/locked). Resolved stat NUMBERS: the
   **AD-Game half is DONE (A6, 2026-08-03 — shared `UnitStatsCatalog` `3bb9b140` + load-bearing
-  validator, ADR-0003)**; 🔲 the Lobby deploys it, then AD-UI fills the `--` slots. Real per-unit
+  validator, ADR-0003)** and the **Lobby DEPLOY is DONE (A6b, 2026-08-06 — drift 9/9)**;
+  🔲 AD-UI fills the `--` slots from `UnitStatsCatalog.Get` (unblocked). Real per-unit
   models + functional action buttons still 🔲.
 - ✅ **Items screen on kit (Lobby, A5 2026-08-03)** — `UIKit.ItemIcon` cards (flat ImageLabel,
   no viewport), QtyBadge, tier borders, hover card, selected panel, search + FilterPanel
@@ -105,6 +106,11 @@ catalog/configs, icon kit, session plan A1–A7). Phases B–F:
 - ✅ **CollectionScreen converted to real instances (A5)** — was script-built, now
   `Panel.Grid.CardTemplate` + a controller on `GetUnitViews`. This removed the last reader of
   `GetCollection`'s interim `Towers`/`Currency` compat fields.
+- ✅ **`UnitStatsCatalog` deployed to the Lobby (A6b, 2026-08-06)** — 9th shared module,
+  `3bb9b140`, **drift GREEN 9/9 in both Places**; verified requireable from a client context.
+- ✅ **`GetCollection` compat fields deleted (A6b)** — zero readers re-confirmed first;
+  `GetUnitViews.Items` reviewed and kept as-is. 🔲 **Retire `GetCollection` entirely at A7**
+  (handler + RemoteFunction) per `docs/decisions/ADR-0004-retire-getcollection.md`.
 
 ### Phase B — Gacha
 - 🔲 Banner engine: one config file per banner (auto-scanned); Standard (3 mythics/hour,

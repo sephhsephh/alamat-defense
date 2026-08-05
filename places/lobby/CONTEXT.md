@@ -1,5 +1,5 @@
 # CONTEXT — Lobby place (LIVE, booted 2026-07-17)
-<!-- owner: lobby | scope: lobby | last-verified: 2026-08-03 -->
+<!-- owner: lobby | scope: lobby | last-verified: 2026-08-06 -->
 
 The social/meta Place: players land here, view their collection, roll banners, pick a
 stage + difficulty, form parties, and teleport into the Game place.
@@ -10,6 +10,14 @@ stage + difficulty, form parties, and teleport into the Game place.
   `ServerScriptService.Server.Data.{ProfileStore, PlayerDataService}` — all four hashes match
   `shared/manifest.json` (Signal 91becf7a, **ProfileTemplate 63a0c98a**, PlayerDataService
   613f0d39, ProfileStore 1e3a6f3f). `Signal` was promoted into `shared/src` 2026-07-17.
+- **All 9 shared modules deployed — drift GREEN 9/9 (A6b, 2026-08-06).** The five Meta configs
+  live in `RS.Configs.Meta`: TierConfig a0d6e3a3, StatGradeConfig 49a6edfd, AscensionConfig
+  59aa8e15, ItemCatalog 789dca4b, and **`UnitStatsCatalog` 3bb9b140** (deployed A6b). The latter
+  is a GENERATED read-only cache of each tower's resolved base DMG/RNG/SPA at tier 1 / ML 1 /
+  no trait / mid-roll / asc 0 — **SPA is already inverted, these are not raw BaseStats**. Owner
+  is AD-Game; the Lobby only consumes it. `Get(towerId)` returns nil for unknown ids and **Farm
+  has no DMG/SPA keys** (support tower). Its validator is Game-only canon by design — the Lobby
+  has no tower configs to validate against, so do NOT port it here. See ADR-0003.
 - **Boot:** `Server.Bootstrap` asserts the save contract and runs `PlayerDataService.Init()`.
   **Schema v2** profile loads from **Beta1_PlayerDataDev1** (prod store **Beta1_PlayerData**;
   intentional beta reset 2026-07-31; DataStoreState=Access) — the Lobby shares the Game
@@ -26,13 +34,16 @@ stage + difficulty, form parties, and teleport into the Game place.
   - **`GetUnitViews.Items` (A5, 2026-08-03):** the same remote also returns the profile's
     `{ [itemId] = count }` map (copied, defensive if absent) for the Items screen. Additive and
     read-only; no contract bump. **Nothing WRITES `Data.Items` in either Place**, so it is
-    legitimately empty today. Added by AD-UI with the user's authorisation — it is AD-Lobby
-    canon, flagged for review in `docs/proposals/2026-08-03-drop-getcollection-compat.md`.
-  - Collection (`Server.Lobby.LobbyServices` `GetCollection`, `StarterGui.CollectionScreen`) —
-    READ-ONLY owned units. **Schema v2 (A2):** serves uuid-keyed `Units` + `Loadout` +
-    `Currencies` + `PlayerLevel`. It ALSO still returns interim `Towers` + `Currency`, but as of
-    **A5 those have ZERO readers** (UnitsGUI moved at A4, CollectionScreen at A5) — deleting them
-    is AD-Lobby's call, see the proposal above + the PENDING in STATE.md.
+    legitimately empty today. Added by AD-UI with the user's authorisation; **AD-Lobby reviewed
+    it at A6b and KEPT IT AS-IS** — the shape is right, so `ItemsController` needs no change.
+    `GetUnitViews` is now the Lobby's SINGLE profile read path and load-bearing for every
+    screen: additive changes are free, but a breaking one needs contract treatment (ADR-0004).
+  - **`GetCollection` — DEAD CODE, retirement scheduled (ADR-0004).** Serves uuid-keyed `Units`
+    + `Loadout` + `Currencies` + `PlayerXP`/`PlayerLevel`; the interim `Towers`/`Currency` compat
+    fields were **DELETED at A6b (2026-08-06)** after a re-grep confirmed zero readers. It now has
+    **zero callers of any kind** — every screen reads `GetUnitViews`. The handler + RemoteFunction
+    are removed at **A7, after the user's republish**. **Do not build new readers on it.**
+    (`StarterGui.CollectionScreen` renders from `GetUnitViews`, not this.)
   - Stage select + difficulty (`RS.Configs.StageRegistry` mirror, `GetStages`,
     `StarterGui.StageSelectScreen`) — captures (StageId, DifficultyPercent).
   - Parties + reserved-server launch (`Server.Lobby.PartyService`, `RS.Configs.LobbyConfig`,
@@ -92,12 +103,16 @@ Each screen honours a `DevAutoOpen` attribute as a Studio harness (all left OFF)
 
 ## Open PENDINGs (see STATE.md)
 
-- **AD-UI (A6):** resolved DMG/RNG/SPA NUMBERS (the Units stat rows' number slot shows `--`),
-  real per-unit models (everything uses `UnitModels.Placeholder`), functional Units action
-  buttons, hotbar rebuild. Kit promotion to `shared/src` at Integration (A7).
-- **AD-Lobby (A5 handoff):** delete the now-unread `Towers`/`Currency` compat fields from
-  `GetCollection`, and review the `Items` field AD-UI added to `GetUnitViews` —
-  `docs/proposals/2026-08-03-drop-getcollection-compat.md`.
+- **AD-UI (A6, UNBLOCKED 2026-08-06):** fill the Units stat rows' `--` number slots from
+  `UnitStatsCatalog.Get` (`Stats.BaseStatsFrame.{DMG,RNG,SPA}`) — the module is now deployed
+  here and verified requireable. The `Grade` labels beside them already work from the roll and
+  must keep working; **Farm returns no DMG/SPA, handle the nil**. Also still open: real per-unit
+  models (everything uses `UnitModels.Placeholder`), functional Units action buttons, hotbar
+  rebuild. Kit promotion to `shared/src` at Integration (A7).
+- ~~**AD-Lobby (A5 handoff)**~~ **DONE 2026-08-06 (A6b)** — compat fields deleted (zero readers
+  re-confirmed), `Items` reviewed and kept as-is; proposal RESOLVED.
+- **A7:** retire `GetCollection` — delete the handler + the RemoteFunction (ADR-0004), after the
+  user's republish.
 - **Unscheduled:** no writer for `Data.Items` (Items screen shows all zeroes) and none for
   `Data.Loadout` (`Equipped` is always false).
 - **USER (BLOCKING):** save + republish **BOTH** Places together — schema v2 + teleport v2 are

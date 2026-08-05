@@ -11,8 +11,8 @@
   deterministic rotation, GrantService), config shapes, session plans, cross-phase invariants
 
 ## contracts/
-- `save-schema.md` — Profile data shape, versions, migration rules (owner: Game). **v1**
-- `teleport.md` — Lobby→Game / Game→Lobby TeleportData payloads (owner: Lobby). **v0 draft**
+- `save-schema.md` — Profile data shape, versions, migration rules (owner: Game). **v2**
+- `teleport.md` — Lobby→Game / Game→Lobby TeleportData payloads (owner: Lobby). **v2**
 
 ## design/
 - (empty — design pillars/economy docs migrate here from Studio progressively)
@@ -31,6 +31,8 @@
 - `ADR-0002-profilestore.md` — why ProfileStore, schema ownership, session-lock/teleport rules
 - `ADR-0003-lobby-stat-numbers.md` — the Lobby gets resolved DMG/RNG/SPA from a GENERATED
   `UnitStatsCatalog` + boot validator, not by promoting the full stat stack (user, 2026-08-03)
+- `ADR-0004-retire-getcollection.md` — `GetUnitViews` is the Lobby's single profile read path;
+  `GetCollection` is dead code, retirement ACCEPTED and scheduled for A7 (AD-Lobby, 2026-08-06)
 
 ## proposals/
 - `2026-08-03-drop-getcollection-compat.md` — AD-UI→AD-Lobby: delete the now-unread

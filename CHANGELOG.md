@@ -1,5 +1,78 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-06 [lobby] A6b (AD-Lobby): UnitStatsCatalog deployed (drift 9/9), GetCollection compat fields deleted, GetCollection retirement decided (ADR-0004)
+
+Bootstrap drift **8/9 with `UnitStatsCatalog=MISSING`** exactly as A6 documented; all 8 other
+hashes matched the manifest. Integration gate: **No Integration needed — proceeding** (triggers 1
+and 2 fire, but the trigger IS this task and deploying a shared module into my own Place is
+ordinary owner-chat work — nothing required the Game Place to act).
+
+- **`UnitStatsCatalog` DEPLOYED to the Lobby.** `shared/src/UnitStatsCatalog.luau` written
+  VERBATIM (2474 bytes, zero local modifications) to `RS.Configs.Meta.UnitStatsCatalog`; the
+  module did not previously exist and was created. Hash came back **`3bb9b140`** — equal to the
+  manifest on the first write, no reconciliation needed. `manifest.json` →
+  `modules.UnitStatsCatalog.deployed.Lobby = "3bb9b140"`. **Drift re-run: GREEN 9/9 in the Lobby**,
+  now byte-identical with the Game in all nine shared modules. The load-bearing validator
+  (`UnitStatsCatalogValidate`) was deliberately NOT ported — it is Game canon and the Lobby has no
+  tower configs to validate against (noted in the manifest comment so nobody "fixes" the omission).
+- **`GetCollection` compat fields DELETED** (proposal `2026-08-03-drop-getcollection-compat.md`).
+  Re-grepped BEFORE deleting, as the proposal demands: `result.Towers` / `result.Currency` had
+  **zero readers**. The only `%.Towers` / `%.Currency` hits in the Place are `ProfileTemplate`'s
+  v1→v2 migration reading the OLD PROFILE fields — a different thing entirely, left untouched.
+  Removed the `towers` local, the `prev`/highest-MetaLevel block, both trailing return fields and
+  the stale header paragraphs. `GetCollection` still serves `Units`/`Loadout`/`Currencies`/
+  `PlayerXP`/`PlayerLevel`.
+- **`GetUnitViews.Items` REVIEWED → KEPT AS-IS.** AD-UI's user-authorised addition is the right
+  shape: it copies rather than aliasing `data.Items`, is defensive about the field being absent,
+  type-checks each count, and is read-only + additive. **No reshape, so `ItemsController` needs no
+  change.** Confirmed as AD-Lobby canon in the module header.
+- **`GetCollection` fate DECIDED: retire it — `docs/decisions/ADR-0004-retire-getcollection.md`.**
+  The re-grep found the remote now has **zero callers of any kind** (every screen reads
+  `GetUnitViews`); the only references left are its own handler registration and comments. Two
+  profile read paths against one schema is a standing rot hazard — the compat cruft deleted above
+  is exactly that rot. **Execution (handler + RemoteFunction deletion) is scheduled for A7,
+  deliberately AFTER the blocking republish**: that publish is already the riskiest open action and
+  carries all of A-phase + A5 + A6, remote deletions fail late and silently (a client
+  `WaitForChild`ing a removed remote yields forever), and Place-local code is Studio-canon
+  (ADR-0001) so the published file is the only recoverable snapshot. Until then it stays wired and
+  unread — **no new readers may be built on it**, recorded in the `LobbyServices` header.
+- **Contract impact: none.** No shared-module EDIT (a deploy of an unchanged module), no schema or
+  teleport change. `GetCollection` is not a versioned contract and both deleted fields were
+  documented as interim from the day they landed. ADR-0004 does note that `GetUnitViews` is now
+  load-bearing for the entire Lobby UI and would need contract treatment if ever changed breakingly.
+
+**Verified live (Play, dev store, Lobby)** — canonical method per CLAUDE.md (`[DIAG]` prints from
+real Scripts + `get_console_output`, plus instance-property reads; no service state via
+`execute_luau`). Studio was restarted mid-session, so every edit was re-verified from the saved
+file afterwards (drift 9/9, zero compat remnants) before landing:
+
+- Boot clean: `[CONTRACT] Lobby boot: save-schema v2`, `[DATA] LobbyServices ready`, profile v2
+  loaded, `CollectionScreen`/`HotbarController`/`UnitsController`/`ItemsController` all ready.
+  **No errors or warnings under any of our log prefixes.** `LobbyServices ready` is the module's
+  LAST line, so the edited module compiled and both handlers registered.
+- Collection loads with the compat fields gone: `[DIAG] CollectionScreen loaded 8 unit view(s)`,
+  **8 cards, 0 stray templates**, meta line `8 unit(s) | Gold: 240 | Silver: 0 | Account Lv 1
+  (360 XP)`, first cards Necromancer/Mythic/Lv 20, Meteor/Legendary, Warchief/Legendary,
+  Babaylan/Epic — real grades throughout. Verified via the `DevAutoOpen` harness (A5 pattern),
+  **left OFF on all three screens at landing**.
+- `UnitStatsCatalog` requires cleanly from a client context (the exact thing AD-UI needs next):
+  8 towers, `Get` is a function, all values match A6's published set (Archer 15/20/6, Knight
+  35/10/1.4, Mage 30/18/2, **Farm RNG-only, no DMG/SPA**, Babaylan 20/22/2.5, Meteor 30/24/1.4,
+  Warchief 25/18/1, Necromancer 28/22/1.1), `Get("NotATower")` → nil, REFERENCE tier 1 / ML 1 /
+  asc 0. (Pure data module, no services — a compile+shape check, not a live-service-state check.)
+- **Environment note:** four Play attempts died within ~1s to `Server Kick Message: Error 500`.
+  Cause was a **free model the user had inserted**; after the user removed it and restarted
+  Studio, Play was stable and every check above passed. Not a code defect — but see the advisory:
+  inserted free models are a known backdoor-script vector and the Place should be swept.
+- **PENDINGs:** the TWO this session owned are **CLEARED** (deploy `UnitStatsCatalog` to the Lobby;
+  the A5 `GetCollection` handoff). **NEW (A7 / AD-Integration):** delete the `GetCollection` handler
+  + RemoteFunction per ADR-0004, after the republish. **AD-UI is now UNBLOCKED** to fill the Units
+  `--` slots from `UnitStatsCatalog.Get`. Unchanged: **USER republish both Places** (now also
+  covering A5 + A6 + this session), no `Data.Loadout` writer, no `Data.Items` writer,
+  `TowerProgressionConfig` promotion for `XpPct`, Game round-trip test.
+- Commit is **local** (`push pending` — the remote-tracking ref shows main level with origin
+  through A6, but this session's commit is unpushed).
+
 ## 2026-08-03 [game] A6 (AD-Game): UnitStatsCatalog + load-bearing validator, profile-wait moved to StartMatch, cold-profile harness
 
 Bootstrap drift **GREEN 8/8** at start. Integration gate: **No Integration needed — proceeding**

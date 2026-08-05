@@ -93,7 +93,12 @@ up next session. Unlisted new system → add it to OWNERSHIP.md as part of build
 - Write WHOLE module files (multi_edit for targeted diffs, `.Source =` for rewrites).
   Never chain `gsub` edits; `%` in gsub replacements fails silently.
 - All persistent edits in the **Edit** datamodel. Play mode is read-only observation.
+- **Standing permission (user rule, 2026-08-06): any chat may run `start_stop_play` itself
+  when verification needs it** — ask the user to SAVE first, then Play, then stop and leave
+  every `Dev*` harness attribute OFF. Re-verify your edits from the saved file afterwards.
 - Console output lingers across Play sessions — correlate timestamps before trusting it.
+  A Play session that dies in ~1s with `Server Kick Message: Error 500` is an ENVIRONMENT
+  fault (an inserted free model caused it 2026-08-06), not your code — say so, don't "fix" code.
 - After editing a shared module in Studio, its disk canon + manifest MUST be updated in
   the same session (landing checklist step 2). No exceptions.
 - Log prefixes: `[DIAG]` debugging, `[DATA]` persistence, `[CONTRACT]` schema/version

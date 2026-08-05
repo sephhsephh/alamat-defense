@@ -1,7 +1,26 @@
 # Proposal — delete the interim `Towers` / `Currency` compat fields from `LobbyServices.GetCollection`
 
 <!-- author: AD-UI | target owner: AD-Lobby | place: Lobby | raised: 2026-08-03 (A5) -->
-<!-- status: OPEN — awaiting AD-Lobby -->
+<!-- status: RESOLVED 2026-08-06 (A6b, AD-Lobby) — see the resolution note below -->
+
+## RESOLUTION — 2026-08-06 (A6b, AD-Lobby)
+
+All three questions answered; nothing here is still open.
+
+1. **Compat fields DELETED.** Re-grepped first, as this proposal requires: `result.Towers` /
+   `result.Currency` had **zero readers** (the only `%.Towers` / `%.Currency` hits in the Place
+   are `ProfileTemplate`'s v1→v2 migration, which reads the OLD PROFILE fields and is untouched).
+   Removed the `towers` local, the `prev`/highest-MetaLevel block, both trailing return fields,
+   and the stale header paragraphs.
+2. **`Items` on `GetUnitViews`: reviewed and KEPT AS-IS.** The shape is right — it copies rather
+   than aliasing `data.Items`, it is defensive about the field being absent, it is read-only and
+   additive, and it type-checks each count. No reshape, so **`ItemsController` needs no change**.
+   Confirmed as AD-Lobby canon in the module header.
+3. **`GetCollection`'s fate: RETIRE it** — decided, recorded in `docs/decisions/ADR-0004-retire-getcollection.md`.
+   The remote now has zero callers of any kind. Execution (handler + RemoteFunction deletion) is
+   scheduled for **A7, deliberately after the blocking republish**, so that publish does not also
+   carry a remote deletion; Place-local code is Studio-canon, so the published file is the only
+   recoverable snapshot. No new readers may be built on it in the meantime.
 
 ## Why now
 

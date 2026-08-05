@@ -95,9 +95,9 @@
       "deployPath": "ReplicatedStorage.Configs.Meta.UnitStatsCatalog",
       "deployed": {
         "Game": "3bb9b140",
-        "Lobby": null
+        "Lobby": "3bb9b140"
       },
-      "comment": "GENERATED cache of per-tower RESOLVED base stats (DMG/RNG/SPA at tier1/ML1/no-trait/mid-roll/asc0) so the Lobby fills the Units-screen number slots without the full stat stack (ADR-0003). Added A6 2026-08-03 (owner AD-Game). Load-bearing validator SSS.Server.UnitStatsCatalogValidate regenerates from the live tower configs at boot in the Game place and errors LOUD on drift. deployed.Lobby=null (never deployed) -> AD-Lobby/Integration must deploy before the Lobby reads it. Regenerate + rehash whenever a tower's Damage/Range/SPA or BaseStats changes."
+      "comment": "GENERATED cache of per-tower RESOLVED base stats (DMG/RNG/SPA at tier1/ML1/no-trait/mid-roll/asc0) so the Lobby fills the Units-screen number slots without the full stat stack (ADR-0003). Added A6 2026-08-03 (owner AD-Game). Load-bearing validator SSS.Server.UnitStatsCatalogValidate regenerates from the live tower configs at boot in the Game place and errors LOUD on drift -- it stays GAME-ONLY canon (the Lobby has no tower configs to validate against). Deployed byte-identical (3bb9b140) in GAME (A6) and LOBBY (A6b, 2026-08-06) -- drift-green 9/9 in both Places. Regenerate + rehash whenever a tower's Damage/Range/SPA or BaseStats changes."
     }
   }
 }
