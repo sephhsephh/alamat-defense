@@ -1,5 +1,5 @@
 # STATE — Alamat Defense
-<!-- owner: all | scope: global | last-verified: 2026-08-03 -->
+<!-- owner: all | scope: global | last-verified: 2026-08-06 -->
 
 ## Snapshot
 
@@ -35,15 +35,16 @@ as the source of truth for it.
 
 Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
 
-- **PENDING (USER, BLOCKING):** republish **BOTH** Places — the entire A-phase promotion
-  (4 shared Meta configs, the reconciled multi-colour `TierConfig`, `GetUnitViews`) **plus A5,
-  A6 and A6b** (`UnitStatsCatalog` in both Places) is Studio canon and not in git. Live currently
-  runs the pre-promotion build. A PARTIAL publish breaks launches (`[CONTRACT]` version mismatch).
+- ~~PENDING (USER, BLOCKING): republish BOTH Places.~~ **DONE 2026-08-06 (user)** — both Places
+  republished together, so the whole A-phase (4 shared Meta configs, multi-colour `TierConfig`,
+  `GetUnitViews`, A5 UI, A6 `UnitStatsCatalog` + validator, A6b) is now LIVE. Live re-verification
+  of the **teleport v2 loop end-to-end** (lobby → reserved match → return → banner) is still an
+  open user action — v2 has only ever been Studio-verified; v1 was live-verified 2026-07-18.
 
 - **PENDING (A7 / AD-Integration — retire `GetCollection`):** ADR-0004 decided it. The remote has
   **zero callers of any kind**; delete the handler in `LobbyServices` AND the
-  `RS.Remotes.GetCollection` RemoteFunction, then re-verify every Lobby screen loads. Deliberately
-  sequenced **AFTER the user's republish** so that publish does not also carry a remote deletion.
+  `RS.Remotes.GetCollection` RemoteFunction, then re-verify every Lobby screen loads.
+  **UNBLOCKED 2026-08-06** — it was sequenced after the republish, which has now happened.
   Meanwhile: **no new readers may be built on `GetCollection`** — use `GetUnitViews`.
 
 - **PENDING (NEEDS SCHEDULING — two profile fields have no WRITER):**
@@ -75,14 +76,14 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
   Game receives `MatchLaunch` and returns `MatchReturn`. v2 (A2, 2026-08-01) = `Loadout` carries
   unit uuids; **hard cutover, no migration** — v1 is rejected with `[CONTRACT]`. Version lives in
   `LobbyConfig.MatchLaunchVersion` == `GameConfig.TeleportPayloadVersion` (must always be equal).
-  Verified in Studio both sides; both Places **published 2026-08-01** — live re-verification of
-  the v2 loop is the open user action (v1 was live-verified end-to-end 2026-07-18).
+  Verified in Studio both sides; both Places **republished together 2026-08-06**, so v2 is now the
+  LIVE build in both. **Live e2e re-verification of the v2 loop is still the open user action** —
+  publishing it is not the same as running it (v1 was live-verified end-to-end 2026-07-18).
 
 ## Current focus
 
-1. **USER: republish both Places** (A-phase promotion is Studio canon). Live is fine on the
-   previous build — the hotfix run was confirmed working — so this is not urgent, but nothing
-   from this session reaches players until it happens.
+1. **AD-UI: fill the Units `--` number slots** from `UnitStatsCatalog.Get` (unblocked; the last
+   piece of A6). Then the hotbar rebuild on the kit.
 2. ~~**A4 + A5 [AD-UI]**~~ **DONE 2026-08-03** — Units, Items and Collection screens all run on
    the kit + `GetUnitViews`; `UIKit.ItemIcon` + `UIKit.FilterPanel` added; templates consolidated
    into `RS.UITemplates.Kit`; `UnitCatalog` and `StarterGui.UITemplates` deleted. Details in

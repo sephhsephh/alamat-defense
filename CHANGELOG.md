@@ -1,5 +1,31 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-06 [user] BOTH Places republished — the A-phase is live; blocking PENDING cleared
+
+Bookkeeping entry (no code change). The **USER, BLOCKING** republish PENDING that had been open
+since 2026-08-01 is **CLEARED**: the user republished both Places together, so everything that
+was Studio-only canon is now the live build — the 4 shared Meta configs, the reconciled
+multi-colour `TierConfig`, `GetUnitViews` (+`Items`), the A5 UI (Items screen, FilterPanel,
+ItemIcon, rebuilt CollectionScreen, kit consolidated into `RS.UITemplates.Kit`), and A6/A6b
+(`UnitStatsCatalog` `3bb9b140` + the Game-side validator, compat fields dropped).
+
+Verified in the Lobby before clearing it (AD-UI, place-asserted):
+
+- Drift **GREEN 9/9**, `UnitStatsCatalog=3bb9b140` matching `shared/manifest.json`
+  (`deployed.Lobby` and `deployed.Game` both `3bb9b140`).
+- `LobbyServices`: `Towers = towers` and `Currency = currencies.Gold` **absent** (A6b's removal
+  really landed), `Items = items` **present** (kept per the A6b review).
+- `RS.Remotes.GetCollection` still **present** — correct: ADR-0004 sequences its deletion for A7.
+
+- **Still open (user):** live e2e re-verification of the **teleport v2 loop** (lobby → reserved
+  match → return → banner). Publishing v2 is not the same as running it; v2 has only ever been
+  Studio-verified, and only v1 was ever live-verified end-to-end (2026-07-18). Worth one run now
+  that both Places are on v2, since a `[CONTRACT]` mismatch would be a launch-blocker.
+- **Unblocked by this:** the A7 `GetCollection` retirement (ADR-0004) was deliberately sequenced
+  after the republish so that publish would not also carry a remote deletion.
+- **Next:** AD-UI fills the Units `--` number slots from `UnitStatsCatalog.Get` — the last piece
+  of A6. No Integration needed until A7.
+
 ## 2026-08-06 [lobby] A6b (AD-Lobby): UnitStatsCatalog deployed (drift 9/9), GetCollection compat fields deleted, GetCollection retirement decided (ADR-0004)
 
 Bootstrap drift **8/9 with `UnitStatsCatalog=MISSING`** exactly as A6 documented; all 8 other
