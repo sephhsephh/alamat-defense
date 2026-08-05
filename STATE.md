@@ -54,10 +54,12 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
     therefore shows every catalog item at count 0. Correct, but the screen is inert until an
     item economy exists.
 
-- **PENDING (AD-UI, UNBLOCKED 2026-08-06):** fill the A5 Units `--` number slots from
-  `UnitStatsCatalog.Get` (`StarterGui.UnitsGUI.UnitsController`,
-  `Stats.BaseStatsFrame.{DMG,RNG,SPA}`). The `Grade` labels beside them already work from the roll
-  and must keep working. Farm has **no DMG/SPA keys** — handle the nil, don't print "nil".
+- ~~PENDING (AD-UI): fill the Units `--` number slots.~~ **DONE 2026-08-06** — `UnitsController`
+  reads `UnitStatsCatalog.Get(view.TowerId)`; `formatStat` trims decimals and renders `--` for a
+  missing value (Farm's absent DMG/SPA, unknown towerId). Grades still render beside them.
+  **Known and intended:** the number is per-TOWER (mid-roll reference), so two instances of one
+  tower show equal numbers while their grades differ — ADR-0003's accepted trade, documented in
+  `docs/systems/lobby-ui.md`. Per-unit numbers would need the Min/Max ranges promoted too.
 
 - **PENDING (AD-PlayerLevel, small):** promote `TowerProgressionConfig` to shared so the Lobby can
   compute `XpPct` for a real XP bar. The unitView sends raw `XP` + `Level` only.
@@ -82,8 +84,8 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
 
 ## Current focus
 
-1. **AD-UI: fill the Units `--` number slots** from `UnitStatsCatalog.Get` (unblocked; the last
-   piece of A6). Then the hotbar rebuild on the kit.
+1. **A6 [AD-UI], Game place:** hotbar rebuild on the kit + `RewardPopup` + `CurrencyBar`
+   (blueprint §9 A6). The Lobby half of A6 is done — Units number slots landed 2026-08-06.
 2. ~~**A4 + A5 [AD-UI]**~~ **DONE 2026-08-03** — Units, Items and Collection screens all run on
    the kit + `GetUnitViews`; `UIKit.ItemIcon` + `UIKit.FilterPanel` added; templates consolidated
    into `RS.UITemplates.Kit`; `UnitCatalog` and `StarterGui.UITemplates` deleted. Details in

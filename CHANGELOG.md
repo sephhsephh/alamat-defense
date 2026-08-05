@@ -1,5 +1,46 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-06 [lobby] A6 (AD-UI): Units stat NUMBERS filled from UnitStatsCatalog — the `--` slots are gone
+
+Bootstrap drift **GREEN 9/9** (`UnitStatsCatalog=3bb9b140` matching the manifest, deployed by A6b),
+unchanged at landing — no shared module touched. Integration gate: **No Integration needed —
+proceeding** (Integration is A7).
+
+- **`UnitsController.fillStats` now reads `UnitStatsCatalog.Get(view.TowerId)`** and writes the
+  value into each `Stats.BaseStatsFrame.{DMG,RNG,SPA}` row's `TextLabel`, beside the existing
+  `Grade` letter. Closes the last Lobby-side piece of A6 (ADR-0003). The `NUMBER_PENDING = "--"`
+  constant is gone.
+- **`formatStat`** trims decimals (`15`, `20`, `1.4`, `2.5` — never `2.0`) and returns `--` for a
+  non-number, so a support tower or an unrecognised towerId **never prints "nil"**.
+- **Farm handled by construction:** it has no `DMG`/`SPA` keys at all, so `stats and stats.DMG`
+  yields nil → `--`. An unknown towerId makes `Get()` return nil and every slot reads `--`.
+
+**Verified live (Play, dev store, place-asserted reads):**
+
+- Auto-selected Necromancer rendered **DMG=28 (B), RNG=22 (C), SPA=1.1 (D)** — numbers match
+  `UnitStatsCatalog` exactly, grades still vary per unit alongside them.
+- Formatter checked against all 8 catalog entries: Archer 15/20/6, Knight 35/10/1.4, Mage 30/18/2,
+  **Farm --/18/--**, Babaylan 20/22/2.5, Meteor 30/24/1.4, Warchief 25/18/1, Necromancer 28/22/1.1.
+  Unknown id → `Get()` nil → `--`.
+- **Zero TextLabels anywhere in UnitsGUI render the string "nil".** Harness left OFF.
+- NOT verified: only the auto-selected unit was rendered — clicking through all 8 cards needs a
+  real mouse (`VirtualInputManager` is blocked for tooling). The towerId→stats lookup is the same
+  code path for every card.
+
+**Design note carried into the docs (not a bug):** the number is **per-TOWER, not per-unit**. Two
+instances of one tower show identical numbers while their grade letters differ, because the grade
+comes from the unit's roll and the number is fixed at the catalog's mid-roll reference. That is
+ADR-0003's accepted trade — per-unit numbers would require promoting the Min/Max ranges as well,
+which the ADR deliberately rejected. Recorded in `docs/systems/lobby-ui.md` so a future session
+does not "fix" it.
+
+- **Contract impact:** none — read-only consumer of an already-deployed shared module. No schema,
+  teleport, manifest or drift-surface change.
+- **PENDINGs:** the AD-UI number-slot PENDING is CLEARED. Remaining A6 work is the **hotbar rebuild
+  in the GAME place** + `RewardPopup` + `CurrencyBar` (blueprint §9). Unchanged: A7 `GetCollection`
+  retirement (ADR-0004, unblocked), no writer for `Data.Loadout` or `Data.Items`,
+  `TowerProgressionConfig` promotion, Game round-trip test, and the **live teleport v2 e2e run**.
+
 ## 2026-08-06 [user] BOTH Places republished — the A-phase is live; blocking PENDING cleared
 
 Bookkeeping entry (no code change). The **USER, BLOCKING** republish PENDING that had been open

@@ -92,11 +92,12 @@ catalog/configs, icon kit, session plan A1–A7). Phases B–F:
 - ✅ **Units screen on kit + view-model (Lobby; A4 2026-08-03, A5 filters 2026-08-03)** —
   uuid cards from `GetUnitViews`, shared multi-colour tier borders, per-stat GRADE letters in
   the designed `Grade` labels, real Level/XP, sort (equipped>favourited>tier>name), live search,
-  and the shared FilterPanel (tier + equipped/favourited/locked). Resolved stat NUMBERS: the
-  **AD-Game half is DONE (A6, 2026-08-03 — shared `UnitStatsCatalog` `3bb9b140` + load-bearing
-  validator, ADR-0003)** and the **Lobby DEPLOY is DONE (A6b, 2026-08-06 — drift 9/9)**;
-  🔲 AD-UI fills the `--` slots from `UnitStatsCatalog.Get` (unblocked). Real per-unit
-  models + functional action buttons still 🔲.
+  and the shared FilterPanel (tier + equipped/favourited/locked). ✅ **Resolved stat NUMBERS —
+  COMPLETE:** AD-Game's `UnitStatsCatalog` `3bb9b140` + validator (A6, 2026-08-03, ADR-0003),
+  Lobby deploy (A6b, 2026-08-06, drift 9/9), and **AD-UI filled the slots (2026-08-06)** —
+  `UnitStatsCatalog.Get`, decimals trimmed, `--` for Farm's absent DMG/SPA, never "nil".
+  Numbers are per-TOWER at the mid-roll reference, not per-unit (ADR-0003's accepted trade).
+  Real per-unit models + functional action buttons still 🔲.
 - ✅ **Items screen on kit (Lobby, A5 2026-08-03)** — `UIKit.ItemIcon` cards (flat ImageLabel,
   no viewport), QtyBadge, tier borders, hover card, selected panel, search + FilterPanel
   (tier/kind/owned-only). Counts come from `GetUnitViews.Items`. 🔲 blocked on there being an

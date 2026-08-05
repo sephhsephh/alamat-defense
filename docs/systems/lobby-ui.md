@@ -57,10 +57,21 @@ silently kept an old footprint this way until it was caught.
   `UnitModels.Placeholder` (real models later). Action buttons still **animation-only**.
   **A5:** stat rows are dual-slot — the user added a `Grade` TextLabel to each of
   `Stats.BaseStatsFrame.{DMG,RNG,SPA}`, so the GRADE letter renders in `Grade` and the NUMBER
-  slot (`TextLabel`) shows `--` until A6 supplies real values (it used to show a stale `99.9k`).
-  Rows WITHOUT a `Grade` child (the hover preview's Attack/Element/MaxPlacement) keep the old
-  behaviour and show the letter in their single label. FILTERS button → shared `UIKit.FilterPanel`
-  (tier + equipped/favourited/locked).
+  slot (`TextLabel`) carries the value. Rows WITHOUT a `Grade` child (the hover preview's
+  Attack/Element/MaxPlacement) keep the old behaviour and show the letter in their single label.
+  FILTERS button → shared `UIKit.FilterPanel` (tier + equipped/favourited/locked).
+  **A6 (2026-08-06):** the number slot is now filled from the shared `UnitStatsCatalog.Get(towerId)`
+  (ADR-0003) — resolver-PRODUCED base values, SPA already inverted, not raw `BaseStats`.
+  `formatStat` trims decimals (`15`, `1.4`, `2.5`) and renders `--` for a missing value, so a
+  support tower (Farm has no DMG/SPA keys) or an unknown towerId **never prints "nil"**.
+
+  **Read this before "fixing" a bug report:** the number is **per-TOWER, not per-unit**. Two
+  instances of the same tower show the SAME number while their GRADE letters differ — the grade
+  comes from that unit's roll, the number is fixed at the catalog's mid-roll reference (tier 1 /
+  ML 1 / no trait / asc 0). That is the sanctioned ADR-0003 trade: the Lobby cannot resolve a
+  per-unit number without the ~12-module full stat stack. It reads correctly because the panel is
+  titled *BaseStatsFrame*, but it is a real thing players may query. Per-unit numbers would need
+  the Min/Max ranges promoted too, which ADR-0003 deliberately rejected.
 - **Items screen** (`StarterGui.ItemsGUI.ItemsController`, A5) — opens from **HUD.Inventory**.
   Chrome cloned from the Units screen so the design matches. The LIST is every `ItemCatalog`
   entry with `Kind = "Item"|"Currency"` (a compendium of what exists); the COUNTS come from
