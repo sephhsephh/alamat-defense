@@ -270,14 +270,14 @@
     },
     "UIKitHotbar": {
       "file": "shared/src/UIKitHotbar.luau",
-      "hash": "9d8d4b19",
+      "hash": "be2873bb",
       "owner": "ui",
       "deployPath": "ReplicatedStorage.Shared.UIKit.Hotbar",
       "deployed": {
-        "Game": "9d8d4b19",
-        "Lobby": "9d8d4b19"
+        "Game": "be2873bb",
+        "Lobby": "be2873bb"
       },
-      "comment": "Kit CONTROLLER. ONE hotbar for BOTH Places so they look and feel identical (user rule 2026-08-06): same slot design, hover, press animation and locked/empty states. Each Place supplies only OnActivated -- Lobby opens the Units screen on that unit, Game starts placement. Always draws LoadoutConfig.MaxSlots slots; a slot is never hidden, only filled/empty/locked. GAME DEPLOY PENDING alongside Kit_HotbarSlot.",
+      "comment": "Kit CONTROLLER. ONE hotbar for BOTH Places so they look and feel identical (user rule 2026-08-06): same slot design, hover, press animation and locked/empty states. Each Place supplies only OnActivated -- Lobby opens the Units screen on that unit, Game starts placement. Always draws LoadoutConfig.MaxSlots slots; a slot is never hidden, only filled/empty/locked. GAME DEPLOY PENDING alongside Kit_HotbarSlot. 2026-08-06 fix: paint BG's OWN UIGradient from the tier too -- only the stroke's gradient was being set, so the slot background stayed at the template's authored red for every unit. BG's gradient and the stroke's gradient are DIFFERENT instances; do not merge the lookups.",
       "kind": "module"
     }
   },

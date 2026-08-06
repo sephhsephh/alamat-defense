@@ -1,5 +1,31 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-06 [integration] Hotbar slot BACKGROUND now follows the unit's tier (was stuck red)
+
+User-reported: every hotbar slot's background gradient stayed reddish regardless of which unit sat
+in it. Correct — `UIKit.Hotbar.paint()` only ever set the **stroke's** gradient, so `BG`'s own
+`UIGradient` kept the colour authored on the template.
+
+- **Root cause, worth remembering:** a slot has **TWO different `UIGradient` instances** —
+  `BG.UIGradient` (the background) and `BG.UIStrokeWithGradient.UIGradient` (the border). Setting
+  only the second leaves the first frozen at whatever the designer painted. Confirmed in Studio
+  that they are genuinely separate instances (`bgGrad == strokeGrad` is **false**).
+- Both are now driven from one `tierSeq`, so border and background always agree. Empty and locked
+  slots get a neutral grey instead of a stale tier colour.
+- The lookup deliberately uses `BG:FindFirstChildOfClass("UIGradient")` — **not** a recursive find,
+  which would return the stroke's gradient and make the two fight over one instance. Commented in
+  the module so it does not get "simplified" later.
+- `UIKitHotbar` `9d8d4b19` → **`be2873bb`**, deployed to BOTH Places as a targeted diff (not a
+  re-emit), hashes verified equal on both sides. Drift **24/24 GREEN**.
+
+**Verified live (Play, Lobby):** equipped three units of deliberately different tiers and read the
+actual gradient keypoints back — Archer/Common `(205,205,215)`, Mage/Rare `(55,130,255)`,
+Necromancer/Mythic `(255,60,60)`, each **exactly** matching `TierConfig` for that tier; empty slots
+`(70,66,82)`. **4 distinct colours across 6 slots** (1 would have meant still stuck).
+
+- **Contract impact:** none — shared-module value change only, both Places redeployed together.
+- **PENDINGs:** none new. Both Places need republishing.
+
 ## 2026-08-06 [game] Game hotbar now IS the Lobby's ScreenGui (user-copied), driven by the shared kit
 
 The user copied `StarterGui.Hotbar` wholesale from the Lobby into the Game place, so both Places

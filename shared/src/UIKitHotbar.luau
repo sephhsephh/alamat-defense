@@ -141,6 +141,7 @@ function Hotbar.attach(container: GuiObject, opts: { [string]: any })
 		local vf = btn:FindFirstChildWhichIsA("ViewportFrame", true)
 		local trait = btn:FindFirstChild("TraitIcon", true)
 		local stroke = btn:FindFirstChild("UIStrokeWithGradient", true)
+		local bg = btn:FindFirstChild("BG", true)
 
 		local towerId = entry and entry.TowerId or nil
 		if vf then showModel(vf, opts.ModelSource, unlocked and towerId or nil) end
@@ -149,14 +150,28 @@ function Hotbar.attach(container: GuiObject, opts: { [string]: any })
 		if trait and trait:IsA("GuiObject") then
 			trait.Visible = (entry ~= nil) and unlocked and (entry.Trait ~= nil and entry.Trait ~= "None")
 		end
+
+		local showTier = (entry ~= nil) and unlocked
+		local tierSeq = showTier
+			and TierConfig.seamlessSequence(entry.Tier or ItemCatalog.GetTier(entry.TowerId))
+			or nil
+
+		-- BORDER (the stroke's gradient).
 		if stroke and stroke:IsA("UIStroke") then
 			local g = stroke:FindFirstChildOfClass("UIGradient")
 			if not g then g = Instance.new("UIGradient"); g.Parent = stroke end
-			if entry and unlocked then
-				local tier = entry.Tier or ItemCatalog.GetTier(entry.TowerId)
-				g.Color = TierConfig.seamlessSequence(tier)
-			else
-				g.Color = ColorSequence.new(Color3.fromRGB(90, 84, 104))
+			g.Color = tierSeq or ColorSequence.new(Color3.fromRGB(90, 84, 104))
+		end
+
+		-- BACKGROUND (BG's OWN gradient). This is a DIFFERENT UIGradient from the stroke's, and
+		-- forgetting it is why the slot background sat at the template's authored colour (a red)
+		-- no matter which unit was in it. FindFirstChildOfClass on BG returns BG's own gradient,
+		-- NOT the one nested under BG.UIStrokeWithGradient -- do not "simplify" this to a
+		-- recursive find or the border and background will fight over the same instance.
+		if bg then
+			local bgGrad = bg:FindFirstChildOfClass("UIGradient")
+			if bgGrad then
+				bgGrad.Color = tierSeq or ColorSequence.new(Color3.fromRGB(70, 66, 82))
 			end
 		end
 	end
