@@ -202,6 +202,9 @@ local MODULES = {
 	-- A6 2026-08-06: reward-reveal popup. No caller yet by design -- match-end keeps its own
 	-- list; this exists for Phase B gacha and is smoke-tested rather than wired.
 	UIKitRewardPopup = "ReplicatedStorage.Shared.UIKit.RewardPopup",
+	-- 2026-08-06: hotbar slot count + per-slot unlock levels. BOTH Places draw the same 6 slots
+	-- and the same locks, so this cannot be Place-local.
+	LoadoutConfig = "ReplicatedStorage.Configs.Meta.LoadoutConfig",
 }
 
 -- GuiObject subtrees. Promoted by AD-UI 2026-08-06; a Place that has not received the kit
@@ -218,6 +221,9 @@ local TEMPLATES = {
 	-- and hash-matched, rather than copied.
 	Kit_UnitIcon = "ReplicatedStorage.UITemplates.Kit.UnitIcon",
 	Kit_RewardPopup = "ReplicatedStorage.UITemplates.Kit.RewardPopup",
+	-- The USER'S OWN hotbar slot design, lifted from the Lobby (their design is the source of
+	-- truth) so BOTH Places draw the identical slot. Game deploy PENDING until it is copied.
+	Kit_HotbarSlot = "ReplicatedStorage.UITemplates.Kit.HotbarSlot",
 }
 
 local out = {}

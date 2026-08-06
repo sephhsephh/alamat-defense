@@ -1,5 +1,50 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-06 [lobby] EQUIPPING EXISTS — `Data.Loadout` finally has a writer; shared slot template + unlock config
+
+New feature, NOT in the Phase A blueprint. User asked for a matching hotbar in both Places with
+different actions, plus real equipping; they chose to do it before A7 and authorised AD-UI to write
+the AD-Lobby server half. **This is a checkpoint — the two hotbar controllers are NOT built yet.**
+
+- **`Server.Lobby.LoadoutService` — the FIRST EVER writer of `Data.Loadout`.** Since A1 the field
+  was created empty by the template, set empty by the migration, and read by everyone: which is
+  precisely why `Equipped` was permanently `false` and every launch fell back to auto-loadout.
+  `SetLoadoutSlot(slotIndex, uuid?)` re-checks everything server-side — profile loaded, slot within
+  `MaxSlots`, slot unlocked at the player's CURRENT level, uuid actually owned, no duplicate (moving
+  a unit vacates its old slot). AD-Lobby canon, written by AD-UI with the user's authorisation.
+- **CAUGHT BEFORE SHIPPING — a silent contract break.** The first draft stored slots as a
+  fixed-length array with `false` for empty. `Data.Loadout` is a **schema-v2 contract field
+  documented as `{ string }`** (a dense uuid list) and **the Game's match launcher reads it**, so
+  writing `false` into it could have broken starting a match — live. Rewritten to only ever write a
+  dense uuid list, with a header explaining why and saying "do NOT just write false into the array".
+  **Consequence, accepted by the user:** slots fill LEFT TO RIGHT, no gaps. True fixed positions
+  need a schema bump + migration under AD-Game's contract protocol — logged, not smuggled in.
+- **`LoadoutConfig` `5ac9b8c0`** (new shared module, 15th): `MaxSlots = 6`,
+  `SlotUnlockLevel = {1,1,1,5,20,50}`, plus `UnlockedSlots` / `IsSlotUnlocked` / `RequiredLevel`.
+  SHARED because both Places must agree on how many slots exist — a Place-local copy is exactly how
+  two hotbars end up disagreeing. Deployed to BOTH Places, verified Lv1→3, Lv5→4, Lv20→5, Lv50→6.
+- **`Kit_HotbarSlot` `8c562d59`** — the **user's own Lobby slot design**, lifted into the kit so
+  both Places draw an identical slot (their design is the source of truth, per their instruction).
+  Added `LockOverlay` (dark + lock icon + "Lv N") and `SlotNumber`. **Lobby only so far — the Game
+  deploy is the user's copy/paste step**, which is why its `deployed.Game` is `null`.
+- **Fixed a live bug found on the way:** all 6 Lobby hotbar slots still contained
+  `Unit/ItemIconTemplateLocalScript`, the script with the `ocal Preview` typo on line 30. It was
+  removed from the kit template at A5 but never from the live slots, so it had been throwing 6×
+  on every Lobby load ever since. **8 stale scripts stripped.**
+
+**Verified live (Play, Lobby, real remote calls — not `execute_luau` module reads):**
+equip slot 1 → ok, 1 equipped · equip slot 2 → ok, 2 equipped · re-equip the SAME unit into another
+slot → **moves it, 0 duplicates** · unowned uuid → `not_owned` · slot 99 → `bad_slot` · slot 4 at
+level 1 → `slot_locked` (need Lv5, have 1) · clear → ok ·
+**`GetUnitViews` now reports `Equipped=true` (Farm, Knight) — the first time that flag has ever
+been true in this project.**
+
+- **Contract impact:** none — `Data.Loadout` keeps its documented `{ string }` shape. Drift surface
+  21 → 23 entries (15 modules + 8 templates).
+- **PENDINGs:** `Kit_HotbarSlot` needs the user's copy into the Game place. Then the shared
+  `UIKit.Hotbar` controller + wiring both Places (Lobby: open Units with that unit selected;
+  Game: start placement). The long-standing "`Data.Loadout` has no writer" PENDING is **CLEARED**.
+
 ## 2026-08-06 [integration] A6 COMPLETE — RewardPopup (shared) + CurrencyBar (Lobby-local); drift 21/21
 
 Blueprint §9 A6's last two items, finishing the phase. Drift **21/21 GREEN in BOTH Places** at

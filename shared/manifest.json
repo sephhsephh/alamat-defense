@@ -244,6 +244,29 @@
       },
       "comment": "Kit TEMPLATE (dark Overlay + Panel with Title/Subtitle + Grid + RewardItemTemplate + CloseButton, blueprint section 5). Built by one identical deterministic script run in BOTH Places and hash-matched. A6 2026-08-06.",
       "kind": "template"
+    },
+    "LoadoutConfig": {
+      "file": "shared/src/LoadoutConfig.luau",
+      "hash": "5ac9b8c0",
+      "owner": "lobby",
+      "deployPath": "ReplicatedStorage.Configs.Meta.LoadoutConfig",
+      "deployed": {
+        "Game": "5ac9b8c0",
+        "Lobby": "5ac9b8c0"
+      },
+      "comment": "Hotbar slot count (6) + per-slot account-level unlocks {1,1,1,5,20,50} + helpers. SHARED because both Places draw the same 6 slots and the same locks -- if only one knew, the two hotbars would disagree. Written by AD-UI 2026-08-06 with the user's authorisation; owner is AD-Lobby (it gates a profile write). Verified Lv1->3 slots, Lv5->4, Lv20->5, Lv50->6.",
+      "kind": "module"
+    },
+    "Kit_HotbarSlot": {
+      "hash": "8c562d59",
+      "owner": "ui",
+      "deployPath": "ReplicatedStorage.UITemplates.Kit.HotbarSlot",
+      "deployed": {
+        "Game": null,
+        "Lobby": "8c562d59"
+      },
+      "comment": "Kit TEMPLATE: the USER'S OWN hotbar slot design, lifted from the Lobby's Slot1 so BOTH Places draw an identical slot (user rule 2026-08-06: same look, different action). Adds LockOverlay (dark + lock icon + 'Lv N') and SlotNumber; the broken legacy per-slot script was stripped. GAME DEPLOY PENDING -- the user copy/pastes it, then hashes must match.",
+      "kind": "template"
     }
   },
   "templatesNote": "Templates are under drift control since 2026-08-06 (ADR-0005). They have NO shared/src file: the Instance is the canon. Two safe ways to get one into another Place: COPY it (Studio copy/paste) and prove equality by hash, OR build it with an identical DETERMINISTIC script run in both Places and hash-match (used for Kit_UnitIcon). Never rebuild by hand/by eye. See tools/checklists.md."

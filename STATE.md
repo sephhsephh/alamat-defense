@@ -73,12 +73,22 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
   **UNBLOCKED 2026-08-06** — it was sequenced after the republish, which has now happened.
   Meanwhile: **no new readers may be built on `GetCollection`** — use `GetUnitViews`.
 
-- **PENDING (NEEDS SCHEDULING — two profile fields have no WRITER):**
-  - `Data.Loadout` — nothing ever writes it, so `Equipped` is always false and launches always
-    fall through to auto-loadout (top 6 by MetaLevel). Needs a loadout picker UI.
-  - `Data.Items` — nothing writes it either (no drop/grant/shop path). The A5 Items screen
-    therefore shows every catalog item at count 0. Correct, but the screen is inert until an
-    item economy exists.
+- ~~PENDING: `Data.Loadout` has no writer.~~ **CLEARED 2026-08-06** — `Server.Lobby.LoadoutService`
+  (`SetLoadoutSlot`) is the first writer; `Equipped` is now really true for equipped units.
+  **Slots fill LEFT TO RIGHT with no gaps** — `Data.Loadout` is a schema-v2 `{ string }` contract
+  field the match launcher reads, so it must stay a dense list. Fixed slot positions (leave slot 1
+  empty, keep a unit in slot 3) need a **schema bump + migration under AD-Game's contract
+  protocol** — deliberately deferred, not smuggled in.
+
+- **PENDING (AD-UI — finish the shared hotbar):** `Kit_HotbarSlot` `8c562d59` is Lobby-only;
+  **the user copy/pastes it into the Game place** (`deployed.Game` is `null` until then). Then build
+  the shared `UIKit.Hotbar` controller — always 6 slots, states filled/empty/locked, identical look
+  and hover in both Places — and wire the two actions: **Lobby** click/key 1-6 opens the Units
+  screen with that unit selected (empty slot opens it unselected); **Game** click/key starts
+  placement mode.
+
+- **PENDING (NEEDS SCHEDULING):** `Data.Items` has no writer (no drop/grant/shop path), so the A5
+  Items screen shows every catalog item at count 0. Correct, but inert until an item economy exists.
 
 - **NOT a bug, do not "fix" it:** the Units screen's stat NUMBERS are per-TOWER (the catalog's
   mid-roll reference), so two instances of one tower show equal numbers while their GRADE letters
@@ -108,8 +118,10 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
 
 ## Current focus
 
-1. **A7 [AD-Integration]** — Phase A is otherwise DONE. Full-phase acceptance (blueprint §8) +
-   retire `GetCollection` (ADR-0004, zero callers, unblocked). ~~A1–A6~~ all landed.
+1. **Finish the shared hotbar [AD-UI]** — user's copy of `Kit_HotbarSlot` into the Game place,
+   then the shared `UIKit.Hotbar` controller + both wirings. Equipping already works.
+2. **A7 [AD-Integration]** — Phase A acceptance (blueprint §8) + retire `GetCollection` (ADR-0004).
+   The user chose to do the hotbar/equipping FIRST, so A7 now signs off a slightly bigger surface.
 2. **A7 [AD-Integration]:** full Phase A acceptance (blueprint §8) + retire `GetCollection`
    (ADR-0004, zero callers, already unblocked).
 3. **USER:** run the teleport v2 loop live once — published is not the same as verified.
