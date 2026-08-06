@@ -35,6 +35,9 @@
   `GetCollection` is dead code, retirement ACCEPTED and scheduled for A7 (AD-Lobby, 2026-08-06)
 
 ## proposals/
+- `2026-08-06-kit-promotion-blocks-a6.md` — AD-UI→AD-Integration: A6's Game hotbar needs the kit,
+  which is Lobby-only, and `hash_shared.luau` cannot hash GuiObject templates (only ModuleScripts).
+  **DECIDED: extend the tooling first.** BLOCKS A6's Game half.
 - `2026-08-03-drop-getcollection-compat.md` — AD-UI→AD-Lobby: delete the now-unread
   `Towers`/`Currency` compat fields from `GetCollection`, and review the `Items` field AD-UI
   added to `GetUnitViews` (user-authorised edit to AD-Lobby canon). OPEN.

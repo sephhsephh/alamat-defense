@@ -41,6 +41,22 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
   of the **teleport v2 loop end-to-end** (lobby → reserved match → return → banner) is still an
   open user action — v2 has only ever been Studio-verified; v1 was live-verified 2026-07-18.
 
+- **PENDING (AD-Integration, BLOCKING A6's Game half — hash instance trees):** `tools/hash_shared.luau`
+  hashes `inst.Source` and returns `MISSING` for anything that is not a `LuaSourceContainer`, so the
+  UI kit's **GuiObject templates cannot be drift-checked** — only its ModuleScript controllers can.
+  Copying templates into the Game place would create an invisible divergence surface (this already
+  bit once at A5: `ItemsGUI.HoverPreview` silently kept a stale size). **User decided 2026-08-06
+  (option B):** extend the tooling to serialise + hash a GuiObject subtree (canonical: sorted
+  children, sorted whitelisted properties) so templates become real manifest entries; document the
+  format in an ADR. THEN AD-UI promotes the kit and only THEN can A6's Game half run.
+  Full analysis: `docs/proposals/2026-08-06-kit-promotion-blocks-a6.md`.
+
+- **PENDING (AD-UI, blocked on the above):** promote the UI kit — controllers
+  (`UIKit.{Button,ItemIcon,FilterPanel}`) **and** templates (`RS.UITemplates.Kit.*`) — into
+  `shared/src` + `manifest.json`, deploy to both Places. Then blueprint §9 A6's Game half: hotbar
+  rebuild on the kit + `RewardPopup` + `CurrencyBar`. The kit is currently **Lobby-only**;
+  `RS.UITemplates.Kit`, `RS.Shared.UIKit` and `UIKitBootstrap` are all ABSENT in the Game place.
+
 - **PENDING (A7 / AD-Integration — retire `GetCollection`):** ADR-0004 decided it. The remote has
   **zero callers of any kind**; delete the handler in `LobbyServices` AND the
   `RS.Remotes.GetCollection` RemoteFunction, then re-verify every Lobby screen loads.
@@ -84,8 +100,9 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
 
 ## Current focus
 
-1. **A6 [AD-UI], Game place:** hotbar rebuild on the kit + `RewardPopup` + `CurrencyBar`
-   (blueprint §9 A6). The Lobby half of A6 is done — Units number slots landed 2026-08-06.
+1. **AD-Integration: teach `tools/hash_shared.luau` to hash instance trees** — BLOCKS everything
+   below it. Then AD-UI promotes the kit, then A6's Game half (hotbar + `RewardPopup` +
+   `CurrencyBar`) can finally run. A6's Lobby half is done (Units number slots, 2026-08-06).
 2. ~~**A4 + A5 [AD-UI]**~~ **DONE 2026-08-03** — Units, Items and Collection screens all run on
    the kit + `GetUnitViews`; `UIKit.ItemIcon` + `UIKit.FilterPanel` added; templates consolidated
    into `RS.UITemplates.Kit`; `UnitCatalog` and `StarterGui.UITemplates` deleted. Details in

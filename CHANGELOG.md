@@ -1,5 +1,43 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-06 [game] A6 Game half BLOCKED — the kit is Lobby-only and the drift tooling cannot hash templates (no code written)
+
+AD-UI bootstrapped into the **Game place** for the first time (place-asserted via
+`RS.Configs.Towers` + `SSS.Server.MatchDirector`). Drift **GREEN 9/9** at bootstrap and unchanged
+at landing — **nothing was written to the Game place.** Integration gate: **Run an AD-Integration
+session BEFORE this task** (see below).
+
+**The blocker.** Blueprint §9 A6 says "hotbar rebuild **on kit** in GAME place", but verified in
+Studio: `ReplicatedStorage.UITemplates.Kit` **ABSENT**, `ReplicatedStorage.Shared.UIKit` **ABSENT**,
+`StarterPlayerScripts.UIKitBootstrap` **ABSENT**. The kit is Lobby-only (built at A4/A5); the Game
+place's UI is entirely Place-local and script-era (`Hotbar.SlotTemplate`, `MatchEnd.RewardRowTemplate`,
+`Notifications.CardTemplate`, ...). Blueprint §9 **A7** is the step that promotes the kit to
+`shared/src` — **so A6 depends on A7** and the session plan's ordering cannot be executed as written.
+
+**The deeper problem.** `tools/hash_shared.luau` hashes `inst.Source` and returns `MISSING` for
+anything that is not a `LuaSourceContainer`. The kit is half ModuleScript controllers (hashable —
+`Button`, `ItemIcon`, `FilterPanel`) and half **GuiObject templates** (`Kit.Button`, `Kit.ItemIcon`,
+`Kit.ItemHoverCard`, `Kit.FilterPanel`, `Kit.UnitPreviewTemplate` — NOT hashable). Copying templates
+into the Game place would create a divergence surface **invisible to the drift check** — the exact
+failure class this repo exists to prevent, and one that already bit once at A5 (`ItemsGUI.HoverPreview`
+silently kept a stale size after its template was resized; caught only by manual comparison). The
+no-UI-in-scripts rule means it cannot be dodged by generating templates from code either.
+
+- **DECISION (user, this session): option B — fix the tooling FIRST.** Extend `hash_shared.luau` to
+  serialise + hash GuiObject subtrees so templates become first-class manifest entries; document the
+  canonical format in an ADR. The hand-mirrored shortcut was explicitly rejected. Rationale accepted:
+  `RewardPopup`, `CurrencyBar`, `UnitHoverCard`, `ViewportPreview` and `NPCPrompt` are all still
+  unbuilt and all carry the same problem, so the mechanism is worth fixing once.
+- **Sequencing:** AD-Integration (tooling) → AD-UI (promote kit, both halves) → AD-UI (A6 Game half).
+- **Contract impact:** none. No code, no shared-module, no manifest change. Drift untouched 9/9.
+- **PENDINGs:** TWO new — AD-Integration (hash instance trees, blocking) and AD-UI (promote the kit,
+  blocked on it). Analysis in `docs/proposals/2026-08-06-kit-promotion-blocks-a6.md`.
+- **Doc staleness spotted (not mine to edit — AD-Game's canon):** `places/game/CONTEXT.md` is
+  `last-verified: 2026-08-01` and now wrong in three places — it still lists the USER publish as
+  BLOCKING (done 2026-08-06), still says the Lobby's `StarterChoiceService` writes `0.5` (fixed
+  2026-08-03), and still says `UnitStatsCatalog` is "Game-deployed only until the Lobby deploys it"
+  (the Lobby deployed it at A6b). Worth a pass by AD-Game or the next Integration session.
+
 ## 2026-08-06 [lobby] A6 (AD-UI): Units stat NUMBERS filled from UnitStatsCatalog — the `--` slots are gone
 
 Bootstrap drift **GREEN 9/9** (`UnitStatsCatalog=3bb9b140` matching the manifest, deployed by A6b),
