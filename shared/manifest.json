@@ -186,7 +186,7 @@
         "Game": "0c9d7818",
         "Lobby": "0c9d7818"
       },
-      "comment": "Kit TEMPLATE (item hover panel: ItemName/TierName/IconImage/Description/OwnedLabel). No shared/src file exists -- the INSTANCE is the canon (ADR-0005); copy it between Places and verify by hash, never rebuild by hand. Promoted 2026-08-06.",
+      "comment": "Kit TEMPLATE (item hover panel: ItemName/TierName/IconImage/Description/OwnedLabel). No shared/src file exists -- the INSTANCE is the canon (ADR-0005); copy it between Places and verify by hash, never rebuild by hand. Promoted 2026-08-06. STATUS 2026-08-06: no RUNTIME lookup. ItemsGUI.HoverPreview is a CLONE taken once at build time, so editing this master does NOT update the deployed screen -- re-clone or edit both. This master/clone split is a known sharp edge of template canon (it already caused a stale-size bug at A5).",
       "kind": "template"
     },
     "Kit_FilterPanel": {
@@ -208,7 +208,7 @@
         "Game": "55e17da8",
         "Lobby": "55e17da8"
       },
-      "comment": "Kit TEMPLATE (unit hover panel (its ViewportFrame 3D contents are NOT hashed -- ADR-0005)). No shared/src file exists -- the INSTANCE is the canon (ADR-0005); copy it between Places and verify by hash, never rebuild by hand. Promoted 2026-08-06.",
+      "comment": "Kit TEMPLATE (unit hover panel (its ViewportFrame 3D contents are NOT hashed -- ADR-0005)). No shared/src file exists -- the INSTANCE is the canon (ADR-0005); copy it between Places and verify by hash, never rebuild by hand. Promoted 2026-08-06. STATUS 2026-08-06: now has a real consumer again -- UIKitHotbar clones it for the hover preview in BOTH Places. NOTE it has no UnitLevelBar (the Lobby's separate UnitsGUI.HoverPreview does), so the hotbar preview shows name/tier/stats but NOT level; add one to this template if level is wanted there.",
       "kind": "template"
     },
     "Kit_UnitIcon": {
@@ -219,7 +219,7 @@
         "Game": "24281a2b",
         "Lobby": "24281a2b"
       },
-      "comment": "Kit TEMPLATE (the blueprint section 5 UnitIcon: ViewportFrame + BG/tier border + TraitIcon + LevelBadge + CostLabel + NameLabel + ShinyBadge, plus KeyLabel/CountLabel that default HIDDEN for the hotbar). A6 2026-08-06: renamed from the A5 leftover 'Unit/ItemIconTemplate' (which had zero readers) and put to work as the Game hotbar slot. Built by running one IDENTICAL deterministic script in BOTH Places and hash-matching the result -- the base tree was verified identical (be620746) first. ViewportFrame 3D contents are not hashed (ADR-0005).",
+      "comment": "Kit TEMPLATE (the blueprint section 5 UnitIcon: ViewportFrame + BG/tier border + TraitIcon + LevelBadge + CostLabel + NameLabel + ShinyBadge, plus KeyLabel/CountLabel that default HIDDEN for the hotbar). A6 2026-08-06: renamed from the A5 leftover 'Unit/ItemIconTemplate' (which had zero readers) and put to work as the Game hotbar slot. Built by running one IDENTICAL deterministic script in BOTH Places and hash-matching the result -- the base tree was verified identical (be620746) first. ViewportFrame 3D contents are not hashed (ADR-0005). STATUS 2026-08-06: NO CONSUMER. The Game hotbar used it until the hotbar moved to Kit_HotbarSlot; the only remaining mention is the disabled Hotbar_RETIRED script. KEPT deliberately -- it is the blueprint section 5 UnitIcon and carries a rig, and 'obviously dead' things in this project have twice turned out to be worth keeping. Do not delete without asking.",
       "kind": "template"
     },
     "UIKitRewardPopup": {
@@ -270,14 +270,14 @@
     },
     "UIKitHotbar": {
       "file": "shared/src/UIKitHotbar.luau",
-      "hash": "be2873bb",
+      "hash": "616b06bf",
       "owner": "ui",
       "deployPath": "ReplicatedStorage.Shared.UIKit.Hotbar",
       "deployed": {
-        "Game": "be2873bb",
-        "Lobby": "be2873bb"
+        "Game": "616b06bf",
+        "Lobby": "616b06bf"
       },
-      "comment": "Kit CONTROLLER. ONE hotbar for BOTH Places so they look and feel identical (user rule 2026-08-06): same slot design, hover, press animation and locked/empty states. Each Place supplies only OnActivated -- Lobby opens the Units screen on that unit, Game starts placement. Always draws LoadoutConfig.MaxSlots slots; a slot is never hidden, only filled/empty/locked. GAME DEPLOY PENDING alongside Kit_HotbarSlot. 2026-08-06 fix: paint BG's OWN UIGradient from the tier too -- only the stroke's gradient was being set, so the slot background stayed at the template's authored red for every unit. BG's gradient and the stroke's gradient are DIFFERENT instances; do not merge the lookups.",
+      "comment": "Kit CONTROLLER. ONE hotbar for BOTH Places so they look and feel identical (user rule 2026-08-06): same slot design, hover, press animation and locked/empty states. Each Place supplies only OnActivated -- Lobby opens the Units screen on that unit, Game starts placement. Always draws LoadoutConfig.MaxSlots slots; a slot is never hidden, only filled/empty/locked. GAME DEPLOY PENDING alongside Kit_HotbarSlot. 2026-08-06 fix: paint BG's OWN UIGradient from the tier too -- only the stroke's gradient was being set, so the slot background stayed at the template's authored red for every unit. BG's gradient and the stroke's gradient are DIFFERENT instances; do not merge the lookups. 2026-08-06: hover preview RESTORED (the first version of this controller dropped the popup the Lobby hotbar used to have). It clones the shared Kit.UnitPreviewTemplate, so both Places pop the same card. Only shown for a FILLED, UNLOCKED slot.",
       "kind": "module"
     }
   },

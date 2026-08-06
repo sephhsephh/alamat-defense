@@ -43,13 +43,21 @@ local TEMPLATE_PATHS = {
 	{ "ReplicatedStorage", "Shared", "UIKit", "Templates", "HotbarSlot" },
 }
 
+-- Hover preview. Uses the SHARED `Kit.UnitPreviewTemplate`, so both Places pop the same card and
+-- editing that one template restyles both. Optional: if it is missing, hover still scales/glows
+-- and the preview is simply skipped.
+local PREVIEW_TEMPLATE_PATHS = {
+	{ "ReplicatedStorage", "UITemplates", "Kit", "UnitPreviewTemplate" },
+	{ "ReplicatedStorage", "Shared", "UIKit", "Templates", "UnitPreviewTemplate" },
+}
+
 local KEY_FOR_SLOT = {
 	[Enum.KeyCode.One] = 1, [Enum.KeyCode.Two] = 2, [Enum.KeyCode.Three] = 3,
 	[Enum.KeyCode.Four] = 4, [Enum.KeyCode.Five] = 5, [Enum.KeyCode.Six] = 6,
 }
 
-local function resolveTemplate(): GuiObject?
-	for _, path in ipairs(TEMPLATE_PATHS) do
+local function resolveFrom(paths: { { string } }): GuiObject?
+	for _, path in ipairs(paths) do
 		local node: Instance? = game
 		for _, seg in ipairs(path) do
 			node = node and node:FindFirstChild(seg)
@@ -57,6 +65,10 @@ local function resolveTemplate(): GuiObject?
 		if node and node:IsA("GuiObject") then return node end
 	end
 	return nil
+end
+
+local function resolveTemplate(): GuiObject?
+	return resolveFrom(TEMPLATE_PATHS)
 end
 
 local function setText(root: Instance, name: string, value: string)
@@ -109,6 +121,83 @@ function Hotbar.attach(container: GuiObject, opts: { [string]: any })
 	local slots: { any } = {}
 	local entries: { [number]: any } = {}
 	local playerLevel = 1
+
+	-- ===== Hover preview (restored 2026-08-06) =====
+	-- The Lobby hotbar used to pop a unit card on hover and the first version of this shared
+	-- controller dropped it. It lives here now so BOTH Places get it from one place.
+	local screen = container:FindFirstAncestorWhichIsA("ScreenGui")
+	local previewTemplate = resolveFrom(PREVIEW_TEMPLATE_PATHS)
+	local preview: GuiObject? = nil
+	if previewTemplate and screen then
+		preview = previewTemplate:Clone()
+		;(preview :: GuiObject).Name = "HotbarHoverPreview"
+		;(preview :: GuiObject).Visible = false
+		;(preview :: GuiObject).ZIndex = 50
+		;(preview :: GuiObject).Parent = screen
+	end
+
+	local function hidePreview()
+		if preview then preview.Visible = false end
+	end
+
+	-- Fill from whatever the Place's entry happens to carry: the Lobby passes a unitView
+	-- (Name/Tier/Level/Grades), the Game passes a loadout row (TowerId/MetaLevel/Trait). Anything
+	-- absent is simply skipped rather than printed as nil.
+	local function showPreview(slotBtn: GuiObject, entry: any)
+		if not (preview and entry) then return end
+		local towerId = entry.TowerId
+		local name = entry.Name or ItemCatalog.GetName(towerId)
+		local tier = entry.Tier or ItemCatalog.GetTier(towerId)
+		setText(preview, "UnitName", name)
+		setText(preview, "TierName", tier)
+
+		local level = entry.Level or entry.MetaLevel
+		local bar = preview:FindFirstChild("UnitLevelBar", true)
+		if bar and level then
+			local l = bar:FindFirstChildWhichIsA("TextLabel")
+			if l then l.Text = "LVL: " .. tostring(level) end
+		end
+
+		-- Grades only exist on the Lobby's unitView; the Game has none, so leave those rows alone
+		-- rather than blanking a row the designer filled in.
+		local grades = entry.Grades
+		local bsf = preview:FindFirstChild("BaseStatsFrame", true)
+		if grades and bsf then
+			local function row(names: { string }, value: string)
+				for _, n in ipairs(names) do
+					local r = bsf:FindFirstChild(n)
+					if r then
+						local g = r:FindFirstChild("Grade")
+						local target = (g and g:IsA("TextLabel")) and g or r:FindFirstChildWhichIsA("TextLabel")
+						if target then target.Text = value end
+						return
+					end
+				end
+			end
+			row({ "DMG", "Attack" }, grades.DMG or "-")
+			row({ "RNG", "Element" }, grades.RNG or "-")
+			row({ "SPA", "MaxPlacement" }, grades.SPA or "-")
+		end
+
+		-- Border matches the tier, like every other card in the kit.
+		local st = preview:FindFirstChildWhichIsA("UIStroke")
+		if st then
+			local g = st:FindFirstChildOfClass("UIGradient")
+			if not g then g = Instance.new("UIGradient"); g.Parent = st end
+			g.Color = TierConfig.seamlessSequence(tier)
+		end
+
+		-- Sit ABOVE the hovered slot, clamped so it never runs off either edge.
+		local vp = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1920, 1080)
+		local pw = preview.AbsoluteSize.X > 0 and preview.AbsoluteSize.X or vp.X * 0.2
+		local ph = preview.AbsoluteSize.Y > 0 and preview.AbsoluteSize.Y or vp.Y * 0.25
+		local p, s = slotBtn.AbsolutePosition, slotBtn.AbsoluteSize
+		local x = math.clamp(p.X + s.X / 2 - pw / 2, 8, math.max(8, vp.X - pw - 8))
+		local y = math.max(8, p.Y - ph - 10)
+		preview.AnchorPoint = Vector2.new(0, 0)
+		preview.Position = UDim2.fromOffset(x, y)
+		preview.Visible = true
+	end
 
 	for i = 1, LoadoutConfig.MaxSlots do
 		local btn = template:Clone()
@@ -185,6 +274,16 @@ function Hotbar.attach(container: GuiObject, opts: { [string]: any })
 
 	for i = 1, LoadoutConfig.MaxSlots do
 		slots[i].Handle.onActivated(function() activate(i) end)
+		-- Preview only for a slot that actually holds a unit and is unlocked; hovering an empty
+		-- or locked slot must not pop a card full of stale data.
+		slots[i].Handle.onHover(function(on: boolean)
+			local entry = entries[i]
+			if on and entry and LoadoutConfig.IsSlotUnlocked(i, playerLevel) then
+				showPreview(slots[i].Button, entry)
+			else
+				hidePreview()
+			end
+		end)
 	end
 
 	local keyConn = UserInputService.InputBegan:Connect(function(input, gameProcessed)
@@ -211,8 +310,12 @@ function Hotbar.attach(container: GuiObject, opts: { [string]: any })
 	function handle.slotInstance(i: number): GuiObject?
 		return slots[i] and slots[i].Button or nil
 	end
+	function handle.previewInstance(): GuiObject?
+		return preview
+	end
 	function handle.destroy()
 		keyConn:Disconnect()
+		if preview then preview:Destroy(); preview = nil end
 		for _, s in ipairs(slots) do
 			s.Handle.destroy()
 			s.Button:Destroy()

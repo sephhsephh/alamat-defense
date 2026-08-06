@@ -1,5 +1,47 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-06 [integration] Hotbar hover preview RESTORED (a regression I introduced) + dead-template audit
+
+User chose to skip A7 for now and do AD-UI cleanup. The audit turned up something worse than dead
+templates: **my `UIKit.Hotbar` rewrite had silently dropped the Lobby hotbar's hover preview.**
+The old `HotbarController` popped `Hotbar.Templates.UnitPreviewTemplate` above the hovered slot;
+the shared controller never implemented one, so the feature vanished when the hotbar was rebuilt.
+The user had explicitly asked for "same hover functions" — this was a loss, not a simplification.
+
+- **Hover preview restored in the SHARED controller**, so both Places get it from one place. It
+  clones **`Kit.UnitPreviewTemplate`** — which also gives that template a real runtime consumer for
+  the first time (the audit had just flagged it as referenced by nobody).
+- Shown **only for a FILLED, UNLOCKED slot** — hovering an empty or locked slot must not pop a card
+  full of stale data. Positioned above the slot and clamped to the screen on both edges.
+- Fills defensively from whatever the Place's entry carries: the Lobby passes a unitView
+  (Name/Tier/Level/Grades), the Game passes a loadout row (TowerId/MetaLevel/Trait). **Grade rows
+  are left untouched when absent** rather than blanked, so the Game does not wipe rows the designer
+  filled in.
+- `UIKitHotbar` `be2873bb` → **`616b06bf`**, deployed to BOTH Places as the same 5-hunk diff;
+  hashes verified equal on both sides and `require` OK. Drift **24/24 GREEN**.
+
+**Dead-template audit (user chose "keep, but write down why") — recorded in the manifest:**
+
+- **`Kit_UnitIcon` — NO CONSUMER.** The Game hotbar used it until the move to `Kit_HotbarSlot`;
+  the only remaining mention is the *disabled* `Hotbar_RETIRED` script. Kept deliberately (it is
+  the blueprint §5 UnitIcon and carries a rig) with a "do not delete without asking" note — twice
+  now an "obviously dead" thing here turned out to be worth keeping.
+- **`Kit_ItemHoverCard` — no runtime lookup.** `ItemsGUI.HoverPreview` is a clone taken once at
+  build time, so **editing the master does not update the deployed screen**. This master/clone
+  split is a real sharp edge of template canon — it already caused the stale-size bug at A5.
+
+**Verified live (Play, Lobby):** preview instance created from the shared template, **hidden at
+rest**, carrying UnitName / TierName / BaseStatsFrame / ViewportFrame; module hash matches disk in
+both Places.
+
+- **NOT verified, stated plainly:** the hover *trigger* itself. `MouseEnter` cannot be fired from
+  tooling and `VirtualInputManager` is blocked, so the preview appearing on a real hover is
+  code-inspection-only. Worth one manual hover when you next open the Lobby.
+- **Known gap:** `Kit.UnitPreviewTemplate` has **no `UnitLevelBar`** (the Lobby's separate
+  `UnitsGUI.HoverPreview` does), so the hotbar preview shows name/tier/stats but **not level**. The
+  code skips it gracefully rather than printing nil. Add one to that template if level is wanted.
+- **Contract impact:** none. **PENDINGs:** none new; A7 still open.
+
 ## 2026-08-06 [integration] Hotbar slot BACKGROUND now follows the unit's tier (was stuck red)
 
 User-reported: every hotbar slot's background gradient stayed reddish regardless of which unit sat
