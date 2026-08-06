@@ -25,12 +25,12 @@ Per-Place detail lives in `places/<place>/CONTEXT.md` — this is the one-glance
   (per-uuid tier/level/grades/equipped/favorited + `Items`) and the soon-retired `GetCollection`.
   UI: Units + Items + Collection on the kit / view-model — see `docs/systems/lobby-ui.md`.
 - **Shared canon** (`shared/manifest.json`, drift-checked by `tools/hash_shared.luau`):
-  **18 entries = 13 modules + 5 templates**, all **GREEN 18/18 in BOTH Places** (byte-identical).
+  **19 entries = 13 modules + 6 templates**, all **GREEN 19/19 in BOTH Places** (byte-identical).
   Modules: `ProfileTemplate`, `PlayerDataService`, `ProfileStore`, `Signal`, `TierConfig`,
   `StatGradeConfig`, `AscensionConfig`, `ItemCatalog`, `UnitStatsCatalog`, and the kit's
   `UIKitButton`/`UIKitItemIcon`/`UIKitFilterPanel`/`UIKitBootstrap` (2026-08-06).
   Templates (instance trees, ADR-0005, no `shared/src` file): `Kit_Button`, `Kit_ItemIcon`,
-  `Kit_ItemHoverCard`, `Kit_FilterPanel`, `Kit_UnitPreviewTemplate`.
+  `Kit_ItemHoverCard`, `Kit_FilterPanel`, `Kit_UnitPreviewTemplate`, `Kit_UnitIcon` (A6).
   `UnitStatsCatalogValidate` is Game-only canon by design (the Lobby has no tower configs to
   validate against); do not "fix" its absence.
 
@@ -46,11 +46,18 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
 - ~~PENDING: template hashing (AD-Integration) + kit promotion (AD-UI).~~ **BOTH DONE 2026-08-06**
   — ADR-0005 + the 18/18 shared canon above. Deploy procedures live in `tools/checklists.md`.
 
-- **PENDING (AD-UI — blueprint §9 A6's Game half, UNBLOCKED):** rebuild the Game hotbar on the kit
-  + `RewardPopup` + `CurrencyBar`. The kit is present in the Game place but **no Game screen uses
-  it yet** — they are all still Place-local and script-era. Decide there whether
-  `Kit.Unit/ItemIconTemplate` becomes the blueprint §5 `UnitIcon` or is deleted: zero code readers,
-  carries a 268-instance rig, deliberately OUT of drift control.
+- ~~PENDING (AD-UI): rebuild the Game hotbar on the kit.~~ **DONE 2026-08-06** — slots are
+  `Kit.UnitIcon` clones with real per-tower viewport models, `UIKit.Button` behaviour, and a
+  **tier-coloured** border (was trait rarity; the trait moved to the corner dot, not dropped).
+  `Unit/ItemIconTemplate` renamed → `Kit_UnitIcon` `24281a2b`, now the 19th drift-controlled entry.
+
+- **PENDING (AD-UI — the rest of blueprint §9 A6):** `RewardPopup` + `CurrencyBar`. Decisions
+  already taken 2026-08-06: **RewardPopup** = a NEW reusable kit component (dark overlay + grid +
+  `RewardItemTemplate`), MatchEnd's existing rewards list left working and untouched;
+  **CurrencyBar** = **Lobby only** — mid-match the player cares about Cash, already in
+  `MatchHUD.TopRight`. Also decide the fate of two now-DEAD templates while there:
+  `StarterGui.Hotbar.SlotTemplate` (Game, zero readers since the rebuild) — neither was deleted
+  unilaterally because both may be designs worth keeping.
 
 - **DRIFT RULE (new, applies to everyone):** the kit is shared now. Editing a controller **or a
   template** in one Place only is DRIFT. Change → re-hash → copy to the other Place → update the
@@ -98,9 +105,9 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
 
 ## Current focus
 
-1. **A6's Game half [AD-UI]:** Game hotbar rebuilt on the kit + `RewardPopup` + `CurrencyBar`.
-   Both blockers cleared — the tooling hashes instance trees (ADR-0005) and **the kit promotion
-   landed 2026-08-06** (4 controllers + 5 templates, drift 18/18 GREEN in both Places).
+1. **Finish A6 [AD-UI]:** `RewardPopup` (new reusable component; leave MatchEnd alone) +
+   `CurrencyBar` (Lobby only). The **hotbar landed 2026-08-06** on `Kit.UnitIcon`, so A6 is
+   two-thirds done; the kit promotion and template hashing are both behind us.
 2. **A7 [AD-Integration]:** full Phase A acceptance (blueprint §8) + retire `GetCollection`
    (ADR-0004, zero callers, already unblocked).
 3. **USER:** run the teleport v2 loop live once — published is not the same as verified.

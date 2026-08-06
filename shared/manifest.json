@@ -210,7 +210,18 @@
       },
       "comment": "Kit TEMPLATE (unit hover panel (its ViewportFrame 3D contents are NOT hashed -- ADR-0005)). No shared/src file exists -- the INSTANCE is the canon (ADR-0005); copy it between Places and verify by hash, never rebuild by hand. Promoted 2026-08-06.",
       "kind": "template"
+    },
+    "Kit_UnitIcon": {
+      "hash": "24281a2b",
+      "owner": "ui",
+      "deployPath": "ReplicatedStorage.UITemplates.Kit.UnitIcon",
+      "deployed": {
+        "Game": "24281a2b",
+        "Lobby": "24281a2b"
+      },
+      "comment": "Kit TEMPLATE (the blueprint section 5 UnitIcon: ViewportFrame + BG/tier border + TraitIcon + LevelBadge + CostLabel + NameLabel + ShinyBadge, plus KeyLabel/CountLabel that default HIDDEN for the hotbar). A6 2026-08-06: renamed from the A5 leftover 'Unit/ItemIconTemplate' (which had zero readers) and put to work as the Game hotbar slot. Built by running one IDENTICAL deterministic script in BOTH Places and hash-matching the result -- the base tree was verified identical (be620746) first. ViewportFrame 3D contents are not hashed (ADR-0005).",
+      "kind": "template"
     }
   },
-  "templatesNote": "Templates are under drift control since 2026-08-06 (ADR-0005). They have NO shared/src file: the Instance is the canon, so deploying one means COPYING it (Studio copy/paste) and proving equality by hash -- see tools/checklists.md 'Deploying a shared TEMPLATE'. NOTE Kit.Unit/ItemIconTemplate is deliberately NOT under drift control: it has zero code readers (only a stale comment in HotbarController) and is an A5 leftover; A6 either formalises it as the blueprint section 5 'UnitIcon' or deletes it."
+  "templatesNote": "Templates are under drift control since 2026-08-06 (ADR-0005). They have NO shared/src file: the Instance is the canon. Two safe ways to get one into another Place: COPY it (Studio copy/paste) and prove equality by hash, OR build it with an identical DETERMINISTIC script run in both Places and hash-match (used for Kit_UnitIcon). Never rebuild by hand/by eye. See tools/checklists.md."
 }

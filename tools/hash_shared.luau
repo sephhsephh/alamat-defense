@@ -202,15 +202,18 @@ local MODULES = {
 }
 
 -- GuiObject subtrees. Promoted by AD-UI 2026-08-06; a Place that has not received the kit
--- reports MISSING. NOTE `Kit.Unit/ItemIconTemplate` is deliberately NOT here: it has zero code
--- readers (only a stale comment in HotbarController) and is a leftover from the A5 kit move --
--- A6 either formalises it as the blueprint section 5 `UnitIcon` or deletes it.
+-- reports MISSING.
 local TEMPLATES = {
 	Kit_Button = "ReplicatedStorage.UITemplates.Kit.Button",
 	Kit_ItemIcon = "ReplicatedStorage.UITemplates.Kit.ItemIcon",
 	Kit_ItemHoverCard = "ReplicatedStorage.UITemplates.Kit.ItemHoverCard",
 	Kit_FilterPanel = "ReplicatedStorage.UITemplates.Kit.FilterPanel",
 	Kit_UnitPreviewTemplate = "ReplicatedStorage.UITemplates.Kit.UnitPreviewTemplate",
+	-- A6 2026-08-06: the former `Unit/ItemIconTemplate` (an A5 leftover with zero readers),
+	-- RENAMED and formalised as the blueprint section 5 UnitIcon and now actually used --
+	-- it is the Game hotbar's slot. Built by an IDENTICAL deterministic script in both Places
+	-- and hash-matched, rather than copied.
+	Kit_UnitIcon = "ReplicatedStorage.UITemplates.Kit.UnitIcon",
 }
 
 local out = {}

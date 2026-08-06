@@ -16,12 +16,15 @@ describes what is there and why.
 >
 > Manifest keys: modules `UIKitButton` `UIKitItemIcon` `UIKitFilterPanel` `UIKitBootstrap`;
 > templates `Kit_Button` `Kit_ItemIcon` `Kit_ItemHoverCard` `Kit_FilterPanel`
-> `Kit_UnitPreviewTemplate`. **Editing any of them in one Place is now DRIFT** — change it, re-hash,
-> copy to the other Place, update the manifest (`tools/checklists.md` has both procedures).
+> `Kit_UnitPreviewTemplate` `Kit_UnitIcon`. **Editing any of them in one Place is now DRIFT** —
+> change it, re-hash, mirror to the other Place, update the manifest (`tools/checklists.md`).
 >
-> `Kit.Unit/ItemIconTemplate` is deliberately NOT under drift control: zero code readers (only a
-> stale comment in `HotbarController`), an A5 leftover carrying a 268-instance rig. A6 either
-> formalises it as the blueprint §5 `UnitIcon` or deletes it.
+> **`Kit_UnitIcon` (A6, 2026-08-06)** — the former `Unit/ItemIconTemplate`, renamed and formalised
+> as the blueprint §5 UnitIcon: `ViewportFrame` + `BG`/tier border + `TraitIcon` + `LevelBadge` +
+> `CostLabel` + `NameLabel` + `ShinyBadge`, plus `KeyLabel`/`CountLabel` that default **hidden**
+> (the Game hotbar turns those two on; other consumers leave them off). Its first consumer is the
+> **Game** hotbar. Deployed by running one identical deterministic script in both Places and
+> hash-matching — the second sanctioned deploy route alongside Studio copy/paste.
 
 **Kit layout (A5):** REAL instance templates live in **`ReplicatedStorage.UITemplates.Kit`**
 (the blueprint §5 home) — `Button`, `UnitPreviewTemplate`, `Unit/ItemIconTemplate`, and the new

@@ -1,5 +1,56 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-06 [game] A6: Game hotbar rebuilt on the shared kit + `Kit_UnitIcon` formalised (drift 19/19)
+
+Blueprint §9 A6, Game half — the hotbar. Bootstrap drift GREEN; **19/19 GREEN in both Places** at
+landing. Integration gate: **No Integration needed — proceeding** (A7 is the Integration session).
+
+- **`Kit.Unit/ItemIconTemplate` → `Kit.UnitIcon`**, formalised as the blueprint §5 UnitIcon and
+  finally given a job. Added `LevelBadge`, `CostLabel`, `NameLabel`, `ShinyBadge` (hidden) and
+  `KeyLabel`/`CountLabel` (hidden by default — the hotbar turns those two on; other consumers
+  leave them off, per the kit's degrade-gracefully convention). Now **under drift control** as
+  `Kit_UnitIcon` `24281a2b`, 19th manifest entry.
+- **Built by running ONE identical deterministic script in BOTH Places, then hash-matching** —
+  no copy/paste needed. The base tree was verified identical first (`be620746`, 268 descendants in
+  both) so the transform started from the same place. This is now recorded in `templatesNote` as a
+  second sanctioned way to deploy a template alongside Studio copy/paste.
+- **Hotbar (`StarterPlayerScripts.Client.UI.Hotbar`) rebuilt on the kit:** clones `Kit.UnitIcon`
+  instead of the Place-local text-only `SlotTemplate`, and behaviour comes from `UIKit.Button`
+  instead of hand-rolled styling. Slots now show the **real per-tower model** from
+  `RS.TowerModels` in the viewport (the Game place has all 8; the Lobby only has a placeholder).
+- **BORDER now encodes UNIT TIER** (user decision) via shared `ItemCatalog.GetTier` +
+  `TierConfig.seamlessSequence`, so a tower reads identically here and on the Lobby's screens,
+  multi-colour Mythic/Secret included.
+- **The trait was NOT dropped in the process.** The border used to encode **trait rarity** — a
+  different axis from unit tier, and swapping one for the other naively would have silently
+  destroyed information mid-match. The trait moved to the corner `TraitIcon`, tinted by rarity and
+  shown only when the unit actually has one. `TRAIT_RARITY_COLORS` stays a local table **on
+  purpose** (there is no shared config for trait rarity) with a comment saying not to "unify" it.
+- **Viewport rigs are stripped of scripts on clone** — a display rig must not run code inside a
+  ViewportFrame. Verified 0 `LuaSourceContainer`s inside every slot's model.
+- The affordability/limit greying is preserved, including its two distinct failure colours, and
+  now also drives `UIKit.Button.setEnabled`.
+
+**Verified live (Play, Game place, place-asserted):** 5 slots built from `Kit.UnitIcon` ·
+`[Hotbar] built 5 slot(s) on the shared kit` · keys 1–5 · names incl. the `DisplayName` override
+("Meteor Mage") · costs $100–$400 · levels · counts `0/1`…`0/6` · tiers Common/Rare/Legendary/
+Mythic correct · **real models loaded** (Archer, Necromancer, Warchief, Farm, Meteor) ·
+**0 scripts inside any viewport** · trait dot visible only on the one unit that has a trait ·
+`[DIAG] UIKitBootstrap: 5 'UIKitButton' button(s)` · no errors, match booted normally.
+
+- **SCOPE — deliberately NOT done this session:** `RewardPopup` and `CurrencyBar` (blueprint §9
+  A6's other two items). Each new shared component needs authoring + promotion + cross-Place sync
+  + verification; batching four into one session would have made the verification thin. Decisions
+  already taken for them: RewardPopup = a NEW reusable component, MatchEnd's working rewards list
+  left alone; CurrencyBar = **Lobby only** (mid-match the player cares about Cash, which
+  `MatchHUD.TopRight` already shows).
+- **`StarterGui.Hotbar.SlotTemplate` is now DEAD** (zero readers) but deliberately NOT deleted —
+  same call as `Unit/ItemIconTemplate`: it may be a design worth keeping, and silently binning a
+  user's design is worse than flagging it. Decide it alongside `RewardPopup`.
+- **Contract impact:** none — no schema, teleport or module change. Drift surface 18 → 19 entries.
+- **PENDINGs:** A6's hotbar item done. Remaining A6: `RewardPopup` + `CurrencyBar`. **Both Places
+  need republishing** — `Kit.UnitIcon` changed in both and the Game hotbar is Studio canon.
+
 ## 2026-08-06 [integration] UI kit promoted to shared canon — 4 controllers + 5 templates, drift 18/18 GREEN in both Places
 
 AD-UI, spanning BOTH Places (the promotion is inherently cross-Place, so this is logged as an
