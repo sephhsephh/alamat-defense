@@ -1,5 +1,55 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-06 [integration] Drift tooling now hashes UI templates (instance trees) — ADR-0005; A6's blocker cleared
+
+Executes the blocking PENDING from `docs/proposals/2026-08-06-kit-promotion-blocks-a6.md`
+(user decision: option B, fix the tooling before promoting the kit). **Tooling only — no game
+code, no shared module, no Place behaviour changed.** Drift measured 9/9 GREEN in BOTH Places at
+bootstrap AND after landing; both Places left byte-identical (every probe reverted, verified).
+
+- **`tools/hash_shared.luau` gained a TEMPLATE half.** GuiObject subtrees are serialised to a
+  canonical string and hashed with the same `fnv1a32`. Format (ADR-0005): one line per instance,
+  `depth|ClassName|Name|props|{attributes}|[tags]`; properties from a single by-NAME whitelist,
+  `pcall`-read and sorted; children serialised recursively then **sorted by their serialised
+  text** so Studio's child order is irrelevant; numbers at `%.4f` and Color3 as 0–255 ints so
+  float round-tripping cannot flip a hash. Template hashes print with a trailing `*`.
+- **Attributes and CollectionService tags are hashed** — the kit is attribute-driven
+  (`HoverScale`, `HoverStrokeColor`, …) and the `UIKitButton` tag is what wires a button to the
+  kit at all, so both carry real design intent.
+- **ViewportFrame 3D contents are deliberately excluded.** The kit's viewports hold display rigs
+  (Humanoid, MeshParts, 112 Attachments, 150 Vector3Values — **679 instances across the kit, vs
+  167 once excluded**). Those rigs are AD-TowerModels canon, swapped at runtime by the
+  controllers; hashing them would make UI drift trip on every unrelated rig change. The
+  ViewportFrame's own properties are hashed.
+- **Module hashing is untouched** — every historical module hash stays valid.
+
+**Verified in Studio (Lobby; every probe reverted, final baseline re-matched):** re-run stable ·
+`Size` +1px moves the hash · a `UIStroke.Color` nested deep in the tree moves it · adding an
+attribute moves it · adding a tag moves it · **reparenting a child does NOT move it** (order
+independence, as designed) · renaming a child moves it. **All 9 module hashes matched the manifest
+exactly** in both Places (no regression), and the 5 kit templates correctly reported `MISSING` in
+the Game place — confirming both that the absent-path works and that the kit really is Lobby-only.
+Measured Lobby template hashes: `Button=812d0780` `ItemIcon=ee1ccd33` `ItemHoverCard=0c9d7818`
+`FilterPanel=0170b0e9` `UnitPreviewTemplate=55e17da8`.
+
+- **`shared/manifest.json`:** entries now carry `"kind"` (`module` | `template`); the comment
+  documents both hashing modes; a `templatesNote` records the measured kit hashes and says AD-UI
+  must add the manifest entries AND uncomment `TEMPLATES` in the tool **in the same session**.
+  No template entries added yet — nothing is deployed to two Places yet, so there is nothing to
+  compare, and a manifest entry that no Place satisfies would just read as permanent drift.
+- **`tools/checklists.md`:** new "Deploying a shared TEMPLATE (GuiObject) into a Place" section —
+  copy the Instance (never rebuild by hand), hash both sides, re-copy on mismatch rather than
+  eyeballing a fix.
+- **ADR-0005** documents the format, the whitelist rationale, what is excluded and why, and the
+  honest limits: the whitelist IS the contract (an unlisted property is invisible), 3D content is
+  unverified by construction, and **adding a property to the whitelist changes every template
+  hash at once** — treat that like a schema bump, not drift.
+- **Contract impact:** none. No save-schema, teleport, or shared-module change; manifest gained
+  metadata only, no hash moved.
+- **PENDINGs:** the blocking AD-Integration tooling PENDING is **CLEARED**. AD-UI is unblocked to
+  promote the kit (controllers + templates) and then do A6's Game half. Nothing to republish —
+  `tools/` never ships to a Place.
+
 ## 2026-08-06 [game] A6 Game half BLOCKED — the kit is Lobby-only and the drift tooling cannot hash templates (no code written)
 
 AD-UI bootstrapped into the **Game place** for the first time (place-asserted via

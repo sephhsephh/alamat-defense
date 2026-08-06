@@ -1,6 +1,6 @@
 {
   "hashAlgorithm": "fnv1a32",
-  "comment": "Hashes are FNV-1a 32-bit over the exact module Source bytes. tools/hash_shared.luau computes the same hash inside Studio. 'deployed' records the hash last verified in each Place; null = not yet deployed. Any mismatch between file hash and a deployed hash = DRIFT: stop and reconcile before working on shared systems.",
+  "comment": "Hashes are FNV-1a 32-bit. MODULES ('kind':'module') hash the exact ModuleScript Source bytes. TEMPLATES ('kind':'template') hash a CANONICAL SERIALISATION of a GuiObject subtree (sorted children, whitelisted+sorted properties, attributes, tags; ViewportFrame 3D contents excluded) -- see docs/decisions/ADR-0005-instance-tree-hashing.md. tools/hash_shared.luau computes both inside Studio and marks template hashes with a trailing '*'. 'deployed' records the hash last verified in each Place; null = not yet deployed. Any mismatch between file hash and a deployed hash = DRIFT: stop and reconcile before working on shared systems.",
   "modules": {
     "ProfileTemplate": {
       "file": "shared/src/ProfileTemplate.luau",
@@ -11,7 +11,8 @@
         "Game": "63a0c98a",
         "Lobby": "63a0c98a"
       },
-      "comment": "SCHEMA_VERSION=2 (A1, 2026-08-01): Towers(towerId) -> Units(uuid) instances, Currency -> Currencies map, +PlayerLevel/Loadout/Pity/Counters/Quests/LoginStreak/ShopStock/Titles/Spirits/Battlepass; Migrations[1] converts v1->v2. STORE_NAME stays Beta1_PlayerData(Dev1). Deployed byte-identical (63a0c98a) in GAME (A1) and LOBBY (A2, 2026-08-01) -- drift-green in both Places. Prior hashes: 184cdfad = beta store rename (v1), 8ac5d3e9 = starter-seed removal (v1), 376e717d = original v1."
+      "comment": "SCHEMA_VERSION=2 (A1, 2026-08-01): Towers(towerId) -> Units(uuid) instances, Currency -> Currencies map, +PlayerLevel/Loadout/Pity/Counters/Quests/LoginStreak/ShopStock/Titles/Spirits/Battlepass; Migrations[1] converts v1->v2. STORE_NAME stays Beta1_PlayerData(Dev1). Deployed byte-identical (63a0c98a) in GAME (A1) and LOBBY (A2, 2026-08-01) -- drift-green in both Places. Prior hashes: 184cdfad = beta store rename (v1), 8ac5d3e9 = starter-seed removal (v1), 376e717d = original v1.",
+      "kind": "module"
     },
     "PlayerDataService": {
       "file": "shared/src/PlayerDataService.luau",
@@ -21,7 +22,8 @@
       "deployed": {
         "Game": "613f0d39",
         "Lobby": "613f0d39"
-      }
+      },
+      "kind": "module"
     },
     "ProfileStore": {
       "file": "shared/src/ProfileStore.luau",
@@ -31,7 +33,8 @@
       "deployed": {
         "Game": "1e3a6f3f",
         "Lobby": "1e3a6f3f"
-      }
+      },
+      "kind": "module"
     },
     "Signal": {
       "file": "shared/src/Signal.luau",
@@ -42,7 +45,8 @@
         "Game": "91becf7a",
         "Lobby": "91becf7a"
       },
-      "comment": "Lua-side pub/sub used by PlayerDataService. Promoted into shared canon 2026-07-17 (AD-Lobby session) from the verified live Game source; covered by the shared/src deploys row in OWNERSHIP.md (owner AD-Game)."
+      "comment": "Lua-side pub/sub used by PlayerDataService. Promoted into shared canon 2026-07-17 (AD-Lobby session) from the verified live Game source; covered by the shared/src deploys row in OWNERSHIP.md (owner AD-Game).",
+      "kind": "module"
     },
     "TierConfig": {
       "file": "shared/src/TierConfig.luau",
@@ -53,7 +57,8 @@
         "Game": "a0d6e3a3",
         "Lobby": "a0d6e3a3"
       },
-      "comment": "Promoted to shared canon 2026-08-01 (A-phase Integration). RECONCILED from two predecessors: the Game's A3 TierConfig (Order/SortOrder + PascalCase API) and the Lobby's interim TierConfig (multi-colour palettes + ColorSequence helpers, incl. Mythic rainbow / Secret red+dark-red). Every tier authors a Colors LIST; .Color is derived from Colors[1]. Both predecessors are REPLACED."
+      "comment": "Promoted to shared canon 2026-08-01 (A-phase Integration). RECONCILED from two predecessors: the Game's A3 TierConfig (Order/SortOrder + PascalCase API) and the Lobby's interim TierConfig (multi-colour palettes + ColorSequence helpers, incl. Mythic rainbow / Secret red+dark-red). Every tier authors a Colors LIST; .Color is derived from Colors[1]. Both predecessors are REPLACED.",
+      "kind": "module"
     },
     "StatGradeConfig": {
       "file": "shared/src/StatGradeConfig.luau",
@@ -64,7 +69,8 @@
         "Game": "49a6edfd",
         "Lobby": "49a6edfd"
       },
-      "comment": "Promoted to shared canon 2026-08-01 (A-phase Integration), byte-identical to the A3 original. Maps a 0..1 roll to D..Apex. The Lobby needs it to grade rolls WITHOUT tower configs - grades come from the roll alone."
+      "comment": "Promoted to shared canon 2026-08-01 (A-phase Integration), byte-identical to the A3 original. Maps a 0..1 roll to D..Apex. The Lobby needs it to grade rolls WITHOUT tower configs - grades come from the roll alone.",
+      "kind": "module"
     },
     "AscensionConfig": {
       "file": "shared/src/AscensionConfig.luau",
@@ -75,7 +81,8 @@
         "Game": "59aa8e15",
         "Lobby": "59aa8e15"
       },
-      "comment": "Promoted to shared canon 2026-08-01 (A-phase Integration), byte-identical to the A3 original. Required by the Game's TowerStatResolver; the Lobby displays ascension level."
+      "comment": "Promoted to shared canon 2026-08-01 (A-phase Integration), byte-identical to the A3 original. Required by the Game's TowerStatResolver; the Lobby displays ascension level.",
+      "kind": "module"
     },
     "ItemCatalog": {
       "file": "shared/src/ItemCatalog.luau",
@@ -86,7 +93,8 @@
         "Game": "789dca4b",
         "Lobby": "789dca4b"
       },
-      "comment": "Promoted to shared canon 2026-08-01 (A-phase Integration). THE authority on a grantable's Name/Tier/Icon; replaces the Lobby's interim UnitCatalog for name+tier. CHANGED at promotion: the TowerConfigRegistry require is now LAZY + OPTIONAL so the module loads in the Lobby (which has no tower configs); Validate() returns (ok, errors, notes) and reports the skipped Tower->TowerConfig cross-check. Added GetName/GetTier convenience readers."
+      "comment": "Promoted to shared canon 2026-08-01 (A-phase Integration). THE authority on a grantable's Name/Tier/Icon; replaces the Lobby's interim UnitCatalog for name+tier. CHANGED at promotion: the TowerConfigRegistry require is now LAZY + OPTIONAL so the module loads in the Lobby (which has no tower configs); Validate() returns (ok, errors, notes) and reports the skipped Tower->TowerConfig cross-check. Added GetName/GetTier convenience readers.",
+      "kind": "module"
     },
     "UnitStatsCatalog": {
       "file": "shared/src/UnitStatsCatalog.luau",
@@ -97,7 +105,9 @@
         "Game": "3bb9b140",
         "Lobby": "3bb9b140"
       },
-      "comment": "GENERATED cache of per-tower RESOLVED base stats (DMG/RNG/SPA at tier1/ML1/no-trait/mid-roll/asc0) so the Lobby fills the Units-screen number slots without the full stat stack (ADR-0003). Added A6 2026-08-03 (owner AD-Game). Load-bearing validator SSS.Server.UnitStatsCatalogValidate regenerates from the live tower configs at boot in the Game place and errors LOUD on drift -- it stays GAME-ONLY canon (the Lobby has no tower configs to validate against). Deployed byte-identical (3bb9b140) in GAME (A6) and LOBBY (A6b, 2026-08-06) -- drift-green 9/9 in both Places. Regenerate + rehash whenever a tower's Damage/Range/SPA or BaseStats changes."
+      "comment": "GENERATED cache of per-tower RESOLVED base stats (DMG/RNG/SPA at tier1/ML1/no-trait/mid-roll/asc0) so the Lobby fills the Units-screen number slots without the full stat stack (ADR-0003). Added A6 2026-08-03 (owner AD-Game). Load-bearing validator SSS.Server.UnitStatsCatalogValidate regenerates from the live tower configs at boot in the Game place and errors LOUD on drift -- it stays GAME-ONLY canon (the Lobby has no tower configs to validate against). Deployed byte-identical (3bb9b140) in GAME (A6) and LOBBY (A6b, 2026-08-06) -- drift-green 9/9 in both Places. Regenerate + rehash whenever a tower's Damage/Range/SPA or BaseStats changes.",
+      "kind": "module"
     }
-  }
+  },
+  "templatesNote": "No templates are under drift control yet. AD-UI adds the 5 kit entries (Kit.Button, Kit.ItemIcon, Kit.ItemHoverCard, Kit.FilterPanel, Kit.UnitPreviewTemplate) here AND uncomments them in tools/hash_shared.luau in the same session it promotes the kit. Lobby hashes measured 2026-08-06: Button=812d0780 ItemIcon=ee1ccd33 ItemHoverCard=0c9d7818 FilterPanel=0170b0e9 UnitPreviewTemplate=55e17da8 (recompute at promotion -- do not paste these in blind)."
 }

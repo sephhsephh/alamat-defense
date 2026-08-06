@@ -39,17 +39,22 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
   are now published on v2, so a `[CONTRACT]` mismatch would block every launch. (The A-phase
   republish itself is DONE 2026-08-06.)
 
-- **PENDING (AD-Integration, BLOCKING A6's Game half):** teach `tools/hash_shared.luau` to hash
-  **GuiObject subtrees**. It only hashes `inst.Source` today, so the kit's TEMPLATES cannot be
-  drift-checked — only its ModuleScript controllers can — and mirroring templates into the Game
-  place would create invisible divergence (it already bit once at A5). User decided 2026-08-06:
-  fix the tooling FIRST, document the canonical format in an ADR. Full analysis + rejected
-  alternatives: `docs/proposals/2026-08-06-kit-promotion-blocks-a6.md`.
+- ~~PENDING (AD-Integration, BLOCKING A6): teach `hash_shared.luau` to hash GuiObject subtrees.~~
+  **DONE 2026-08-06 (ADR-0005).** Templates are now first-class drift artefacts: canonical
+  serialisation (sorted children, whitelisted+sorted properties, attributes, tags; ViewportFrame
+  3D contents excluded) hashed with the same fnv1a32, printed with a trailing `*`. Module hashing
+  untouched — all 9 hashes verified unchanged in both Places. Sensitivity + order-independence
+  proven in Studio and reverted. **Deploy procedure: `tools/checklists.md` → "Deploying a shared
+  TEMPLATE".**
 
-- **PENDING (AD-UI, blocked on the above):** promote the kit (controllers **and** templates) to
-  `shared/src` + `manifest.json`, deploy both Places; THEN blueprint §9 A6's Game half (hotbar on
-  the kit + `RewardPopup` + `CurrencyBar`). The kit is **Lobby-only** — `RS.UITemplates.Kit`,
-  `RS.Shared.UIKit` and `UIKitBootstrap` are all ABSENT in the Game place.
+- **PENDING (AD-UI, NOW UNBLOCKED — the kit promotion):** promote the kit to shared canon and
+  deploy to the Game place: `UIKit.{Button,ItemIcon,FilterPanel}` (ModuleScripts, normal module
+  procedure) **and** the 5 templates `Kit.{Button,ItemIcon,ItemHoverCard,FilterPanel,
+  UnitPreviewTemplate}` (Instance copy + hash-verify per the new checklist). In the SAME session:
+  add manifest entries with `"kind":"template"` AND uncomment `TEMPLATES` in
+  `tools/hash_shared.luau` — the two must never disagree. Lobby hashes measured 2026-08-06 are in
+  `manifest.templatesNote` (recompute, don't paste blind). **THEN** blueprint §9 A6's Game half:
+  hotbar on the kit + `RewardPopup` + `CurrencyBar`.
 
 - **PENDING (A7 / AD-Integration — retire `GetCollection`):** ADR-0004 decided it. The remote has
   **zero callers of any kind**; delete the handler in `LobbyServices` AND the
@@ -92,19 +97,15 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
 
 ## Current focus
 
-1. **AD-Integration: teach `tools/hash_shared.luau` to hash instance trees** — BLOCKS everything
-   below it. Then AD-UI promotes the kit, then A6's Game half (hotbar + `RewardPopup` +
-   `CurrencyBar`) can finally run. A6's Lobby half is done (Units number slots, 2026-08-06).
-2. ~~**A4 + A5 [AD-UI]**~~ **DONE 2026-08-03** — Units, Items and Collection screens all run on
-   the kit + `GetUnitViews`; `UIKit.ItemIcon` + `UIKit.FilterPanel` added; templates consolidated
-   into `RS.UITemplates.Kit`; `UnitCatalog` and `StarterGui.UITemplates` deleted. Details in
-   `docs/systems/lobby-ui.md`. Compat-field removal handed to AD-Lobby (PENDING above).
-3. ~~**A6**~~ **DONE** — AD-Game 2026-08-03 (UnitStatsCatalog + validator, hotfix review,
-   cold-profile harness); AD-Lobby 2026-08-06 (A6b: deployed to the Lobby, drift 9/9, compat
-   fields dropped, ADR-0004). Remaining A6 work is **AD-UI's**: fill the Units `--` number slots
-   from `UnitStatsCatalog.Get` (unblocked now) + rebuild the hotbar on the kit.
-4. Then A7 (full Phase A acceptance, Integration) → Phase B gacha. A7 also retires
-   `GetCollection` (ADR-0004) and promotes the UI kit to `shared/src`.
-5. Unscheduled but wanted: loadout picker (equipping), an item economy that writes `Data.Items`,
-   real art/anim asset ids.
+1. **AD-UI: promote the kit, then A6's Game half.** Unblocked 2026-08-06 — the drift tooling now
+   covers templates (ADR-0005), so the kit can be promoted with every part verifiable. Controllers
+   via the normal module procedure, the 5 templates via the new "Deploying a shared TEMPLATE"
+   checklist; manifest entries + uncommenting `TEMPLATES` happen in that same session. Then the
+   Game hotbar on the kit + `RewardPopup` + `CurrencyBar`.
+2. **A7 [AD-Integration]:** full Phase A acceptance (blueprint §8) + retire `GetCollection`
+   (ADR-0004, zero callers, already unblocked).
+3. **USER:** run the teleport v2 loop live once — published is not the same as verified.
+4. Then Phase B (gacha). Schema v2 already carries `Pity`, `Currencies`, `Items`.
+5. Unscheduled but wanted: loadout picker (`Data.Loadout` has no writer, so nothing is ever
+   "equipped"), an item economy (`Data.Items` has no writer either), real art/anim asset ids.
 

@@ -56,6 +56,25 @@ Dependency note: `PlayerDataService` requires `ReplicatedStorage.Shared.Signal` 
 Signal module must exist in the Place first (copy from the Game place; consider promoting
 Signal itself into `shared/src` at that moment).
 
+## Deploying a shared TEMPLATE (GuiObject) into a Place
+
+Templates are drift-checked since 2026-08-06 (**ADR-0005**), but they cannot be written from a
+text file the way a module can — `shared/src/` holds no copy of them. The Instance itself is the
+canon, and the hash is what makes copying it verifiable.
+
+1. In the SOURCE Place, run `tools/hash_shared.luau` and note the template's hash (trailing `*`).
+2. Copy the Instance into the TARGET Place (Studio copy/paste, or `:Clone()` + reparent via
+   execute_luau in the Edit datamodel). Never rebuild it by hand — that is the divergence this
+   mechanism exists to catch.
+3. Run the tool in the TARGET Place. The hash MUST equal the source's, exactly.
+4. Update `shared/manifest.json` → that template's `deployed.<Place>`.
+5. If the hashes differ, do NOT "fix it up" by eye: re-copy. A mismatch means the trees really
+   differ somewhere in the whitelisted surface.
+
+Note: adding a property to the whitelist in `hash_shared.luau` changes **every** template hash at
+once. Treat that like a schema bump — land it in one Integration session, redeploy, and say so in
+the changelog so it is not mistaken for drift.
+
 ## Editing a shared module (owner only)
 
 1. Confirm you own it (constitution table) and no sibling chat is mid-session on it.
