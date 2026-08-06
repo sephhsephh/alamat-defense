@@ -26,10 +26,14 @@ not the pasted ones) · 0 scripts in any viewport · **only ONE controller live*
 present and `Disabled=true`, no stray `Hotbar` script) · `[Hotbar] Initialized (GAME, shared
 UIKit.Hotbar on the copied Lobby design)` · no errors.
 
-- **NOTE — `Hotbar Old` was not found.** The user reported renaming the old Game hotbar before
-  pasting, but no such ScreenGui exists in the Place, so the previous Game hotbar design is gone.
-  Place-local UI is not in git, so the only copy is inside the last published Game place. It was
-  superseded anyway (text-only `Container` + `SlotTemplate`), but flagged rather than passed over.
+- **CORRECTION (same day).** This entry originally claimed the old Game hotbar was gone. **That was
+  wrong.** It is present as **`"Hotbar - old"`** (spaces + dash); the earlier check searched for the
+  literal string `"Hotbar Old"`, found nothing, and reported it missing far too confidently. The
+  user's rename did stick and their old design was never lost. Lesson: when verifying a rename,
+  LIST the children — never probe a guessed name and treat absence as proof.
+  It was left `Enabled=true` (harmless — `Container` held only a `UIListLayout` and `SlotTemplate`
+  is `Visible=false`, so nothing rendered) and is now **`Enabled=false`, kept as a backup**, with
+  `RetiredOn` / `RetiredReason` attributes so a later session knows why it is off.
 - **Contract impact:** none. No shared module or template changed — drift stays **24/24 GREEN**.
 - **PENDINGs:** none new. Next is **A7 [AD-Integration]**. Both Places need republishing.
 
