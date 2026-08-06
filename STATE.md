@@ -1,134 +1,104 @@
 # STATE — Alamat Defense
-<!-- owner: all | scope: global | last-verified: 2026-08-06 -->
+<!-- owner: all | scope: global | last-verified: 2026-08-06 (A7) -->
+<!-- SIZE RULE (ADR-0006): ONE file, cap 120 lines. A RESOLVED pending is DELETED (the changelog
+     is its record) -- never struck through. Sections that duplicate a canon doc keep a pointer. -->
 
 ## Snapshot
 
 Data-driven Roblox tower defense (Filipino myth theme). ~70% of the core loop done as a
-single-Place vertical slice: full match lifecycle (Stage 1, Acts 1–3), 8 towers, passives/
-abilities/summons, progression + match-end rewards, **ProfileStore persistence (schema v2: uuid unit instances)**.
-Multi-Place split (Lobby + Game) is the current initiative; this repo was created 2026-07-17
-as the source of truth for it.
+two-Place vertical slice: full match lifecycle (Stage 1, Acts 1–3), 8 towers, passives/abilities/
+summons, progression + match-end rewards, **ProfileStore persistence (schema v2: uuid unit
+instances)**, and a shared UI kit both Places draw from.
 
-## Places
-
-Per-Place detail lives in `places/<place>/CONTEXT.md` — this is the one-glance version.
-
-- **Game** (Studio: "Alamat Defense - Game") — the match Place. Healthy, live. Persistence on
-  **Beta1_PlayerData** (Studio `Beta1_PlayerDataDev1`, API access ON). `MatchEntryService` is the
+- **Game** (Studio: "Alamat Defense - Game") — the match Place. `MatchEntryService` is the
   production entry; `MatchLifecycleSmokeTest` / `ColdProfileMatchTest` are the Studio harnesses.
-  Cross-place ids set both ways (`LobbyPlaceId` 83342803778137). Owns tower configs, combat, the
-  stat resolver, match runtime. **Has the UI kit since 2026-08-06 but no screen uses it yet** —
-  that is A6's Game half.
-- **Lobby** (Studio: "Alamat Defense - Lobby") — the social/meta Place, live. Scene
-  `Workspace.Lobby`; flow = collection → stage select + difficulty → party → reserved-server
-  launch, plus the MatchReturn banner and first-join starter picker. Serves **`GetUnitViews`**
-  (per-uuid tier/level/grades/equipped/favorited + `Items`) and the soon-retired `GetCollection`.
-  UI: Units + Items + Collection on the kit / view-model — see `docs/systems/lobby-ui.md`.
+  Owns tower configs, combat, the stat resolver, match runtime. Hotbar is on the shared kit.
+- **Lobby** (Studio: "Alamat Defense - Lobby") — the social/meta Place. Scene `Workspace.Lobby`;
+  flow = collection → stage select + difficulty → party → reserved-server launch, plus the
+  MatchReturn banner and first-join starter picker. **`GetUnitViews` is its SINGLE profile read
+  path** (`GetCollection` retired A7, ADR-0004). Screens: `docs/systems/lobby-ui.md`.
 - **Shared canon** (`shared/manifest.json`, drift-checked by `tools/hash_shared.luau`):
-  **21 entries = 14 modules + 7 templates**, all **GREEN 21/21 in BOTH Places** (byte-identical).
-  Modules: `ProfileTemplate`, `PlayerDataService`, `ProfileStore`, `Signal`, `TierConfig`,
-  `StatGradeConfig`, `AscensionConfig`, `ItemCatalog`, `UnitStatsCatalog`, and the kit's
-  `UIKitButton`/`UIKitItemIcon`/`UIKitFilterPanel`/`UIKitBootstrap` (2026-08-06).
-  Templates (instance trees, ADR-0005, no `shared/src` file): `Kit_Button`, `Kit_ItemIcon`,
-  `Kit_ItemHoverCard`, `Kit_FilterPanel`, `Kit_UnitPreviewTemplate`, `Kit_UnitIcon` (A6).
-  `UnitStatsCatalogValidate` is Game-only canon by design (the Lobby has no tower configs to
-  validate against); do not "fix" its absence.
+  **24 entries = 16 modules + 8 templates**, all **GREEN 24/24 in BOTH Places** (byte-identical).
+  Templates are hashed as INSTANCE trees and have no `shared/src` file (ADR-0005). Kit detail:
+  `docs/systems/ui-kit.md`. `UnitStatsCatalogValidate` is Game-only canon by design — do not
+  "fix" its absence in the Lobby.
+
+**DRIFT RULE (applies to everyone):** editing a shared controller **or a template** in one Place
+only is DRIFT. Change → re-hash → copy to the other Place → update the manifest. Copy templates,
+never rebuild them by hand. Both procedures: `tools/checklists.md`.
 
 ## Open PENDINGs
 
-Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
+Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 
-- **PENDING (USER):** run the **teleport v2 loop live** — lobby → reserved match → return → banner.
-  v2 has only ever been Studio-verified; only v1 was ever live-verified (2026-07-18). Both Places
-  are now published on v2, so a `[CONTRACT]` mismatch would block every launch. (The A-phase
-  republish itself is DONE 2026-08-06.)
+- **PENDING (A8, AD-Game) — BLOCKS PHASE A SIGN-OFF.** Blueprint §6 (Counters pipeline) was
+  **never implemented and was never assigned a session task in §9**. Nothing writes
+  `Counters.Global`, `Counters.PerUnit[uuid].Kills` or `Worthiness` in either Place. A7 verified
+  this live: after a real 7-wave match, `Counters.Global` was EMPTY, `Counters.PerUnit` had 0
+  entries and every unit stayed at `Worthiness 0`. §8 acceptance requires all three, so **Phase A
+  is NOT signed off.** Scope: increment Clears/ClearsByStage/Waves + Summons, commit
+  `PerUnit[uuid].Kills` from `MatchStatsTracker` at match end (one commit, not per-kill), and
+  Worthiness += config points per kill capped at 100.
 
-- ~~PENDING: template hashing (AD-Integration) + kit promotion (AD-UI).~~ **BOTH DONE 2026-08-06**
-  — ADR-0005 + the 18/18 shared canon above. Deploy procedures live in `tools/checklists.md`.
+- **PENDING (USER):** run the **teleport v2 loop live** — lobby → reserved match → return →
+  banner. v2 has only ever been Studio-verified; only v1 was ever live-verified (2026-07-18).
+  Both Places are published on v2, so a `[CONTRACT]` mismatch would block every launch.
 
-- ~~PENDING (AD-UI): rebuild the Game hotbar on the kit.~~ **DONE 2026-08-06** — slots are
-  `Kit.UnitIcon` clones with real per-tower viewport models, `UIKit.Button` behaviour, and a
-  **tier-coloured** border (was trait rarity; the trait moved to the corner dot, not dropped).
-  `Unit/ItemIconTemplate` renamed → `Kit_UnitIcon` `24281a2b`, now the 19th drift-controlled entry.
+- **PENDING (USER):** **republish BOTH Places** — A7's `GetCollection` deletion is Lobby Studio
+  canon and is not in git (ADR-0001).
 
-- ~~PENDING (AD-UI): `RewardPopup` + `CurrencyBar`.~~ **DONE 2026-08-06 — A6 IS COMPLETE.**
-  `Kit_RewardPopup` + `UIKitRewardPopup` are shared canon in both Places (no caller yet by design —
-  MatchEnd keeps its list; this is for Phase B gacha, smoke-tested not wired). `CurrencyBar` is
-  **Lobby-local on purpose** (`HUD.Top.CurrencyBar` + controller) — a single-Place widget under
-  drift control would cost a cross-Place sync forever; the header says to promote it into the Kit
-  if the Game place ever wants one.
+- **PENDING (AD-UI, needs a USER decision):** `Kit_UnitIcon` has **no consumer**. The Units
+  screen renders its own card design, not the kit icon, which is why blueprint §5's one-icon
+  intent is unmet. Either the Units screen adopts `Kit.UnitIcon` or the template is retired.
+  **Do not delete it unilaterally** — it carries a rig and the user asked for it to be kept.
 
-- **PENDING (AD-UI, small/cosmetic):** two now-DEAD templates neither deleted unilaterally, since
-  both may be designs worth keeping: `StarterGui.Hotbar.SlotTemplate` (Game — zero readers since
-  the hotbar moved to `Kit.UnitIcon`). Decide keep-or-delete when next touching either screen.
+- **PENDING (AD-UI, small):** the hotbar **hover TRIGGER** is unverified in BOTH Places.
+  `MouseEnter` cannot be fired from tooling and `VirtualInputManager` is blocked, so "the card
+  appears on a real hover" is code-inspection-only. One manual hover in each Place closes it.
+  Related: `Kit.UnitPreviewTemplate` has no `UnitLevelBar`, so the hotbar preview shows
+  name/tier/stats but not level (intentional, skipped gracefully).
 
-- **DRIFT RULE (new, applies to everyone):** the kit is shared now. Editing a controller **or a
-  template** in one Place only is DRIFT. Change → re-hash → copy to the other Place → update the
-  manifest. Templates have NO `shared/src` file — the INSTANCE is the canon (ADR-0005); copy it,
-  never rebuild it by hand. Both procedures are in `tools/checklists.md`.
+- **PENDING (AD-UI, small/cosmetic):** `Kit_ItemHoverCard`'s master/clone split —
+  `ItemsGUI.HoverPreview` is a clone taken once at build time, so editing the master does NOT
+  update the deployed screen. Decide whether this needs a real fix (it caused a stale-size bug at
+  A5). Also `StarterGui.Hotbar.SlotTemplate` (Game) is dead — keep or delete when next touched.
 
-- **PENDING (A7 / AD-Integration — retire `GetCollection`):** ADR-0004 decided it. The remote has
-  **zero callers of any kind**; delete the handler in `LobbyServices` AND the
-  `RS.Remotes.GetCollection` RemoteFunction, then re-verify every Lobby screen loads.
-  **UNBLOCKED 2026-08-06** — it was sequenced after the republish, which has now happened.
-  Meanwhile: **no new readers may be built on `GetCollection`** — use `GetUnitViews`.
-
-- ~~PENDING: `Data.Loadout` has no writer.~~ **CLEARED 2026-08-06** — `Server.Lobby.LoadoutService`
-  (`SetLoadoutSlot`) is the first writer; `Equipped` is now really true for equipped units.
-  **Slots fill LEFT TO RIGHT with no gaps** — `Data.Loadout` is a schema-v2 `{ string }` contract
-  field the match launcher reads, so it must stay a dense list. Fixed slot positions (leave slot 1
-  empty, keep a unit in slot 3) need a **schema bump + migration under AD-Game's contract
-  protocol** — deliberately deferred, not smuggled in.
-
-- ~~PENDING: shared hotbar in both Places.~~ **DONE 2026-08-06.** The user copied the Lobby's whole
-  `StarterGui.Hotbar` into the Game, so both Places hold the SAME screen; the Game got its own
-  controller (placement) and the old `StarterPlayerScripts.Client.UI.Hotbar` was disabled +
-  renamed `Hotbar_RETIRED_2026-08-06` (it would have double-bound keys 1-6). Both hotbars are ONE component
-  (`UIKitHotbar` + `Kit_HotbarSlot`, the user's own design): same slots, hover and animation;
-  the only difference is `OnActivated` — **Lobby** opens the Units screen on that unit, **Game**
-  starts placement. Always 6 slots, states filled/empty/locked.
-  **Locks are a LOBBY concern:** the Game shows none, because you equip in the Lobby and the Game
-  has no `PlayerLevel` (`LoadoutAssigned` carries TowerId/MetaLevel/Trait only). In-match, slots
-  you did not bring are EMPTY. Real in-match locks would need AD-Game to send `PlayerLevel`.
-
-- **PENDING (NEEDS SCHEDULING):** `Data.Items` has no writer (no drop/grant/shop path), so the A5
-  Items screen shows every catalog item at count 0. Correct, but inert until an item economy exists.
-
-- **NOT a bug, do not "fix" it:** the Units screen's stat NUMBERS are per-TOWER (the catalog's
-  mid-roll reference), so two instances of one tower show equal numbers while their GRADE letters
-  differ. ADR-0003's accepted trade; per-unit numbers would need the Min/Max ranges promoted too.
-  Details in `docs/systems/lobby-ui.md`. (Slots filled 2026-08-06; that PENDING is closed.)
+- **PENDING (AD-Game, small):** a unit at `MAX_META_LEVEL` **loses its stored XP** — Archer Lv100
+  went `XP 400 → 0` on earning defeat XP, because `ApplyXP` discards overflow at max rather than
+  preserving the stored value. Cosmetic, but the Units screen shows that number.
 
 - **PENDING (AD-PlayerLevel, small):** promote `TowerProgressionConfig` to shared so the Lobby can
   compute `XpPct` for a real XP bar. The unitView sends raw `XP` + `Level` only.
 
-- **PENDING (Game):** persistence round-trip test (never run; profile shape has changed since it
-  was raised) and progressive `ServerStorage.Documentation` → `docs/systems/` migration.
+- **PENDING (Game):** real-DataStore persistence round-trip test for the PLAYER profile (A7 did a
+  real round trip on a scratch key only), and the progressive
+  `ServerStorage.Documentation` → `docs/systems/` migration.
 
-## Contracts (current versions)
+- **PENDING (NEEDS SCHEDULING):** no writer for `Data.Items` in normal play, so the Items screen
+  shows every count at 0. A latent path exists (`RewardCalculator` → `AddItem` on a Victory drop
+  roll) but has never fired. Correct, not a bug — inert until an item economy exists.
 
-- Save schema: **v2** (`shared/src/ProfileTemplate.luau`, hash `63a0c98a`) — store
-  "Beta1_PlayerData"/"Beta1_PlayerDataDev1". v2 (A1, 2026-08-01) = uuid unit `Units` +
-  `Currencies` map + meta fields; `Migrations[1]` converts v1→v2. **Deployed + drift-green in
-  BOTH Places** (Game A1, Lobby A2 — both `63a0c98a`).
-- Teleport payload: **v2** (`docs/contracts/teleport.md`) — implemented BOTH sides + BOTH
-  directions: Lobby sends `MatchLaunch` and consumes `MatchReturn` (banner + next-act pre-select);
-  Game receives `MatchLaunch` and returns `MatchReturn`. v2 (A2, 2026-08-01) = `Loadout` carries
-  unit uuids; **hard cutover, no migration** — v1 is rejected with `[CONTRACT]`. Version lives in
-  `LobbyConfig.MatchLaunchVersion` == `GameConfig.TeleportPayloadVersion` (must always be equal).
-  Verified in Studio both sides; both Places **republished together 2026-08-06**, so v2 is now the
-  LIVE build in both. **Live e2e re-verification of the v2 loop is still the open user action** —
-  publishing it is not the same as running it (v1 was live-verified end-to-end 2026-07-18).
+- **NOT a bug, do not "fix" it:** the Units screen's stat NUMBERS are per-TOWER (the catalog's
+  mid-roll reference), so two instances of one tower show equal numbers while their GRADE letters
+  differ. ADR-0003's accepted trade. Details in `docs/systems/lobby-ui.md`.
 
-## Current focus
+- **NOT a bug:** `Data.Loadout` fills **LEFT TO RIGHT with no gaps** — it is a schema-v2
+  `{ string }` contract field the match launcher reads, so it must stay a dense list. Fixed slot
+  positions need a schema bump + migration under AD-Game's contract protocol (deferred).
 
-1. **A7 [AD-Integration]** — Phase A acceptance (blueprint §8) + retire `GetCollection` (ADR-0004).
-   The hotbar + equipping work is DONE, so A7 signs off a bigger surface than the blueprint
-   assumed: equipping, the shared hotbar, and 24 drift-controlled entries.
-2. **A7 [AD-Integration]:** full Phase A acceptance (blueprint §8) + retire `GetCollection`
-   (ADR-0004, zero callers, already unblocked).
-3. **USER:** run the teleport v2 loop live once — published is not the same as verified.
-4. Then Phase B (gacha). Schema v2 already carries `Pity`, `Currencies`, `Items`.
-5. Unscheduled but wanted: loadout picker (`Data.Loadout` has no writer, so nothing is ever
-   "equipped"), an item economy (`Data.Items` has no writer either), real art/anim asset ids.
+## Contracts (versions only — detail in `docs/contracts/`)
 
+- **Save schema v2** — `shared/src/ProfileTemplate.luau`, hash `63a0c98a`, deployed + drift-green
+  in BOTH Places. Store `Beta1_PlayerData` (Studio: `Beta1_PlayerDataDev1`, API access ON).
+  `Migrations[1]` v1→v2 re-verified live at A7 on a real ProfileStore round trip.
+- **Teleport payload v2** — `docs/contracts/teleport.md`. Both sides, both directions. Hard
+  cutover, no migration; v1 is rejected with `[CONTRACT]`. `LobbyConfig.MatchLaunchVersion` must
+  always equal `GameConfig.TeleportPayloadVersion`. Live e2e re-verification is still open (USER).
+
+## Next up
+
+1. **A8 [AD-Game]** — blueprint §6 counters + worthiness. This is the last thing between here and
+   Phase A sign-off; everything else in §8 passes.
+2. **USER** — republish both Places, then run the teleport v2 loop live once.
+3. Then **Phase B (gacha)**. Schema v2 already carries `Pity`, `Currencies`, `Items`, and
+   `UIKitRewardPopup` is built and waiting for its first caller.

@@ -42,14 +42,15 @@ confirm profile load + schema version on every boot.
   `Meta.{TierConfig, StatGradeConfig, AscensionConfig, ItemCatalog, UnitStatsCatalog}` = rarity /
   roll-grade / ascension / grantable catalog / generated resolved-stat cache — **shared canon**
   (drift-checked). `UnitStatsCatalog` is deployed in BOTH Places since A6b, 2026-08-06.)
-- **UI kit (AD-UI, shared canon since 2026-08-06)** — present in this Place but **not yet used by
-  any Game screen**; A6 is what rebuilds the hotbar on it. `RS.Shared.UIKit.{Button, ItemIcon,
-  FilterPanel}` (controllers) + `RS.UITemplates.Kit.*` (REAL instance templates, hashed as
-  instance trees per ADR-0005) + `StarterPlayerScripts.UIKitBootstrap` (attaches every GuiButton
-  tagged `UIKitButton`). Verified loading + creating here 2026-08-06. Editing any of it in one
-  Place only is DRIFT — see `docs/systems/lobby-ui.md` and `tools/checklists.md`.
-  The Game's existing screens are still Place-local and script-era (`Hotbar.SlotTemplate`,
-  `MatchEnd.RewardRowTemplate`, `Notifications.CardTemplate`, ...).
+- **UI kit (AD-UI, shared canon since 2026-08-06)** — 6 controllers in `RS.Shared.UIKit` +
+  8 REAL instance templates in `RS.UITemplates.Kit` (hashed as instance trees per ADR-0005) +
+  `StarterPlayerScripts.UIKitBootstrap`. **The Game HOTBAR is on it**: `StarterGui.Hotbar` is the
+  Lobby's own ScreenGui (user-copied), driven by the shared `UIKit.Hotbar` with `Kit.HotbarSlot`
+  clones; the only Place difference is `OnActivated` → **start placement**. The old
+  `StarterPlayerScripts.Client.UI.Hotbar` is disabled/renamed `Hotbar_RETIRED_2026-08-06`, and
+  `"Hotbar - old"` is kept as a disabled backup. Editing any kit half in one Place only is DRIFT
+  — see `docs/systems/ui-kit.md` and `tools/checklists.md`. The Game's OTHER screens are still
+  Place-local and script-era (`MatchEnd.RewardRowTemplate`, `Notifications.CardTemplate`, ...).
 - Remotes: `RS.Remotes.{Placement, Towers, Match, Economy, Combat, Settings}`
 - Rich legacy docs: `ServerStorage.Documentation.*` (AIState, SystemIndex, HowTo, ...) —
   still valid; migrating to repo `docs/systems/` on touch.
@@ -84,7 +85,20 @@ confirm profile load + schema version on every boot.
   Play, pressing Lobby now attempts a real TeleportAsync, which fails (pcall'd +
   TeleportInitFailed handled) — expected; real teleports need the published client.
 - Enemies.Behaviors (Flying/Splitting/...) is an empty extension point.
-- Real-DataStore round-trip test still PENDING (mock verified only).
+- **Counters + Worthiness have NO WRITER (blueprint §6 was never implemented and never assigned a
+  session task).** A7 confirmed live: after a real 7-wave match `Counters.Global` was EMPTY,
+  `Counters.PerUnit` had 0 entries, every unit stayed `Worthiness 0`. Match-end **XP by uuid works**
+  (`RewardCalculator` → `AddTowerXP`). **This is A8 [AD-Game] and it is the only thing blocking
+  Phase A sign-off.** NOTE while implementing: `MatchStatsTracker` keys towers by **TowerId**, not
+  uuid, so two instances of the same tower would collide — resolve that when wiring PerUnit kills.
+- A unit at `MAX_META_LEVEL` LOSES stored XP (`ApplyXP` discards overflow rather than preserving
+  it): Archer Lv100 went `XP 400 → 0` at A7. Cosmetic but visible on the Units screen.
+- `DevSetOwnedTowers` (smoke test) REPLACES `data.Units` with new uuids, which orphans the Lobby's
+  saved `Data.Loadout`. It fails safe (readers filter unowned uuids) but the hotbar will report a
+  stale "N equipped" count until the next equip. Disable the smoke test when testing the real
+  cold path.
+- Real-DataStore round-trip test for the PLAYER profile still PENDING (A7 did a real ProfileStore
+  round trip on a scratch key, which exercised Reconcile + Migrate but not the player join path).
 - **Stat rolls live + actually rolling (A3 + 2026-08-03):** `TowerStatResolver` reads each unit's
   `StatRolls` + `Ascension`; Archer + Mage are the `BaseStats` quality-range pilots. Grants now
   ROLL — `PlayerInventoryService.GrantUnit` (explicit `opts.StatRolls` wins) and `DevSetOwnedTowers`

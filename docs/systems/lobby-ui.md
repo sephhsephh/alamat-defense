@@ -1,116 +1,100 @@
-# SYSTEM — Lobby UI (kit + screens)
-<!-- owner: AD-UI | scope: lobby | last-verified: 2026-08-03 (A5) -->
+# SYSTEM — Lobby UI (screens)
 
-Split out of `places/lobby/CONTEXT.md` at A5 (2026-08-03) when that file passed its 150-line
-cap. This is the AD-UI canon description of the Lobby's UI kit and screens. `CONTEXT.md` keeps
-only a pointer. Studio remains canon for the actual instances and controller code; this doc
-describes what is there and why.
+<!-- owner: AD-UI | scope: lobby | last-verified: 2026-08-06 (A7) -->
 
-## UI kit + screens (AD-UI, 2026-07-31; A4 view-model 2026-08-03; A5 kit + screens 2026-08-03)
+Split out of `places/lobby/CONTEXT.md` at A5 when that file passed its 150-line cap. **At A7
+(2026-08-06) the KIT half moved out to `docs/systems/ui-kit.md`** — the kit is used by both Places
+now, so describing it from a Lobby viewpoint had become wrong. This file is the Lobby's SCREENS.
+Read `ui-kit.md` first for the components they build on.
 
-> **SHARED CANON since 2026-08-06.** The kit is no longer Lobby-only: its 4 controllers and 5
-> templates were promoted to `shared/manifest.json` and deployed byte-identically to BOTH Places
-> (drift 18/18 green). Templates are hashed as instance trees per **ADR-0005**. This file is still
-> written from the Lobby's point of view; when the Game place starts using the kit (A6), the kit
-> half is worth splitting into its own `docs/systems/ui-kit.md`.
->
-> Manifest keys: modules `UIKitButton` `UIKitItemIcon` `UIKitFilterPanel` `UIKitBootstrap`;
-> templates `Kit_Button` `Kit_ItemIcon` `Kit_ItemHoverCard` `Kit_FilterPanel`
-> `Kit_UnitPreviewTemplate` `Kit_UnitIcon`. **Editing any of them in one Place is now DRIFT** —
-> change it, re-hash, mirror to the other Place, update the manifest (`tools/checklists.md`).
->
-> **`Kit_UnitIcon` (A6, 2026-08-06)** — the former `Unit/ItemIconTemplate`, renamed and formalised
-> as the blueprint §5 UnitIcon: `ViewportFrame` + `BG`/tier border + `TraitIcon` + `LevelBadge` +
-> `CostLabel` + `NameLabel` + `ShinyBadge`, plus `KeyLabel`/`CountLabel` that default **hidden**
-> (the Game hotbar turns those two on; other consumers leave them off). Its first consumer is the
-> **Game** hotbar. Deployed by running one identical deterministic script in both Places and
-> hash-matching — the second sanctioned deploy route alongside Studio copy/paste.
+Studio is canon for the actual instances and controller code (ADR-0001); this describes what is
+there and why.
 
-**Kit layout (A5):** REAL instance templates live in **`ReplicatedStorage.UITemplates.Kit`**
-(the blueprint §5 home) — `Button`, `UnitPreviewTemplate`, `Unit/ItemIconTemplate`, and the new
-`ItemIcon` / `ItemHoverCard` / `FilterPanel`. `StarterGui.UITemplates` was emptied into it and
-deleted. Controllers are client ModuleScripts in `ReplicatedStorage.Shared.UIKit`
-(`Button`, `ItemIcon`, `FilterPanel`); each resolves its template by path with fallbacks.
-Removed at the move: the legacy per-slot `Unit/ItemIconTemplateLocalScript`, which had a
-**syntax error on line 30** (`ocal Preview`) and had been erroring on every replication.
+## Screens
 
-- **`UIKit.ItemIcon`** (A5) — item card controller. `ItemIcon.create(parent, itemId, qty)`;
-  flat `IconImage` ImageLabel (**no ViewportFrame — items have no model**), `QtyBadge` that
-  hides at qty 0 (and dims the icon), tier border + BG from the shared multi-colour `TierConfig`,
-  hover/press scale + white border, `onHover`/`onActivated`/`setQty`/`setSelected`/`destroy`.
-  `ItemIcon.ImageFor(id)` falls back to the Studio placeholder while catalog art is `rbxassetid://0`.
-**Hover-card placement (both screens, hardened A5).** `showPreview` anchors the card at
-`(0, 0.5)` beside the hovered card, flipping to the LEFT when it would overflow right. It
-**measures `hoverPreview.AbsoluteSize`** rather than assuming a scale — A4 assumed `0.2 × 0.36`
-of the viewport when the real frame is ~`0.19 × 0.19`, which made the flip fire twice as early
-as needed. The vertical `math.clamp` is guarded because it ERRORS when max < min (preview taller
-than the viewport, or a degenerate `ViewportSize`), falling back to vertical centre.
-**When you resize a Kit template, re-sync any already-deployed clone** — `ItemsGUI.HoverPreview`
-silently kept an old footprint this way until it was caught.
+- **Hotbar** (`StarterGui.Hotbar.HotbarController`) — the shared `UIKit.Hotbar` (see `ui-kit.md`).
+  Lobby action: click or key 1-6 fires `ClientEvents.OpenUnitsWithUuid` and `UnitsController`
+  opens the Units screen on that unit. Verified A7: 6 slots, 3 filled with correct tier colours
+  (Archer/Common `(205,205,215)`, Babaylan/Epic `(168,70,235)`, Farm/Rare `(55,130,255)`), slots
+  4/5/6 locked at Lv 5/20/50, 0 scripts in any viewport.
 
-- **`UIKit.FilterPanel`** (A5) — reusable filter panel, used by BOTH the Units and Items screens.
-  Clones `GroupTemplate` / `ToggleTemplate`; Apply commits pending→applied and fires `OnApply`,
-  Cancel reverts, Reset clears. `handle.selected(groupId)` returns nil when a group is
-  unconstrained, so "no filters" means "show everything".
-- **`UIKit.Button`** (`ReplicatedStorage.Shared.UIKit.Button`) — ONE reusable controller for
-  every button (no per-button scripts). Hover = scale from centre (`centerAnchor` fix) + stroke
-  thicken OR `HoverStrokeColor` (e.g. white) + icon rotate; press animation; seamless (tiled)
-  animated gradient. All attribute-driven (`HoverScale/HoverStrokeMult/HoverStrokeColor/
-  HoverIconRotation/PressScale/TweenTime/GradientAnimate/GradientSpeed/GlowStrokeName/
-  StrokeHiddenUntilHover`). API: attach/create/onActivated/onHover/setHovered/setText/setIcon/
-  setStrokeColor/setEnabled. **Tag any GuiButton `UIKitButton`** → `StarterPlayerScripts.UIKitBootstrap`
-  attaches it (tags copy to clones).
-- **Hotbar** (`StarterGui.Hotbar.HotbarController`) — single controller replaces the old
-  duplicated per-slot scripts (disabled); glow on hover + `Hotbar.Templates.UnitPreviewTemplate`
-  shown above the hovered slot.
-- **Units screen** (`StarterGui.UnitsGUI.UnitsController`) — **A4 (2026-08-03): now reads the
-  `LobbyServices.GetUnitViews` view-model**, keyed by **uuid** (one card per unit instance).
-  Per card from the view: `Name`+`Tier` (ItemCatalog), tier-coloured border **and** BG (shared
-  `TierConfig`, seamless multi-colour), per-stat **GRADE** letters in the Stats panel + hover
-  preview (`view.Grades` from `StatGradeConfig`), real `Level`/`XP` on the preview level bar, and
-  `Favorited`/`Equipped` driving the sort (equipped > favourited > tier high→low > name). Hover =
-  white border + scale + `UITemplates.UnitPreviewTemplate` popup (fake element chips hidden);
-  click → `SelectedUnitFrame`. Live SearchBar (by name). **Resolved DMG/RNG/SPA NUMBERS deferred
-  to A6** (grades only for now — TowerStatResolver not in the Lobby). Placeholder model
-  `UnitModels.Placeholder` (real models later). Action buttons still **animation-only**.
-  **A5:** stat rows are dual-slot — the user added a `Grade` TextLabel to each of
-  `Stats.BaseStatsFrame.{DMG,RNG,SPA}`, so the GRADE letter renders in `Grade` and the NUMBER
-  slot (`TextLabel`) carries the value. Rows WITHOUT a `Grade` child (the hover preview's
-  Attack/Element/MaxPlacement) keep the old behaviour and show the letter in their single label.
-  FILTERS button → shared `UIKit.FilterPanel` (tier + equipped/favourited/locked).
-  **A6 (2026-08-06):** the number slot is now filled from the shared `UnitStatsCatalog.Get(towerId)`
-  (ADR-0003) — resolver-PRODUCED base values, SPA already inverted, not raw `BaseStats`.
-  `formatStat` trims decimals (`15`, `1.4`, `2.5`) and renders `--` for a missing value, so a
-  support tower (Farm has no DMG/SPA keys) or an unknown towerId **never prints "nil"**.
+- **Units screen** (`StarterGui.UnitsGUI.UnitsController`) — reads the `GetUnitViews` view-model,
+  **one card per uuid** (`UnitsContainer.UnitCard_<uuid>`). Per card: `Name`+`Tier` from
+  `ItemCatalog`, tier-coloured border **and** BG from the shared `TierConfig`, per-stat GRADE
+  letters, real `Level`/`XP` on the preview level bar, and `Favorited`/`Equipped` driving the sort
+  (equipped > favourited > tier high→low > name). Hover = white border + scale +
+  `UnitPreviewTemplate` popup; click → `SelectedUnitFrame`. Live SearchBar. FILTERS button → the
+  shared `UIKit.FilterPanel` (tier + equipped/favourited/locked).
 
-  **Read this before "fixing" a bug report:** the number is **per-TOWER, not per-unit**. Two
-  instances of the same tower show the SAME number while their GRADE letters differ — the grade
-  comes from that unit's roll, the number is fixed at the catalog's mid-roll reference (tier 1 /
-  ML 1 / no trait / asc 0). That is the sanctioned ADR-0003 trade: the Lobby cannot resolve a
-  per-unit number without the ~12-module full stat stack. It reads correctly because the panel is
-  titled *BaseStatsFrame*, but it is a real thing players may query. Per-unit numbers would need
-  the Min/Max ranges promoted too, which ADR-0003 deliberately rejected.
+  - **A5:** stat rows are dual-slot — each of `Stats.BaseStatsFrame.{DMG,RNG,SPA}` has a `Grade`
+    TextLabel for the letter and a `TextLabel` for the number. Rows WITHOUT a `Grade` child (the
+    hover preview's Attack/Element/MaxPlacement) keep the old single-label behaviour.
+  - **A6:** the number slot is filled from the shared `UnitStatsCatalog.Get(towerId)` (ADR-0003) —
+    resolver-PRODUCED base values, **SPA already inverted**, not raw `BaseStats`. `formatStat`
+    trims decimals (`15`, `1.4`, `2.5`) and renders `--` for a missing value, so Farm (no DMG/SPA)
+    or an unknown towerId **never prints "nil"**. Verified live A7: `20 / 22 / 2.5` with grades.
+  - **Read this before "fixing" a bug report:** the number is **per-TOWER, not per-unit**. Two
+    instances of one tower show the SAME number while their GRADE letters differ — the grade comes
+    from that unit's roll, the number is the catalog's mid-roll reference (tier 1 / ML 1 / no
+    trait / asc 0). ADR-0003's accepted trade; per-unit numbers would need the Min/Max ranges
+    promoted too, which ADR-0003 deliberately rejected.
+  - **A7 FINDING — the cards are NOT `Kit.UnitIcon` clones.** They are a screen-local card design
+    (`PlacementPrice` + a level `TextLabel`); the kit's `NameLabel`/`LevelBadge`/`CostLabel`/
+    `ShinyBadge` are absent. So the Units screen goes "through the kit" for its **FilterPanel** and
+    the shared **TierConfig/StatGradeConfig/UnitStatsCatalog**, but not for its cards. This is
+    exactly why `Kit_UnitIcon` has no consumer. Not a defect — the screen works and the user owns
+    the design — but blueprint §5 intended one icon component, so either the screen adopts
+    `Kit.UnitIcon` or `Kit_UnitIcon` should be retired. **User decision needed; do not act
+    unilaterally.**
+  - Still open: real per-unit models (everything uses `UnitModels.Placeholder`) and functional
+    action buttons (animation-only today).
+
 - **Items screen** (`StarterGui.ItemsGUI.ItemsController`, A5) — opens from **HUD.Inventory**.
-  Chrome cloned from the Units screen so the design matches. The LIST is every `ItemCatalog`
-  entry with `Kind = "Item"|"Currency"` (a compendium of what exists); the COUNTS come from
-  `GetUnitViews.Items` (+ `Currencies` for Gold/Silver). Cards are `UIKit.ItemIcon`; hover pops
-  `HoverPreview` (the kit's `ItemHoverCard`) to the RIGHT, click fills `SelectedItemFrame`
-  (name/tier/description/owned x/max). Search + `UIKit.FilterPanel` (tier / kind / owned-only).
-  Sort: owned first, then tier high→low, then name. **All counts read 0 today** — no writer.
-- **Collection screen** (`StarterGui.CollectionScreen.Controller`, A5 rebuild) — was
-  script-built, now REAL instances (`Panel.Grid.CardTemplate`, editable in Studio) filled from
-  `GetUnitViews`: one card per uuid with tier border/BG, `Lv N`, the three GRADE letters, and a
-  status line (EQUIPPED / FAVOURITED / LOCKED / ASC n). Meta line shows unit count + Gold/Silver
-  + account level. **This removed the last reader of `GetCollection`'s compat fields.**
-- **Studio harness (A5):** each of `UnitsGUI` / `ItemsGUI` / `CollectionScreen` honours a
-  `DevAutoOpen` **attribute** — set it true to open that screen on boot with no HUD click, so a
-  Play session can be verified without synthetic input (`VirtualInputManager` is blocked for
-  tooling). Same pattern as `DevSimulateReturn` / `DevSimulateFirstJoin`. **All three left OFF.**
-- **Configs:** `RS.Configs.Meta.TierConfig` + `ItemCatalog` + `StatGradeConfig` + `AscensionConfig`
-  are **SHARED CANON** (`shared/src`, deployed both Places, drift-checked). `TierConfig` = 8 tiers,
-  per-tier `Colors` list (Mythic rainbow + Secret red→dark-red), helpers
-  `get`/`colorSequence`/`seamlessSequence`/`isMultiColor`. `ItemCatalog` = authority on Name+Tier.
-  **`UnitCatalog` DELETED at A4 (2026-08-03)** — the Units screen no longer reads any placeholder.
-- **HUD buttons** (`HUD.Left.Buttons.{Play,Units,Inventory,Areas,Summon,Store}`) tagged +
-  animated; `Frame.BorderDesignInside` hidden; hover = white stroke (no thicken).
-  (The sixth button is `Store`, not `Shop` — this doc said Shop until A5.)
+  Chrome cloned from the Units screen so the design matches. The LIST is every `ItemCatalog` entry
+  with `Kind = "Item"|"Currency"` (a compendium of what exists); the COUNTS come from
+  `GetUnitViews.Items` (+ `Currencies` for Gold/Silver). Cards are genuine `UIKit.ItemIcon` clones
+  — verified A7: 5 cards, all `IconImage`+`QtyBadge`, **0 ViewportFrames**, Gold showing `x120`.
+  Hover pops `HoverPreview` (the kit's `ItemHoverCard`) to the RIGHT; click fills
+  `SelectedItemFrame`. Search + `UIKit.FilterPanel` (tier / kind / owned-only). Sort: owned first,
+  then tier high→low, then name.
+  **Every ITEM count reads 0** and that is correct — `Data.Items` has no writer in either Place.
+  (A drop path exists in the Game's `RewardCalculator` → `AddItem`, but it only fires on a
+  **Victory** roll against the stage drop table, which has never landed. Confirmed empty at A7.)
+
+- **Collection screen** (`StarterGui.CollectionScreen.Controller`, A5 rebuild) — was script-built,
+  now REAL instances (`Panel.Grid.CardTemplate`) filled from `GetUnitViews`: one card per uuid with
+  tier border/BG, `Lv N`, the three GRADE letters, and a status line (EQUIPPED / FAVOURITED /
+  LOCKED / ASC n). Meta line shows unit count + Gold/Silver + account level. This removed the last
+  reader of `GetCollection`'s compat fields. **A7 note:** its controller references **no kit
+  component at all** — it is entirely screen-local. Fine today; worth folding into the kit if a
+  third card-grid screen ever appears.
+
+- **StageSelect / Party / Return / StarterChoice** — still legacy script-built screens, on the
+  "convert to instance trees when next touched" list (rule 2026-07-18). `ReturnScreen` builds its
+  banner only when a `MatchReturn` payload is present, so it legitimately has **0 GuiObjects** on a
+  normal boot — that is not a fault.
+
+- **CurrencyBar** (`StarterGui.HUD.Top.CurrencyBar` + controller, A6) — **Lobby-local on purpose**,
+  not shared: a single-Place widget under drift control costs a cross-Place sync forever for
+  something the Game never renders. Refresh is deliberately **one-shot on join** — nothing in the
+  Lobby SPENDS Gold or Silver yet, so there is no change event to subscribe to. Wire a RemoteEvent
+  when a shop or gacha lands; **do not poll.** Amounts abbreviate (`12.3K`, `1.2M`). Promote it
+  into the Kit the day the Game place wants one.
+
+- **HUD buttons** (`HUD.Left.Buttons.{Play,Units,Inventory,Areas,Summon,Store}`) tagged
+  `UIKitButton` + animated; `Frame.BorderDesignInside` hidden; hover = white stroke (no thicken).
+  (The sixth button is `Store`, not `Shop`.) 34 tagged buttons attach at boot.
+
+## Studio harnesses (all left OFF)
+
+`UnitsGUI` / `ItemsGUI` / `CollectionScreen` each honour a **`DevAutoOpen` attribute** — set it
+true to open that screen on boot with no HUD click, so a Play session can be verified without
+synthetic input (`VirtualInputManager` is blocked for tooling). Same pattern as
+`DevSimulateReturn` (MatchReturnService) and `DevSimulateFirstJoin` (StarterChoiceService).
+
+## Server read path
+
+**`GetUnitViews` is the SINGLE profile read path** for every Lobby screen since A7 retired
+`GetCollection` (ADR-0004). It is load-bearing: additive changes are free, a breaking one needs
+contract treatment. Clients never read profiles directly — the server decides what a unit "is",
+the client only renders it. See `places/lobby/CONTEXT.md` for the field list.

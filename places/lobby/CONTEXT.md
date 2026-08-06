@@ -38,12 +38,12 @@ stage + difficulty, form parties, and teleport into the Game place.
     it at A6b and KEPT IT AS-IS** — the shape is right, so `ItemsController` needs no change.
     `GetUnitViews` is now the Lobby's SINGLE profile read path and load-bearing for every
     screen: additive changes are free, but a breaking one needs contract treatment (ADR-0004).
-  - **`GetCollection` — DEAD CODE, retirement scheduled (ADR-0004).** Serves uuid-keyed `Units`
-    + `Loadout` + `Currencies` + `PlayerXP`/`PlayerLevel`; the interim `Towers`/`Currency` compat
-    fields were **DELETED at A6b (2026-08-06)** after a re-grep confirmed zero readers. It now has
-    **zero callers of any kind** — every screen reads `GetUnitViews`. The handler + RemoteFunction
-    are removed at **A7, after the user's republish**. **Do not build new readers on it.**
-    (`StarterGui.CollectionScreen` renders from `GetUnitViews`, not this.)
+  - **`GetCollection` — RETIRED A7 (2026-08-06, ADR-0004).** The handler in `LobbyServices` and
+    the `RS.Remotes.GetCollection` RemoteFunction are both **GONE**; `RS.Remotes` holds 12 entries.
+    Both Places were re-grepped first (zero callers, zero field readers) and all 7 screens were
+    re-verified loading afterwards with no errors and no infinite-yield warning. **`GetUnitViews`
+    is now the SINGLE profile read path** and is load-bearing for every screen: additive changes
+    are free, a breaking one needs contract treatment. **Do not add a second read path.**
   - Stage select + difficulty (`RS.Configs.StageRegistry` mirror, `GetStages`,
     `StarterGui.StageSelectScreen`) — captures (StageId, DifficultyPercent).
   - Parties + reserved-server launch (`Server.Lobby.PartyService`, `RS.Configs.LobbyConfig`,
@@ -82,14 +82,15 @@ session; reconcile before any work if a shared hash drifts.
 
 ## UI kit + screens (AD-UI)
 
-Full detail moved to **`docs/systems/lobby-ui.md`** at A5 (2026-08-03) — this file hit its
-150-line cap. Short version: REAL instance templates in `ReplicatedStorage.UITemplates.Kit`
-(`Button`, `ItemIcon`, `ItemHoverCard`, `FilterPanel`, `UnitPreviewTemplate`,
-`Unit/ItemIconTemplate`); controllers in `ReplicatedStorage.Shared.UIKit`
-(`Button`, `ItemIcon`, `FilterPanel`). Screens: **Units** (uuid cards + grades + filters),
-**Items** (catalog + counts + filters, A5), **Collection** (rebuilt on real instances, A5),
-**Hotbar**. `StarterGui.UITemplates` was emptied into the Kit and deleted.
-Each screen honours a `DevAutoOpen` attribute as a Studio harness (all left OFF).
+Two docs since A7 (2026-08-06): **`docs/systems/ui-kit.md`** is the Place-neutral kit (6 shared
+controllers in `RS.Shared.UIKit` + 8 real instance templates in `RS.UITemplates.Kit`, all under
+drift control); **`docs/systems/lobby-ui.md`** is this Place's SCREENS — **Units** (uuid cards +
+grades + numbers + filters), **Items** (catalog + counts + filters), **Collection**, **Hotbar**
+(the shared component), **CurrencyBar** (Lobby-local by design), plus the legacy script-built
+StageSelect / Party / Return / StarterChoice. `StarterGui.UITemplates` was emptied into the Kit
+and deleted. Each of Units/Items/Collection honours a `DevAutoOpen` Studio harness (all left OFF).
+**A7 finding:** the Units screen's cards are screen-local, NOT `Kit.UnitIcon` clones — see
+`lobby-ui.md`; that template still has no consumer and its fate is a user decision.
 
 ## v2 candidates (not built)
 
@@ -101,23 +102,18 @@ Each screen honours a `DevAutoOpen` attribute as a Studio harness (all left OFF)
 - Convert legacy script-built screens to instance trees when next touched (rule 2026-07-18):
   ~~CollectionScreen~~ (done A5), StageSelectScreen, PartyScreen, ReturnScreen.
 
-## Open PENDINGs (see STATE.md)
+## Open PENDINGs (see STATE.md — this is the Lobby-relevant subset)
 
-- **AD-UI (A6, UNBLOCKED 2026-08-06):** fill the Units stat rows' `--` number slots from
-  `UnitStatsCatalog.Get` (`Stats.BaseStatsFrame.{DMG,RNG,SPA}`) — the module is now deployed
-  here and verified requireable. The `Grade` labels beside them already work from the roll and
-  must keep working; **Farm returns no DMG/SPA, handle the nil**. Also still open: real per-unit
-  models (everything uses `UnitModels.Placeholder`), functional Units action buttons, hotbar
-  rebuild. Kit promotion to `shared/src` at Integration (A7).
-- ~~**AD-Lobby (A5 handoff)**~~ **DONE 2026-08-06 (A6b)** — compat fields deleted (zero readers
-  re-confirmed), `Items` reviewed and kept as-is; proposal RESOLVED.
-- **A7:** retire `GetCollection` — delete the handler + the RemoteFunction (ADR-0004), after the
-  user's republish.
-- **Unscheduled:** no writer for `Data.Items` (Items screen shows all zeroes) and none for
-  `Data.Loadout` (`Equipped` is always false).
-- **USER (BLOCKING):** save + republish **BOTH** Places together — schema v2 + teleport v2 are
-  Studio-canon on both sides and v1/v2 do not interoperate. A partial publish breaks live
-  launches with `[CONTRACT] PayloadVersion mismatch`. (LIVE v1 loop was verified 2026-07-18.)
+- **AD-UI:** real per-unit models (everything uses `UnitModels.Placeholder`) and functional Units
+  action buttons (animation-only today). `Kit_UnitIcon` has no consumer — user decision.
+- **AD-UI (small):** the hotbar hover TRIGGER is unverified (tooling cannot fire `MouseEnter`);
+  `Kit_ItemHoverCard`'s master/clone split means editing the master does not update the screen.
+- **USER (BLOCKING):** save + **republish BOTH Places** — A7 deleted `GetCollection` here, which
+  is Studio canon and not in git. Schema v2 + teleport v2 also do not interoperate with v1, so a
+  partial publish breaks live launches with `[CONTRACT] PayloadVersion mismatch`.
+- **USER:** run the teleport v2 loop LIVE once (only v1 was ever live-verified, 2026-07-18).
+- **Unscheduled:** no writer for `Data.Items` in normal play, so the Items screen shows all zeroes.
+  (`Data.Loadout` now HAS a writer — `LoadoutService`, 2026-08-06 — so `Equipped` is real.)
 
 ## Ownership notes
 

@@ -42,9 +42,12 @@ everything untradeable at launch).
 - ✅ Collection screen rebuilt on real instances + the `GetUnitViews` view-model (A5, 2026-08-03)
 - ✅ Items screen (A5, 2026-08-03) — catalog-driven; real counts land when an item economy does
 - 🟡 v1: parties (in-memory, single-server; cross-server/persisted = later phase)
-- 🔲 Loadout picker UI (player chooses their 6; replaces auto-loadout) — also the missing
-  `Data.Loadout` WRITER, so `Equipped` is false everywhere until it exists
-- 🔲 Item economy: nothing writes `Data.Items` in either Place (no drop/grant/shop path yet)
+- ✅ **Equipping (2026-08-06)** — `Server.Lobby.LoadoutService` (`SetLoadoutSlot`) is the FIRST
+  writer of `Data.Loadout`, so `Equipped` is finally real. Slots fill LEFT TO RIGHT (dense uuid
+  list — a contract requirement). The shared hotbar is the picker UI. **A7 verified the full chain
+  live: equip in the Lobby → the Game place starts a match from those exact uuids.**
+- 🔲 Item economy: nothing writes `Data.Items` in normal play (a latent Victory-drop path exists
+  in the Game's `RewardCalculator`, but it has never fired), so every count is 0
 
 ## Cross-Place
 
@@ -60,8 +63,10 @@ everything untradeable at launch).
   (hash `63a0c98a`, drift-green in Game + Lobby). Game A1 2026-08-01, Lobby A2 2026-08-01.
 - ✅ **Teleport v2** (A2, 2026-08-01): `Loadout` carries unit uuids, `PayloadVersion = 2` both
   sides, hard cutover (v1 rejected). Studio-verified; live re-run pending the user's republish.
-- 🔲 Counters pipeline: Game commits per-match counters (kills/uuid, clears, waves) →
-  feeds quests, worthiness, evolution takedowns
+- 🔲 **Counters pipeline (blueprint §6) — the ONE thing blocking Phase A sign-off.** Game commits
+  per-match counters (kills/uuid, clears, waves) + worthiness → feeds quests, evolution takedowns.
+  **Never implemented and never assigned a session task in §9**; A7 confirmed live that nothing
+  writes `Counters` or `Worthiness` in either Place. Scheduled as **A8 [AD-Game]**.
 
 ## Meta-systems (phased; each phase ships playable)
 
@@ -86,10 +91,9 @@ catalog/configs, icon kit, session plan A1–A7). Phases B–F:
   `UIKit.FilterPanel` (A5, 2026-08-03)**, all in `RS.Shared.UIKit`, cloning REAL instance
   templates from **`RS.UITemplates.Kit`** (the blueprint §5 home — `StarterGui.UITemplates`
   was emptied into it at A5). Tier-coloured borders via the shared `TierConfig`.
-  ✅ **Kit PROMOTED to shared canon 2026-08-06** — 4 controllers (`UIKitButton`, `UIKitItemIcon`,
-  `UIKitFilterPanel`, `UIKitBootstrap`) + 5 templates (`Kit_*`, hashed as instance trees per
-  ADR-0005), deployed byte-identically to BOTH Places, **drift 18/18 GREEN**. Pulled forward from
-  A7 because A6's Game hotbar depends on it.
+  ✅ **Kit PROMOTED to shared canon 2026-08-06**, pulled forward from A7 because A6's Game hotbar
+  depends on it. Now **6 controllers + 8 templates**, deployed byte-identically to BOTH Places —
+  **drift 24/24 GREEN**, re-verified at A7. Place-neutral doc: `docs/systems/ui-kit.md`.
   ✅ **`Kit_UnitIcon`** (A6) — the blueprint §5 UnitIcon, now the Game hotbar's slot.
   ✅ **`RewardPopup`** (A6) — `Kit_RewardPopup` + `UIKitRewardPopup`, catalog-id driven, shared
   canon in both Places; no caller yet by design (Phase B gacha).
@@ -97,7 +101,11 @@ catalog/configs, icon kit, session plan A1–A7). Phases B–F:
   single-Place widget under drift control costs a cross-Place sync forever.
   Still 🔲: UnitHoverCard, ViewportPreview, NPCPrompt; a `UIKit.UnitIcon` controller (deferred —
   one consumer today, so `UIKit.Button` + the template suffice).
-- 🟡 Hotbar rebuilt on kit (lobby — glow + hover preview via one controller, 2026-07-31; game 🔲)
+- ✅ **Hotbar rebuilt on kit — BOTH Places (2026-08-06)**: ONE component (`UIKitHotbar` +
+  `Kit_HotbarSlot`, the user's own design), same look/hover/animation; only `OnActivated` differs
+  (Lobby opens Units on that unit, Game starts placement). Always 6 slots, filled/empty/locked;
+  locks are Lobby-only by design. 🔲 the hover TRIGGER is still unverified in both Places
+  (`MouseEnter` cannot be fired from tooling) — one manual hover each closes it.
 - ✅ **Units screen on kit + view-model (Lobby; A4 2026-08-03, A5 filters 2026-08-03)** —
   uuid cards from `GetUnitViews`, shared multi-colour tier borders, per-stat GRADE letters in
   the designed `Grade` labels, real Level/XP, sort (equipped>favourited>tier>name), live search,
@@ -118,9 +126,21 @@ catalog/configs, icon kit, session plan A1–A7). Phases B–F:
   `GetCollection`'s interim `Towers`/`Currency` compat fields.
 - ✅ **`UnitStatsCatalog` deployed to the Lobby (A6b, 2026-08-06)** — 9th shared module,
   `3bb9b140`, **drift GREEN 9/9 in both Places**; verified requireable from a client context.
-- ✅ **`GetCollection` compat fields deleted (A6b)** — zero readers re-confirmed first;
-  `GetUnitViews.Items` reviewed and kept as-is. 🔲 **Retire `GetCollection` entirely at A7**
-  (handler + RemoteFunction) per `docs/decisions/ADR-0004-retire-getcollection.md`.
+- ✅ **`GetCollection` RETIRED entirely (A7, 2026-08-06)** — handler + the `RS.Remotes` instance
+  deleted per ADR-0004, after re-grepping BOTH Places for readers (zero) and re-verifying all 7
+  Lobby screens still load with no errors and no infinite-yield. `GetUnitViews` is now the Lobby's
+  single profile read path.
+
+### Phase A acceptance (§8) — run at A7, 2026-08-06. **NOT SIGNED OFF.**
+
+- ✅ starter grant with real rolls · ✅ hotbar + Items on the kit · ✅ match plays with resolver
+  stats (7 waves, 46,375 dmg) · ✅ **match-end XP committed by uuid** · ✅ v1→v2 migration on a real
+  ProfileStore round trip · ✅ drift 24/24 in both Places · ✅ **equip → launch → match uses that
+  loadout, across Places**
+- 🟡 Units screen: kit FilterPanel + shared configs, but its CARDS are screen-local, not
+  `Kit.UnitIcon` (which therefore still has no consumer — user decision pending)
+- ❌ **counters + worthiness NOT committed** — blueprint §6 has no writer at all. **A8 [AD-Game]
+  is the only thing left before Phase A can be declared done.**
 
 ### Phase B — Gacha
 - 🔲 Banner engine: one config file per banner (auto-scanned); Standard (3 mythics/hour,

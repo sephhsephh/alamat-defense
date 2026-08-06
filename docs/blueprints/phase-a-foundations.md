@@ -150,3 +150,16 @@ v1→v2, all towers present as instances); drift check green in BOTH Places.
 - **A5 [AD-UI]** Units screen + Items screen rebuilt on kit (+FilterPanel). Convert legacy CollectionScreen per the convert-on-touch rule.
 - **A6 [AD-UI]** Hotbar rebuild on kit in GAME place (+ lobby hotbar mirror) + RewardPopup + CurrencyBar.
 - **A7 [AD-Integration]** Full-phase acceptance (§8), promote kit/config modules used by both Places into shared/src + manifest, ROADMAP flips, republish both Places (USER).
+- **A8 [AD-Game]** §6 Counters pipeline + Worthiness commit. **ADDED 2026-08-06 by the A7
+  acceptance session.** §6 was written into this blueprint but **never assigned to any session
+  task A1–A7**, so nothing ever implemented it; A7 confirmed live that no writer for
+  `Counters.Global`, `Counters.PerUnit[uuid].Kills` or `Worthiness` exists in either Place. §8
+  requires all three, so **Phase A cannot be signed off until A8 lands.** Implementation note from
+  A7: `MatchStatsTracker` keys towers by **TowerId**, not uuid, so two instances of the same tower
+  would collide on `PerUnit[uuid]` — resolve that as part of the task.
+
+**A7 acceptance result (2026-08-06):** §8 PASSES on starter rolls, hotbar + Items on the kit,
+resolver stats in a real match, match-end **XP by uuid**, v1→v2 migration, drift 24/24 in both
+Places, and the full equip→launch→match chain across Places. It is **PARTIAL** on "units screen
+renders through the kit" (its cards are screen-local, not `Kit.UnitIcon`) and **FAILS** on
+counters + worthiness. Detail in `CHANGELOG.md`.

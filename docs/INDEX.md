@@ -18,9 +18,12 @@
 - (empty — design pillars/economy docs migrate here from Studio progressively)
 
 ## systems/
-- `lobby-ui.md` — AD-UI canon for the Lobby's UI kit (`RS.UITemplates.Kit` templates +
-  `RS.Shared.UIKit` controllers: Button/ItemIcon/FilterPanel) and its screens (Units, Items,
-  Collection, Hotbar, HUD buttons) + the `DevAutoOpen` Studio harness. Split out of
+- `ui-kit.md` — **Place-NEUTRAL** AD-UI canon for the shared UI kit: 6 controllers
+  (`RS.Shared.UIKit`, `shared/src` files) + 8 real instance templates (`RS.UITemplates.Kit`, the
+  INSTANCE is canon per ADR-0005), the shared hotbar, the configs it depends on, and the rules
+  that keep it healthy. Split out of `lobby-ui.md` at A7 once BOTH Places used the kit.
+- `lobby-ui.md` — the LOBBY's screens only (Units, Items, Collection, Hotbar, CurrencyBar, HUD
+  buttons, the legacy script-built four) + the `DevAutoOpen` Studio harness. Split out of
   `places/lobby/CONTEXT.md` at A5 when that file passed its 150-line cap.
 - (otherwise — richer system docs still live in the Game place's `ServerStorage.Documentation`
   [Architecture, SystemIndex, GameplaySystems, Networking, GameFlow, HowTo, CodingStandards,
@@ -32,7 +35,11 @@
 - `ADR-0003-lobby-stat-numbers.md` — the Lobby gets resolved DMG/RNG/SPA from a GENERATED
   `UnitStatsCatalog` + boot validator, not by promoting the full stat stack (user, 2026-08-03)
 - `ADR-0004-retire-getcollection.md` — `GetUnitViews` is the Lobby's single profile read path;
-  `GetCollection` is dead code, retirement ACCEPTED and scheduled for A7 (AD-Lobby, 2026-08-06)
+  `GetCollection` is dead code. ACCEPTED 2026-08-06 (AD-Lobby), **EXECUTED at A7 the same day**
+- `ADR-0005-instance-tree-hashing.md` — GuiObject subtrees are drift-controlled canon: the format,
+  the property whitelist, and why ViewportFrame 3D contents are excluded
+- `ADR-0006-state-md-cap.md` — `STATE.md` stays ONE file (the bootstrap ritual reads it), cap
+  100→120, and a resolved PENDING is DELETED rather than struck through (AD-Integration, A7)
 
 ## proposals/
 - `2026-08-06-kit-promotion-blocks-a6.md` — AD-UI→AD-Integration: A6's Game hotbar needs the kit,

@@ -130,6 +130,10 @@ up next session. Unlisted new system → add it to OWNERSHIP.md as part of build
 
 ## Doc size caps (keep bootstrap under ~3k tokens forever)
 
-CLAUDE.md ≤150 lines · STATE.md ≤100 · CONTEXT.md ≤150 · contract ≤300 · system ≤300.
+CLAUDE.md ≤150 lines · STATE.md ≤120 · CONTEXT.md ≤150 · contract ≤300 · system ≤300.
 Over cap → split, register in `docs/INDEX.md`. Current-state docs describe NOW; history
 goes to CHANGELOG/ADRs. New durable decision → one-page ADR in `docs/decisions/`.
+
+**`STATE.md` is the documented exception to "split" (ADR-0006):** the bootstrap ritual reads
+it for PENDINGs, so it stays ONE file. Over 120 → **delete resolved PENDINGs** (their record is
+the changelog); strikethrough `~~DONE~~` entries are banned from the PENDING list.

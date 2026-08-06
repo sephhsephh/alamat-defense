@@ -1,5 +1,88 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-06 [integration] A7 — Phase A acceptance run + `GetCollection` RETIRED. **Phase A is NOT signed off.**
+
+The blueprint §8 acceptance, walked live in BOTH Places. Drift **24/24 GREEN in both** at bootstrap
+and again at landing (16 modules + 8 templates, byte-identical). Integration gate: this IS the
+Integration session. Verified by a temporary in-engine harness (`SSS.Server.A7Acceptance`, since
+DELETED) plus real client→server remote round trips — never `execute_luau` module reads.
+
+**§8 acceptance, item by item:**
+
+| § 8 item | Verdict | Evidence |
+| --- | --- | --- |
+| Starter picker → unit instance with real rolls | **PASS\*** | `GetStarterOffer` → 4 choices; `ChooseStarterTower` granted uuid `8704564d` with rolls **0.1305 / 0.2418 / 0.3901** — NOT the legacy hardcoded 0.5 |
+| Hotbar renders through the kit | **PASS** | 6 slots, all `Kit_HotbarSlot`-shaped, 3 filled with correct tier colours, 3 locked Lv5/20/50, **0 scripts in any viewport** |
+| Items screen renders through the kit | **PASS** | 5 cards, all `UIKit.ItemIcon` (`IconImage`+`QtyBadge`), **0 ViewportFrames** |
+| Units screen renders through the kit | **PARTIAL** | FilterPanel + TierConfig/StatGrade/UnitStatsCatalog are the kit's; the **CARDS are screen-local, not `Kit.UnitIcon`** |
+| Match plays with resolver stats | **PASS** | 7 waves, **46,375 damage**; per-unit resolve, e.g. Knight DMG roll 0.771 → 39.38 vs Mage 0.025 → 26.73 |
+| Match end commits **XP** by uuid | **PASS** | Mage `16e224f7` **+358**, Knight `82acb182` **+97**; unequipped units that gained XP: **0** |
+| Match end commits **counters** by uuid | **FAIL** | `Counters.Global` EMPTY, `Counters.PerUnit` **0 entries** after a real match |
+| Match end commits **worthiness** by uuid | **FAIL** | every unit `Worthiness 0 → 0` |
+| Old v1 dev profile migrates cleanly | **PASS** | real ProfileStore round trip on a scratch key: `[DATA] Migrated … 1 step(s): v1 -> v2`, 3/3 towers as uuid instances, `Currency 250 → Currencies.Gold 250`, old `Towers` removed, PlayerXP preserved |
+| Drift green in BOTH Places | **PASS** | 24/24 both, at bootstrap and at landing |
+
+\* eligibility was forced by the `DevSimulateFirstJoin` harness (the dev profile owns 8 units), so
+the *grant path and rolls* are proven but "a zero-unit profile is offered the picker" is still
+inspection-only — it shares the same `isEligible` function and `ProfileTemplate.Template.Units`
+ships empty.
+
+- **BONUS, and the strongest result of the session — the EQUIP → LAUNCH → MATCH chain is real.**
+  Equipped 3 units in the LOBBY via `SetLoadoutSlot`, stopped, then booted the GAME place: it read
+  **the same 3 uuids** out of `Data.Loadout` and started the match from exactly them
+  (`Mage 16e224f7`, `Knight 82acb182`, `Archer e0633351`). One shared profile, two Places, no
+  auto-loadout fallback. Gold moved 120 → 135 → 150 across the Places as rewards committed.
+
+**Why Phase A is NOT signed off: blueprint §6 (Counters pipeline) was never implemented.** It has
+no writer anywhere in either Place — `script_grep` for `Counters` / `Worthiness` returns only the
+template definition and the zero-initialisers — and, checking §9, **no session task A1–A7 was ever
+assigned to it.** It is a hole in the session plan, not a regression. §8 explicitly requires
+counters + worthiness, so A7 cannot sign the phase off. Needs an **A8 [AD-Game]**.
+
+**`GetCollection` RETIRED (ADR-0004) — executed.**
+
+- **Re-grepped BOTH Places FIRST:** zero callers of the remote, zero readers of its fields. The
+  only `%.Towers` / `%.Currency` hits were `ProfileTemplate`'s v1→v2 migration (reads OLD profile
+  fields) — **left untouched**, as instructed.
+- Deleted the handler in `Server.Lobby.LobbyServices` **and** the `RS.Remotes.GetCollection`
+  RemoteFunction instance. `RS.Remotes` went 13 → 12.
+- **Re-verified all 7 Lobby screens load after the deletion** — Units, Items, Collection,
+  StageSelect, Party, Return, StarterChoice: all present, all controllers enabled, **no errors and
+  no "Infinite yield" warning** (the failure mode a removed remote actually produces). All five
+  read remotes round-tripped `ok=true`. `ReturnScreen` has 0 GuiObjects on a normal boot by design
+  (it builds only on a `MatchReturn` payload) — not a fault.
+- `GetUnitViews` is now the Lobby's SINGLE profile read path, recorded in the `LobbyServices` header.
+
+**Other findings worth keeping:**
+
+- **A max-meta-level unit LOSES stored XP.** Archer (Lv100 = `MAX_META_LEVEL`) went `XP 400 → 0`
+  when it earned defeat XP — `ApplyXP` discards overflow at max level rather than clamping the
+  stored value. Cosmetic, but it silently destroys a number the Units screen shows.
+- **A Game-place dev seed orphans the Lobby's saved loadout.** `DevSetOwnedTowers` replaces
+  `data.Units` wholesale with new uuids, so `Data.Loadout` was holding 2 uuids that resolved to
+  nothing; the hotbar logged "2 equipped" while drawing 2 EMPTY slots. It **fails safe** —
+  `LoadoutService.clean()` drops unowned uuids on the next write and `PartyService.buildLoadout`
+  filters them — so this is a misleading count, not corruption.
+- `Data.Items` genuinely empty, confirming the "no writer" note. There IS a latent path
+  (`RewardCalculator` → `AddItem`) but it only fires on a **Victory** drop roll, which never landed.
+- **§9 A7's "promote kit/config modules into shared/src + manifest" verified, not redone:** 16/16
+  modules have `shared/src` files, 8 templates, all 24 `deployed` in both Places.
+
+**Housekeeping settled (both were raised repeatedly):**
+
+- **ADR-0006** — `STATE.md` stays ONE file (the ritual reads it); cap **100 → 120**; a resolved
+  PENDING is **deleted**, not struck through. The real cause of the overage was 4 struck-through
+  DONE entries (~30 lines) duplicating changelog entries. `CLAUDE.md` updated.
+- **`docs/systems/ui-kit.md`** — the kit half of `lobby-ui.md` split out into a Place-neutral doc
+  (it serves both Places now); `lobby-ui.md` slimmed to the Lobby's screens.
+
+- **Contract impact:** NONE. No shared module or template changed — drift stays **24/24 GREEN**.
+  The `GetCollection` deletion is Lobby-local Studio canon.
+- **PENDINGs:** **NEW — A8 [AD-Game]: implement blueprint §6** (counters + worthiness commit).
+  Phase A stays OPEN until it lands. Carried: hotbar hover TRIGGER unverified in both Places;
+  `Kit_UnitIcon` still consumerless (user decision); teleport v2 live loop (USER).
+- **BOTH Places need republishing** — the `GetCollection` deletion is Studio canon.
+
 ## 2026-08-06 [integration] Hotbar hover preview RESTORED (a regression I introduced) + dead-template audit
 
 User chose to skip A7 for now and do AD-UI cleanup. The audit turned up something worse than dead
