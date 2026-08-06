@@ -8,6 +8,21 @@ describes what is there and why.
 
 ## UI kit + screens (AD-UI, 2026-07-31; A4 view-model 2026-08-03; A5 kit + screens 2026-08-03)
 
+> **SHARED CANON since 2026-08-06.** The kit is no longer Lobby-only: its 4 controllers and 5
+> templates were promoted to `shared/manifest.json` and deployed byte-identically to BOTH Places
+> (drift 18/18 green). Templates are hashed as instance trees per **ADR-0005**. This file is still
+> written from the Lobby's point of view; when the Game place starts using the kit (A6), the kit
+> half is worth splitting into its own `docs/systems/ui-kit.md`.
+>
+> Manifest keys: modules `UIKitButton` `UIKitItemIcon` `UIKitFilterPanel` `UIKitBootstrap`;
+> templates `Kit_Button` `Kit_ItemIcon` `Kit_ItemHoverCard` `Kit_FilterPanel`
+> `Kit_UnitPreviewTemplate`. **Editing any of them in one Place is now DRIFT** — change it, re-hash,
+> copy to the other Place, update the manifest (`tools/checklists.md` has both procedures).
+>
+> `Kit.Unit/ItemIconTemplate` is deliberately NOT under drift control: zero code readers (only a
+> stale comment in `HotbarController`), an A5 leftover carrying a 268-instance rig. A6 either
+> formalises it as the blueprint §5 `UnitIcon` or deletes it.
+
 **Kit layout (A5):** REAL instance templates live in **`ReplicatedStorage.UITemplates.Kit`**
 (the blueprint §5 home) — `Button`, `UnitPreviewTemplate`, `Unit/ItemIconTemplate`, and the new
 `ItemIcon` / `ItemHoverCard` / `FilterPanel`. `StarterGui.UITemplates` was emptied into it and

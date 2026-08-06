@@ -86,8 +86,12 @@ catalog/configs, icon kit, session plan A1–A7). Phases B–F:
   `UIKit.FilterPanel` (A5, 2026-08-03)**, all in `RS.Shared.UIKit`, cloning REAL instance
   templates from **`RS.UITemplates.Kit`** (the blueprint §5 home — `StarterGui.UITemplates`
   was emptied into it at A5). Tier-coloured borders via the shared `TierConfig`.
+  ✅ **Kit PROMOTED to shared canon 2026-08-06** — 4 controllers (`UIKitButton`, `UIKitItemIcon`,
+  `UIKitFilterPanel`, `UIKitBootstrap`) + 5 templates (`Kit_*`, hashed as instance trees per
+  ADR-0005), deployed byte-identically to BOTH Places, **drift 18/18 GREEN**. Pulled forward from
+  A7 because A6's Game hotbar depends on it.
   Still 🔲: UnitIcon formalised as a kit controller, UnitHoverCard, RewardPopup, CurrencyBar,
-  ViewportPreview, NPCPrompt; promotion of the kit to `shared/src` (A7).
+  ViewportPreview, NPCPrompt.
 - 🟡 Hotbar rebuilt on kit (lobby — glow + hover preview via one controller, 2026-07-31; game 🔲)
 - ✅ **Units screen on kit + view-model (Lobby; A4 2026-08-03, A5 filters 2026-08-03)** —
   uuid cards from `GetUnitViews`, shared multi-colour tier borders, per-stat GRADE letters in

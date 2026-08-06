@@ -1,5 +1,9 @@
 # CONTEXT — Game place ("Alamat Defense")
-<!-- owner: game | scope: game | last-verified: 2026-08-01 -->
+<!-- owner: game | scope: game | last-verified: 2026-08-06 -->
+<!-- 2026-08-06 (AD-UI): added the UI-kit line below (AD-UI's own system) and corrected three
+     STALE facts flagged the previous session — the USER publish is done, the Lobby's starter
+     grant no longer writes 0.5, and UnitStatsCatalog is deployed in BOTH Places. Everything
+     else in this file is AD-Game's canon and was left untouched. -->
 
 The match Place: loads a map, runs waves, towers fight, rewards commit to the profile.
 Server-authoritative, registry/config-driven, signal-decoupled. `--!strict` throughout.
@@ -37,7 +41,15 @@ confirm profile load + schema version on every boot.
   (`Global.GameConfig` = cross-Place ids: `LobbyPlaceId`, `TeleportPayloadVersion`;
   `Meta.{TierConfig, StatGradeConfig, AscensionConfig, ItemCatalog, UnitStatsCatalog}` = rarity /
   roll-grade / ascension / grantable catalog / generated resolved-stat cache — **shared canon**
-  (drift-checked). `UnitStatsCatalog` (A6) is Game-deployed only until the Lobby deploys it.)
+  (drift-checked). `UnitStatsCatalog` is deployed in BOTH Places since A6b, 2026-08-06.)
+- **UI kit (AD-UI, shared canon since 2026-08-06)** — present in this Place but **not yet used by
+  any Game screen**; A6 is what rebuilds the hotbar on it. `RS.Shared.UIKit.{Button, ItemIcon,
+  FilterPanel}` (controllers) + `RS.UITemplates.Kit.*` (REAL instance templates, hashed as
+  instance trees per ADR-0005) + `StarterPlayerScripts.UIKitBootstrap` (attaches every GuiButton
+  tagged `UIKitButton`). Verified loading + creating here 2026-08-06. Editing any of it in one
+  Place only is DRIFT — see `docs/systems/lobby-ui.md` and `tools/checklists.md`.
+  The Game's existing screens are still Place-local and script-era (`Hotbar.SlotTemplate`,
+  `MatchEnd.RewardRowTemplate`, `Notifications.CardTemplate`, ...).
 - Remotes: `RS.Remotes.{Placement, Towers, Match, Economy, Combat, Settings}`
 - Rich legacy docs: `ServerStorage.Documentation.*` (AIState, SystemIndex, HowTo, ...) —
   still valid; migrating to repo `docs/systems/` on touch.
@@ -77,8 +89,8 @@ confirm profile load + schema version on every boot.
   `StatRolls` + `Ascension`; Archer + Mage are the `BaseStats` quality-range pilots. Grants now
   ROLL — `PlayerInventoryService.GrantUnit` (explicit `opts.StatRolls` wins) and `DevSetOwnedTowers`
   call `StatGradeConfig.RollAll(rng)` off one persistent `Random` (was hardcoded 0.5). The Lobby's
-  `StarterChoiceService` still writes 0.5 until its PENDING lands (proposal 2026-08-03). Existing
-  units + the v1→v2 migration stay grandfathered at 0.5 (append-only). Client stat PREVIEWS still
-  resolve at rollMult 1.0 until the UI wire-up (A4–A6); server gameplay is roll-correct.
-- **USER (BLOCKING):** the A1 service refactors, A2 version flip, and A3 Meta configs + resolver
-  are all Studio-canon — publish this Place together with the Lobby (v1/v2 do not interoperate).
+  `StarterChoiceService` ALSO rolls since 2026-08-03 — **all grant paths now roll.** Existing
+  units + the v1→v2 migration stay grandfathered at 0.5 (append-only).
+- ~~USER (BLOCKING) publish~~ **DONE 2026-08-06** — both Places were republished together, so the
+  whole A-phase is the live build. Still open: a live end-to-end run of the **teleport v2 loop**
+  (publishing v2 is not the same as exercising it).

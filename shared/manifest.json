@@ -107,7 +107,110 @@
       },
       "comment": "GENERATED cache of per-tower RESOLVED base stats (DMG/RNG/SPA at tier1/ML1/no-trait/mid-roll/asc0) so the Lobby fills the Units-screen number slots without the full stat stack (ADR-0003). Added A6 2026-08-03 (owner AD-Game). Load-bearing validator SSS.Server.UnitStatsCatalogValidate regenerates from the live tower configs at boot in the Game place and errors LOUD on drift -- it stays GAME-ONLY canon (the Lobby has no tower configs to validate against). Deployed byte-identical (3bb9b140) in GAME (A6) and LOBBY (A6b, 2026-08-06) -- drift-green 9/9 in both Places. Regenerate + rehash whenever a tower's Damage/Range/SPA or BaseStats changes.",
       "kind": "module"
+    },
+    "UIKitButton": {
+      "file": "shared/src/UIKitButton.luau",
+      "hash": "4968d8c3",
+      "owner": "ui",
+      "deployPath": "ReplicatedStorage.Shared.UIKit.Button",
+      "deployed": {
+        "Game": "4968d8c3",
+        "Lobby": "4968d8c3"
+      },
+      "comment": "Kit CONTROLLER. ONE reusable behaviour controller for every GuiButton (hover scale/stroke/icon-rotate, press, seamless animated gradient); all tuning via Attributes. Tag any GuiButton 'UIKitButton' and UIKitBootstrap attaches it. Promoted to shared canon 2026-08-06 with the rest of the kit so the Game place can build on it (blueprint section 9 A6).",
+      "kind": "module"
+    },
+    "UIKitItemIcon": {
+      "file": "shared/src/UIKitItemIcon.luau",
+      "hash": "b717ebe9",
+      "owner": "ui",
+      "deployPath": "ReplicatedStorage.Shared.UIKit.ItemIcon",
+      "deployed": {
+        "Game": "b717ebe9",
+        "Lobby": "b717ebe9"
+      },
+      "comment": "Kit CONTROLLER. Item card: flat ImageLabel icon (items have no model, so NO ViewportFrame), QtyBadge that hides at qty 0, tier border/BG from the shared TierConfig. Requires Configs.Meta.{ItemCatalog,TierConfig} -- both already shared. Promoted 2026-08-06.",
+      "kind": "module"
+    },
+    "UIKitFilterPanel": {
+      "file": "shared/src/UIKitFilterPanel.luau",
+      "hash": "72b49660",
+      "owner": "ui",
+      "deployPath": "ReplicatedStorage.Shared.UIKit.FilterPanel",
+      "deployed": {
+        "Game": "72b49660",
+        "Lobby": "72b49660"
+      },
+      "comment": "Kit CONTROLLER. Reusable filter panel (GroupTemplate + ToggleTemplate + Apply/Reset/Cancel, pending-vs-applied state). Used by BOTH the Units and Items screens in the Lobby. Promoted 2026-08-06.",
+      "kind": "module"
+    },
+    "UIKitBootstrap": {
+      "file": "shared/src/UIKitBootstrap.luau",
+      "hash": "f930ff7b",
+      "owner": "ui",
+      "deployPath": "StarterPlayer.StarterPlayerScripts.UIKitBootstrap",
+      "deployed": {
+        "Game": "f930ff7b",
+        "Lobby": "f930ff7b"
+      },
+      "comment": "Kit CONTROLLER (LocalScript, not a ModuleScript -- still hashed as source). Attaches UIKit.Button to every instance tagged 'UIKitButton', including clones added later. Without this in a Place, tagged buttons are inert. Promoted 2026-08-06.",
+      "kind": "module"
+    },
+    "Kit_Button": {
+      "hash": "812d0780",
+      "owner": "ui",
+      "deployPath": "ReplicatedStorage.UITemplates.Kit.Button",
+      "deployed": {
+        "Game": "812d0780",
+        "Lobby": "812d0780"
+      },
+      "comment": "Kit TEMPLATE (the generic button design UIKit.Button.create() clones). No shared/src file exists -- the INSTANCE is the canon (ADR-0005); copy it between Places and verify by hash, never rebuild by hand. Promoted 2026-08-06.",
+      "kind": "template"
+    },
+    "Kit_ItemIcon": {
+      "hash": "ee1ccd33",
+      "owner": "ui",
+      "deployPath": "ReplicatedStorage.UITemplates.Kit.ItemIcon",
+      "deployed": {
+        "Game": "ee1ccd33",
+        "Lobby": "ee1ccd33"
+      },
+      "comment": "Kit TEMPLATE (item card: Main/BG + IconImage + QtyBadge, tier stroke). No shared/src file exists -- the INSTANCE is the canon (ADR-0005); copy it between Places and verify by hash, never rebuild by hand. Promoted 2026-08-06.",
+      "kind": "template"
+    },
+    "Kit_ItemHoverCard": {
+      "hash": "0c9d7818",
+      "owner": "ui",
+      "deployPath": "ReplicatedStorage.UITemplates.Kit.ItemHoverCard",
+      "deployed": {
+        "Game": "0c9d7818",
+        "Lobby": "0c9d7818"
+      },
+      "comment": "Kit TEMPLATE (item hover panel: ItemName/TierName/IconImage/Description/OwnedLabel). No shared/src file exists -- the INSTANCE is the canon (ADR-0005); copy it between Places and verify by hash, never rebuild by hand. Promoted 2026-08-06.",
+      "kind": "template"
+    },
+    "Kit_FilterPanel": {
+      "hash": "0170b0e9",
+      "owner": "ui",
+      "deployPath": "ReplicatedStorage.UITemplates.Kit.FilterPanel",
+      "deployed": {
+        "Game": "0170b0e9",
+        "Lobby": "0170b0e9"
+      },
+      "comment": "Kit TEMPLATE (filter panel incl. GroupTemplate + ToggleTemplate + Apply/Reset/Cancel). No shared/src file exists -- the INSTANCE is the canon (ADR-0005); copy it between Places and verify by hash, never rebuild by hand. Promoted 2026-08-06.",
+      "kind": "template"
+    },
+    "Kit_UnitPreviewTemplate": {
+      "hash": "55e17da8",
+      "owner": "ui",
+      "deployPath": "ReplicatedStorage.UITemplates.Kit.UnitPreviewTemplate",
+      "deployed": {
+        "Game": "55e17da8",
+        "Lobby": "55e17da8"
+      },
+      "comment": "Kit TEMPLATE (unit hover panel (its ViewportFrame 3D contents are NOT hashed -- ADR-0005)). No shared/src file exists -- the INSTANCE is the canon (ADR-0005); copy it between Places and verify by hash, never rebuild by hand. Promoted 2026-08-06.",
+      "kind": "template"
     }
   },
-  "templatesNote": "No templates are under drift control yet. AD-UI adds the 5 kit entries (Kit.Button, Kit.ItemIcon, Kit.ItemHoverCard, Kit.FilterPanel, Kit.UnitPreviewTemplate) here AND uncomments them in tools/hash_shared.luau in the same session it promotes the kit. Lobby hashes measured 2026-08-06: Button=812d0780 ItemIcon=ee1ccd33 ItemHoverCard=0c9d7818 FilterPanel=0170b0e9 UnitPreviewTemplate=55e17da8 (recompute at promotion -- do not paste these in blind)."
+  "templatesNote": "Templates are under drift control since 2026-08-06 (ADR-0005). They have NO shared/src file: the Instance is the canon, so deploying one means COPYING it (Studio copy/paste) and proving equality by hash -- see tools/checklists.md 'Deploying a shared TEMPLATE'. NOTE Kit.Unit/ItemIconTemplate is deliberately NOT under drift control: it has zero code readers (only a stale comment in HotbarController) and is an A5 leftover; A6 either formalises it as the blueprint section 5 'UnitIcon' or deletes it."
 }

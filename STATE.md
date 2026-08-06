@@ -17,18 +17,22 @@ Per-Place detail lives in `places/<place>/CONTEXT.md` — this is the one-glance
   **Beta1_PlayerData** (Studio `Beta1_PlayerDataDev1`, API access ON). `MatchEntryService` is the
   production entry; `MatchLifecycleSmokeTest` / `ColdProfileMatchTest` are the Studio harnesses.
   Cross-place ids set both ways (`LobbyPlaceId` 83342803778137). Owns tower configs, combat, the
-  stat resolver, match runtime. **Has NO UI kit** (Lobby-only — see the blocked PENDING below).
+  stat resolver, match runtime. **Has the UI kit since 2026-08-06 but no screen uses it yet** —
+  that is A6's Game half.
 - **Lobby** (Studio: "Alamat Defense - Lobby") — the social/meta Place, live. Scene
   `Workspace.Lobby`; flow = collection → stage select + difficulty → party → reserved-server
   launch, plus the MatchReturn banner and first-join starter picker. Serves **`GetUnitViews`**
   (per-uuid tier/level/grades/equipped/favorited + `Items`) and the soon-retired `GetCollection`.
   UI: Units + Items + Collection on the kit / view-model — see `docs/systems/lobby-ui.md`.
-- **Shared canon** (`shared/src` + `manifest.json`, drift-checked by `tools/hash_shared.luau`):
-  **9 modules** — `ProfileTemplate`, `PlayerDataService`, `ProfileStore`, `Signal`, `TierConfig`,
-  `StatGradeConfig`, `AscensionConfig`, `ItemCatalog` (2026-08-01), and `UnitStatsCatalog`
-  (A6, 2026-08-03; deployed to the Lobby A6b 2026-08-06). **All 9 drift GREEN 9/9 in BOTH
-  Places** — byte-identical everywhere. Note `UnitStatsCatalogValidate` is Game-only canon by
-  design (the Lobby has no tower configs to validate against); do not "fix" its absence.
+- **Shared canon** (`shared/manifest.json`, drift-checked by `tools/hash_shared.luau`):
+  **18 entries = 13 modules + 5 templates**, all **GREEN 18/18 in BOTH Places** (byte-identical).
+  Modules: `ProfileTemplate`, `PlayerDataService`, `ProfileStore`, `Signal`, `TierConfig`,
+  `StatGradeConfig`, `AscensionConfig`, `ItemCatalog`, `UnitStatsCatalog`, and the kit's
+  `UIKitButton`/`UIKitItemIcon`/`UIKitFilterPanel`/`UIKitBootstrap` (2026-08-06).
+  Templates (instance trees, ADR-0005, no `shared/src` file): `Kit_Button`, `Kit_ItemIcon`,
+  `Kit_ItemHoverCard`, `Kit_FilterPanel`, `Kit_UnitPreviewTemplate`.
+  `UnitStatsCatalogValidate` is Game-only canon by design (the Lobby has no tower configs to
+  validate against); do not "fix" its absence.
 
 ## Open PENDINGs
 
@@ -47,14 +51,22 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
   proven in Studio and reverted. **Deploy procedure: `tools/checklists.md` → "Deploying a shared
   TEMPLATE".**
 
-- **PENDING (AD-UI, NOW UNBLOCKED — the kit promotion):** promote the kit to shared canon and
-  deploy to the Game place: `UIKit.{Button,ItemIcon,FilterPanel}` (ModuleScripts, normal module
-  procedure) **and** the 5 templates `Kit.{Button,ItemIcon,ItemHoverCard,FilterPanel,
-  UnitPreviewTemplate}` (Instance copy + hash-verify per the new checklist). In the SAME session:
-  add manifest entries with `"kind":"template"` AND uncomment `TEMPLATES` in
-  `tools/hash_shared.luau` — the two must never disagree. Lobby hashes measured 2026-08-06 are in
-  `manifest.templatesNote` (recompute, don't paste blind). **THEN** blueprint §9 A6's Game half:
-  hotbar on the kit + `RewardPopup` + `CurrencyBar`.
+- ~~PENDING (AD-UI): promote the kit.~~ **DONE 2026-08-06** — 4 controllers + 5 templates are
+  shared canon, deployed byte-identically to BOTH Places; manifest entries and the tool's
+  `TEMPLATES` block landed in the same session. **Drift 18/18 GREEN in both.** Verified in the
+  Game place at runtime: all 3 modules require, `UIKitBootstrap` attaches its 5 tagged buttons,
+  and `Button/ItemIcon/FilterPanel.create()` each build correctly.
+
+- **PENDING (AD-UI — blueprint §9 A6's Game half, UNBLOCKED):** rebuild the Game hotbar on the kit
+  + `RewardPopup` + `CurrencyBar`. The kit is present in the Game place but **no Game screen uses
+  it yet** — they are all still Place-local and script-era. Decide there whether
+  `Kit.Unit/ItemIconTemplate` becomes the blueprint §5 `UnitIcon` or is deleted: zero code readers,
+  carries a 268-instance rig, deliberately OUT of drift control.
+
+- **DRIFT RULE (new, applies to everyone):** the kit is shared now. Editing a controller **or a
+  template** in one Place only is DRIFT. Change → re-hash → copy to the other Place → update the
+  manifest. Templates have NO `shared/src` file — the INSTANCE is the canon (ADR-0005); copy it,
+  never rebuild it by hand. Both procedures are in `tools/checklists.md`.
 
 - **PENDING (A7 / AD-Integration — retire `GetCollection`):** ADR-0004 decided it. The remote has
   **zero callers of any kind**; delete the handler in `LobbyServices` AND the
@@ -97,11 +109,9 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
 
 ## Current focus
 
-1. **AD-UI: promote the kit, then A6's Game half.** Unblocked 2026-08-06 — the drift tooling now
-   covers templates (ADR-0005), so the kit can be promoted with every part verifiable. Controllers
-   via the normal module procedure, the 5 templates via the new "Deploying a shared TEMPLATE"
-   checklist; manifest entries + uncommenting `TEMPLATES` happen in that same session. Then the
-   Game hotbar on the kit + `RewardPopup` + `CurrencyBar`.
+1. **A6's Game half [AD-UI]:** Game hotbar rebuilt on the kit + `RewardPopup` + `CurrencyBar`.
+   Both blockers cleared — the tooling hashes instance trees (ADR-0005) and **the kit promotion
+   landed 2026-08-06** (4 controllers + 5 templates, drift 18/18 GREEN in both Places).
 2. **A7 [AD-Integration]:** full Phase A acceptance (blueprint §8) + retire `GetCollection`
    (ADR-0004, zero callers, already unblocked).
 3. **USER:** run the teleport v2 loop live once — published is not the same as verified.

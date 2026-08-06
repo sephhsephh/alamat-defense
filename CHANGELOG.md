@@ -1,5 +1,55 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-06 [integration] UI kit promoted to shared canon — 4 controllers + 5 templates, drift 18/18 GREEN in both Places
+
+AD-UI, spanning BOTH Places (the promotion is inherently cross-Place, so this is logged as an
+integration-shaped landing). Clears the A6 blocker raised earlier today. Bootstrap drift GREEN in
+both; **18/18 GREEN in both at landing.**
+
+- **Controllers → `shared/src` + manifest** (`kind: "module"`, owner `ui`): `UIKitButton`
+  `4968d8c3`, `UIKitItemIcon` `b717ebe9`, `UIKitFilterPanel` `72b49660`, `UIKitBootstrap`
+  `f930ff7b`. `UIKitBootstrap` is a **LocalScript**, not a ModuleScript — still hashed as source,
+  and without it in a Place every `UIKitButton`-tagged button is inert, so it belongs in the kit.
+- **Templates → manifest** (`kind: "template"`, no `shared/src` file — the INSTANCE is the canon,
+  ADR-0005): `Kit_Button` `812d0780`, `Kit_ItemIcon` `ee1ccd33`, `Kit_ItemHoverCard` `0c9d7818`,
+  `Kit_FilterPanel` `0170b0e9`, `Kit_UnitPreviewTemplate` `55e17da8`. `TEMPLATES` uncommented in
+  `tools/hash_shared.luau` **in this same session**, as the manifest note required — the tool and
+  the manifest must never disagree.
+- **The 4 controller files were transcribed into `shared/src` and proven byte-exact by hash**
+  (12505/8430/7766/1554 bytes, tab counts included) rather than assumed correct.
+- **Templates were COPIED, never rebuilt** (`tools/checklists.md`): `:Clone()` cannot cross
+  datamodels, so the user did one Studio copy/paste of `RS.UITemplates`, `RS.Shared.UIKit` and
+  `StarterPlayerScripts.UIKitBootstrap` from Lobby → Game. All 9 new hashes then matched the Lobby
+  **exactly, first try, zero mismatches** — including the 5 `UIKitButton` CollectionService tags,
+  which the hash covers and which are the entire wiring mechanism.
+- **Independently reproduced AD-Integration's template hashes** from a fresh session before
+  copying anything — good evidence the canonical serialisation is stable over time, not just
+  within one run.
+
+**Verified at runtime in the GAME place (Play, place-asserted):** `require` succeeds for all three
+modules (`ItemIcon` pulls `ItemCatalog` + `TierConfig`, both already shared) ·
+`[DIAG] UIKitBootstrap: 5 'UIKitButton' button(s) at start` · `Button.create` OK ·
+`ItemIcon.create("BannerTicket", 3)` renders badge `x3` · `FilterPanel.create` builds its group
+with 1 toggle · scratch ScreenGui cleaned up · no errors, match booted normally,
+`[Test] UnitStatsCatalog OK: 8 towers match live configs` still green.
+
+- **`Kit.Unit/ItemIconTemplate` deliberately left OUT of drift control** — zero code readers (the
+  only hits are a stale comment in `HotbarController` and the docs), and it carries a
+  268-instance rig inside a ViewportFrame. Recorded in the manifest note and in the tool. A6
+  either formalises it as the blueprint §5 `UnitIcon` or deletes it; not binned unilaterally
+  because it may be a design the user wants.
+- **NEW STANDING RULE:** the kit is shared now, so editing a controller **or a template** in one
+  Place only is drift. Change → re-hash → copy → update the manifest.
+- **Also corrected `places/game/CONTEXT.md`** — it was `last-verified 2026-08-01` and wrong in
+  three ways (publish still listed BLOCKING, Lobby starter grant still described as writing 0.5,
+  `UnitStatsCatalog` still "Game-only"). Flagged last session, unfixed since; a chat bootstrapping
+  off it would start with three false beliefs. AD-Game's other content left untouched and the edit
+  is annotated in the file header.
+- **Contract impact:** none — no save-schema or teleport change. The drift SURFACE grew from 9 to
+  18 entries, which is the point.
+- **PENDINGs:** kit-promotion PENDING **CLEARED**. A6's Game half is now unblocked. **Both Places
+  need republishing** — the kit is Studio canon in both and not in git.
+
 ## 2026-08-06 [integration] Drift tooling now hashes UI templates (instance trees) — ADR-0005; A6's blocker cleared
 
 Executes the blocking PENDING from `docs/proposals/2026-08-06-kit-promotion-blocks-a6.md`

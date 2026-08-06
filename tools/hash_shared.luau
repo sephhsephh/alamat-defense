@@ -194,16 +194,23 @@ local MODULES = {
 	ItemCatalog = "ReplicatedStorage.Configs.Meta.ItemCatalog",
 	-- Added A6 2026-08-03 (owner AD-Game): generated resolved-stat cache (ADR-0003).
 	UnitStatsCatalog = "ReplicatedStorage.Configs.Meta.UnitStatsCatalog",
+	-- Kit CONTROLLERS, promoted 2026-08-06 (owner AD-UI). The kit's other half is TEMPLATES below.
+	UIKitButton = "ReplicatedStorage.Shared.UIKit.Button",
+	UIKitItemIcon = "ReplicatedStorage.Shared.UIKit.ItemIcon",
+	UIKitFilterPanel = "ReplicatedStorage.Shared.UIKit.FilterPanel",
+	UIKitBootstrap = "StarterPlayer.StarterPlayerScripts.UIKitBootstrap",
 }
 
--- GuiObject subtrees. Populated by AD-UI when the kit is promoted (the entries below are the
--- kit as it exists in the Lobby today; a Place that has not received it reports MISSING).
+-- GuiObject subtrees. Promoted by AD-UI 2026-08-06; a Place that has not received the kit
+-- reports MISSING. NOTE `Kit.Unit/ItemIconTemplate` is deliberately NOT here: it has zero code
+-- readers (only a stale comment in HotbarController) and is a leftover from the A5 kit move --
+-- A6 either formalises it as the blueprint section 5 `UnitIcon` or deletes it.
 local TEMPLATES = {
-	-- Kit_Button = "ReplicatedStorage.UITemplates.Kit.Button",
-	-- Kit_ItemIcon = "ReplicatedStorage.UITemplates.Kit.ItemIcon",
-	-- Kit_ItemHoverCard = "ReplicatedStorage.UITemplates.Kit.ItemHoverCard",
-	-- Kit_FilterPanel = "ReplicatedStorage.UITemplates.Kit.FilterPanel",
-	-- Kit_UnitPreviewTemplate = "ReplicatedStorage.UITemplates.Kit.UnitPreviewTemplate",
+	Kit_Button = "ReplicatedStorage.UITemplates.Kit.Button",
+	Kit_ItemIcon = "ReplicatedStorage.UITemplates.Kit.ItemIcon",
+	Kit_ItemHoverCard = "ReplicatedStorage.UITemplates.Kit.ItemHoverCard",
+	Kit_FilterPanel = "ReplicatedStorage.UITemplates.Kit.FilterPanel",
+	Kit_UnitPreviewTemplate = "ReplicatedStorage.UITemplates.Kit.UnitPreviewTemplate",
 }
 
 local out = {}
