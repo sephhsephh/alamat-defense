@@ -262,7 +262,7 @@
       "owner": "ui",
       "deployPath": "ReplicatedStorage.UITemplates.Kit.HotbarSlot",
       "deployed": {
-        "Game": null,
+        "Game": "8c562d59",
         "Lobby": "8c562d59"
       },
       "comment": "Kit TEMPLATE: the USER'S OWN hotbar slot design, lifted from the Lobby's Slot1 so BOTH Places draw an identical slot (user rule 2026-08-06: same look, different action). Adds LockOverlay (dark + lock icon + 'Lv N') and SlotNumber; the broken legacy per-slot script was stripped. GAME DEPLOY PENDING -- the user copy/pastes it, then hashes must match.",
@@ -274,7 +274,7 @@
       "owner": "ui",
       "deployPath": "ReplicatedStorage.Shared.UIKit.Hotbar",
       "deployed": {
-        "Game": null,
+        "Game": "9d8d4b19",
         "Lobby": "9d8d4b19"
       },
       "comment": "Kit CONTROLLER. ONE hotbar for BOTH Places so they look and feel identical (user rule 2026-08-06): same slot design, hover, press animation and locked/empty states. Each Place supplies only OnActivated -- Lobby opens the Units screen on that unit, Game starts placement. Always draws LoadoutConfig.MaxSlots slots; a slot is never hidden, only filled/empty/locked. GAME DEPLOY PENDING alongside Kit_HotbarSlot.",

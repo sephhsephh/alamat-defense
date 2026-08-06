@@ -1,5 +1,40 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-06 [integration] Both hotbars are now ONE component — same look, different action (drift 24/24)
+
+Finishes the user's request: the Lobby and Game hotbars are the same shared component with the
+same slot design, hover and animation; only the click behaviour differs. Drift **24/24 GREEN in
+both Places** (16 modules + 8 templates).
+
+- **`Kit_HotbarSlot` `8c562d59` deployed to the Game** — the user's copy landed **exactly**, hash
+  matched first try, and **0 scripts inside** (the broken legacy per-slot script did not ride
+  along). `UIKitHotbar` `9d8d4b19` deployed alongside it; both `deployed.Game` filled in.
+- **Game hotbar rebuilt on `UIKit.Hotbar`.** It previously used `Kit.UnitIcon` with its own logic,
+  which is exactly why the two hotbars looked different. Now both clone the same
+  `Kit.HotbarSlot`, so restyling that one template changes both.
+- **Game action = start placement**; Lobby action = open the Units screen on that unit. That single
+  `OnActivated` callback is the only difference between the two hotbars.
+- Affordability / placement-limit feedback preserved, still distinguishing the two failure reasons
+  by colour (at-limit vs too-poor), now layered on top of the shared slot rather than replacing it.
+
+- **DESIGN CALL — locks are a LOBBY concern, and the Game shows none.** You equip in the Lobby, not
+  mid-match, so a "Lv 5" padlock on a match hotbar is noise the player cannot act on. The Game also
+  genuinely has no `PlayerLevel` to hand — `LoadoutAssigned` carries TowerId/MetaLevel/Trait only.
+  So in-match, slots the player did not bring render **EMPTY, not LOCKED**. Wiring real locks there
+  would need the server to send `PlayerLevel`, which is an AD-Game payload change, not a UI fix —
+  recorded in the module header rather than faked with a guess.
+
+**Verified live (Play, Game place, place-asserted):** exactly **6 slots** drawn · 5 units with
+their real models (Archer, Necromancer, Warchief, Farm, Meteor) · **slot 6 EMPTY, not locked**, as
+designed · **0 scripts inside any viewport** · `[Hotbar] 5 unit(s) on the shared kit hotbar
+(6 slots drawn)` · `UIKit.Hotbar` byte-identical to the Lobby's (7999) and requires cleanly ·
+`[DIAG] UIKitBootstrap: 6 'UIKitButton' button(s)` · no errors, match booted normally.
+
+- **Contract impact:** none. Drift surface unchanged at 24 entries; the two pending Game deploys
+  are now filled.
+- **PENDINGs:** hotbar work COMPLETE both Places. Next is **A7 [AD-Integration]** — Phase A
+  acceptance + retire `GetCollection`. Both Places need republishing (Studio canon).
+
 ## 2026-08-06 [lobby] Shared hotbar: one component, both Places — Lobby half wired and verified
 
 Second half of the equipping work. **Lobby is done; the GAME half is blocked on the user copying

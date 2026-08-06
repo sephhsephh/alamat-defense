@@ -80,12 +80,13 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
   empty, keep a unit in slot 3) need a **schema bump + migration under AD-Game's contract
   protocol** — deliberately deferred, not smuggled in.
 
-- **PENDING (USER, then AD-UI — the Game half of the hotbar):** the shared `UIKitHotbar` `9d8d4b19`
-  and the Lobby wiring are **DONE and verified**. Blocked on one manual step: **copy
-  `ReplicatedStorage.UITemplates.Kit.HotbarSlot` (`8c562d59`) from the Lobby into the Game place.**
-  `deployed.Game` is `null` for BOTH `Kit_HotbarSlot` and `UIKitHotbar` until then. After the copy:
-  deploy `UIKitHotbar` to the Game and rebuild the Game hotbar on it with **placement** as its
-  `OnActivated` (the current Game hotbar still uses `Kit.UnitIcon` from A6).
+- ~~PENDING: shared hotbar in both Places.~~ **DONE 2026-08-06.** Both hotbars are ONE component
+  (`UIKitHotbar` + `Kit_HotbarSlot`, the user's own design): same slots, hover and animation;
+  the only difference is `OnActivated` — **Lobby** opens the Units screen on that unit, **Game**
+  starts placement. Always 6 slots, states filled/empty/locked.
+  **Locks are a LOBBY concern:** the Game shows none, because you equip in the Lobby and the Game
+  has no `PlayerLevel` (`LoadoutAssigned` carries TowerId/MetaLevel/Trait only). In-match, slots
+  you did not bring are EMPTY. Real in-match locks would need AD-Game to send `PlayerLevel`.
 
 - **PENDING (NEEDS SCHEDULING):** `Data.Items` has no writer (no drop/grant/shop path), so the A5
   Items screen shows every catalog item at count 0. Correct, but inert until an item economy exists.
@@ -118,10 +119,9 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
 
 ## Current focus
 
-1. **Finish the shared hotbar [AD-UI]** — user's copy of `Kit_HotbarSlot` into the Game place,
-   then the shared `UIKit.Hotbar` controller + both wirings. Equipping already works.
-2. **A7 [AD-Integration]** — Phase A acceptance (blueprint §8) + retire `GetCollection` (ADR-0004).
-   The user chose to do the hotbar/equipping FIRST, so A7 now signs off a slightly bigger surface.
+1. **A7 [AD-Integration]** — Phase A acceptance (blueprint §8) + retire `GetCollection` (ADR-0004).
+   The hotbar + equipping work is DONE, so A7 signs off a bigger surface than the blueprint
+   assumed: equipping, the shared hotbar, and 24 drift-controlled entries.
 2. **A7 [AD-Integration]:** full Phase A acceptance (blueprint §8) + retire `GetCollection`
    (ADR-0004, zero callers, already unblocked).
 3. **USER:** run the teleport v2 loop live once — published is not the same as verified.
