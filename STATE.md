@@ -80,7 +80,10 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
   empty, keep a unit in slot 3) need a **schema bump + migration under AD-Game's contract
   protocol** — deliberately deferred, not smuggled in.
 
-- ~~PENDING: shared hotbar in both Places.~~ **DONE 2026-08-06.** Both hotbars are ONE component
+- ~~PENDING: shared hotbar in both Places.~~ **DONE 2026-08-06.** The user copied the Lobby's whole
+  `StarterGui.Hotbar` into the Game, so both Places hold the SAME screen; the Game got its own
+  controller (placement) and the old `StarterPlayerScripts.Client.UI.Hotbar` was disabled +
+  renamed `Hotbar_RETIRED_2026-08-06` (it would have double-bound keys 1-6). Both hotbars are ONE component
   (`UIKitHotbar` + `Kit_HotbarSlot`, the user's own design): same slots, hover and animation;
   the only difference is `OnActivated` — **Lobby** opens the Units screen on that unit, **Game**
   starts placement. Always 6 slots, states filled/empty/locked.

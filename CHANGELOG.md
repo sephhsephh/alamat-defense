@@ -1,5 +1,38 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-06 [game] Game hotbar now IS the Lobby's ScreenGui (user-copied), driven by the shared kit
+
+The user copied `StarterGui.Hotbar` wholesale from the Lobby into the Game place, so both Places
+literally hold the same screen. This session made that copy actually work in the Game.
+
+- **Replaced the pasted controller.** The copy brought the LOBBY's `HotbarController` with it,
+  which calls `GetUnitViews` and fires `ClientEvents.OpenUnitsWithUuid` — **neither exists in the
+  Game place**, so it would have errored on every join. Swapped for a Game controller that runs the
+  same shared `UIKit.Hotbar` but whose `OnActivated` starts **placement**.
+- **Retired the old hotbar script.** `StarterPlayerScripts.Client.UI.Hotbar` was still enabled and
+  looked for a `Container` that the pasted ScreenGui does not have. Worse, both it and the new
+  controller bind keys **1-6**, so every keypress would have fired placement twice. Disabled and
+  renamed `Hotbar_RETIRED_2026-08-06` rather than deleted, so it is recoverable.
+- **Controller now lives inside the ScreenGui**, mirroring the Lobby, so the two Places are
+  structured the same way as well as looking the same.
+- The pasted `Slot1..Slot6` are replaced at runtime by `Kit.HotbarSlot` clones. Intentional: the
+  hand-made slots have only `BG / TraitIcon / ViewportFrame` and **lack the `LockOverlay` and
+  `SlotNumber`** the kit slot carries. Rebuilding from the kit is what guarantees both Places draw
+  the same thing — and restyling `Kit.HotbarSlot` still changes both at once.
+
+**Verified live (Play, Game, place-asserted):** exactly **6 slots** · 5 real models (Archer,
+Necromancer, Warchief, Farm, Meteor) · slot 6 EMPTY · **every slot has the lock part** (kit clones,
+not the pasted ones) · 0 scripts in any viewport · **only ONE controller live** (retired script
+present and `Disabled=true`, no stray `Hotbar` script) · `[Hotbar] Initialized (GAME, shared
+UIKit.Hotbar on the copied Lobby design)` · no errors.
+
+- **NOTE — `Hotbar Old` was not found.** The user reported renaming the old Game hotbar before
+  pasting, but no such ScreenGui exists in the Place, so the previous Game hotbar design is gone.
+  Place-local UI is not in git, so the only copy is inside the last published Game place. It was
+  superseded anyway (text-only `Container` + `SlotTemplate`), but flagged rather than passed over.
+- **Contract impact:** none. No shared module or template changed — drift stays **24/24 GREEN**.
+- **PENDINGs:** none new. Next is **A7 [AD-Integration]**. Both Places need republishing.
+
 ## 2026-08-06 [integration] Both hotbars are now ONE component — same look, different action (drift 24/24)
 
 Finishes the user's request: the Lobby and Game hotbars are the same shared component with the
