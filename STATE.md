@@ -80,12 +80,12 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
   empty, keep a unit in slot 3) need a **schema bump + migration under AD-Game's contract
   protocol** — deliberately deferred, not smuggled in.
 
-- **PENDING (AD-UI — finish the shared hotbar):** `Kit_HotbarSlot` `8c562d59` is Lobby-only;
-  **the user copy/pastes it into the Game place** (`deployed.Game` is `null` until then). Then build
-  the shared `UIKit.Hotbar` controller — always 6 slots, states filled/empty/locked, identical look
-  and hover in both Places — and wire the two actions: **Lobby** click/key 1-6 opens the Units
-  screen with that unit selected (empty slot opens it unselected); **Game** click/key starts
-  placement mode.
+- **PENDING (USER, then AD-UI — the Game half of the hotbar):** the shared `UIKitHotbar` `9d8d4b19`
+  and the Lobby wiring are **DONE and verified**. Blocked on one manual step: **copy
+  `ReplicatedStorage.UITemplates.Kit.HotbarSlot` (`8c562d59`) from the Lobby into the Game place.**
+  `deployed.Game` is `null` for BOTH `Kit_HotbarSlot` and `UIKitHotbar` until then. After the copy:
+  deploy `UIKitHotbar` to the Game and rebuild the Game hotbar on it with **placement** as its
+  `OnActivated` (the current Game hotbar still uses `Kit.UnitIcon` from A6).
 
 - **PENDING (NEEDS SCHEDULING):** `Data.Items` has no writer (no drop/grant/shop path), so the A5
   Items screen shows every catalog item at count 0. Correct, but inert until an item economy exists.

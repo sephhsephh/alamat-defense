@@ -205,6 +205,9 @@ local MODULES = {
 	-- 2026-08-06: hotbar slot count + per-slot unlock levels. BOTH Places draw the same 6 slots
 	-- and the same locks, so this cannot be Place-local.
 	LoadoutConfig = "ReplicatedStorage.Configs.Meta.LoadoutConfig",
+	-- 2026-08-06: ONE hotbar for both Places. Same look/hover/animation everywhere; each Place
+	-- only supplies what a click does. Game deploy PENDING with Kit_HotbarSlot.
+	UIKitHotbar = "ReplicatedStorage.Shared.UIKit.Hotbar",
 }
 
 -- GuiObject subtrees. Promoted by AD-UI 2026-08-06; a Place that has not received the kit

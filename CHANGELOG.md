@@ -1,5 +1,38 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-06 [lobby] Shared hotbar: one component, both Places — Lobby half wired and verified
+
+Second half of the equipping work. **Lobby is done; the GAME half is blocked on the user copying
+`Kit_HotbarSlot` into that Place** (its `deployed.Game` is `null`, and so is `UIKitHotbar`'s).
+User confirmed both Places republished and all commits pushed before this session.
+
+- **`UIKitHotbar` `9d8d4b19`** (new shared controller) — ONE hotbar so both Places look and feel
+  identical: same slot design, hover, press animation, and locked/empty states. A Place supplies
+  only `OnActivated`. That is the whole point of the user's request ("same animation and structure
+  and hover functions", different action).
+- **Always draws 6 slots**, never hides one. Three states: **FILLED** (model in viewport, tier
+  border, trait dot) · **EMPTY** (viewport cleared, per-unit details hidden — deliberately not left
+  showing stale data) · **LOCKED** (dark overlay + lock + "Lv N", and genuinely not clickable, not
+  just visually dimmed).
+- **Lobby action wired:** click or key 1-6 fires `ClientEvents.OpenUnitsWithUuid`, and
+  `UnitsController` opens the Units screen focused on that unit. An **empty** slot fires with `nil`
+  and opens Units unselected, so the click always goes somewhere useful (user decision).
+- Slot models come from the loadout the server now actually saves, so the hotbar reflects real
+  equipping rather than the old auto-loadout guess.
+
+**Verified live (Play, Lobby):** exactly **6 slots** · slots 1-3 unlocked, **4/5/6 locked showing
+"Lv 5" / "Lv 20" / "Lv 50" with `Active=false`** (really unclickable) · equipping two units filled
+slots 1 and 2 with models · firing for Mage, Archer and Necromancer each selected the right unit ·
+closing the screen and firing again re-opened it on the right unit.
+
+- **Honest note on the first test run:** an early reading showed the wrong unit selected. Re-testing
+  against a settled profile showed all four selections correct, including the closed→open path. It
+  was a race in the *test* (two equip calls landing at the same instant as the fire), not a bug in
+  the controller — recorded as re-verified rather than as a fix, because nothing was changed.
+- **Contract impact:** none. Drift surface 23 → 24 entries; **two await the Game deploy.**
+- **PENDINGs:** user copies `Kit_HotbarSlot` (`8c562d59`) into the Game place; then `UIKitHotbar`
+  deploys there and the Game hotbar gets rebuilt on it with placement as its action.
+
 ## 2026-08-06 [lobby] EQUIPPING EXISTS — `Data.Loadout` finally has a writer; shared slot template + unlock config
 
 New feature, NOT in the Phase A blueprint. User asked for a matching hotbar in both Places with
