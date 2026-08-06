@@ -25,7 +25,7 @@ Per-Place detail lives in `places/<place>/CONTEXT.md` — this is the one-glance
   (per-uuid tier/level/grades/equipped/favorited + `Items`) and the soon-retired `GetCollection`.
   UI: Units + Items + Collection on the kit / view-model — see `docs/systems/lobby-ui.md`.
 - **Shared canon** (`shared/manifest.json`, drift-checked by `tools/hash_shared.luau`):
-  **19 entries = 13 modules + 6 templates**, all **GREEN 19/19 in BOTH Places** (byte-identical).
+  **21 entries = 14 modules + 7 templates**, all **GREEN 21/21 in BOTH Places** (byte-identical).
   Modules: `ProfileTemplate`, `PlayerDataService`, `ProfileStore`, `Signal`, `TierConfig`,
   `StatGradeConfig`, `AscensionConfig`, `ItemCatalog`, `UnitStatsCatalog`, and the kit's
   `UIKitButton`/`UIKitItemIcon`/`UIKitFilterPanel`/`UIKitBootstrap` (2026-08-06).
@@ -51,13 +51,16 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
   **tier-coloured** border (was trait rarity; the trait moved to the corner dot, not dropped).
   `Unit/ItemIconTemplate` renamed → `Kit_UnitIcon` `24281a2b`, now the 19th drift-controlled entry.
 
-- **PENDING (AD-UI — the rest of blueprint §9 A6):** `RewardPopup` + `CurrencyBar`. Decisions
-  already taken 2026-08-06: **RewardPopup** = a NEW reusable kit component (dark overlay + grid +
-  `RewardItemTemplate`), MatchEnd's existing rewards list left working and untouched;
-  **CurrencyBar** = **Lobby only** — mid-match the player cares about Cash, already in
-  `MatchHUD.TopRight`. Also decide the fate of two now-DEAD templates while there:
-  `StarterGui.Hotbar.SlotTemplate` (Game, zero readers since the rebuild) — neither was deleted
-  unilaterally because both may be designs worth keeping.
+- ~~PENDING (AD-UI): `RewardPopup` + `CurrencyBar`.~~ **DONE 2026-08-06 — A6 IS COMPLETE.**
+  `Kit_RewardPopup` + `UIKitRewardPopup` are shared canon in both Places (no caller yet by design —
+  MatchEnd keeps its list; this is for Phase B gacha, smoke-tested not wired). `CurrencyBar` is
+  **Lobby-local on purpose** (`HUD.Top.CurrencyBar` + controller) — a single-Place widget under
+  drift control would cost a cross-Place sync forever; the header says to promote it into the Kit
+  if the Game place ever wants one.
+
+- **PENDING (AD-UI, small/cosmetic):** two now-DEAD templates neither deleted unilaterally, since
+  both may be designs worth keeping: `StarterGui.Hotbar.SlotTemplate` (Game — zero readers since
+  the hotbar moved to `Kit.UnitIcon`). Decide keep-or-delete when next touching either screen.
 
 - **DRIFT RULE (new, applies to everyone):** the kit is shared now. Editing a controller **or a
   template** in one Place only is DRIFT. Change → re-hash → copy to the other Place → update the
@@ -105,9 +108,8 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
 
 ## Current focus
 
-1. **Finish A6 [AD-UI]:** `RewardPopup` (new reusable component; leave MatchEnd alone) +
-   `CurrencyBar` (Lobby only). The **hotbar landed 2026-08-06** on `Kit.UnitIcon`, so A6 is
-   two-thirds done; the kit promotion and template hashing are both behind us.
+1. **A7 [AD-Integration]** — Phase A is otherwise DONE. Full-phase acceptance (blueprint §8) +
+   retire `GetCollection` (ADR-0004, zero callers, unblocked). ~~A1–A6~~ all landed.
 2. **A7 [AD-Integration]:** full Phase A acceptance (blueprint §8) + retire `GetCollection`
    (ADR-0004, zero callers, already unblocked).
 3. **USER:** run the teleport v2 loop live once — published is not the same as verified.

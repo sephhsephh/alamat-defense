@@ -90,8 +90,13 @@ catalog/configs, icon kit, session plan A1–A7). Phases B–F:
   `UIKitFilterPanel`, `UIKitBootstrap`) + 5 templates (`Kit_*`, hashed as instance trees per
   ADR-0005), deployed byte-identically to BOTH Places, **drift 18/18 GREEN**. Pulled forward from
   A7 because A6's Game hotbar depends on it.
-  Still 🔲: UnitIcon formalised as a kit controller, UnitHoverCard, RewardPopup, CurrencyBar,
-  ViewportPreview, NPCPrompt.
+  ✅ **`Kit_UnitIcon`** (A6) — the blueprint §5 UnitIcon, now the Game hotbar's slot.
+  ✅ **`RewardPopup`** (A6) — `Kit_RewardPopup` + `UIKitRewardPopup`, catalog-id driven, shared
+  canon in both Places; no caller yet by design (Phase B gacha).
+  ✅ **`CurrencyBar`** (A6) — built **Lobby-local** (`HUD.Top.CurrencyBar`), not shared: a
+  single-Place widget under drift control costs a cross-Place sync forever.
+  Still 🔲: UnitHoverCard, ViewportPreview, NPCPrompt; a `UIKit.UnitIcon` controller (deferred —
+  one consumer today, so `UIKit.Button` + the template suffice).
 - 🟡 Hotbar rebuilt on kit (lobby — glow + hover preview via one controller, 2026-07-31; game 🔲)
 - ✅ **Units screen on kit + view-model (Lobby; A4 2026-08-03, A5 filters 2026-08-03)** —
   uuid cards from `GetUnitViews`, shared multi-colour tier borders, per-stat GRADE letters in

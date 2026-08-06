@@ -199,6 +199,9 @@ local MODULES = {
 	UIKitItemIcon = "ReplicatedStorage.Shared.UIKit.ItemIcon",
 	UIKitFilterPanel = "ReplicatedStorage.Shared.UIKit.FilterPanel",
 	UIKitBootstrap = "StarterPlayer.StarterPlayerScripts.UIKitBootstrap",
+	-- A6 2026-08-06: reward-reveal popup. No caller yet by design -- match-end keeps its own
+	-- list; this exists for Phase B gacha and is smoke-tested rather than wired.
+	UIKitRewardPopup = "ReplicatedStorage.Shared.UIKit.RewardPopup",
 }
 
 -- GuiObject subtrees. Promoted by AD-UI 2026-08-06; a Place that has not received the kit
@@ -214,6 +217,7 @@ local TEMPLATES = {
 	-- it is the Game hotbar's slot. Built by an IDENTICAL deterministic script in both Places
 	-- and hash-matched, rather than copied.
 	Kit_UnitIcon = "ReplicatedStorage.UITemplates.Kit.UnitIcon",
+	Kit_RewardPopup = "ReplicatedStorage.UITemplates.Kit.RewardPopup",
 }
 
 local out = {}

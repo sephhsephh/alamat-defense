@@ -221,6 +221,29 @@
       },
       "comment": "Kit TEMPLATE (the blueprint section 5 UnitIcon: ViewportFrame + BG/tier border + TraitIcon + LevelBadge + CostLabel + NameLabel + ShinyBadge, plus KeyLabel/CountLabel that default HIDDEN for the hotbar). A6 2026-08-06: renamed from the A5 leftover 'Unit/ItemIconTemplate' (which had zero readers) and put to work as the Game hotbar slot. Built by running one IDENTICAL deterministic script in BOTH Places and hash-matching the result -- the base tree was verified identical (be620746) first. ViewportFrame 3D contents are not hashed (ADR-0005).",
       "kind": "template"
+    },
+    "UIKitRewardPopup": {
+      "file": "shared/src/UIKitRewardPopup.luau",
+      "hash": "82aec138",
+      "owner": "ui",
+      "deployPath": "ReplicatedStorage.Shared.UIKit.RewardPopup",
+      "deployed": {
+        "Game": "82aec138",
+        "Lobby": "82aec138"
+      },
+      "comment": "Kit CONTROLLER. Reward-reveal popup: takes CATALOG IDS and resolves name/tier/icon from the shared ItemCatalog + TierConfig, so callers need no art or naming logic. An id that is NOT in the catalog still renders (falls back to the id, tier Common) rather than erroring -- a reward the player earned must never fail to display. A6 2026-08-06. NO CALLER YET BY DESIGN: MatchEnd keeps its own working rewards list (user decision); this exists for Phase B gacha and was smoke-tested, not wired.",
+      "kind": "module"
+    },
+    "Kit_RewardPopup": {
+      "hash": "e11a5bf3",
+      "owner": "ui",
+      "deployPath": "ReplicatedStorage.UITemplates.Kit.RewardPopup",
+      "deployed": {
+        "Game": "e11a5bf3",
+        "Lobby": "e11a5bf3"
+      },
+      "comment": "Kit TEMPLATE (dark Overlay + Panel with Title/Subtitle + Grid + RewardItemTemplate + CloseButton, blueprint section 5). Built by one identical deterministic script run in BOTH Places and hash-matched. A6 2026-08-06.",
+      "kind": "template"
     }
   },
   "templatesNote": "Templates are under drift control since 2026-08-06 (ADR-0005). They have NO shared/src file: the Instance is the canon. Two safe ways to get one into another Place: COPY it (Studio copy/paste) and prove equality by hash, OR build it with an identical DETERMINISTIC script run in both Places and hash-match (used for Kit_UnitIcon). Never rebuild by hand/by eye. See tools/checklists.md."

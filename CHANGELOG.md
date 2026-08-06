@@ -1,5 +1,49 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-06 [integration] A6 COMPLETE — RewardPopup (shared) + CurrencyBar (Lobby-local); drift 21/21
+
+Blueprint §9 A6's last two items, finishing the phase. Drift **21/21 GREEN in BOTH Places** at
+landing. Integration gate: **No Integration needed — proceeding** (A7 is the Integration session).
+
+- **`Kit_RewardPopup` `e11a5bf3` + `UIKitRewardPopup` `82aec138`** — shared canon, both Places.
+  Dark `Overlay` (clicking it closes) + `Panel` with `Title`/`Subtitle` + `Grid` +
+  `RewardItemTemplate` + a kit-tagged `CloseButton`, per blueprint §5.
+  **Rewards are addressed by CATALOG ID**, so callers supply no art or naming: name, tier and icon
+  all resolve through the shared `ItemCatalog` + `TierConfig`, same as every other kit card.
+- **Deliberate robustness:** an id that is NOT in the catalog still renders (falls back to the id
+  itself, tier Common) instead of erroring. A reward the player actually earned must never fail to
+  display because a catalog entry was missed — the popup degrades, it does not vanish.
+- **`CurrencyBar` — built LOBBY-LOCAL, not shared.** Per the user's "Lobby only" decision, and
+  because putting a single-Place widget under drift control would cost a cross-Place sync forever
+  for something the Game place never renders. `StarterGui.HUD.Top.CurrencyBar` +
+  `CurrencyBarController`; the module header says explicitly to promote it into the Kit the day the
+  Game place wants one. Consistent with the same call made for `UIKit.UnitIcon` last session.
+- **CurrencyBar refresh is deliberately one-shot on join** — nothing in the Lobby SPENDS Gold or
+  Silver yet, so there is no change event to subscribe to. The header says to wire a RemoteEvent
+  when a shop or gacha lands, and explicitly says **not to poll**.
+- Amounts abbreviate (`12.3K`, `1.2M`) — a currency bar is glanced at, not audited.
+
+**Verified live (Play, both Places, place-asserted):**
+
+- **RewardPopup (Game):** 5 cards from deliberately MIXED input — table form, bare-string form,
+  a tower id, and **an id that does not exist in the catalog**. All 5 rendered:
+  `Banner Ticket/x2 | Gold/x250 | Necromancer/x1 | NotARealThing/x7 | Silver/x1`. Title/subtitle
+  set, **no stray `RewardItemTemplate` left in the Grid**, `hide()` works, `destroy()` clean.
+- **CurrencyBar (Lobby):** 2 pills in order, `Gold=0 Silver=0` **cross-checked against the server
+  view-model** (`GetUnitViews.Currencies`), icons set, no stray `CurrencyTemplate`.
+- **Kit intact after all changes:** `Button, FilterPanel, ItemHoverCard, ItemIcon, RewardPopup,
+  UnitIcon, UnitPreviewTemplate`; all four shared controllers `require` cleanly in both Places.
+- **`CurrencyBar` confirmed ABSENT from the Game place** — it is Lobby-local by design, not an
+  oversight.
+
+- **Contract impact:** none. Drift surface 19 → 21 entries (14 modules + 7 templates).
+- **A6 IS NOW COMPLETE:** Lobby stat numbers (2026-08-06) · Game hotbar on the kit (2026-08-06) ·
+  RewardPopup · CurrencyBar. Next is **A7 [AD-Integration]**: full Phase A acceptance (blueprint
+  §8) + retire `GetCollection` (ADR-0004).
+- **PENDINGs:** A6 cleared. **Both Places need republishing** — all of this is Studio canon.
+  Two dead templates still awaiting a call: `StarterGui.Hotbar.SlotTemplate` (Game) and the
+  Lobby's `UnitsGUI` slot design, neither deleted unilaterally.
+
 ## 2026-08-06 [game] A6: Game hotbar rebuilt on the shared kit + `Kit_UnitIcon` formalised (drift 19/19)
 
 Blueprint §9 A6, Game half — the hotbar. Bootstrap drift GREEN; **19/19 GREEN in both Places** at
