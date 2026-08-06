@@ -43,19 +43,8 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
   are now published on v2, so a `[CONTRACT]` mismatch would block every launch. (The A-phase
   republish itself is DONE 2026-08-06.)
 
-- ~~PENDING (AD-Integration, BLOCKING A6): teach `hash_shared.luau` to hash GuiObject subtrees.~~
-  **DONE 2026-08-06 (ADR-0005).** Templates are now first-class drift artefacts: canonical
-  serialisation (sorted children, whitelisted+sorted properties, attributes, tags; ViewportFrame
-  3D contents excluded) hashed with the same fnv1a32, printed with a trailing `*`. Module hashing
-  untouched — all 9 hashes verified unchanged in both Places. Sensitivity + order-independence
-  proven in Studio and reverted. **Deploy procedure: `tools/checklists.md` → "Deploying a shared
-  TEMPLATE".**
-
-- ~~PENDING (AD-UI): promote the kit.~~ **DONE 2026-08-06** — 4 controllers + 5 templates are
-  shared canon, deployed byte-identically to BOTH Places; manifest entries and the tool's
-  `TEMPLATES` block landed in the same session. **Drift 18/18 GREEN in both.** Verified in the
-  Game place at runtime: all 3 modules require, `UIKitBootstrap` attaches its 5 tagged buttons,
-  and `Button/ItemIcon/FilterPanel.create()` each build correctly.
+- ~~PENDING: template hashing (AD-Integration) + kit promotion (AD-UI).~~ **BOTH DONE 2026-08-06**
+  — ADR-0005 + the 18/18 shared canon above. Deploy procedures live in `tools/checklists.md`.
 
 - **PENDING (AD-UI — blueprint §9 A6's Game half, UNBLOCKED):** rebuild the Game hotbar on the kit
   + `RewardPopup` + `CurrencyBar`. The kit is present in the Game place but **no Game screen uses
