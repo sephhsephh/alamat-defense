@@ -63,10 +63,14 @@ everything untradeable at launch).
   (hash `63a0c98a`, drift-green in Game + Lobby). Game A1 2026-08-01, Lobby A2 2026-08-01.
 - ✅ **Teleport v2** (A2, 2026-08-01): `Loadout` carries unit uuids, `PayloadVersion = 2` both
   sides, hard cutover (v1 rejected). Studio-verified; live re-run pending the user's republish.
-- 🔲 **Counters pipeline (blueprint §6) — the ONE thing blocking Phase A sign-off.** Game commits
-  per-match counters (kills/uuid, clears, waves) + worthiness → feeds quests, evolution takedowns.
-  **Never implemented and never assigned a session task in §9**; A7 confirmed live that nothing
-  writes `Counters` or `Worthiness` in either Place. Scheduled as **A8 [AD-Game]**.
+- ✅ **Counters pipeline (blueprint §6)** — done at **A8 [AD-Game], 2026-08-06**. Match end commits
+  `Counters.PerUnit[uuid].Kills` + `Worthiness` (one commit, capped 100) and
+  `Counters.Global.{Clears, ClearsByStage[stageId], Waves}`; `Counters.Global.Summons` increments
+  live from `SummonManager`. Verified across two real 15-wave matches (Defeat + Victory) with
+  per-uuid deltas matching `MatchStatsTracker` exactly. Rate lives in
+  `RS.Configs.Global.WorthinessConfig` (0.02/kill). **No schema bump** — v2 already had the fields.
+  Lobby needed no change: `GetUnitViews` already serves `Worthiness`. Feeds quests + evolution
+  takedowns later.
 
 ## Meta-systems (phased; each phase ships playable)
 
@@ -131,16 +135,25 @@ catalog/configs, icon kit, session plan A1–A7). Phases B–F:
   Lobby screens still load with no errors and no infinite-yield. `GetUnitViews` is now the Lobby's
   single profile read path.
 
-### Phase A acceptance (§8) — run at A7, 2026-08-06. **NOT SIGNED OFF.**
+### Phase A acceptance (§8) — run at A7, counters closed at A8, both 2026-08-06.
+**Every §8 item now passes except one PARTIAL. Sign-off waits on a USER decision, not on code.**
 
 - ✅ starter grant with real rolls · ✅ hotbar + Items on the kit · ✅ match plays with resolver
   stats (7 waves, 46,375 dmg) · ✅ **match-end XP committed by uuid** · ✅ v1→v2 migration on a real
   ProfileStore round trip · ✅ drift 24/24 in both Places · ✅ **equip → launch → match uses that
   loadout, across Places**
+- ✅ **counters + worthiness committed by uuid (A8)** — was the ❌ at A7. Two real 15-wave matches:
+  Defeat gave `Waves 15`, `Summons 111`, per-uuid kills Archer 171 / Necromancer 66 / Warchief 34 /
+  Meteor 10, each exactly matching `MatchStatsTracker`; Victory then gave `Clears 1`,
+  `ClearsByStage.Stage1_Act1 1`, `Waves 30` (cumulative), `Summons 255`. Worthiness = kills × 0.02
+  on every unit; the 100 cap held against two contrived 999,999-kill commits.
 - 🟡 Units screen: kit FilterPanel + shared configs, but its CARDS are screen-local, not
-  `Kit.UnitIcon` (which therefore still has no consumer — user decision pending)
-- ❌ **counters + worthiness NOT committed** — blueprint §6 has no writer at all. **A8 [AD-Game]
-  is the only thing left before Phase A can be declared done.**
+  `Kit.UnitIcon` (which therefore still has no consumer — **user decision pending; this is the one
+  remaining §8 gap**)
+
+**Remaining before sign-off:** (a) the USER decides whether the Units screen adopts `Kit.UnitIcon`
+or the template is retired; (b) a short **AD-Integration** re-check of §8 end to end. No AD-Game
+work is outstanding.
 
 ### Phase B — Gacha
 - 🔲 Banner engine: one config file per banner (auto-scanned); Standard (3 mythics/hour,

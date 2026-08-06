@@ -157,9 +157,18 @@ v1→v2, all towers present as instances); drift check green in BOTH Places.
   requires all three, so **Phase A cannot be signed off until A8 lands.** Implementation note from
   A7: `MatchStatsTracker` keys towers by **TowerId**, not uuid, so two instances of the same tower
   would collide on `PerUnit[uuid]` — resolve that as part of the task.
+  **DONE 2026-08-06.** Rate config = `RS.Configs.Global.WorthinessConfig` (0.02/kill, cap 100). No
+  schema bump; Lobby untouched. The TowerId collision was resolved by crediting the FIRST loadout
+  entry per TowerId, because PLACEMENT is towerId-addressed too (`FindEntry` returns the first
+  match), so the first instance is the only one that ever fights. Making it truly per-instance is
+  a separate PENDING on the placement remote.
 
-**A7 acceptance result (2026-08-06):** §8 PASSES on starter rolls, hotbar + Items on the kit,
-resolver stats in a real match, match-end **XP by uuid**, v1→v2 migration, drift 24/24 in both
-Places, and the full equip→launch→match chain across Places. It is **PARTIAL** on "units screen
-renders through the kit" (its cards are screen-local, not `Kit.UnitIcon`) and **FAILS** on
-counters + worthiness. Detail in `CHANGELOG.md`.
+**A7 acceptance result (2026-08-06), as amended by A8 the same day:** §8 PASSES on starter rolls,
+hotbar + Items on the kit, resolver stats in a real match, match-end **XP by uuid**, v1→v2
+migration, drift 24/24 in both Places, and the full equip→launch→match chain across Places.
+**Counters + worthiness were a FAIL at A7 and are a PASS after A8** (two real 15-wave matches;
+per-uuid kill deltas matched `MatchStatsTracker` exactly, Clears/ClearsByStage moved on the Victory
+run only, Summons moved on real Necromancer raises, the 100 cap held). The one item still
+**PARTIAL** is "units screen renders through the kit" — its cards are screen-local, not
+`Kit.UnitIcon` — and resolving it is a **USER decision**, so Phase A sign-off waits on that plus a
+short AD-Integration re-check. Detail in `CHANGELOG.md`.

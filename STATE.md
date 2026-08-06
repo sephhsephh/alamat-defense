@@ -31,14 +31,15 @@ never rebuild them by hand. Both procedures: `tools/checklists.md`.
 
 Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 
-- **PENDING (A8, AD-Game) — BLOCKS PHASE A SIGN-OFF.** Blueprint §6 (Counters pipeline) was
-  **never implemented and was never assigned a session task in §9**. Nothing writes
-  `Counters.Global`, `Counters.PerUnit[uuid].Kills` or `Worthiness` in either Place. A7 verified
-  this live: after a real 7-wave match, `Counters.Global` was EMPTY, `Counters.PerUnit` had 0
-  entries and every unit stayed at `Worthiness 0`. §8 acceptance requires all three, so **Phase A
-  is NOT signed off.** Scope: increment Clears/ClearsByStage/Waves + Summons, commit
-  `PerUnit[uuid].Kills` from `MatchStatsTracker` at match end (one commit, not per-kill), and
-  Worthiness += config points per kill capped at 100.
+- **PENDING (AD-Game, real) — PLACEMENT IS NOT uuid-AWARE.** `RequestPlace` sends only a `towerId`
+  and `PlacementValidator` resolves it via `LoadoutValidator.FindEntry`, which returns the FIRST
+  loadout entry with that TowerId. So a player who brings TWO instances of one tower has only the
+  first instance ever enter the match (its MetaLevel/StatRolls/Ascension drive every copy placed),
+  and `RewardCalculator` **grants BOTH entries the same aggregate XP** — a silent double-grant that
+  only the multi-instance case hits. A8's counters sidestep it by crediting the first entry only.
+  Real fix, in order: uuid on the placement remote → `FindEntry` by uuid → per-uuid placement
+  limits → `MatchStatsTracker` keyed by uuid → drop A8's first-entry rule. Client-facing, so it is
+  its own session.
 
 - **PENDING (USER):** run the **teleport v2 loop live** — lobby → reserved match → return →
   banner. v2 has only ever been Studio-verified; only v1 was ever live-verified (2026-07-18).
@@ -47,10 +48,12 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 - **PENDING (USER):** **republish BOTH Places** — A7's `GetCollection` deletion is Lobby Studio
   canon and is not in git (ADR-0001).
 
-- **PENDING (AD-UI, needs a USER decision):** `Kit_UnitIcon` has **no consumer**. The Units
-  screen renders its own card design, not the kit icon, which is why blueprint §5's one-icon
-  intent is unmet. Either the Units screen adopts `Kit.UnitIcon` or the template is retired.
-  **Do not delete it unilaterally** — it carries a rig and the user asked for it to be kept.
+- **PENDING (AD-UI, needs a USER decision) — NOW THE LAST THING BLOCKING PHASE A SIGN-OFF.**
+  `Kit_UnitIcon` has **no consumer**. The Units screen renders its own card design, not the kit
+  icon, which is why blueprint §5's one-icon intent is unmet, and it is the only §8 item still
+  PARTIAL now that A8 has closed counters. Either the Units screen adopts `Kit.UnitIcon` or the
+  template is retired. **Do not delete it unilaterally** — it carries a rig and the user asked for
+  it to be kept. After the decision lands, one short **AD-Integration** §8 re-check signs Phase A off.
 
 - **PENDING (AD-UI, small):** the hotbar **hover TRIGGER** is unverified in BOTH Places.
   `MouseEnter` cannot be fired from tooling and `VirtualInputManager` is blocked, so "the card
@@ -97,8 +100,10 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 
 ## Next up
 
-1. **A8 [AD-Game]** — blueprint §6 counters + worthiness. This is the last thing between here and
-   Phase A sign-off; everything else in §8 passes.
-2. **USER** — republish both Places, then run the teleport v2 loop live once.
-3. Then **Phase B (gacha)**. Schema v2 already carries `Pity`, `Currencies`, `Items`, and
+1. **USER decision** — Units screen adopts `Kit.UnitIcon`, or the template retires. This is now the
+   ONLY open §8 item; A8 closed the counters FAIL on 2026-08-06.
+2. **AD-Integration** — short §8 re-check once (1) lands, then **declare Phase A signed off**.
+3. **USER** — republish both Places (A7's `GetCollection` deletion + A8's Game service changes are
+   Studio canon, not git), then run the teleport v2 loop live once.
+4. Then **Phase B (gacha)**. Schema v2 already carries `Pity`, `Currencies`, `Items`, and
    `UIKitRewardPopup` is built and waiting for its first caller.

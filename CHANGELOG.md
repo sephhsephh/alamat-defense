@@ -1,5 +1,90 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-06 [game] A8 — Counters pipeline + Worthiness commit (blueprint §6). **The A7 ❌ is closed.**
+
+Drift **24/24 GREEN** at bootstrap and again at landing — no shared module or template was touched,
+so the Lobby is NOT stale. Integration gate: **no Integration needed**, and that held (see
+"Contract impact"). Verified by a temporary real Script (`SSS.Server.A8Counters`, since DELETED)
+plus `get_console_output` across TWO complete matches — never `execute_luau` for service state.
+
+**What was built (exactly §6, nothing more):**
+
+- **`RS.Configs.Global.WorthinessConfig`** (new, Game-owned, NOT shared canon). `PointsPerKill`,
+  `Max = 100`, and a pure `Apply(current, kills)` that clamps AND rounds. **Where it lives was the
+  one genuine ambiguity in §6** — it sits next to `TowerProgressionConfig` because it is the same
+  kind of thing: a per-unit progression rate the Game computes and the Lobby merely displays. The
+  cap lives inside `Apply`, not at the call site, so a future second caller cannot bypass it.
+  **Rate 0.02/kill (5,000 kills to cap) — the USER chose this** from four options; retune in that
+  one file.
+- **`PlayerInventoryService`** — new counters section: `IncrementGlobalCounter`,
+  `IncrementStageClears` (its own function because `ClearsByStage` is a nested map a careless
+  caller would clobber with a number), `CommitUnitKills` (kills + worthiness in ONE write) and
+  `GetCounters` (a deep COPY, same rule as `GetUnit`).
+- **`RewardCalculator.GrantForPlayer`** — the match-end commit, beside the existing tower-XP
+  commit so both walk the loadout once. `Clears` + `ClearsByStage[stageId]` move **on Victory
+  only** — "a defeat is not a clear", and a counter that lies is worse than a missing one. `Waves`
+  moves on any outcome.
+- **`SummonManager.SpawnForTower`** — `Counters.Global.Summons`, the one LIVE increment, after the
+  spawn actually succeeds. A summon is a discrete event with no match-end aggregate to recover it
+  from; it is an in-memory `profile.Data` write, not a DataStore call.
+
+**NO SCHEMA BUMP, and none was needed** — `Counters = { Global, PerUnit }` and
+`UnitInstance.Worthiness` have existed since v2. `ProfileTemplate` was not opened. **The Lobby was
+not touched**: `GetUnitViews` already serves `Worthiness`, so real values appear there for free.
+
+**THE HAZARD A7 FLAGGED — resolved deliberately, and it turned out to be bigger than stated.**
+A7 warned that `MatchStatsTracker` keys towers by TowerId, not uuid. True — but **so does
+PLACEMENT**: `RequestPlace` carries no uuid at all, and `PlacementValidator` resolves it through
+`LoadoutValidator.FindEntry`, which returns the **FIRST** loadout entry matching the TowerId. So
+when a player brings two instances of one tower, the second **never enters the match** — every copy
+placed already runs on the first instance's MetaLevel/StatRolls/Ascension. Making the tracker
+uuid-aware inside A8 would have been building attribution for an identity the runtime never
+establishes. **Decision: credit the aggregate to the FIRST loadout entry per TowerId, zero to
+later ones.** That is not a compromise — it is what actually happened, and it keeps
+`sum(PerUnit kills)` equal to the tracked total instead of inflating it.
+**Discovered while doing it (NOT fixed, new PENDING): the XP path does the wrong thing here** —
+`RewardCalculator` gives every same-TowerId entry the same aggregate damage/kills, so a duplicate
+tower is granted XP twice for one tower's work. Pre-existing, invisible in the single-instance case
+A7 tested, and out of A8's scope. Real fix is upstream: uuid on the placement remote → `FindEntry`
+by uuid → per-uuid limits → uuid-keyed tracker → drop A8's first-entry rule.
+
+**Acceptance — two complete Stage1_Act1 runs (15 waves, speed 10), PASS/FAIL as observed:**
+
+| Item | Verdict | Evidence |
+| --- | --- | --- |
+| `Counters.PerUnit[uuid].Kills` commits | **PASS** | Run 1 (Defeat): Archer `e90feb6c` 0→**171**, Necromancer `9c7d5c0b` 0→**66**, Warchief `98db8383` 0→**34**, Meteor `c0903607` 0→**10** |
+| deltas match the match's ACTUAL kills | **PASS** | tracker reported 171 / 66 / 34 / 10 for those same towers — every unit printed `<= MATCHES tracker`. Committed total 281 vs 283 player kills; the 2 missing are `estimateTowerKills`' pre-existing `math.floor` truncation across 4 towers |
+| `Worthiness` commits, same pass | **PASS** | 171×0.02 = **3.42**, 66×0.02 = **1.32**, 34×0.02 = **0.68**, 10×0.02 = **0.20** — exact |
+| Worthiness capped at 100 | **PASS** | contrived: two back-to-back `CommitUnitKills(uuid, 999999)` on a non-loadout Mage → `0.00 → 100.00 → 100.00`. Kills kept accumulating (1,999,998) — only Worthiness is capped, which is the intent |
+| `Counters.Global.Waves` | **PASS** | 15 after run 1, **30** after run 2 — accumulates across matches |
+| `Counters.Global.Clears` / `ClearsByStage` | **PASS** | run 1 was a Defeat and correctly moved NEITHER; run 2 (Victory) gave `Clears = 1` and `ClearsByStage = { Stage1_Act1 = 1 }` |
+| `Counters.Global.Summons` moves on a real raise | **PASS** | Necromancer was in the loadout and actually raised Chargers: **111** after run 1, **255** after run 2 |
+| equipped-only XP still correct (must not regress) | **PASS** | only loadout units moved; Mage/Knight/Babaylan stayed 0/0 in both runs until the contrived cap test |
+
+- **Run 1 Defeat** (leaked at wave 15/15, 95,860 dmg, 283 kills) and **run 2 Victory** (15/15,
+  144,882 dmg, 285 kills, towers stacked to force a win so the Victory-only branch was exercised
+  for real rather than argued for on paper).
+- **Bonus:** run 2's BEFORE snapshot read `Summons 111 / Waves 15` — run 1's values, recovered from
+  the profile through a real ProfileStore round trip (`DataStoreState=Access`) across two Play
+  sessions. The counters persist, not just accumulate in memory.
+- **Placement note for future sessions:** towers were placed at **z ≈ −250** beside the real
+  `Path_Main`. `AutoPlaceForEndScreenTest`'s z = +12 is ~260 studs off and is why A7's first match
+  dealt 0 damage. It is still `ENABLED=false`; its coordinates were left alone.
+- **Studio artifact, not a bug:** `DevSetOwnedTowers` mints new uuids every Play, so the dev
+  profile's `Counters.PerUnit` accumulates orphan entries from previous runs. Real play has stable
+  uuids. Not worth pruning.
+
+- **Contract impact:** **NONE.** No schema bump, no shared module, no template — drift **24/24
+  GREEN** in the Game at landing, and the Lobby is untouched and therefore **NOT stale**.
+- **PENDINGs:** **NEW — AD-Game: placement is not uuid-aware** (detail in `STATE.md`); it also
+  causes duplicate-tower XP double-granting. **CLEARED — A8.** Carried unchanged: `Kit_UnitIcon`
+  consumerless (USER decision), max-level XP loss, teleport v2 live loop (USER), republish (USER).
+- **Phase A is NOT being declared done here, and that is deliberate.** §6 is done and the counters
+  ❌ is closed, but §8's "units screen renders through the kit" is still PARTIAL and resolving it is
+  a **USER decision**, not AD-Game's call. Sign-off now waits on exactly that plus a short
+  AD-Integration re-check — no AD-Game work is outstanding.
+- **USER must republish the Game place** — these are service changes, Studio canon, not git.
+
 ## 2026-08-06 [integration] A7 — Phase A acceptance run + `GetCollection` RETIRED. **Phase A is NOT signed off.**
 
 The blueprint §8 acceptance, walked live in BOTH Places. Drift **24/24 GREEN in both** at bootstrap

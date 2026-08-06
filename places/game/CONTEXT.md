@@ -39,6 +39,8 @@ confirm profile load + schema version on every boot.
 - Shared: `RS.Shared.{Signal, Enums, Schema, ProfileTemplate, TowerStatResolver, AttackShapes}`
 - Configs: `RS.Configs.{Towers, Enemies, Waves, Stages, Maps, Traits, StatusEffects, Summons, Global, Meta}`
   (`Global.GameConfig` = cross-Place ids: `LobbyPlaceId`, `TeleportPayloadVersion`;
+  `Global.WorthinessConfig` = worthiness per kill + the 100 cap, A8 — a per-unit progression rate,
+  sibling to `TowerProgressionConfig`, Game-computed and Lobby-displayed so NOT shared canon;
   `Meta.{TierConfig, StatGradeConfig, AscensionConfig, ItemCatalog, UnitStatsCatalog}` = rarity /
   roll-grade / ascension / grantable catalog / generated resolved-stat cache — **shared canon**
   (drift-checked). `UnitStatsCatalog` is deployed in BOTH Places since A6b, 2026-08-06.)
@@ -85,12 +87,23 @@ confirm profile load + schema version on every boot.
   Play, pressing Lobby now attempts a real TeleportAsync, which fails (pcall'd +
   TeleportInitFailed handled) — expected; real teleports need the published client.
 - Enemies.Behaviors (Flying/Splitting/...) is an empty extension point.
-- **Counters + Worthiness have NO WRITER (blueprint §6 was never implemented and never assigned a
-  session task).** A7 confirmed live: after a real 7-wave match `Counters.Global` was EMPTY,
-  `Counters.PerUnit` had 0 entries, every unit stayed `Worthiness 0`. Match-end **XP by uuid works**
-  (`RewardCalculator` → `AddTowerXP`). **This is A8 [AD-Game] and it is the only thing blocking
-  Phase A sign-off.** NOTE while implementing: `MatchStatsTracker` keys towers by **TowerId**, not
-  uuid, so two instances of the same tower would collide — resolve that when wiring PerUnit kills.
+- **Counters + Worthiness are WRITTEN (blueprint §6, A8 2026-08-06).** The commit lives in
+  `RewardCalculator.GrantForPlayer`, beside the existing tower-XP commit, and runs ONCE per match:
+  `PlayerInventoryService.CommitUnitKills(userId, uuid, kills)` adds `Counters.PerUnit[uuid].Kills`
+  and advances `Worthiness` by `RS.Configs.Global.WorthinessConfig` (0.02/kill, capped 100 inside
+  `WorthinessConfig.Apply`, so the cap cannot be bypassed by a future caller). Then
+  `IncrementGlobalCounter`/`IncrementStageClears` move `Clears` + `ClearsByStage[stageId]`
+  **on Victory only** ("a defeat is not a clear") and `Waves` on any outcome.
+  `Counters.Global.Summons` is the one LIVE increment, in `SummonManager.SpawnForTower` — a spawn
+  has no match-end aggregate to recover it from. **No schema bump**: v2 already declared all of it.
+- **Kill credit goes to the FIRST loadout entry per TowerId — deliberate, not a shortcut.**
+  `MatchStatsTracker` keys towers by TowerId, but so does PLACEMENT: `RequestPlace` carries no
+  uuid, and `PlacementValidator` resolves it through `LoadoutValidator.FindEntry`, which returns
+  the FIRST entry matching the TowerId. So with two instances of one tower, the first is the only
+  one that ever fights — crediting both would invent kills and push the PerUnit total above the
+  match's real count. Making this truly per-instance means teaching PLACEMENT about uuids first
+  (see the PENDING). **The XP path does NOT yet do this** and still credits every same-TowerId
+  entry the same aggregate; pre-existing, correct for the single-instance case, PENDING.
 - A unit at `MAX_META_LEVEL` LOSES stored XP (`ApplyXP` discards overflow rather than preserving
   it): Archer Lv100 went `XP 400 → 0` at A7. Cosmetic but visible on the Units screen.
 - `DevSetOwnedTowers` (smoke test) REPLACES `data.Units` with new uuids, which orphans the Lobby's
