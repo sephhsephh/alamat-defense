@@ -11,19 +11,18 @@ as the source of truth for it.
 
 ## Places
 
-- **Game** (Studio: "Alamat Defense - Game") — the match Place. Healthy, live.
-  Persistence on **Beta1_PlayerData** (Studio: `Beta1_PlayerDataDev1`, API access ON).
-  `MatchEntryService` is the production entry (reads `TeleportData.MatchLaunch`, waits for
-  profiles, then `StartMatch`); `MatchLifecycleSmokeTest` is the Studio fallback and stands down
-  when a payload is present. `ReturnToLobby` sends `MatchReturn`. Cross-place ids set both ways
-  (`LobbyPlaceId` 83342803778137). Owns tower configs, combat, the stat resolver, match runtime.
-- **Lobby** (Studio: "Alamat Defense - Lobby") — the social/meta Place, live.
-  Scene `Workspace.Lobby`; flow = collection → stage select + difficulty → party →
-  reserved-server launch, plus `MatchReturn` welcome-back banner + next-act pre-select and the
-  first-join starter picker. Serves `GetCollection` (compat fields now UNREAD) and
-  **`GetUnitViews`** (the A4/A5 contract: per-uuid tier/level/grades/equipped/favorited, plus
-  `Items` counts since A5). `PartyService.buildLoadout` sends unit uuids. UI: Units + Items +
-  Collection screens all on the kit / view-model (A4+A5) — see `docs/systems/lobby-ui.md`.
+Per-Place detail lives in `places/<place>/CONTEXT.md` — this is the one-glance version.
+
+- **Game** (Studio: "Alamat Defense - Game") — the match Place. Healthy, live. Persistence on
+  **Beta1_PlayerData** (Studio `Beta1_PlayerDataDev1`, API access ON). `MatchEntryService` is the
+  production entry; `MatchLifecycleSmokeTest` / `ColdProfileMatchTest` are the Studio harnesses.
+  Cross-place ids set both ways (`LobbyPlaceId` 83342803778137). Owns tower configs, combat, the
+  stat resolver, match runtime. **Has NO UI kit** (Lobby-only — see the blocked PENDING below).
+- **Lobby** (Studio: "Alamat Defense - Lobby") — the social/meta Place, live. Scene
+  `Workspace.Lobby`; flow = collection → stage select + difficulty → party → reserved-server
+  launch, plus the MatchReturn banner and first-join starter picker. Serves **`GetUnitViews`**
+  (per-uuid tier/level/grades/equipped/favorited + `Items`) and the soon-retired `GetCollection`.
+  UI: Units + Items + Collection on the kit / view-model — see `docs/systems/lobby-ui.md`.
 - **Shared canon** (`shared/src` + `manifest.json`, drift-checked by `tools/hash_shared.luau`):
   **9 modules** — `ProfileTemplate`, `PlayerDataService`, `ProfileStore`, `Signal`, `TierConfig`,
   `StatGradeConfig`, `AscensionConfig`, `ItemCatalog` (2026-08-01), and `UnitStatsCatalog`
@@ -35,27 +34,22 @@ as the source of truth for it.
 
 Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
 
-- ~~PENDING (USER, BLOCKING): republish BOTH Places.~~ **DONE 2026-08-06 (user)** — both Places
-  republished together, so the whole A-phase (4 shared Meta configs, multi-colour `TierConfig`,
-  `GetUnitViews`, A5 UI, A6 `UnitStatsCatalog` + validator, A6b) is now LIVE. Live re-verification
-  of the **teleport v2 loop end-to-end** (lobby → reserved match → return → banner) is still an
-  open user action — v2 has only ever been Studio-verified; v1 was live-verified 2026-07-18.
+- **PENDING (USER):** run the **teleport v2 loop live** — lobby → reserved match → return → banner.
+  v2 has only ever been Studio-verified; only v1 was ever live-verified (2026-07-18). Both Places
+  are now published on v2, so a `[CONTRACT]` mismatch would block every launch. (The A-phase
+  republish itself is DONE 2026-08-06.)
 
-- **PENDING (AD-Integration, BLOCKING A6's Game half — hash instance trees):** `tools/hash_shared.luau`
-  hashes `inst.Source` and returns `MISSING` for anything that is not a `LuaSourceContainer`, so the
-  UI kit's **GuiObject templates cannot be drift-checked** — only its ModuleScript controllers can.
-  Copying templates into the Game place would create an invisible divergence surface (this already
-  bit once at A5: `ItemsGUI.HoverPreview` silently kept a stale size). **User decided 2026-08-06
-  (option B):** extend the tooling to serialise + hash a GuiObject subtree (canonical: sorted
-  children, sorted whitelisted properties) so templates become real manifest entries; document the
-  format in an ADR. THEN AD-UI promotes the kit and only THEN can A6's Game half run.
-  Full analysis: `docs/proposals/2026-08-06-kit-promotion-blocks-a6.md`.
+- **PENDING (AD-Integration, BLOCKING A6's Game half):** teach `tools/hash_shared.luau` to hash
+  **GuiObject subtrees**. It only hashes `inst.Source` today, so the kit's TEMPLATES cannot be
+  drift-checked — only its ModuleScript controllers can — and mirroring templates into the Game
+  place would create invisible divergence (it already bit once at A5). User decided 2026-08-06:
+  fix the tooling FIRST, document the canonical format in an ADR. Full analysis + rejected
+  alternatives: `docs/proposals/2026-08-06-kit-promotion-blocks-a6.md`.
 
-- **PENDING (AD-UI, blocked on the above):** promote the UI kit — controllers
-  (`UIKit.{Button,ItemIcon,FilterPanel}`) **and** templates (`RS.UITemplates.Kit.*`) — into
-  `shared/src` + `manifest.json`, deploy to both Places. Then blueprint §9 A6's Game half: hotbar
-  rebuild on the kit + `RewardPopup` + `CurrencyBar`. The kit is currently **Lobby-only**;
-  `RS.UITemplates.Kit`, `RS.Shared.UIKit` and `UIKitBootstrap` are all ABSENT in the Game place.
+- **PENDING (AD-UI, blocked on the above):** promote the kit (controllers **and** templates) to
+  `shared/src` + `manifest.json`, deploy both Places; THEN blueprint §9 A6's Game half (hotbar on
+  the kit + `RewardPopup` + `CurrencyBar`). The kit is **Lobby-only** — `RS.UITemplates.Kit`,
+  `RS.Shared.UIKit` and `UIKitBootstrap` are all ABSENT in the Game place.
 
 - **PENDING (A7 / AD-Integration — retire `GetCollection`):** ADR-0004 decided it. The remote has
   **zero callers of any kind**; delete the handler in `LobbyServices` AND the
@@ -70,12 +64,10 @@ Resolved PENDINGs live in `CHANGELOG.md` (this list is CURRENT-state only).
     therefore shows every catalog item at count 0. Correct, but the screen is inert until an
     item economy exists.
 
-- ~~PENDING (AD-UI): fill the Units `--` number slots.~~ **DONE 2026-08-06** — `UnitsController`
-  reads `UnitStatsCatalog.Get(view.TowerId)`; `formatStat` trims decimals and renders `--` for a
-  missing value (Farm's absent DMG/SPA, unknown towerId). Grades still render beside them.
-  **Known and intended:** the number is per-TOWER (mid-roll reference), so two instances of one
-  tower show equal numbers while their grades differ — ADR-0003's accepted trade, documented in
-  `docs/systems/lobby-ui.md`. Per-unit numbers would need the Min/Max ranges promoted too.
+- **NOT a bug, do not "fix" it:** the Units screen's stat NUMBERS are per-TOWER (the catalog's
+  mid-roll reference), so two instances of one tower show equal numbers while their GRADE letters
+  differ. ADR-0003's accepted trade; per-unit numbers would need the Min/Max ranges promoted too.
+  Details in `docs/systems/lobby-ui.md`. (Slots filled 2026-08-06; that PENDING is closed.)
 
 - **PENDING (AD-PlayerLevel, small):** promote `TowerProgressionConfig` to shared so the Lobby can
   compute `XpPct` for a real XP bar. The unitView sends raw `XP` + `Level` only.
