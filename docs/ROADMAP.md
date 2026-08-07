@@ -155,9 +155,14 @@ catalog/configs, icon kit, session plan A1–A7). Phases B–F:
   CARDS are screen-local by design. §8 reads pragmatically, `Kit_UnitIcon` is PARKED for Phase B,
   and the Collection screen stays out of scope. The exception is recorded, not pretended away.
 
-**Remaining before sign-off:** one short **AD-Integration** re-check of §8 end to end (drift in
-both Places + the §8 list re-confirmed after A8). **Nothing else is outstanding** — no AD-Game work,
-no AD-UI work, no user decision.
+**✅ SIGNED OFF 2026-08-06 (A9, AD-Integration).** Every §8 item PASSES, re-verified live in both
+Places — counters/worthiness re-observed from scratch rather than taken from A8's report, and each
+run's totals read back at the next boot through a real ProfileStore round trip. Full table in
+`docs/blueprints/phase-a-foundations.md`. **PHASE A IS COMPLETE (A1–A9).**
+
+**Carried out of Phase A deliberately:** placement is not uuid-aware, so a duplicate tower never
+fights and is granted XP twice. Out of §8 scope, but **fix it first in Phase B** — gacha makes
+duplicates routine.
 
 ### Phase B — Gacha
 - 🔲 Banner engine: one config file per banner (auto-scanned); Standard (3 mythics/hour,

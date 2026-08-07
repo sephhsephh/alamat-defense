@@ -1,6 +1,9 @@
 # BLUEPRINT — Phase A: Foundations (schema v2, catalog, icon kit)
 <!-- owner: AD-Game (schema/teleport/resolver) + AD-UI (kit/screens) | scope: global -->
-<!-- status: READY TO IMPLEMENT | blueprints are LAW: deviations require docs/proposals/ -->
+<!-- status: ✅ COMPLETE — Phase A SIGNED OFF 2026-08-06 (A9, AD-Integration). §8 acceptance re-run
+     live in BOTH Places; every item PASSES. A1–A8 all landed. This file is now HISTORY + the
+     reference for what Phase A established; do not add new session tasks to §9.
+     Blueprints are LAW: deviations require docs/proposals/ -->
 
 Rules for the implementing chat: do NOT redesign anything here. If something is ambiguous
 or won't work, STOP and write a proposal — never improvise a different shape. Implement
@@ -163,12 +166,34 @@ v1→v2, all towers present as instances); drift check green in BOTH Places.
   match), so the first instance is the only one that ever fights. Making it truly per-instance is
   a separate PENDING on the placement remote.
 
-**A7 acceptance result (2026-08-06), as amended by A8 the same day:** §8 PASSES on starter rolls,
-hotbar + Items on the kit, resolver stats in a real match, match-end **XP by uuid**, v1→v2
-migration, drift 24/24 in both Places, and the full equip→launch→match chain across Places.
-**Counters + worthiness were a FAIL at A7 and are a PASS after A8** (two real 15-wave matches;
-per-uuid kill deltas matched `MatchStatsTracker` exactly, Clears/ClearsByStage moved on the Victory
-run only, Summons moved on real Necromancer raises, the 100 cap held). The one item still
-**PARTIAL** is "units screen renders through the kit" — its cards are screen-local, not
-`Kit.UnitIcon` — and resolving it is a **USER decision**, so Phase A sign-off waits on that plus a
-short AD-Integration re-check. Detail in `CHANGELOG.md`.
+- **A9 [AD-Integration]** §8 sign-off re-check. **ADDED + COMPLETED 2026-08-06.**
+
+## FINAL §8 RESULT — **PHASE A SIGNED OFF 2026-08-06 (A9)**
+
+Every acceptance item PASSES. Re-verified live in BOTH Places, in-engine.
+
+| §8 item | Verdict | Where verified |
+| --- | --- | --- |
+| Fresh profile → starter picker → instance with real rolls | **PASS** | A7 — rolls `0.1305/0.2418/0.3901`, not the legacy 0.5 |
+| Hotbar renders through the kit | **PASS** | A7 + A9 — 6/6 kit-shaped slots, both Places |
+| Items screen renders through the kit | **PASS** | A7 — 5 `UIKit.ItemIcon` cards, 0 ViewportFrames |
+| Units screen renders through the kit | **PASS** *(recorded exception)* | A7 + **ADR-0007** — kit FilterPanel + shared config stack; cards screen-local by USER decision |
+| Match plays with resolver stats | **PASS** | A7 (46,375 dmg) + A9 (63,643 dmg, 15/15 waves) |
+| Match end commits **XP** by uuid | **PASS** | A7 (Mage +358 / Knight +97, real Lobby loadout) + A9 (Necromancer +620, Warchief/Meteor +60) |
+| Match end commits **counters** by uuid | **PASS** | A8 + **A9 independently** — `Waves +15`, `Clears +1` on Victory, `ClearsByStage +1`, `Summons +139` |
+| Match end commits **worthiness** by uuid | **PASS** | A9 — Archer 198 kills → `3.96`, Necromancer 86 → `1.72`; exact ×0.02 on every unit |
+| Old v1 dev profile migrates cleanly | **PASS** | A7 — real ProfileStore round trip, 3/3 towers as uuid instances |
+| Drift green in BOTH Places | **PASS** | 24/24 at A7, A8 and A9 |
+
+A7's two open marks are both closed: the counters/worthiness ❌ by **A8**, and the units-screen 🟡
+by **ADR-0007** (the user parked `Kit_UnitIcon`; §8 reads pragmatically and the exception is
+recorded, not hidden).
+
+**Known defect carried OUT of Phase A, deliberately:** placement is not uuid-aware
+(`RequestPlace` sends a towerId; `LoadoutValidator.FindEntry` returns the FIRST matching entry), so
+a player bringing two instances of one tower has only the first ever fight, and the XP path grants
+both the same aggregate. Outside §8's scope and not a Phase A regression — §1's "Ripple" never
+listed the placement remote. **But Phase B is GACHA, which makes duplicates routine rather than
+rare, so this should be fixed at the START of Phase B.** Tracked in `STATE.md`.
+
+Detail in `CHANGELOG.md`.

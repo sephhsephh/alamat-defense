@@ -102,6 +102,15 @@ and deleted. Each of Units/Items/Collection honours a `DevAutoOpen` Studio harne
 - Convert legacy script-built screens to instance trees when next touched (rule 2026-07-18):
   ~~CollectionScreen~~ (done A5), StageSelectScreen, PartyScreen, ReturnScreen.
 
+## Phase A: SIGNED OFF (A9, 2026-08-06)
+
+Every §8 item passes. Nothing in this Place is outstanding for Phase A. Two A9 results worth
+keeping: all **7 screens** still load after A7 removed `GetCollection` (all five read remotes
+round-trip `ok=true`, hotbar 6/6 kit-shaped), and **`Worthiness` now shows REAL values here with
+zero Lobby changes** — A8 wrote it in the Game place, and because `GetUnitViews` already carried the
+field, Archer `1d6c4076` reads `3.96` and Necromancer `035673d9` reads `1.72`, the exact uuids and
+values the Game committed. That is the contract paying for itself.
+
 ## Open PENDINGs (see STATE.md — this is the Lobby-relevant subset)
 
 - **AD-UI:** real per-unit models (everything uses `UnitModels.Placeholder`) and functional Units

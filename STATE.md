@@ -31,15 +31,18 @@ never rebuild them by hand. Both procedures: `tools/checklists.md`.
 
 Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 
-- **PENDING (AD-Game, real) — PLACEMENT IS NOT uuid-AWARE.** `RequestPlace` sends only a `towerId`
-  and `PlacementValidator` resolves it via `LoadoutValidator.FindEntry`, which returns the FIRST
-  loadout entry with that TowerId. So a player who brings TWO instances of one tower has only the
-  first instance ever enter the match (its MetaLevel/StatRolls/Ascension drive every copy placed),
-  and `RewardCalculator` **grants BOTH entries the same aggregate XP** — a silent double-grant that
-  only the multi-instance case hits. A8's counters sidestep it by crediting the first entry only.
-  Real fix, in order: uuid on the placement remote → `FindEntry` by uuid → per-uuid placement
-  limits → `MatchStatsTracker` keyed by uuid → drop A8's first-entry rule. Client-facing, so it is
-  its own session.
+- **PENDING (AD-Game) — PLACEMENT IS NOT uuid-AWARE. ⚠ FIX THIS FIRST IN PHASE B.**
+  `RequestPlace` sends only a `towerId` and `PlacementValidator` resolves it via
+  `LoadoutValidator.FindEntry`, which returns the FIRST loadout entry with that TowerId. So a player
+  who brings TWO instances of one tower has only the first instance ever enter the match (its
+  MetaLevel/StatRolls/Ascension drive every copy placed), and `RewardCalculator` **grants BOTH
+  entries the same aggregate XP** — a silent double-grant that only the multi-instance case hits.
+  A8's counters sidestep it by crediting the first entry only.
+  **A9 judged this OUT of Phase A scope** (§8 never required multi-instance correctness; §1's
+  "Ripple" never listed the placement remote) — but **Phase B is GACHA, which makes duplicates the
+  normal state of an inventory rather than an edge case.** Fix it BEFORE banners ship.
+  Order: uuid on the placement remote → `FindEntry` by uuid → per-uuid placement limits →
+  `MatchStatsTracker` keyed by uuid → drop A8's first-entry rule. Client-facing, so its own session.
 
 - **PENDING (USER):** run the **teleport v2 loop live** — lobby → reserved match → return →
   banner. v2 has only ever been Studio-verified; only v1 was ever live-verified (2026-07-18).
@@ -102,12 +105,14 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 
 ## Next up
 
-1. **AD-Integration — short §8 re-check, then DECLARE PHASE A SIGNED OFF.** Nothing blocks it any
-   more: A8 closed counters/worthiness (2026-08-06) and ADR-0007 settled the last PARTIAL. The
-   re-check is a verification pass, not new work — re-run drift in both Places and confirm the §8
-   list still holds after A8's changes.
-2. **USER** — republish both Places (A7's `GetCollection` deletion + A8's Game service changes are
+**✅ PHASE A IS SIGNED OFF (A9, 2026-08-06).** A1–A9 all landed; every §8 item PASSES, re-verified
+live in both Places. The blueprint `docs/blueprints/phase-a-foundations.md` is now history.
+
+1. **USER** — republish both Places (A7's `GetCollection` deletion + A8's Game service changes are
    Studio canon, not git), then run the teleport v2 loop live once.
-3. Then **Phase B (gacha)**. Schema v2 already carries `Pity`, `Currencies`, `Items`;
-   `UIKitRewardPopup` is built and waiting for its first caller; and the parked `Kit_UnitIcon`
-   question (ADR-0007) resolves here when the summon reveal / unit index need a card.
+2. **Phase B (gacha)** — `docs/blueprints/phases-b-f-meta.md`. **Start by fixing the placement/uuid
+   PENDING above**: gacha hands out duplicates constantly, and until placement is uuid-addressed a
+   duplicate is both unusable and a source of double XP.
+3. Phase B inherits three things already built and waiting: schema v2 carries `Pity`/`Currencies`/
+   `Items`; `UIKitRewardPopup` is shared canon with no caller yet; and the parked `Kit_UnitIcon`
+   question (ADR-0007) resolves when the summon reveal / unit index need a card.

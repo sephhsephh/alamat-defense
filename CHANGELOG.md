@@ -1,5 +1,58 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-06 [integration] A9 — §8 re-check. ✅ **PHASE A IS SIGNED OFF.**
+
+Drift **24/24 GREEN in BOTH Places** at bootstrap and at landing. Integration gate: this IS the
+Integration session. Verified in-engine with a temporary real Script (`SSS.Server.A9SignoffCheck`,
+since DELETED) — **A8's own report was not taken on trust; the counters/worthiness path was
+re-observed from scratch.**
+
+**Every §8 item now PASSES.** Full table in `docs/blueprints/phase-a-foundations.md`. What I
+verified myself this session:
+
+- **Counters commit, independently reproduced** across three complete Stage1_Act1 runs (15 waves,
+  speed 10, all Victories): `Waves +15` per match (60 → 75 → 90 → 105), `Clears +1` and
+  `ClearsByStage.Stage1_Act1 +1` **on Victory only**, `Summons +139` on real Necromancer raises.
+- **Worthiness is exact.** Archer 198 kills → `3.96`, Necromancer 86 → `1.72` — the harness
+  recomputed `WorthinessConfig.Apply(before, kills)` per unit and every one matched to 4 dp.
+- **PERSISTENCE, not just accumulation.** Each run's committed totals were read back at the NEXT
+  boot's snapshot through a real ProfileStore round trip (`DataStoreState=Access`): predicted
+  `Clears 3→4, ClearsByStage 3→4, Waves 60→75, Summons 526→662` and observed exactly that.
+- **XP by uuid did not regress under A8's changes** — Necromancer +620, Warchief +60, Meteor +60;
+  only loadout units moved.
+- **The cross-Place payoff, verified in the Lobby:** A8 wrote `Worthiness` in the GAME place and
+  never touched the Lobby, yet `GetUnitViews` now serves real values because the field was already
+  in the contract — Archer `1d6c4076` = **3.96** and Necromancer `035673d9` = **1.72**, the exact
+  uuids and values the Game committed, read back in the other Place with zero Lobby changes.
+- **Lobby still healthy after A7's remote deletion:** 7/7 screens present, all five read remotes
+  round-trip `ok=true`, hotbar 6/6 kit-shaped, `GetCollection` absent, no `Dev*` attribute on.
+
+**A harness bug worth recording, because it cost three runs and will bite the next author:**
+`Signal:Fire` invokes handlers **SEQUENTIALLY on one thread**, so a `MatchEnded` handler that
+YIELDS blocks every later handler — including `MatchEndPresenter`, which is what drives the
+reward/counter commit. My first three attempts "observed" the commit arriving ~16s late and
+reported all-zero deltas; in fact *my own handler was holding the commit up*. Fixed by
+`task.spawn`-ing the body and returning immediately. **Never yield inside a `Signal` handler in
+this codebase** unless you intend to delay everyone behind you.
+
+**Judgement call, stated openly — the placement/uuid defect does NOT block sign-off.**
+`RequestPlace` carries a towerId and `LoadoutValidator.FindEntry` returns the FIRST matching entry,
+so a player bringing two instances of one tower has only the first ever enter the match, and the XP
+path grants both the same aggregate. It is real, but: §8 never required multi-instance correctness,
+"commits by uuid" is satisfied (the commit IS uuid-keyed and was verified), and §1's "Ripple" never
+listed the placement remote — so it is out of Phase A's scope, not a Phase A regression.
+**However:** Phase B is gacha, which turns duplicates from an edge case into the normal state of a
+player's inventory. **This should be the first thing fixed in Phase B, before banners ship.**
+Recorded that way in `STATE.md` and the blueprint rather than left as a generic backlog item.
+
+- **Contract impact:** NONE. No shared module, template or schema touched — drift unchanged at
+  **24/24**, so neither Place is stale. Docs-and-verification only.
+- **PENDINGs:** the A9 re-check PENDING is CLEARED. Carried: placement/uuid (now flagged as a Phase
+  B blocker), max-level XP loss, hotbar hover trigger, `Kit_ItemHoverCard` clone split, `Data.Items`
+  writer, `TowerProgressionConfig` promotion, teleport v2 live loop (USER), republish (USER).
+- **PHASE A IS COMPLETE.** A1–A9 all landed. Next is **Phase B (gacha)** —
+  `docs/blueprints/phases-b-f-meta.md`.
+
 ## 2026-08-06 [integration] USER DECISION — `Kit_UnitIcon` PARKED (ADR-0007). Phase A is now unblocked.
 
 **Docs only. No code, no template, no Studio change, no drift impact, nothing to republish for this.**

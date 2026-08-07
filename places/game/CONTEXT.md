@@ -104,6 +104,18 @@ confirm profile load + schema version on every boot.
   match's real count. Making this truly per-instance means teaching PLACEMENT about uuids first
   (see the PENDING). **The XP path does NOT yet do this** and still credits every same-TowerId
   entry the same aggregate; pre-existing, correct for the single-instance case, PENDING.
+  **A9 judged this OUT of Phase A scope but flagged it as the FIRST thing to fix in Phase B** —
+  gacha makes duplicates routine rather than rare.
+- **A9 (2026-08-06) re-verified the whole counters path independently** across three 15-wave
+  Victories: `Waves +15` each, `Clears`/`ClearsByStage +1` on Victory only, `Summons +139`,
+  Worthiness exact (Archer 198 kills → 3.96, Necromancer 86 → 1.72), and each run's totals read
+  back at the NEXT boot through a real ProfileStore round trip — so they persist, not just
+  accumulate in memory.
+- **HARNESS GOTCHA — `Signal:Fire` runs handlers SEQUENTIALLY on ONE thread.** A `MatchEnded`
+  handler that YIELDS blocks every later handler, including `MatchEndPresenter`, which is what
+  drives the reward/counter commit. A9 burned three runs "observing" a late commit that its own
+  waiting handler was causing. If you need to inspect post-commit state, `task.spawn` the body and
+  return immediately — never `task.wait` inside a Signal handler here.
 - A unit at `MAX_META_LEVEL` LOSES stored XP (`ApplyXP` discards overflow rather than preserving
   it): Archer Lv100 went `XP 400 → 0` at A7. Cosmetic but visible on the Units screen.
 - `DevSetOwnedTowers` (smoke test) REPLACES `data.Units` with new uuids, which orphans the Lobby's
