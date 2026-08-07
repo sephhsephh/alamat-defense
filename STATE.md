@@ -48,12 +48,14 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 - **PENDING (USER):** **republish BOTH Places** — A7's `GetCollection` deletion is Lobby Studio
   canon and is not in git (ADR-0001).
 
-- **PENDING (AD-UI, needs a USER decision) — NOW THE LAST THING BLOCKING PHASE A SIGN-OFF.**
-  `Kit_UnitIcon` has **no consumer**. The Units screen renders its own card design, not the kit
-  icon, which is why blueprint §5's one-icon intent is unmet, and it is the only §8 item still
-  PARTIAL now that A8 has closed counters. Either the Units screen adopts `Kit.UnitIcon` or the
-  template is retired. **Do not delete it unilaterally** — it carries a rig and the user asked for
-  it to be kept. After the decision lands, one short **AD-Integration** §8 re-check signs Phase A off.
+- **PENDING (Phase B, AD-UI) — the unit-card component.** `Kit_UnitIcon` is **PARKED** by user
+  decision (**ADR-0007**, 2026-08-06): not adopted, not deleted, no code change. Phase B's gacha
+  reveal / unit index are the first real consumers and will define what the component must do.
+  **Do NOT delete `Kit_UnitIcon`** and do NOT build a `UIKit.UnitIcon` controller speculatively —
+  the first real consumer designs it. When it is built, **the USER'S shipping Units card is lifted
+  into the kit as-is** (same move as `Kit_HotbarSlot`); missing kit fields get ADDED to their tree,
+  never used to replace it. Collection screen stays out of scope (convert-on-touch only).
+  **This no longer blocks Phase A** — §8 reads pragmatically and the Units screen PASSES.
 
 - **PENDING (AD-UI, small):** the hotbar **hover TRIGGER** is unverified in BOTH Places.
   `MouseEnter` cannot be fired from tooling and `VirtualInputManager` is blocked, so "the card
@@ -100,10 +102,12 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 
 ## Next up
 
-1. **USER decision** — Units screen adopts `Kit.UnitIcon`, or the template retires. This is now the
-   ONLY open §8 item; A8 closed the counters FAIL on 2026-08-06.
-2. **AD-Integration** — short §8 re-check once (1) lands, then **declare Phase A signed off**.
-3. **USER** — republish both Places (A7's `GetCollection` deletion + A8's Game service changes are
+1. **AD-Integration — short §8 re-check, then DECLARE PHASE A SIGNED OFF.** Nothing blocks it any
+   more: A8 closed counters/worthiness (2026-08-06) and ADR-0007 settled the last PARTIAL. The
+   re-check is a verification pass, not new work — re-run drift in both Places and confirm the §8
+   list still holds after A8's changes.
+2. **USER** — republish both Places (A7's `GetCollection` deletion + A8's Game service changes are
    Studio canon, not git), then run the teleport v2 loop live once.
-4. Then **Phase B (gacha)**. Schema v2 already carries `Pity`, `Currencies`, `Items`, and
-   `UIKitRewardPopup` is built and waiting for its first caller.
+3. Then **Phase B (gacha)**. Schema v2 already carries `Pity`, `Currencies`, `Items`;
+   `UIKitRewardPopup` is built and waiting for its first caller; and the parked `Kit_UnitIcon`
+   question (ADR-0007) resolves here when the summon reveal / unit index need a card.

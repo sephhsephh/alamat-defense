@@ -1,5 +1,45 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-06 [integration] USER DECISION — `Kit_UnitIcon` PARKED (ADR-0007). Phase A is now unblocked.
+
+**Docs only. No code, no template, no Studio change, no drift impact, nothing to republish for this.**
+
+A7 left one §8 item PARTIAL: the Lobby's Units screen renders screen-local cards rather than
+`Kit.UnitIcon` clones, which is why that template has no consumer. Once A8 closed the
+counters/worthiness ❌, this was the LAST thing between the project and Phase A sign-off. It was put
+to the user rather than decided unilaterally — the template carries a rig and the user had
+previously asked for it to be kept.
+
+**The user's decision, four parts (full reasoning in `docs/decisions/ADR-0007-kit-uniticon-parked.md`):**
+
+1. **PARK the template** — not adopted, not deleted, no code change. `Kit_UnitIcon` stays
+   drift-controlled canon in both Places. The question moves to **Phase B**, whose gacha summon
+   reveal and unit index are the first features that will actually need a unit card and will
+   therefore define what the component must do. Designing it now against zero consumers is how you
+   get a component that fits nothing.
+2. **§8 reads PRAGMATICALLY — the Units screen PASSES.** "Renders through the kit" is satisfied by
+   the shared `FilterPanel` and the shared `TierConfig`/`StatGradeConfig`/`UnitStatsCatalog` stack.
+   The card exception is RECORDED, not pretended away.
+3. **If a shared unit card is ever built, the USER'S design wins.** `Kit_UnitIcon` is explicitly
+   NOT the reference: the Units screen's shipping card is lifted into the kit as-is — the same move
+   that produced `Kit_HotbarSlot` — and any fields the kit icon has that it lacks (`ShinyBadge`,
+   `CostLabel`, `KeyLabel`/`CountLabel`) are **ADDED to the user's tree**, never used as grounds to
+   replace it. This is now the standing rule for kit promotion generally, not a one-off.
+4. **Collection screen stays OUT OF SCOPE** — it keeps its own `CardTemplate` and adopts a shared
+   card only opportunistically under the convert-on-touch rule. Folding two working screens into a
+   Phase-A closing task was rejected as unnecessary blast radius.
+
+**Two standing instructions now recorded in the manifest, `ui-kit.md` and ADR-0007:** do NOT delete
+`Kit_UnitIcon` without a fresh user decision, and do NOT build a `UIKit.UnitIcon` controller
+speculatively — its absence is intentional, and the first real consumer designs it.
+
+- Also corrected a **stale ROADMAP claim** that `Kit_UnitIcon` "is the Game hotbar's slot". It was,
+  until the shared-hotbar work replaced it with `Kit_HotbarSlot`; that line had been reading ✅ for a
+  fact that stopped being true the same day.
+- **Contract impact:** none. Drift unchanged at **24/24** — no hash moved, because nothing was touched.
+- **PENDINGs:** the AD-UI "needs a USER decision" PENDING is CLOSED and replaced by a Phase B one.
+  **Phase A has no blockers left** — next is a short AD-Integration §8 re-check to sign it off.
+
 ## 2026-08-06 [game] A8 — Counters pipeline + Worthiness commit (blueprint §6). **The A7 ❌ is closed.**
 
 Drift **24/24 GREEN** at bootstrap and again at landing — no shared module or template was touched,

@@ -48,11 +48,16 @@ Attribute vocabulary for `UIKitButton`: `HoverScale`, `HoverStrokeMult`, `HoverS
   `ViewportFrame`, `TraitIcon`, `LockOverlay` (dark + lock icon + "Lv N") and `SlotNumber`.
 - **`UnitIcon`** — the blueprint §5 UnitIcon: `ViewportFrame` + `BG`/tier border + `TraitIcon` +
   `LevelBadge` + `CostLabel` + `NameLabel` + `ShinyBadge`, plus `KeyLabel`/`CountLabel` that
-  default **hidden**. **STATUS: NO CONSUMER.** The Game hotbar used it until the move to
-  `HotbarSlot`; the only remaining mention is the *disabled* `Hotbar_RETIRED` script. Kept
-  deliberately (it carries a rig, and "obviously dead" things here have twice proven worth
-  keeping). **Do not delete without asking the user.** The Lobby's Units screen renders its own
-  `CardTemplate`, not this — see the A7 finding in `lobby-ui.md`.
+  default **hidden**. **STATUS: NO CONSUMER — PARKED by user decision (ADR-0007, 2026-08-06).**
+  The Game hotbar used it until the move to `HotbarSlot`; the only remaining mention is the
+  *disabled* `Hotbar_RETIRED` script. It is neither adopted nor deleted — the question is deferred
+  to **Phase B**, where the gacha reveal / unit index are the first real consumers.
+  - **Do NOT delete it** without a fresh user decision (it carries a rig).
+  - **Do NOT build a `UIKit.UnitIcon` controller speculatively** — the first real consumer designs
+    it. The absence of a controller for this template is intentional, not an oversight.
+  - **When a unit card IS built, this template is NOT the reference.** The Lobby's shipping Units
+    card is lifted into the kit as-is (same move as `HotbarSlot`); fields this icon has and that
+    card lacks are ADDED to the user's tree, never used to replace it. See ADR-0007.
 - **`ItemHoverCard`** — **no runtime lookup.** `ItemsGUI.HoverPreview` is a CLONE taken once at
   build time, so **editing this master does NOT update the deployed screen**. Re-clone or edit
   both. This master/clone split is a known sharp edge of template canon; it already caused a

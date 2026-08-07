@@ -38,14 +38,15 @@ there and why.
     from that unit's roll, the number is the catalog's mid-roll reference (tier 1 / ML 1 / no
     trait / asc 0). ADR-0003's accepted trade; per-unit numbers would need the Min/Max ranges
     promoted too, which ADR-0003 deliberately rejected.
-  - **A7 FINDING — the cards are NOT `Kit.UnitIcon` clones.** They are a screen-local card design
-    (`PlacementPrice` + a level `TextLabel`); the kit's `NameLabel`/`LevelBadge`/`CostLabel`/
-    `ShinyBadge` are absent. So the Units screen goes "through the kit" for its **FilterPanel** and
-    the shared **TierConfig/StatGradeConfig/UnitStatsCatalog**, but not for its cards. This is
-    exactly why `Kit_UnitIcon` has no consumer. Not a defect — the screen works and the user owns
-    the design — but blueprint §5 intended one icon component, so either the screen adopts
-    `Kit.UnitIcon` or `Kit_UnitIcon` should be retired. **User decision needed; do not act
-    unilaterally.**
+  - **The cards are NOT `Kit.UnitIcon` clones — and that is now a SETTLED decision (ADR-0007).**
+    They are a screen-local design (`PlacementPrice` + a level `TextLabel`); the kit's
+    `NameLabel`/`LevelBadge`/`CostLabel`/`ShinyBadge` are absent. So the Units screen goes "through
+    the kit" for its **FilterPanel** and the shared **TierConfig/StatGradeConfig/UnitStatsCatalog**,
+    but not for its cards. A7 flagged this as the last §8 PARTIAL; the user decided 2026-08-06 to
+    **PARK it**: §8 reads pragmatically and this screen **PASSES**, `Kit_UnitIcon` is neither
+    adopted nor deleted, and the unit-card question moves to Phase B. **Do not "fix" this by
+    rebuilding the cards on `Kit.UnitIcon`.** If a shared card is ever built, THIS card is the one
+    lifted into the kit — the user's design is the source of truth.
   - Still open: real per-unit models (everything uses `UnitModels.Placeholder`) and functional
     action buttons (animation-only today).
 

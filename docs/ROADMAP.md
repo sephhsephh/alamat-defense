@@ -98,7 +98,10 @@ catalog/configs, icon kit, session plan A1–A7). Phases B–F:
   ✅ **Kit PROMOTED to shared canon 2026-08-06**, pulled forward from A7 because A6's Game hotbar
   depends on it. Now **6 controllers + 8 templates**, deployed byte-identically to BOTH Places —
   **drift 24/24 GREEN**, re-verified at A7. Place-neutral doc: `docs/systems/ui-kit.md`.
-  ✅ **`Kit_UnitIcon`** (A6) — the blueprint §5 UnitIcon, now the Game hotbar's slot.
+  🟡 **`Kit_UnitIcon`** (A6) — the blueprint §5 UnitIcon. It WAS the Game hotbar's slot until the
+  shared-hotbar work replaced it with `Kit_HotbarSlot`, so it now has **no consumer**. **PARKED by
+  user decision (ADR-0007)**: not adopted, not deleted, revisited in Phase B. Do not delete it and
+  do not build a controller for it speculatively.
   ✅ **`RewardPopup`** (A6) — `Kit_RewardPopup` + `UIKitRewardPopup`, catalog-id driven, shared
   canon in both Places; no caller yet by design (Phase B gacha).
   ✅ **`CurrencyBar`** (A6) — built **Lobby-local** (`HUD.Top.CurrencyBar`), not shared: a
@@ -147,13 +150,14 @@ catalog/configs, icon kit, session plan A1–A7). Phases B–F:
   Meteor 10, each exactly matching `MatchStatsTracker`; Victory then gave `Clears 1`,
   `ClearsByStage.Stage1_Act1 1`, `Waves 30` (cumulative), `Summons 255`. Worthiness = kills × 0.02
   on every unit; the 100 cap held against two contrived 999,999-kill commits.
-- 🟡 Units screen: kit FilterPanel + shared configs, but its CARDS are screen-local, not
-  `Kit.UnitIcon` (which therefore still has no consumer — **user decision pending; this is the one
-  remaining §8 gap**)
+- ✅ **Units screen — PASSES with a recorded exception (ADR-0007, USER 2026-08-06).** It renders
+  through the kit's FilterPanel and the shared TierConfig/StatGradeConfig/UnitStatsCatalog; its
+  CARDS are screen-local by design. §8 reads pragmatically, `Kit_UnitIcon` is PARKED for Phase B,
+  and the Collection screen stays out of scope. The exception is recorded, not pretended away.
 
-**Remaining before sign-off:** (a) the USER decides whether the Units screen adopts `Kit.UnitIcon`
-or the template is retired; (b) a short **AD-Integration** re-check of §8 end to end. No AD-Game
-work is outstanding.
+**Remaining before sign-off:** one short **AD-Integration** re-check of §8 end to end (drift in
+both Places + the §8 list re-confirmed after A8). **Nothing else is outstanding** — no AD-Game work,
+no AD-UI work, no user decision.
 
 ### Phase B — Gacha
 - 🔲 Banner engine: one config file per banner (auto-scanned); Standard (3 mythics/hour,

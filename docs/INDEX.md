@@ -40,6 +40,10 @@
   the property whitelist, and why ViewportFrame 3D contents are excluded
 - `ADR-0006-state-md-cap.md` — `STATE.md` stays ONE file (the bootstrap ritual reads it), cap
   100→120, and a resolved PENDING is DELETED rather than struck through (AD-Integration, A7)
+- `ADR-0007-kit-uniticon-parked.md` — `Kit_UnitIcon` is PARKED (not adopted, not deleted) until
+  Phase B; §8's "renders through the kit" reads pragmatically so the Units screen PASSES; and when
+  a shared unit card IS built, **the user's shipping design is lifted into the kit**, not replaced
+  by the kit's (USER, 2026-08-06)
 
 ## proposals/
 - `2026-08-06-kit-promotion-blocks-a6.md` — AD-UI→AD-Integration: A6's Game hotbar needs the kit,
