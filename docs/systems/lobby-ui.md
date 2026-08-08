@@ -1,6 +1,6 @@
 # SYSTEM — Lobby UI (screens)
 
-<!-- owner: AD-UI | scope: lobby | last-verified: 2026-08-06 (A7) -->
+<!-- owner: AD-UI | scope: lobby | last-verified: 2026-08-09 (B4) -->
 
 Split out of `places/lobby/CONTEXT.md` at A5 when that file passed its 150-line cap. **At A7
 (2026-08-06) the KIT half moved out to `docs/systems/ui-kit.md`** — the kit is used by both Places
@@ -9,6 +9,80 @@ Read `ui-kit.md` first for the components they build on.
 
 Studio is canon for the actual instances and controller code (ADR-0001); this describes what is
 there and why.
+
+## `ObtainRewardsGUI` — the reward-reveal surface
+
+Built at **B1 (2026-08-08)**; animated at **B4 (2026-08-09)**. Moved here from
+`places/lobby/CONTEXT.md` at B4 — this is a Lobby SCREEN, and CONTEXT.md was over its cap.
+
+**Entry point** (client-side, Lobby-local, matching the `ClientEvents` house pattern):
+
+```lua
+RS.ClientEvents.ShowRewards:Fire({ { Id = "Archer", Level = 12 }, { Id = "Gold", Qty = 250 } })
+```
+
+A bare string id also works. **First production caller = gacha (B3)**, which passes
+`RequestSummon`'s returned views straight through unchanged.
+
+- **ONE grid, MIXED units + items.** Unit cell = this screen's own `RewardsFrame.UnitTemplate`
+  (150×150, locked by its own `UISizeConstraint`, adopted as-is per ADR-0007, kept **Lobby-local,
+  NOT shared canon**). Anything else = a FRESH clone of shared `Kit.ItemIcon` on every show
+  (deliberately not baked in at build time — that is what caused `Kit_ItemHoverCard`'s stale-master
+  bug). Kind is inferred from `ItemCatalog` (`Kind == "Tower"` → unit), forceable with `Kind`. An id
+  absent from the catalog **still renders** (name falls back to the id, tier Common).
+- **Layout:** 5 columns; `cols = min(n, maxCols)` so 3 rewards make a 3-wide frame, not a 5-wide one
+  with gaps. Rows 1–3 grow the frame; row 4+ freezes Y at the 3-row height and scrolls with
+  `CanvasSize` still covering every row. **Every metric is READ from the instances**
+  (`UIGridLayout.CellSize`/`CellPadding`/`FillDirectionMaxCells`, `UIPadding`,
+  `RewardsFrame:GetAttribute("MaxVisibleRows")`) — retune spacing in Studio, no code change.
+- **Back-to-back grants QUEUE, never merge**, so each reward source stays visually distinct.
+
+### Reveal animation + two-stage click (B4, 2026-08-09)
+
+Cells reveal **one at a time** (pop-in, `UIScale` `RevealStartScale` → 1, Back/Out) instead of the
+whole grid appearing at once. Then **click 1 = SKIP**, **click 2 = CLOSE**.
+
+- **Skip is NOT dead-period gated; close is.** Skipping only ever shows you *more*, so a stray click
+  cannot rob you of a rare pull — but the close click is gated by `InputDeadSeconds` measured **from
+  when the reveal FINISHED**, not from when the popup opened. With an animation, "seen" happens at
+  the end of the reveal. Letting the animation finish on its own lands in the identical state as a
+  skip, because both go through one `finishReveal()`.
+- **Tunables are attributes on the ScreenGui** (same philosophy as the layout metrics):
+  `RevealStaggerSeconds` (0.08), `RevealPopSeconds` (0.22), `RevealStartScale` (0.60),
+  `RevealMaxTotalSeconds` (1.20 — caps the whole stagger so a 20-cell batch compresses instead of
+  crawling), plus the existing `InputDeadSeconds` (0.35).
+- **Why `UIScale` and not `Size`:** `UIGridLayout` FORCES `CellSize` onto every child, so a `Size`
+  tween is overwritten every frame. `UIScale` is the only size animation that survives a grid.
+- **It is created on the runtime CLONE, never on a template.** `Kit_ItemIcon` is hashed **shared
+  canon** (`5623f4b4`, also used by the Items screen) — adding anything to it would be drift.
+  The controller already creates `UIGradient`/`WorldModel`/`Camera` on clones, so this matches its
+  own established practice rather than inventing one.
+- **Why it pops from the centre:** the `UIScale` goes on the cell's `Main` child after re-anchoring
+  it to `(0.5,0.5)` at position `(0.5,0.5)` — geometrically identical coverage (Main is
+  `{1,0},{1,0}` at anchor `(0,0)`), but it now grows from the middle instead of the top-left corner.
+  **The grid-positioned ROOT is never re-anchored** — that would shift the cell out of its slot.
+- **Keep the overshoot small.** `RewardsFrame.ClipsDescendants = true` and padding is 8px, so
+  Back/Out from 0.6 (peak ≈ 1.04 ≈ 3px per side on a 150px cell) fits. A much lower start scale or a
+  stronger easing **will clip** on the outer edges.
+- **Cells are hidden until their turn, and this does NOT reflow.** `UIGridLayout` skips invisible
+  children, but because cells reveal in ascending `LayoutOrder` each one lands in the next free slot
+  and the ones already shown never move. Asserted live, not assumed: cell 1 held its
+  `AbsolutePosition` across the whole reveal at n=10 and n=20.
+- **A `revealToken` guards the queue.** It is bumped on every render, and an in-flight reveal loop
+  from a previous batch checks it and bails — so walking the queue quickly can never leave an old
+  loop animating the new batch's cells.
+- The `ClickToCloseLbl` hint stays hidden until closing is *actually* possible (reveal finished AND
+  dead period passed). During the reveal a click skips rather than closes, so showing a close hint
+  then would be a lie.
+- **Studio harness:** the `DevDismiss` attribute routes through the **same `advance()`** a real click
+  does, so it skips while revealing and closes afterwards, dead-period check included
+  (`MouseButton1` cannot be fired from tooling). Left OFF.
+
+**Verified live at B4** (n=1/3/6/10/15/20): stagger observed one cell at a time (`0→1→…→20`); cell 1
+never moved; skip mid-reveal at 2 visible → all 15 instantly at full scale and **still open**; close
+during the dead period **refused**; close after it worked; queue animates each batch; and the layout
+numbers are **identical to B1's** — n=10 `798×324`, n=15 `798×482`, n=20 `806×482` canvas 640 with
+the last cell's bottom at 599 inside a frame bottom of 607. Drift stayed **23/23 GREEN**.
 
 ## Screens
 

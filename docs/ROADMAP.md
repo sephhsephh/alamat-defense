@@ -183,7 +183,16 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
   clone of shared `Kit.ItemIcon` — same footprint, no distortion. 5 columns; rows 1–3 grow the
   frame, row 4+ freezes Y and scrolls with `CanvasSize` still covering every row. Click-anywhere
   dismiss after a 0.35s dead period; back-to-back grants QUEUE. Verified live at n = 1/3/5/6/11/15/
-  20 plus queue, dead-period and unknown-id cases. **No caller yet — gacha is the intended first.**
+  20 plus queue, dead-period and unknown-id cases. **First caller = gacha (B3).**
+- ✅ **B4 — the reveal ANIMATES (2026-08-09).** Cells pop in ONE AT A TIME (`UIScale` 0.6→1,
+  Back/Out) instead of all at once, and the click became two-stage: **click 1 = SKIP** (instant, not
+  gated — skipping only shows you more), **click 2 = CLOSE** (gated by `InputDeadSeconds` measured
+  from when the reveal FINISHED, so a reward can never be clicked away before it is seen). Stagger /
+  pop / start-scale / total-duration cap are ScreenGui attributes. The pop `UIScale` is created on
+  runtime CLONES — `Kit_ItemIcon` is hashed shared canon and was verified untouched at `5623f4b4`.
+  Verified live at n=1/3/6/10/15/20 incl. the scrollbar case; cell 1 never reflows; layout numbers
+  identical to B1's. Written by AD-Gacha inside AD-UI's canon on the user's authorisation —
+  **AD-UI review PENDING**. Doc moved to `docs/systems/lobby-ui.md`.
 - ✅ **B3 — the BANNER ENGINE (AD-Gacha, Lobby, 2026-08-09).** The blueprint's B1 + B2
   session-tasks together (user decision). `docs/systems/gacha.md`.
   **`RS.Shared.MetaMath`** is new shared canon (`6badac1d`, Lobby-only — the Game reports MISSING

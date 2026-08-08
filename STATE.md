@@ -38,12 +38,12 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   all Studio canon and not in git (ADR-0001). v2 has only ever been Studio-verified; only v1 was
   ever live-verified (2026-07-18), and a `[CONTRACT]` mismatch would block every launch.
 
-- **PENDING (AD-UI / AD-Gacha):** the reveal surface now has its first caller (gacha, B3); the
-  remaining thread is the unit card, **Lobby-local not shared** (B1) — revisit when the unit INDEX
-  (blueprint B5) is its second consumer, which is also when `Kit_UnitIcon`'s fate (ADR-0007, still
-  PARKED, do not delete) gets settled. **Quests / login / codes need a NEW reveal answer:** B3's
-  "the remote returns the views" only works for player-INITIATED grants. Do not bolt a push
-  remote onto `SummonService` for them.
+- **PENDING (AD-UI / AD-Gacha):** the unit card stays **Lobby-local not shared** (B1) — revisit at
+  the unit INDEX (blueprint B5), which is also when `Kit_UnitIcon`'s fate (ADR-0007, PARKED, do not
+  delete) gets settled. **AD-UI should REVIEW B4's reveal animation** — AD-Gacha wrote it inside
+  AD-UI's canon on the user's explicit authorisation (same pattern as `LoadoutService`).
+  **Quests / login / codes need a NEW reveal answer:** B3's "the remote returns the views" only
+  works for player-INITIATED grants. Do not bolt a push remote onto `SummonService` for them.
 
 - **PENDING (whoever needs it FIRST, probably AD-Meta at Phase D):** deploy `MetaMath` to the GAME
   place and flip `deployed.Game` in `shared/manifest.json`. Until then the Game's drift reads

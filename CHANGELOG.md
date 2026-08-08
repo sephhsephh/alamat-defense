@@ -1,5 +1,91 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-09 [lobby] B4 — reward reveal ANIMATES (one cell at a time) + two-stage click. Drift untouched.
+
+Bootstrap drift **23/23 GREEN**, unchanged at landing — **this session touched ZERO shared canon**,
+which was the main constraint to respect rather than a happy accident (below). Integration gate:
+**"No Integration needed — proceeding."**
+
+**CROSS-OWNERSHIP, ON THE USER'S EXPLICIT INSTRUCTION.** `ObtainRewardsGUI` /
+`ObtainRewardsController` are **AD-UI canon** (`docs/OWNERSHIP.md`), and this is the AD-Gacha chat —
+the previous session's own next-session prompt said "do not touch it". The user asked for the
+change directly, which is the authorisation, and the repo already has precedent for exactly this
+(`LoadoutService` and `GetUnitViews.Items` were both written cross-ownership with the user's
+sign-off and recorded loudly). **A PENDING asks AD-UI to review it.** Recording it rather than
+quietly editing another chat's system is the whole point of the single-writer rule.
+
+**What changed.** Cells used to appear all at once. Now they reveal **one at a time** (pop-in,
+`UIScale` 0.6 → 1, Back/Out), and the click behaviour became two-stage: **click 1 = SKIP, click 2 =
+CLOSE**.
+
+**The click-timing decision, which is the part with actual judgement in it.** The old rule was one
+click, dead-period gated, so a fast grinder could not stray-click past a rare pull. With a skip step
+that rule no longer fits: a click during the reveal only ever shows you *more*. So the user chose —
+**skip is instant and NOT gated; close IS gated, measured from when the reveal FINISHED rather than
+from when the popup opened.** With an animation, "seen" happens at the end of the reveal, so the
+original protection is preserved exactly where it still means something, and the popup feels
+responsive instead of dead for 0.35s while cells are visibly still arriving. Letting the animation
+finish on its own lands in the identical state as a skip, because both routes go through one
+`finishReveal()`, and one `advance()` decides skip-vs-close for both real input and the harness —
+so the two can never drift apart.
+
+**Three constraints the implementation had to work around, none of them optional:**
+
+- **`UIGridLayout` FORCES `CellSize` onto every child**, so tweening a cell's `Size` is overwritten
+  every frame. `UIScale` is the only size animation that survives a grid.
+- **`Kit_ItemIcon` is hashed SHARED canon** (`5623f4b4`, also used by the Items screen). Adding a
+  `UIScale` to it would be drift in both Places for a Lobby-only animation. The `UIScale` is
+  therefore created on the runtime **CLONE** — which is not a new pattern, it is exactly what this
+  controller already does for `UIGradient`, `WorldModel` and `Camera`. **Verified at landing: both
+  templates are untouched and `Kit_ItemIcon` still hashes `5623f4b4`.**
+- **Popping from the centre without breaking the grid.** The `UIScale` goes on the cell's `Main`
+  child after re-anchoring it to `(0.5,0.5)` at position `(0.5,0.5)` — geometrically identical
+  coverage, since `Main` is `{1,0},{1,0}` at anchor `(0,0)`. The grid-positioned **root is never
+  re-anchored**; that would shift the cell out of its slot. And the overshoot is kept small on
+  purpose: `RewardsFrame.ClipsDescendants` is TRUE with 8px padding, so Back/Out from 0.6 peaks at
+  ≈1.04 (≈3px per side on a 150px cell) and fits. A lower start scale WILL clip.
+
+**One claim in a code comment that was PROVEN rather than asserted.** Hiding cells until their turn
+sounds like it should reflow, because `UIGridLayout` skips invisible children. It does not — cells
+reveal in ascending `LayoutOrder`, so each lands in the next free slot and the ones already shown do
+not move. Rather than reason about it and hope, the harness sampled cell 1's `AbsolutePosition`
+throughout the whole reveal: **it never moved, at n=10 or n=20.**
+
+**Queue safety:** a `revealToken` is bumped on every render, and an in-flight reveal loop from a
+previous batch checks it and bails — so clicking through the queue quickly cannot leave an old loop
+animating the new batch's cells.
+
+**Tunables are ScreenGui ATTRIBUTES**, matching B1's read-everything-from-the-instances philosophy:
+`RevealStaggerSeconds` (0.08), `RevealPopSeconds` (0.22), `RevealStartScale` (0.60),
+`RevealMaxTotalSeconds` (1.20 — caps the whole stagger so a 20-cell batch compresses instead of
+crawling for 1.6s). Retune the feel in Studio, no code change.
+
+**Verified LIVE in Play from a temporary harness (since deleted), driven through the controller's
+own `DevDismiss` hook so the real `advance()` path was exercised, not a simulation:**
+
+- n=10 progression `0→1→2→…→10` — genuinely one at a time; cell 1 never moved; all at full scale.
+- **Skip:** at n=15, clicked at 2 cells visible → all 15 instantly at scale 1.000, **still open**.
+- **Close refused during the dead period**, then accepted after it. Hint label stays hidden until
+  closing is actually possible, so it never invites a click that does something else.
+- Queue (3 then 6): both batches animate; n=1 edge case fine.
+- **n=20, the only case with a scrollbar** — no auto-scroll (`CanvasPosition` 0,0 throughout), no
+  resize mid-reveal, and the off-screen rows 4+ all end at full scale.
+- **Layout is byte-for-byte what B1 measured**: n=10 `798×324`, n=15 `798×482`, n=3 `482×166`,
+  n=1 `166×166`, n=20 `806×482` canvas 640 with the last cell's bottom at 599 inside a frame bottom
+  of 607. The animation disturbed nothing.
+
+**Docs: the `ObtainRewardsGUI` block MOVED from `places/lobby/CONTEXT.md` to
+`docs/systems/lobby-ui.md`**, where `docs/INDEX.md` already said Lobby SCREENS belong. That also
+closes the cap overrun B3 flagged and declined to fix: **CONTEXT.md is back to exactly 150/150** and
+STATE.md holds at 120/120.
+
+**Contract impact: NONE.** No schema, no teleport payload, no shared module, no template. Client-side
+Lobby-local behaviour only.
+
+**PENDINGs: 1 NEW (AD-UI to review this), 0 cleared.** Everything else stands.
+
+**USER must republish BOTH Places** — B4, like A7/A8/B0/B1/B2/B3, is Studio canon and not in git.
+
 ## 2026-08-09 [lobby] B3 — the BANNER ENGINE. `MetaMath` promoted to shared; Lobby drift 23/23 GREEN.
 
 Bootstrap drift **22/22 GREEN**, exactly as expected (15 modules + 7 templates, `Kit_ItemIcon` at

@@ -84,22 +84,13 @@ and deleted. Each of Units/Items/Collection honours a `DevAutoOpen` Studio harne
 **A7 finding:** the Units screen's cards are screen-local, NOT `Kit.UnitIcon` clones — see
 `lobby-ui.md`; that template still has no consumer and its fate is a user decision.
 
-**`ObtainRewardsGUI` — the reward-reveal surface (B1, 2026-08-08, AD-UI). BUILT + verified live.**
-One grid, MIXED units + items. Entry point is client-side and Lobby-local:
-`RS.ClientEvents.ShowRewards:Fire({ { Id = "Archer", Level = 12 }, { Id = "Gold", Qty = 250 } })`
-(a bare string id also works). Cell = unit → this screen's own `RewardsFrame.UnitTemplate`
-(150×150, locked by its own `UISizeConstraint`, adopted as-is per ADR-0007 and kept **Lobby-local**,
-NOT promoted to shared canon); anything else → a FRESH clone of shared `Kit.ItemIcon`. Kind is
-inferred from `ItemCatalog` (`Kind == "Tower"` → unit) and can be forced with `Kind`. An id absent
-from the catalog still renders (name falls back to the id, tier Common). Layout is 5 columns;
-rows 1–3 grow the frame, row 4+ freezes Y at the 3-row height and scrolls. **Every metric is READ
-from the instances** (`UIGridLayout.CellSize`/`CellPadding`/`FillDirectionMaxCells`, `UIPadding`,
-`RewardsFrame:GetAttribute("MaxVisibleRows")`, `ObtainRewardsGUI:GetAttribute("InputDeadSeconds")`)
-— retune spacing in Studio, no code change. Dismiss = click ANYWHERE (`Main` is the full-screen
-catcher, `Active = true`) after a 0.35s input-dead period; back-to-back grants QUEUE, never merge.
-Studio harness: flip the `DevDismiss` attribute (same `dismiss()` path a click takes). Left OFF.
-**FIRST PRODUCTION CALLER = gacha (B3, 2026-08-09)**, as planned. It fires `ShowRewards` with the
-views `RequestSummon` returns, and modifies nothing here. Later systems still wire themselves in.
+**`ObtainRewardsGUI` — the reward-reveal surface (B1 2026-08-08; animated B4 2026-08-09).**
+**Detail lives in `docs/systems/lobby-ui.md` — moved there at B4.** Fire it, never rebuild it:
+`RS.ClientEvents.ShowRewards:Fire({ { Id = "Archer", Level = 12 }, { Id = "Gold", Qty = 250 } })`.
+Mixed units + items, 5 cols, rows 1–3 grow / row 4+ scrolls, grants QUEUE. Cells reveal ONE AT A
+TIME (pop-in), then **click 1 = SKIP, click 2 = CLOSE** (skip instant; close gated from reveal END).
+Tunables are ScreenGui attributes. The pop `UIScale` is made on runtime CLONES only — **never add
+one to `Kit_ItemIcon`, it is hashed shared canon.** First production caller = gacha (B3).
 
 ## Gacha — banner ENGINE built (B3, 2026-08-09). **Full doc: `docs/systems/gacha.md` — read it**
 
