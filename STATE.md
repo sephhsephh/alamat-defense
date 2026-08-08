@@ -51,14 +51,15 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 - **PENDING (USER):** **republish BOTH Places** — A7's `GetCollection` deletion is Lobby Studio
   canon and is not in git (ADR-0001).
 
-- **PENDING (Phase B, AD-UI) — the unit-card component.** `Kit_UnitIcon` is **PARKED** by user
-  decision (**ADR-0007**, 2026-08-06): not adopted, not deleted, no code change. Phase B's gacha
-  reveal / unit index are the first real consumers and will define what the component must do.
-  **Do NOT delete `Kit_UnitIcon`** and do NOT build a `UIKit.UnitIcon` controller speculatively —
-  the first real consumer designs it. When it is built, **the USER'S shipping Units card is lifted
-  into the kit as-is** (same move as `Kit_HotbarSlot`); missing kit fields get ADDED to their tree,
-  never used to replace it. Collection screen stays out of scope (convert-on-touch only).
-  **This no longer blocks Phase A** — §8 reads pragmatically and the Units screen PASSES.
+- **PENDING (Phase B, AD-UI, Lobby) — `ObtainRewardsGUI` + the unit-card component.** The user built
+  `StarterGui.ObtainRewardsGUI` (Lobby) and it WINS: `UIKitRewardPopup` + `Kit_RewardPopup` are to be
+  RETIRED (shared canon → AD-Integration, drift 24 → 22, and only AFTER the replacement works). Its
+  `UnitTemplate` is the unit cell, lifted into the kit as-is — this is **ADR-0007's parked question
+  reaching its first real consumer**, so `Kit_UnitIcon` stays PARKED and must NOT be deleted
+  unilaterally. Grid is MIXED units+items, 5 cols/row, rows 1–3 expand, row 4+ scrolls with Y frozen.
+  Item cell = `Kit_ItemIcon` (size the CELL to `UnitTemplate`; never resize the shared icon).
+  Click-anywhere dismiss, grants QUEUE. Spec + 1 OPEN (who calls it):
+  `docs/proposals/2026-08-08-obtain-rewards-gui.md`. **Does not block B0.**
 
 - **PENDING (AD-UI, small):** the hotbar **hover TRIGGER** is unverified in BOTH Places.
   `MouseEnter` cannot be fired from tooling and `VirtualInputManager` is blocked, so "the card

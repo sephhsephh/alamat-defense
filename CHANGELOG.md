@@ -1,5 +1,55 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-08 [game] B0 NOT STARTED — Studio MCP was down. Spec'd `ObtainRewardsGUI` to disk instead.
+
+**No code changed in any Place. No drift check was run.** The Roblox Studio MCP server disconnected
+before Place binding, so `list_roblox_studios` / `set_active_studio` / `script_read` / `multi_edit` /
+`execute_luau` / `start_stop_play` were all unavailable. CLAUDE.md requires Place binding before any
+write and a drift check at bootstrap; neither was possible, so **B0 (placement uuid-awareness) was
+not attempted** and remains the first Phase B task, untouched. Bootstrap steps 1–4 (disk reads) were
+completed: `CLAUDE.md`, `STATE.md`, `places/game/CONTEXT.md`, and the A9 entry below.
+
+Since the session could not touch Studio, it was spent capturing a user request as a proposal —
+the documented mechanism for a non-owner (`docs/OWNERSHIP.md` puts StarterGui screens under **AD-UI**,
+and this screen is **Lobby**-side, so AD-Game must not build it).
+
+- **NEW `docs/proposals/2026-08-08-obtain-rewards-gui.md`.** The user hand-built
+  `StarterGui.ObtainRewardsGUI` in the Lobby. Four decisions taken: (1) it **WINS** —
+  `UIKitRewardPopup` + `Kit_RewardPopup` are to be **RETIRED**; (2) Lobby only; (3) ONE grid with
+  **MIXED** units + items; (4) its `UnitTemplate` becomes the unit cell, replacing `Kit.UnitIcon`'s
+  role. Layout spec recorded in full (5 columns; rows 1–3 expand the frame; row 4+ freezes Y at the
+  3-row height and shows a scrollbar; padding and cell metrics read from the designed instances,
+  never hardcoded).
+- **This fulfils ADR-0007 rather than overriding it.** ADR-0007 parked `Kit_UnitIcon` and said the
+  first real Phase B consumer would define the component, and that the USER'S shipping card gets
+  lifted into the kit **as-is** with missing fields ADDED to their tree. That consumer has now
+  arrived and the user supplied the card. `Kit_UnitIcon` stays PARKED — **still not to be deleted
+  unilaterally** — until a session with Studio access can see both trees side by side.
+- **Flagged as a SHARED-CANON change, deliberately not folded into the AD-UI build.** Both retirement
+  targets are deployed byte-identically in both Places and are drift-controlled, so removing them is
+  **AD-Integration** work: re-grep both Places for callers first (as ADR-0004 did), delete in both,
+  drop both manifest entries (**24/24 → 22/22**), delete `shared/src/UIKitRewardPopup.luau`, and fix
+  the "24 entries" line in `STATE.md`, both `CONTEXT.md`s and `docs/systems/ui-kit.md`. Sequenced
+  AFTER the replacement works, so there is never a window with no reveal surface.
+- **Two of the three OPEN questions were answered the same session.** ITEM cell = the existing
+  `Kit_ItemIcon`, no new template — with a flagged risk: it was designed for the Lobby's Items
+  *screen*, so its footprint almost certainly does not match `UnitTemplate`, and a `UIGridLayout`
+  forces one `CellSize` on every child, so a mismatch shows up as stretched art rather than as an
+  error. Fix by sizing the CELL to `UnitTemplate` and fitting the icon inside it — **never by
+  resizing `Kit_ItemIcon`**, which is shared canon in use by a shipping screen. Dismissal =
+  click anywhere, and back-to-back grants **QUEUE** rather than merge, so `Show(rewards)` must be
+  safe to call while a popup is already up and needs a short input-dead period on open so a fast
+  grinder cannot stray-click past a rare pull. **Still OPEN: who calls the screen.**
+
+- **Contract impact:** NONE. No schema, no teleport payload, no shared module, no template —
+  nothing in any Place was touched. The Lobby is **NOT** stale.
+- **PENDINGs:** the existing "unit-card component" PENDING was **merged** with this one rather than
+  added alongside it (`STATE.md` was at 118/120 — the merge keeps it at 118). **B0's placement/uuid
+  PENDING is untouched and is still the first Phase B task.**
+- **Everything the USER already owed still stands:** republish BOTH Places, and one live run of the
+  teleport v2 loop. Since B0 will need its own republish afterwards, doing the live teleport check
+  on the CURRENT build first is the cheaper order.
+
 ## 2026-08-06 [integration] A9 — §8 re-check. ✅ **PHASE A IS SIGNED OFF.**
 
 Drift **24/24 GREEN in BOTH Places** at bootstrap and at landing. Integration gate: this IS the
