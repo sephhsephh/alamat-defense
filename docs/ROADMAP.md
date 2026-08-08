@@ -102,10 +102,11 @@ catalog/configs, icon kit, session plan A1–A7). Phases B–F:
   shared-hotbar work replaced it with `Kit_HotbarSlot`, so it now has **no consumer**. **PARKED by
   user decision (ADR-0007)**: not adopted, not deleted, revisited in Phase B. Do not delete it and
   do not build a controller for it speculatively.
-  🟡 **`RewardPopup`** (A6) — `Kit_RewardPopup` + `UIKitRewardPopup`, catalog-id driven, shared
-  canon in both Places, never wired. **SUPERSEDED at B1 by the Lobby's `ObtainRewardsGUI` and now
-  awaiting RETIREMENT by AD-Integration (24 → 22).** Its catalog-resolution behaviour — including
-  "an id absent from the catalog still renders" — was carried over to the replacement.
+  ❌ **`RewardPopup`** (A6) — **RETIRED at B2 (2026-08-08).** `Kit_RewardPopup` + `UIKitRewardPopup`
+  were catalog-id driven shared canon in both Places but were never wired to a caller; the Lobby's
+  `ObtainRewardsGUI` superseded them at B1. Deleted in both Places, manifest **24 → 22**,
+  `shared/src` file deleted. Its catalog-resolution behaviour — including "an id absent from the
+  catalog still renders" — was carried over to `ObtainRewardsController`. Do not re-add.
   ✅ **`CurrencyBar`** (A6) — built **Lobby-local** (`HUD.Top.CurrencyBar`), not shared: a
   single-Place widget under drift control costs a cross-Place sync forever.
   Still 🔲: UnitHoverCard, ViewportPreview, NPCPrompt; a `UIKit.UnitIcon` controller (deferred —

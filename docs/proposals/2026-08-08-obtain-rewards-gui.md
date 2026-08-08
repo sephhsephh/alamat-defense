@@ -8,7 +8,12 @@
      a Show(rewards) entry point now, each system wires itself in as it ships. The RETIREMENT half
      (UIKitRewardPopup + Kit_RewardPopup, 24 -> 22) is still OPEN and belongs to AD-Integration.
      AD-UI's sharing decision: the adopted unit card stays LOBBY-LOCAL, not shared canon -- see
-     docs/systems/ui-kit.md. Details in the B1 CHANGELOG entry. -->
+     docs/systems/ui-kit.md. Details in the B1 CHANGELOG entry.
+
+     CLOSED 2026-08-08 (B2, AD-Integration): the RETIREMENT half is DONE too. UIKitRewardPopup +
+     Kit_RewardPopup deleted in BOTH Places (zero callers, re-grepped live in each first), both
+     manifest entries dropped (24 -> 22), shared/src/UIKitRewardPopup.luau deleted, both Places
+     re-verified booting clean. THIS PROPOSAL IS FULLY RESOLVED -- nothing in it is outstanding. -->
 
 ## Why this exists and who wrote it
 

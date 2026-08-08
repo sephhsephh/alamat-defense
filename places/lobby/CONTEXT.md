@@ -129,10 +129,8 @@ paying for itself. Full evidence in the A9 changelog entry.
 
 - **AD-UI:** real per-unit models (everything uses `UnitModels.Placeholder`) and functional Units
   action buttons (animation-only today). `Kit_UnitIcon` has no consumer — user decision.
-- **AD-Integration (NEW, B1):** `Kit_ItemIcon` canon bumped `ee1ccd33` → **`c5e81264`**; the LOBBY
-  is canon and the **GAME is STALE**. Copy Lobby → Game, set `deployed.Game`. Until then the Game
-  reads 23/24 — expected, not new drift. Also still open: retire `UIKitRewardPopup` +
-  `Kit_RewardPopup` (24 → 22), now that a working replacement exists.
+- **CLEARED at B2 (2026-08-08):** `Kit_ItemIcon` is mirrored to the Game and the reward-popup pair
+  is retired. Drift is **22/22 GREEN in both Places**; current `Kit_ItemIcon` canon is `5623f4b4`.
 - **AD-UI (small):** the hotbar hover TRIGGER is unverified (tooling cannot fire `MouseEnter`);
   `Kit_ItemHoverCard`'s master/clone split means editing the master does not update the screen.
 - **USER (BLOCKING):** save + **republish BOTH Places** — A7 deleted `GetCollection` here, which

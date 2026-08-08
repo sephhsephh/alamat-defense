@@ -1,5 +1,68 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-08 [integration] B2 — kit mirrored + RewardPopup RETIRED (24 → 22). Both Places 22/22 GREEN.
+
+Cleared BOTH of B1's Integration PENDINGs in one session, as B1 recommended (they both touch the
+Game's kit). Bootstrap drift: **Lobby 24/24, Game 23/24** with `Kit_ItemIcon = ee1ccd33` — the
+expected, documented mismatch, not a surprise. At landing both Places read **22/22 GREEN,
+byte-identical, zero mismatches against the manifest.**
+
+**Half 1 — `Kit_ItemIcon` mirrored Lobby → Game.** The two Studio instances are separate processes,
+so a cross-Place `:Clone()` is impossible and Studio copy/paste is the checklist's normal route.
+Instead the 7 diverged properties were written onto the Game's tree from the Lobby's full-precision
+values **and then proved by hash**: the Game re-hashed to **`c5e81264` exactly**, which is the same
+equality test step 3 of the template-deploy checklist uses. Recorded caveat: the hash covers the
+whitelisted surface only, so a difference in an unhashed property would not be caught — acceptable
+here because both trees were byte-identical at `ee1ccd33` and only the Lobby was ever edited.
+
+**Half 2 — `UIKitRewardPopup` + `Kit_RewardPopup` RETIRED.** ADR-0004's procedure, in order:
+
+- **Re-grepped BOTH Places for callers FIRST.** Zero in each: the only hits were the module's own
+  source, doc modules, and one stale comment in `ObtainRewardsController` (corrected).
+- Controller AND template deleted in **both** Places. `RS.Shared.UIKit` 5 → 4 children,
+  `RS.UITemplates.Kit` 8 → 7, identically in each.
+- Both manifest entries dropped (**24 → 22 = 15 modules + 7 templates**), both entries removed from
+  `tools/hash_shared.luau`, and `shared/src/UIKitRewardPopup.luau` DELETED.
+- **Both Places re-verified LOADING afterwards** — a removed module fails at `require`/
+  `WaitForChild` time, not at boot, so a clean boot alone would not prove this (A7's lesson).
+  Game: full match boot, `MatchEndPresenter`/`HUD`/`MatchEndUI`/hotbar (5 units, 6 slots) all up,
+  wave 1 started, no errors, no `Infinite yield`. Lobby: all 7 screen controllers ready, same.
+- **An independent confirmation the template really went:** the Lobby's `UIKitBootstrap` tagged-
+  button count dropped **34 → 33** — that is `Kit_RewardPopup`'s `CloseButton`. Nothing else moved.
+
+**A REAL DEFECT SURFACED, and it was B1's user-confirmed change, not the retirement.** The live
+reveal showed only one quantity badge, on the WRONG card. Measured rather than eyeballed: every
+`QtyBadge` sat at offset **`(−72, −99)`** from its own 150×150 cell, `INSIDE_ITS_CELL=false` on all
+four — `x7` (TraitRerollToken) painted on the **Necromancer** card, `x500` and `x2` pushed past the
+frame edge and clipped away entirely. Cause: the `(0.8565, −150), (0.96, −210)` position B1 recorded
+as intentional. **Negative PIXEL offsets do not scale with the card** — fine at the size it was
+dragged at, broken in a 150×150 grid cell. This is exactly the risk flagged to the user before they
+confirmed it; with evidence in hand they chose to revert.
+
+- `QtyBadge.Position` reverted to `(0.96, 0), (0.96, 0)` in **BOTH** Places in this same session, so
+  no drift window ever existed. **`QtyBadge.Size` keeps the user's smaller `0.3365`** — only the
+  position was touched. The other three B1 changes (root `Size`/`Position`, `Visible`,
+  `IconImage.Image`) are untouched and remain canon.
+- `Kit_ItemIcon` canon therefore moved twice today: `ee1ccd33` → `c5e81264` (B1) → **`5623f4b4`**
+  (B2, current). Both Places re-hashed to `5623f4b4` independently and matched.
+- **Re-verified live:** all four badges now measure `(94, 111)` inside a 150×150 cell,
+  `INSIDE=true`, showing `x500 / x2 / x12 / x7` each on its own card.
+
+**Lesson worth keeping (now in `docs/systems/ui-kit.md`):** a scale-anchored element carrying large
+negative pixel offsets looks correct at the footprint it was dragged at and breaks at every other
+one. On a template reused at different sizes, prefer scale offsets.
+
+**Contract impact:** NONE. No schema bump, no teleport payload change. Two shared entries removed
+and one template hash moved — drift-procedure items, not contract items.
+
+**PENDINGs: TWO CLEARED, ZERO NEW.** Both of B1's Integration items are done and DELETED from
+`STATE.md` per ADR-0006 (this entry is their record). Untouched and still open: nothing calls
+`ObtainRewardsGUI` yet (gacha wires in first), hotbar hover trigger, `Kit_ItemHoverCard`
+master/clone, `Data.Items` writer, max-level XP loss, teleport v2 live loop + republish (USER).
+`Kit_UnitIcon` remains PARKED (ADR-0007) and untouched at `24281a2b`.
+
+**USER must republish BOTH Places** — B2's deletions are Studio canon in each, not git.
+
 ## 2026-08-08 [lobby] B1 — the reward-reveal surface is BUILT. `Kit_ItemIcon` canon bumped; Game now stale.
 
 Bootstrap drift check **23/24**, and the one mismatch was the story of the session (below). At

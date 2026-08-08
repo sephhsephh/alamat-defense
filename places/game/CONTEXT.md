@@ -44,8 +44,8 @@ confirm profile load + schema version on every boot.
   `Meta.{TierConfig, StatGradeConfig, AscensionConfig, ItemCatalog, UnitStatsCatalog}` = rarity /
   roll-grade / ascension / grantable catalog / generated resolved-stat cache — **shared canon**
   (drift-checked). `UnitStatsCatalog` is deployed in BOTH Places since A6b, 2026-08-06.)
-- **UI kit (AD-UI, shared canon since 2026-08-06)** — 6 controllers in `RS.Shared.UIKit` +
-  8 REAL instance templates in `RS.UITemplates.Kit` (hashed as instance trees per ADR-0005) +
+- **UI kit (AD-UI, shared canon since 2026-08-06)** — **5** controllers in `RS.Shared.UIKit` +
+  **7** REAL instance templates in `RS.UITemplates.Kit` (hashed as instance trees per ADR-0005) +
   `StarterPlayerScripts.UIKitBootstrap`. **The Game HOTBAR is on it**: `StarterGui.Hotbar` is the
   Lobby's own ScreenGui (user-copied), driven by the shared `UIKit.Hotbar` with `Kit.HotbarSlot`
   clones; the only Place difference is `OnActivated` → **start placement**. The old
@@ -53,6 +53,11 @@ confirm profile load + schema version on every boot.
   `"Hotbar - old"` is kept as a disabled backup. Editing any kit half in one Place only is DRIFT
   — see `docs/systems/ui-kit.md` and `tools/checklists.md`. The Game's OTHER screens are still
   Place-local and script-era (`MatchEnd.RewardRowTemplate`, `Notifications.CardTemplate`, ...).
+  **B2 (2026-08-08): drift is 22/22 GREEN here** (was 24). `UIKitRewardPopup` + `Kit_RewardPopup`
+  were RETIRED in both Places — they had zero callers here (re-grepped live first) and the Lobby's
+  `ObtainRewardsGUI` superseded them. Match-end keeps its own `RewardRowTemplate` list and is
+  UNAFFECTED. `Kit_ItemIcon` also moved to `5623f4b4` and was mirrored here from the Lobby; if you
+  ever see 21/22 with `Kit_ItemIcon` odd, copy it from the Lobby rather than editing it.
 - Remotes: `RS.Remotes.{Placement, Towers, Match, Economy, Combat, Settings}`
 - Rich legacy docs: `ServerStorage.Documentation.*` (AIState, SystemIndex, HowTo, ...) —
   still valid; migrating to repo `docs/systems/` on touch.

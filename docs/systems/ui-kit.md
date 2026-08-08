@@ -10,8 +10,8 @@ source (ADR-0001); this doc says what exists and why.
 
 ## What the kit is
 
-Two halves, both under drift control (24 manifest entries total). **23 are GREEN in both Places;
-`Kit_ItemIcon` is deliberately NOT** — see the canon bump below.
+Two halves, both under drift control — **22 manifest entries (15 modules + 7 templates), all GREEN
+in both Places.** Was 24 until B2 (2026-08-08) retired `UIKitRewardPopup` + `Kit_RewardPopup`.
 
 - **CONTROLLERS** — client ModuleScripts in `ReplicatedStorage.Shared.UIKit`, with `shared/src`
   files as disk canon. Hashed as SOURCE.
@@ -24,7 +24,7 @@ update `shared/manifest.json`. Both deploy procedures are in `tools/checklists.m
 COPIED (Studio copy/paste, prove equality by hash) or built by one identical deterministic script
 run in both Places — **never rebuilt by hand or by eye**.
 
-## Controllers (`RS.Shared.UIKit`) — 6 manifest entries
+## Controllers (`RS.Shared.UIKit`) — 5 manifest entries
 
 | Manifest key | Deploy path | What it does |
 | --- | --- | --- |
@@ -32,17 +32,29 @@ run in both Places — **never rebuilt by hand or by eye**.
 | `UIKitBootstrap` | `StarterPlayerScripts.UIKitBootstrap` | LocalScript (hashed as source). Attaches `UIKit.Button` to every instance tagged **`UIKitButton`**, including clones added later. Without it in a Place, tagged buttons are inert. |
 | `UIKitItemIcon` | `Shared.UIKit.ItemIcon` | Item card. Flat `IconImage` ImageLabel — **no ViewportFrame, items have no model** — `QtyBadge` that hides at qty 0, tier border/BG from the shared `TierConfig`. |
 | `UIKitFilterPanel` | `Shared.UIKit.FilterPanel` | Reusable filter panel. Clones `GroupTemplate`/`ToggleTemplate`; Apply commits pending→applied, Cancel reverts, Reset clears. `handle.selected(groupId)` returns nil when a group is unconstrained, so "no filters" means "show everything". |
-| `UIKitRewardPopup` | `Shared.UIKit.RewardPopup` | Reward reveal. Takes **catalog ids** and resolves name/tier/icon through `ItemCatalog` + `TierConfig`, so callers supply no art or naming. An id NOT in the catalog still renders (falls back to the id, tier Common) rather than erroring — a reward the player earned must never fail to display. **No caller yet by design**; exists for Phase B gacha. |
 | `UIKitHotbar` | `Shared.UIKit.Hotbar` | ONE hotbar for BOTH Places. See below. |
 
 Attribute vocabulary for `UIKitButton`: `HoverScale`, `HoverStrokeMult`, `HoverStrokeColor`,
 `HoverIconRotation`, `PressScale`, `TweenTime`, `GradientAnimate`, `GradientSpeed`,
 `GlowStrokeName`, `StrokeHiddenUntilHover`.
 
-## Templates (`RS.UITemplates.Kit`) — 8 manifest entries
+## Templates (`RS.UITemplates.Kit`) — 7 manifest entries
 
 `Button`, `ItemIcon`, `ItemHoverCard`, `FilterPanel`, `UnitPreviewTemplate`, `UnitIcon`,
-`RewardPopup`, `HotbarSlot`.
+`HotbarSlot`.
+
+## RETIRED (2026-08-08, B2) — `UIKitRewardPopup` + `Kit_RewardPopup`
+
+Built at A6 for Phase B gacha, smoke-tested, **never wired to a caller**. The user hand-built
+`StarterGui.ObtainRewardsGUI` in the Lobby, which shipped and was verified live at B1, so the kit
+pair was retired: controller and template deleted in **both** Places, both manifest entries dropped
+(**24 → 22**), and `shared/src/UIKitRewardPopup.luau` deleted. Both Places were re-grepped for
+callers first (zero, in both) and re-verified booting afterwards with no errors and no
+`Infinite yield`. **Do not re-add it.** Its one genuinely valuable behaviour — catalog-id
+resolution where *an id absent from the catalog still renders* rather than erroring — was carried
+over into `ObtainRewardsController`. An independent confirmation the template really went: the
+Lobby's `UIKitBootstrap` tagged-button count dropped 34 → 33, which is `Kit_RewardPopup`'s
+`CloseButton`.
 
 - **`HotbarSlot`** — the **user's own Lobby slot design**, lifted into the kit so both Places draw
   an identical slot (user rule 2026-08-06: same look, different action). Carries `BG`,
@@ -75,11 +87,21 @@ Attribute vocabulary for `UIKitButton`: `HoverScale`, `HoverStrokeMult`, `HoverS
   across 3 nodes (root `Size`/`Position`/`Visible`, `QtyBadge` `Size`/`Position` including −150/−210
   px offsets, `IconImage.Image` + `Position`). The user was shown each change with its risks and
   confirmed **all of it intentional**, so the divergence was recorded as a canon bump rather than
-  reverted. **PENDING: AD-Integration copies Lobby → Game and sets `deployed.Game = c5e81264`.**
-  Until then `hash_shared.luau` reads 23/24 in the Game and 24/24 in the Lobby — that is EXPECTED,
-  not new drift. Note the master now sits at `Visible = true`, which is unusual for a template; it
-  is harmless while the master lives in `ReplicatedStorage` (nothing renders there) and every
-  consumer clones it, but do not parent the master itself into a ScreenGui.
+  reverted. **B2 then mirrored it to the Game and bumped again: `c5e81264` → `5623f4b4`, the
+  CURRENT canon, GREEN in both Places.**
+  - **The second bump reverted `QtyBadge.Position`** from `(0.8565, −150), (0.96, −210)` back to
+    `(0.96, 0), (0.96, 0)` in BOTH Places. **Why: negative PIXEL offsets do not scale with the
+    card.** Measured live in the reward grid, every badge landed at offset `(−72, −99)` from its
+    own 150×150 cell — `INSIDE_ITS_CELL=false` on all four — so `x7` painted on the *neighbouring*
+    card and `x500`/`x2` were clipped away entirely. After the revert all badges measure
+    `(94, 111)`, `INSIDE=true`. `QtyBadge.Size` keeps the user's smaller `0.3365`; only the
+    position was reverted.
+  - **Lesson worth keeping:** a scale-anchored element carrying large negative pixel offsets looks
+    right at the size it was dragged at and breaks at every other size. On a template that gets
+    reused at different footprints, prefer scale offsets.
+  - The master sits at `Visible = true`, unusual for a template. Harmless while it lives in
+    `ReplicatedStorage` (nothing renders there) and every consumer clones it — but do not parent
+    the master itself into a ScreenGui.
 - **`ItemHoverCard`** — **no runtime lookup.** `ItemsGUI.HoverPreview` is a CLONE taken once at
   build time, so **editing this master does NOT update the deployed screen**. Re-clone or edit
   both. This master/clone split is a known sharp edge of template canon; it already caused a

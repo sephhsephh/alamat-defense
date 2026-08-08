@@ -199,9 +199,10 @@ local MODULES = {
 	UIKitItemIcon = "ReplicatedStorage.Shared.UIKit.ItemIcon",
 	UIKitFilterPanel = "ReplicatedStorage.Shared.UIKit.FilterPanel",
 	UIKitBootstrap = "StarterPlayer.StarterPlayerScripts.UIKitBootstrap",
-	-- A6 2026-08-06: reward-reveal popup. No caller yet by design -- match-end keeps its own
-	-- list; this exists for Phase B gacha and is smoke-tested rather than wired.
-	UIKitRewardPopup = "ReplicatedStorage.Shared.UIKit.RewardPopup",
+	-- RETIRED 2026-08-08 (B2): UIKitRewardPopup was built at A6 for Phase B gacha and never wired.
+	-- The user's own StarterGui.ObtainRewardsGUI (Lobby) shipped at B1 and superseded it, so the
+	-- controller AND its template were deleted in BOTH Places and dropped from the manifest
+	-- (24 -> 22). Do not re-add: the catalog-resolution behaviour lives on in ObtainRewardsController.
 	-- 2026-08-06: hotbar slot count + per-slot unlock levels. BOTH Places draw the same 6 slots
 	-- and the same locks, so this cannot be Place-local.
 	LoadoutConfig = "ReplicatedStorage.Configs.Meta.LoadoutConfig",
@@ -223,7 +224,7 @@ local TEMPLATES = {
 	-- it is the Game hotbar's slot. Built by an IDENTICAL deterministic script in both Places
 	-- and hash-matched, rather than copied.
 	Kit_UnitIcon = "ReplicatedStorage.UITemplates.Kit.UnitIcon",
-	Kit_RewardPopup = "ReplicatedStorage.UITemplates.Kit.RewardPopup",
+	-- Kit_RewardPopup RETIRED 2026-08-08 (B2) alongside its controller -- see the MODULES note above.
 	-- The USER'S OWN hotbar slot design, lifted from the Lobby (their design is the source of
 	-- truth) so BOTH Places draw the identical slot. Game deploy PENDING until it is copied.
 	Kit_HotbarSlot = "ReplicatedStorage.UITemplates.Kit.HotbarSlot",

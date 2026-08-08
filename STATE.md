@@ -18,8 +18,8 @@ instances)**, and a shared UI kit both Places draw from.
   MatchReturn banner and first-join starter picker. **`GetUnitViews` is its SINGLE profile read
   path** (`GetCollection` retired A7, ADR-0004). Screens: `docs/systems/lobby-ui.md`.
 - **Shared canon** (`shared/manifest.json`, drift-checked by `tools/hash_shared.luau`):
-  **24 entries = 16 modules + 8 templates**. **23 are GREEN in both Places; `Kit_ItemIcon` is
-  intentionally NOT** — canon bumped to `c5e81264` from the Lobby at B1, Game stale (PENDING below).
+  **22 entries = 15 modules + 7 templates**, all **GREEN 22/22 in BOTH Places** (byte-identical).
+  Was 24 until B2 (2026-08-08) retired `UIKitRewardPopup` + `Kit_RewardPopup`.
   Templates are hashed as INSTANCE trees and have no `shared/src` file (ADR-0005). Kit detail:
   `docs/systems/ui-kit.md`. `UnitStatsCatalogValidate` is Game-only canon by design — do not
   "fix" its absence in the Lobby.
@@ -38,21 +38,6 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 
 - **PENDING (USER):** **republish BOTH Places** — A7's `GetCollection` deletion is Lobby Studio
   canon and is not in git (ADR-0001).
-
-- **PENDING (AD-Integration) — `Kit_ItemIcon` canon bumped, the GAME is STALE.** B1 (2026-08-08)
-  found the Lobby's copy diverged in 7 properties across 3 nodes; the **user confirmed all of it
-  intentional** after being shown each change, so canon moved `ee1ccd33` → **`c5e81264`** with the
-  LOBBY as source. Copy Lobby → Game, then set `deployed.Game = c5e81264`. **Until that lands the
-  GAME reads 23/24 and the LOBBY reads 24/24 — that is EXPECTED, not new drift.** Do not "fix" it
-  in the Game by editing the template; copy it.
-
-- **PENDING (AD-Integration) — retire `UIKitRewardPopup` + `Kit_RewardPopup`.** Unblocked: the
-  replacement (`ObtainRewardsGUI`) is BUILT and verified live as of B1, so the "leave no reveal
-  surface" objection is gone. Re-grep BOTH Places for callers first (ADR-0004's procedure), delete
-  controller + template in both, drop both manifest entries (**24 → 22**), delete
-  `shared/src/UIKitRewardPopup.luau`, and fix the "24 entries" line in `STATE.md`, both
-  `CONTEXT.md`s and `docs/systems/ui-kit.md`. Best done in the SAME session as the `Kit_ItemIcon`
-  mirror above, since both touch the Game's kit.
 
 - **PENDING (AD-Gacha / AD-Meta, when those ship) — nothing calls `ObtainRewardsGUI` yet.** The
   screen + its `RS.ClientEvents.ShowRewards` entry point are BUILT and verified; by user decision
@@ -115,6 +100,6 @@ live in both Places. The blueprint `docs/blueprints/phase-a-foundations.md` is n
    uuid-addressed, so duplicates now work and banners are unblocked. B1 landed 2026-08-08: the
    reveal surface (`ObtainRewardsGUI`) is BUILT and verified live.** Next is the banner engine —
    and it is the first system that should call `RS.ClientEvents.ShowRewards`.
-3. **An AD-Integration session is now owed** (see the two PENDINGs above): mirror `Kit_ItemIcon`
-   into the Game, and retire `UIKitRewardPopup` + `Kit_RewardPopup` now that the replacement works.
+3. **B2 (Integration) LANDED 2026-08-08** — `Kit_ItemIcon` mirrored to the Game, the reward-popup
+   pair retired (24 → 22), drift **22/22 GREEN in both Places**. No Integration work is owed.
    Schema v2 already carries `Pity`/`Currencies`/`Items`, so gacha inherits those free.

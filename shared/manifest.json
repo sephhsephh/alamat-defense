@@ -168,14 +168,14 @@
       "kind": "template"
     },
     "Kit_ItemIcon": {
-      "hash": "c5e81264",
+      "hash": "5623f4b4",
       "owner": "ui",
       "deployPath": "ReplicatedStorage.UITemplates.Kit.ItemIcon",
       "deployed": {
-        "Game": "ee1ccd33",
-        "Lobby": "c5e81264"
+        "Game": "5623f4b4",
+        "Lobby": "5623f4b4"
       },
-      "comment": "Kit TEMPLATE (item card: Main/BG + IconImage + QtyBadge, tier stroke). No shared/src file exists -- the INSTANCE is the canon (ADR-0005); copy it between Places and verify by hash, never rebuild by hand. Promoted 2026-08-06. **CANON BUMPED ee1ccd33 -> c5e81264 on 2026-08-08 (B1, AD-UI)**: the Lobby's copy had diverged in 7 properties across 3 nodes (root Size/Position/Visible, QtyBadge Size/Position incl. -150/-210 px offsets, IconImage Image=rbxassetid://101838893546724 + Position). AD-UI found this at bootstrap drift check and the USER confirmed ALL of it intentional after being shown each change and the risks (a Visible=true master, and negative pixel offsets on a bottom-right-anchored badge). The LOBBY is therefore canon and the GAME is now STALE at ee1ccd33. PENDING: AD-Integration must copy Lobby -> Game and set deployed.Game = c5e81264.",
+      "comment": "Kit TEMPLATE (item card: Main/BG + IconImage + QtyBadge, tier stroke). No shared/src file exists -- the INSTANCE is the canon (ADR-0005); copy it between Places and verify by hash, never rebuild by hand. Promoted 2026-08-06. HISTORY: ee1ccd33 = original. c5e81264 = B1 2026-08-08, the Lobby's copy had diverged in 7 properties on 3 nodes and the USER confirmed all of it intentional, so canon moved with the Lobby as source. **5623f4b4 = B2 2026-08-08 (AD-Integration), the CURRENT canon**: mirrored to the Game, then QtyBadge.Position was REVERTED from (0.8565,-150),(0.96,-210) back to (0.96,0),(0.96,0) in BOTH Places. Reason, measured live: those negative PIXEL offsets put every quantity badge OUTSIDE its own card -- offset (-72,-99) from the cell, INSIDE_ITS_CELL=false on all four -- so in the ObtainRewardsGUI reward grid the x7 badge painted on the NEIGHBOURING card and x500/x2 were clipped away entirely. QtyBadge.Size stays at the user's 0.3365 (smaller badge kept); only the position offsets were reverted. Deployed byte-identical in BOTH Places.",
       "kind": "template"
     },
     "Kit_ItemHoverCard": {
@@ -220,29 +220,6 @@
         "Lobby": "24281a2b"
       },
       "comment": "Kit TEMPLATE (the blueprint section 5 UnitIcon: ViewportFrame + BG/tier border + TraitIcon + LevelBadge + CostLabel + NameLabel + ShinyBadge, plus KeyLabel/CountLabel that default HIDDEN for the hotbar). A6 2026-08-06: renamed from the A5 leftover 'Unit/ItemIconTemplate' (which had zero readers) and put to work as the Game hotbar slot. Built by running one IDENTICAL deterministic script in BOTH Places and hash-matching the result -- the base tree was verified identical (be620746) first. ViewportFrame 3D contents are not hashed (ADR-0005). STATUS 2026-08-06: NO CONSUMER -- PARKED BY USER DECISION (docs/decisions/ADR-0007-kit-uniticon-parked.md). The Game hotbar used it until the hotbar moved to Kit_HotbarSlot; the only remaining mention is the disabled Hotbar_RETIRED script. It is neither adopted nor deleted: the unit-card question is deferred to Phase B, whose gacha reveal / unit index are the first real consumers. DO NOT DELETE without a fresh user decision (it carries a rig). DO NOT build a UIKit.UnitIcon controller speculatively -- the first real consumer designs it; the missing controller is intentional. AND NOTE: if a shared unit card is ever built, THIS TEMPLATE IS NOT THE REFERENCE -- the Lobby's shipping Units card is lifted into the kit as-is (same move as Kit_HotbarSlot) and any fields this icon has that it lacks are ADDED to the user's tree.",
-      "kind": "template"
-    },
-    "UIKitRewardPopup": {
-      "file": "shared/src/UIKitRewardPopup.luau",
-      "hash": "82aec138",
-      "owner": "ui",
-      "deployPath": "ReplicatedStorage.Shared.UIKit.RewardPopup",
-      "deployed": {
-        "Game": "82aec138",
-        "Lobby": "82aec138"
-      },
-      "comment": "Kit CONTROLLER. Reward-reveal popup: takes CATALOG IDS and resolves name/tier/icon from the shared ItemCatalog + TierConfig, so callers need no art or naming logic. An id that is NOT in the catalog still renders (falls back to the id, tier Common) rather than erroring -- a reward the player earned must never fail to display. A6 2026-08-06. NO CALLER YET BY DESIGN: MatchEnd keeps its own working rewards list (user decision); this exists for Phase B gacha and was smoke-tested, not wired.",
-      "kind": "module"
-    },
-    "Kit_RewardPopup": {
-      "hash": "e11a5bf3",
-      "owner": "ui",
-      "deployPath": "ReplicatedStorage.UITemplates.Kit.RewardPopup",
-      "deployed": {
-        "Game": "e11a5bf3",
-        "Lobby": "e11a5bf3"
-      },
-      "comment": "Kit TEMPLATE (dark Overlay + Panel with Title/Subtitle + Grid + RewardItemTemplate + CloseButton, blueprint section 5). Built by one identical deterministic script run in BOTH Places and hash-matched. A6 2026-08-06.",
       "kind": "template"
     },
     "LoadoutConfig": {
