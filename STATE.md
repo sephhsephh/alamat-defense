@@ -53,9 +53,8 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   `GrantService`") holds in the **Lobby only** — the Game still grants via AD-Game's
   `PlayerInventoryService` / `RewardCalculator`. Converging spans both Places + AD-Game's canon.
 
-- **PENDING (AD-Traits, small):** promote the trait rarity table to shared and trait-on-summon
-  switches itself on here — the chance is tuned and `SummonEngine` already consumes the RNG draw,
-  so the stream will not shift. Until then every summoned unit gets `Trait = nil`.
+- **PENDING (AD-Traits, small):** promote the trait rarity table to shared → trait-on-summon
+  switches itself on here (chance tuned, RNG draw already consumed). Until then, `Trait = nil`.
 
 - **PENDING (AD-UI, small):** the hotbar **hover TRIGGER** is unverified in BOTH Places.
   `MouseEnter` cannot be fired from tooling and `VirtualInputManager` is blocked, so "the card
