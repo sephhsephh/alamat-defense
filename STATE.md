@@ -102,5 +102,5 @@ live in both Places. The blueprint `docs/blueprints/phase-a-foundations.md` is n
    uuid-addressed, so duplicates now work and banners are unblocked.** Next is the banner engine.
 3. Phase B inherits three things already built and waiting: schema v2 carries `Pity`/`Currencies`/
    `Items`; `UIKitRewardPopup` is shared canon with no caller yet (and is slated for RETIREMENT in
-   favour of the user's `ObtainRewardsGUI` — see the AD-UI PENDING above); and the parked
+gig   favour of the user's `ObtainRewardsGUI` — see the AD-UI PENDING above); and the parked
    `Kit_UnitIcon` question (ADR-0007) resolves when the reveal / unit index needs a card.

@@ -73,7 +73,12 @@ the specific thing you're changing, or when a doc is flagged stale.
    (c) that the commit is local — recommend `git push` (or note "push pending");
    (d) anything the user must do personally (publish a Place, set an id, buy nothing);
    (e) whether the user's NEXT session should be AD-Integration — state it explicitly
-   either way ("run Integration next" / "no Integration needed yet").
+   either way ("run Integration next" / "no Integration needed yet");
+   (f) **a ready-to-paste NEXT SESSION PROMPT** (user rule, 2026-08-08) — ALWAYS, as the last
+   thing in the reply, in ONE copy-paste block. Name the chat identity + Place, state the ONE
+   session-task, carry forward the specific facts, paths and hazards that session needs so it
+   does not re-derive them, and restate the bootstrap + landing requirements. Never end a
+   session with only prose about what comes next.
    If a cross-Place dependency is discovered MID-session, surface it immediately — do
    not wait for landing.
 
