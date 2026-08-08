@@ -1,5 +1,93 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-08 [game] B0 — PLACEMENT IS uuid-ADDRESSED. The last Phase A correctness defect is closed.
+
+Drift **24/24 GREEN** at bootstrap and at landing, byte-identical both times — including
+`UIKitHotbar=616b06bf`, which is the number that proves the shared controller was never touched.
+Integration gate: **no Integration needed**, and it held. Verified with a temporary real Script
+(`SSS.Server.B0Placement`, since DELETED) plus a client-VM invoke of the real remote — never
+`execute_luau` for service state.
+
+**The defect:** `RequestPlace` carried only a `towerId`, and `PlacementValidator` resolved it via
+`LoadoutValidator.FindEntry`, which returned the FIRST loadout entry with that TowerId. A player
+bringing TWO instances of one tower therefore had only the first ever enter the match — its
+MetaLevel/StatRolls/Ascension drove every copy placed — while `RewardCalculator` granted BOTH
+entries the same aggregate XP. Fixed before gacha because gacha makes duplicates routine.
+
+**Two findings that made this smaller and stranger than the plan assumed:**
+
+1. **Step 1 was already done at the wire level.** `ReplicationBridge` fires the whole validated
+   `LoadoutEntry`, which has carried `Uuid` (and `StatRolls`, `Ascension`) since schema v2. The
+   "`LoadoutAssigned` carries TowerId/MetaLevel/Trait only" comment in `HotbarController` — and the
+   PENDING that quoted it — had been **stale for seven sessions**. The real gap was that the
+   controller *dropped* the uuid when calling `PlacementController.Start`. Comments corrected.
+2. **`UIKit.Hotbar` needed no change, verified rather than hoped.** Line 271 passes the raw entry
+   table straight to `OnActivated`; `setData` stores it without copying or stripping; `paint()`
+   only reads `TowerId`/`Trait`/`Tier`. So the Game reads `entry.Uuid` with zero edits to shared
+   canon. **This is why B0 required no Integration session.**
+
+**The change, in the mandated order:**
+
+- `LoadoutValidator.FindEntry(loadout, towerId)` → **`FindByUuid(loadout, uuid)`**. One caller.
+- `RequestPlace` now takes `(uuid, position)`. The uuid is a REQUEST, never truth — resolved
+  against the player's OWN validated loadout, with TowerId read off the server's entry. This is
+  strictly **safer** than before: there is no longer any client-supplied field a forged request
+  could use to pick which of the player's instances to impersonate.
+- Placement limits count **per uuid** (`TowerManager.CountPlayerTowersOfUnit`). The limit VALUE
+  still comes from config + trait; only the count changed.
+- `TowerController.Uuid` + a `UnitUuid` attribute carry the instance into combat;
+  `AttackResolver.DamageDealt` and `StatusEffectManager.EffectTicked` both emit it (so a Burn's DoT
+  lands on the instance that lit it).
+- `MatchStatsTracker.Towers` is **keyed by uuid**, with TowerId kept as a display field.
+- `RewardCalculator` reads per-uuid damage/kills, and **A8's `killsCredited` first-entry rule is
+  DELETED** — it was correct only while placement was towerId-addressed.
+- Client: `HotbarController` passes `entry.Uuid` through; `PlacementController` carries and sends
+  it, and refuses to fire a request with no uuid rather than sending one that can only be rejected.
+  `PlacementCountsChanged` is keyed by uuid (a TowerId key would grey out BOTH slots when one capped).
+
+**Acceptance — two full Stage1_Act1 runs with TWO Archers in one loadout (ML100/rolls .95 vs
+ML5/rolls .05) and a Necromancer as the single-instance control. All PASS.**
+
+| Test | Verdict | Evidence (run 1) |
+| --- | --- | --- |
+| Both instances validate + place | **PASS** | server saw `Archer c1baf563 ML100` AND `Archer 57a45c23 ML5` as separate slots; both PLACED |
+| Each resolves stats from ITS OWN uuid | **PASS** | `DMG 306.45 / RNG 34.48 / SPA 4.478` vs `DMG 14.27 / RNG 19.18 / SPA 6.403` — a 21× damage gap. Pre-B0 both would have read 306.45 |
+| Limits count per uuid | **PASS** | STRONG (Godly) `1/1 canPlaceMore=false` while WEAK `1/4 canPlaceMore=true` — capping one did NOT cap the other, and the two even carry *different limits* because they carry different traits |
+| Each uuid earns from its own work | **PASS** | kills **215 / 6 / 60**, every one matching `MatchStatsTracker`; XP `0 / +84 / +615`; worthiness `4.30 / 0.12 / 1.20` = kills × 0.02 exactly. **No double-grant** |
+| A8's invariant survives | **PASS** | `sum(PerUnit kills) = 281` vs tracker total `283`; the gap of 2 is `estimateTowerKills`' pre-existing `math.floor` truncation, same as A8 recorded |
+| Single-instance unchanged (regression) | **PASS** | Necromancer behaved exactly as at A8/A9 — 60 kills, 1.20 worthiness, +615 XP |
+
+Run 2 independently reproduced all six with different rolls and a shorter match (58 / 1 / 14 kills).
+
+**The remote BINDING was tested separately, because the server function passing is not the same
+thing as a player being able to place.** Tests 1–3 call `PlacementValidator.Validate` directly,
+which skips the bound remote — and the remote's parameter signature is exactly what B0 changed. So
+a third run invoked the real `RequestPlace` from the CLIENT datamodel (invoking a RemoteFunction is
+an instance operation, not a module read, so the separate-VM hazard does not apply):
+
+- real WEAK uuid → **`Success=true, TowerId=Archer, Uuid=ad3d4491`** — the instance that was
+  unplaceable before B0, placed through the real client path
+- bare `"Archer"` (the pre-B0 wire format) → **`NotOwned`** — no silent fallback
+- forged uuid → **`NotOwned`** · numeric arg → **blocked by the remote's Validate predicate**
+
+**Notes for whoever is next:**
+
+- `DevSetOwnedTowers` takes a `{ [towerId] = ... }` MAP, so it can only ever seed ONE instance per
+  tower. **A duplicate-tower test built on it passes while the bug is fully present** — that is how
+  this survived A1–A8. Grant the second instance explicitly with `GrantUnit`.
+- `MatchLifecycleSmokeTest` was `Disabled = true` for these runs (same reason) and is **RESTORED to
+  false**. All `Dev*` attributes OFF, harness deleted, its `B0_*` scratch attributes cleared.
+- Archer STRONG showed `XP 0 → 0` at ML100. That is the **known max-level PENDING** (`ApplyXP`
+  discards overflow at `MAX_META_LEVEL`), untouched and not a B0 regression.
+
+- **Contract impact:** NONE. No schema bump, no teleport-payload change, no shared module, no
+  template. `Data.Loadout` is still a dense `{ string }` of uuids. **The Lobby is NOT stale** and
+  needs no change — nothing it reads or sends moved.
+- **PENDINGs:** **CLEARED — placement is not uuid-aware** (deleted from `STATE.md` per ADR-0006;
+  this entry is its record). None new. Untouched: max-level XP loss, `Data.Items` writer,
+  `ObtainRewardsGUI`/`Kit_UnitIcon` (AD-UI), teleport v2 live loop + republish (USER).
+- **USER must republish the GAME place** — all of B0 is Studio canon, not git.
+
 ## 2026-08-08 [game] B0 NOT STARTED — Studio MCP was down. Spec'd `ObtainRewardsGUI` to disk instead.
 
 **No code changed in any Place. No drift check was run.** The Roblox Studio MCP server disconnected

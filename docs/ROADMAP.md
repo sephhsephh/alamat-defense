@@ -160,11 +160,19 @@ Places — counters/worthiness re-observed from scratch rather than taken from A
 run's totals read back at the next boot through a real ProfileStore round trip. Full table in
 `docs/blueprints/phase-a-foundations.md`. **PHASE A IS COMPLETE (A1–A9).**
 
-**Carried out of Phase A deliberately:** placement is not uuid-aware, so a duplicate tower never
-fights and is granted XP twice. Out of §8 scope, but **fix it first in Phase B** — gacha makes
-duplicates routine.
+**Carried out of Phase A deliberately, then FIXED as the first Phase B task:** placement was not
+uuid-aware, so a duplicate tower never fought and was granted XP twice.
 
 ### Phase B — Gacha
+
+- ✅ **B0 — placement is uuid-addressed (AD-Game, 2026-08-08). Duplicates work; banners unblocked.**
+  `RequestPlace` carries a unit uuid; `LoadoutValidator.FindByUuid` resolves it against the server's
+  own validated loadout; placement limits count per uuid; `MatchStatsTracker` keys by uuid; each
+  uuid earns XP + counters from its own damage/kills, and A8's first-entry rule is gone. Verified
+  live with TWO Archers in one loadout at deliberately different levels/rolls: resolved DMG
+  **306.45 vs 14.27**, limits **1/1 (Godly) vs 1/4**, kills **215 vs 6** each matching the tracker,
+  and the real `RequestPlace` remote accepted the uuid while rejecting a bare TowerId, a forged
+  uuid and a non-string. No shared module touched — drift stayed 24/24 and the Lobby needed nothing.
 - 🔲 Banner engine: one config file per banner (auto-scanned); Standard (3 mythics/hour,
   deterministic rotation), Selection (player-chosen featured, 24h lock, +2 daily
   randoms), Event (EventTokens, start/end, drop-in file per update)

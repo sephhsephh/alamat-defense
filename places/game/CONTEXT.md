@@ -96,14 +96,23 @@ confirm profile load + schema version on every boot.
   **on Victory only** ("a defeat is not a clear") and `Waves` on any outcome.
   `Counters.Global.Summons` is the one LIVE increment, in `SummonManager.SpawnForTower` — a spawn
   has no match-end aggregate to recover it from. **No schema bump**: v2 already declared all of it.
-- **Kill credit goes to the FIRST loadout entry per TowerId — deliberate, not a shortcut.**
-  `MatchStatsTracker` keys towers by TowerId, but so does PLACEMENT: `RequestPlace` carries no
-  uuid, and `PlacementValidator` resolves it through `LoadoutValidator.FindEntry`, which returns
-  the FIRST entry matching the TowerId. So with two instances of one tower, the first is the only
-  one that ever fights — crediting both would invent kills and push the PerUnit total above the
-  match's real count. Making this truly per-instance means teaching PLACEMENT about uuids first
-  (see the PENDING). **The XP path does NOT yet do this** and still credits every same-TowerId
-  entry the same aggregate; pre-existing, correct for the single-instance case, PENDING.
+- **PLACEMENT IS uuid-ADDRESSED END TO END (B0, 2026-08-08).** `RequestPlace` carries a unit
+  **uuid**, not a towerId; `PlacementValidator` resolves it with `LoadoutValidator.FindByUuid`
+  against the player's own validated loadout and reads TowerId/MetaLevel/Trait/StatRolls/Ascension
+  off the SERVER's entry. The uuid is a request, never truth — one the player does not own, or owns
+  but did not bring, resolves to nil and is rejected. `TowerController.Uuid` (+ the `UnitUuid`
+  attribute) carries the instance into combat; `AttackResolver.DamageDealt` and
+  `StatusEffectManager.EffectTicked` both emit it; `MatchStatsTracker` KEYS `Towers` by uuid;
+  `TowerManager.CountPlayerTowersOfUnit` counts limits per uuid; `RewardCalculator` gives each uuid
+  XP + counters from its OWN damage/kills. **A8's first-entry rule is GONE** — it was correct only
+  while placement was towerId-addressed. Do not reintroduce a TowerId lookup in `FindByUuid`, and
+  do not re-key the tracker by type: both make duplicates silently wrong again.
+  Uuid-less towers (the Studio harnesses call `PlaceTower` directly) fall back to TowerId keying,
+  so those runs still produce a scoreboard.
+- **`LoadoutAssigned` already carried `Uuid`** — the old "TowerId/MetaLevel/Trait only" comments
+  were stale since schema v2. `ReplicationBridge` fires the whole validated `LoadoutEntry`. The
+  actual gap was `HotbarController` dropping the uuid on the way into `PlacementController.Start`.
+  `PlacementCountsChanged` is now keyed by uuid too (`{ Current, Limit, TowerId }` per uuid).
   **A9 judged this OUT of Phase A scope but flagged it as the FIRST thing to fix in Phase B** —
   gacha makes duplicates routine rather than rare.
 - **A9 (2026-08-06) re-verified the whole counters path independently** across three 15-wave
