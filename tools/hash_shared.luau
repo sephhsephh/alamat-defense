@@ -187,6 +187,10 @@ local MODULES = {
 	PlayerDataService = "ServerScriptService.Server.Data.PlayerDataService",
 	ProfileStore = "ServerScriptService.Server.Data.ProfileStore",
 	Signal = "ReplicatedStorage.Shared.Signal",
+	-- Added B3 2026-08-09 (owner AD-Gacha): the meta-system shared algorithms (deterministic
+	-- Slot + weighted Pick). LOBBY-ONLY SO FAR -- the Game place reports MISSING until Phase D's
+	-- challenges need it, which is the expected state, not drift. See manifest deployed.Game.
+	MetaMath = "ReplicatedStorage.Shared.MetaMath",
 	-- Promoted to shared canon 2026-08-01 (A-phase Integration promotion):
 	TierConfig = "ReplicatedStorage.Configs.Meta.TierConfig",
 	StatGradeConfig = "ReplicatedStorage.Configs.Meta.StatGradeConfig",

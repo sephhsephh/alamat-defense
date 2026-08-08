@@ -48,6 +48,18 @@
       "comment": "Lua-side pub/sub used by PlayerDataService. Promoted into shared canon 2026-07-17 (AD-Lobby session) from the verified live Game source; covered by the shared/src deploys row in OWNERSHIP.md (owner AD-Game).",
       "kind": "module"
     },
+    "MetaMath": {
+      "file": "shared/src/MetaMath.luau",
+      "hash": "6badac1d",
+      "owner": "gacha",
+      "deployPath": "ReplicatedStorage.Shared.MetaMath",
+      "deployed": {
+        "Game": null,
+        "Lobby": "6badac1d"
+      },
+      "comment": "Added B3 2026-08-09 (AD-Gacha, Lobby). The algorithms the blueprint says to implement ONCE for every meta system: Slot(period, offsetSec) deterministic time buckets (rotations/resets agree across servers with no MessagingService and no stored state), RngForSlot(slot, salt), Pick(rng, {{v,w}}) weighted choice, PickDistinct. Cross-phase invariant 3 routes every reset/rotation through Slot(). PURE -- no services, no state, no config reads; the reset-hour knob is MetaConfig.ResetOffsetSec and is passed IN, which is what keeps this Place-neutral. NOTE the `salt` argument on RngForSlot: without it two banners sharing a RotationPeriod would draw the identical featured set forever. GAME DEPLOY PENDING -- deliberately NOT deployed there yet: nothing in the Game reads it until Phase D challenges need Slot(), so the Game reporting MISSING is the EXPECTED state, not drift. Deploy it (and flip deployed.Game) in the session that first needs it.",
+      "kind": "module"
+    },
     "TierConfig": {
       "file": "shared/src/TierConfig.luau",
       "hash": "a0d6e3a3",

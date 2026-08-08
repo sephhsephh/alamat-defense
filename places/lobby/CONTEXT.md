@@ -1,23 +1,20 @@
 # CONTEXT — Lobby place (LIVE, booted 2026-07-17)
-<!-- owner: lobby | scope: lobby | last-verified: 2026-08-06 -->
+<!-- owner: lobby | scope: lobby | last-verified: 2026-08-09 (B3) -->
 
 The social/meta Place: players land here, view their collection, roll banners, pick a
 stage + difficulty, form parties, and teleport into the Game place.
 
 ## Current live state
 
-- **Data layer deployed & drift-free.** `ReplicatedStorage.Shared.{Signal, ProfileTemplate}`,
-  `ServerScriptService.Server.Data.{ProfileStore, PlayerDataService}` — all four hashes match
-  `shared/manifest.json` (Signal 91becf7a, **ProfileTemplate 63a0c98a**, PlayerDataService
-  613f0d39, ProfileStore 1e3a6f3f). `Signal` was promoted into `shared/src` 2026-07-17.
-- **All 9 shared modules deployed — drift GREEN 9/9 (A6b, 2026-08-06).** The five Meta configs
-  live in `RS.Configs.Meta`: TierConfig a0d6e3a3, StatGradeConfig 49a6edfd, AscensionConfig
-  59aa8e15, ItemCatalog 789dca4b, and **`UnitStatsCatalog` 3bb9b140** (deployed A6b). The latter
-  is a GENERATED read-only cache of each tower's resolved base DMG/RNG/SPA at tier 1 / ML 1 /
-  no trait / mid-roll / asc 0 — **SPA is already inverted, these are not raw BaseStats**. Owner
-  is AD-Game; the Lobby only consumes it. `Get(towerId)` returns nil for unknown ids and **Farm
-  has no DMG/SPA keys** (support tower). Its validator is Game-only canon by design — the Lobby
-  has no tower configs to validate against, so do NOT port it here. See ADR-0003.
+- **Shared canon deployed & drift-free — 23/23 GREEN at B3 (2026-08-09).** Exact hashes live in
+  `shared/manifest.json`; do not duplicate them here. 16 modules + 7 templates, all byte-identical
+  to the manifest. **`MetaMath` (B3) is Lobby-only so far** — the Game reports MISSING for it and
+  that is EXPECTED, not drift; every OTHER entry must match in both Places.
+- **`UnitStatsCatalog`** is a GENERATED read-only cache of each tower's resolved base DMG/RNG/SPA
+  at tier 1 / ML 1 / no trait / mid-roll / asc 0 — **SPA is already inverted, these are not raw
+  BaseStats**. Owner is AD-Game; the Lobby only consumes it. `Get(towerId)` returns nil for unknown
+  ids and **Farm has no DMG/SPA keys** (support tower). Its validator is Game-only canon by design
+  — the Lobby has no tower configs to validate against, so do NOT port it here. See ADR-0003.
 - **Boot:** `Server.Bootstrap` asserts the save contract and runs `PlayerDataService.Init()`.
   **Schema v2** profile loads from **Beta1_PlayerDataDev1** (prod store **Beta1_PlayerData**;
   intentional beta reset 2026-07-31; DataStoreState=Access) — the Lobby shares the Game
@@ -38,12 +35,8 @@ stage + difficulty, form parties, and teleport into the Game place.
     it at A6b and KEPT IT AS-IS** — the shape is right, so `ItemsController` needs no change.
     `GetUnitViews` is now the Lobby's SINGLE profile read path and load-bearing for every
     screen: additive changes are free, but a breaking one needs contract treatment (ADR-0004).
-  - **`GetCollection` — RETIRED A7 (2026-08-06, ADR-0004).** The handler in `LobbyServices` and
-    the `RS.Remotes.GetCollection` RemoteFunction are both **GONE**; `RS.Remotes` holds 12 entries.
-    Both Places were re-grepped first (zero callers, zero field readers) and all 7 screens were
-    re-verified loading afterwards with no errors and no infinite-yield warning. **`GetUnitViews`
-    is now the SINGLE profile read path** and is load-bearing for every screen: additive changes
-    are free, a breaking one needs contract treatment. **Do not add a second read path.**
+  - **`GetCollection` — RETIRED A7 (2026-08-06, ADR-0004)**, handler + RemoteFunction both GONE.
+    **Do not add a second profile read path.** `RS.Remotes` holds **13** entries (+RequestSummon, B3).
   - Stage select + difficulty (`RS.Configs.StageRegistry` mirror, `GetStages`,
     `StarterGui.StageSelectScreen`) — captures (StageId, DifficultyPercent).
   - Parties + reserved-server launch (`Server.Lobby.PartyService`, `RS.Configs.LobbyConfig`,
@@ -72,19 +65,18 @@ stage + difficulty, form parties, and teleport into the Game place.
     prints rolls + grades) and returns its `Uuid`; never clobbers an existing instance;
     Studio harness = `DevSimulateFirstJoin` attribute (sim-only grant-path card,
     self-cleaning by TowerId).
-  - **Loadout at launch (v2 since A2):** `PartyService.buildLoadout` sends unit **uuids** —
-    the saved profile `Loadout` (filtered to still-owned uuids, deduped) if any, else
-    auto-loadout by MetaLevel desc, capped at `LobbyConfig.MaxLoadoutSize=6`. Auto is interim
-    until a loadout-picker UI writes `Data.Loadout`; `[DIAG]` logs the sent loadout.
+    The auto path is interim until a loadout-picker UI writes `Data.Loadout`; `[DIAG]` logs
+    the loadout actually sent. `MaxLoadoutSize = 6`.
 
 Run the constitution's bootstrap ritual + `tools/hash_shared.luau` at the start of every
 session; reconcile before any work if a shared hash drifts.
 
 ## UI kit + screens (AD-UI)
 
-Two docs since A7 (2026-08-06): **`docs/systems/ui-kit.md`** is the Place-neutral kit (6 shared
-controllers in `RS.Shared.UIKit` + 8 real instance templates in `RS.UITemplates.Kit`, all under
-drift control); **`docs/systems/lobby-ui.md`** is this Place's SCREENS — **Units** (uuid cards +
+Two docs since A7 (2026-08-06): **`docs/systems/ui-kit.md`** is the Place-neutral kit (5 shared
+controllers in `RS.Shared.UIKit` + 7 real instance templates in `RS.UITemplates.Kit`, all under
+drift control — was 6+8 until B2 retired the RewardPopup pair);
+**`docs/systems/lobby-ui.md`** is this Place's SCREENS — **Units** (uuid cards +
 grades + numbers + filters), **Items** (catalog + counts + filters), **Collection**, **Hotbar**
 (the shared component), **CurrencyBar** (Lobby-local by design), plus the legacy script-built
 StageSelect / Party / Return / StarterChoice. `StarterGui.UITemplates` was emptied into the Kit
@@ -106,12 +98,29 @@ from the instances** (`UIGridLayout.CellSize`/`CellPadding`/`FillDirectionMaxCel
 — retune spacing in Studio, no code change. Dismiss = click ANYWHERE (`Main` is the full-screen
 catcher, `Active = true`) after a 0.35s input-dead period; back-to-back grants QUEUE, never merge.
 Studio harness: flip the `DevDismiss` attribute (same `dismiss()` path a click takes). Left OFF.
-**No production caller yet** — each system wires itself in as it ships (user decision).
+**FIRST PRODUCTION CALLER = gacha (B3, 2026-08-09)**, as planned. It fires `ShowRewards` with the
+views `RequestSummon` returns, and modifies nothing here. Later systems still wire themselves in.
+
+## Gacha — banner ENGINE built (B3, 2026-08-09). **Full doc: `docs/systems/gacha.md` — read it**
+
+Server-complete, **no UI at all yet**. `SSS.Server.Meta.{GrantService, SummonEngine, SummonService}`
++ `RS.Configs.{Gacha.*, Banners.*, Meta.MetaConfig}`, driven by `RS.Remotes.RequestSummon`
+(Remotes 12 → 13). The five things a Lobby session must not get wrong:
+
+- **`GrantService` is THE one grant path** (invariant 1) — never grant or write `Currencies`
+  inline. Its unit record stays byte-compatible with `StarterChoiceService` + the Game's `GrantUnit`.
+- **`RS.Shared.MetaMath` is new SHARED canon** (`6badac1d`). **Not deployed to the Game** — it
+  reports MISSING there and that is EXPECTED, not drift.
+- **Reveal = the remote's RETURN VALUE** (client fires the existing `ShowRewards` with
+  `result.Rewards`). No push remote exists; `ObtainRewardsGUI` was consumed, never modified.
+- Pity uses the schema-v2 `Data.Pity[ref]` field — **no schema bump**. Pulls count on
+  `Counters.Global.GachaPulls`, NOT `Summons` (ADR-0008 — A8 already owns that key).
+- Trait-on-summon is **inert here** (no trait table in this Place); Selection/Event refused till B4.
 
 ## v2 candidates (not built)
 
-- Gacha/banners (uses `GrantUnit` semantics + Items tickets) — schema v2 has landed, so this
-  is now gated only on A3's catalog/tier configs.
+- Gacha UI: summon NPC + banner carousel + x1/x10 buttons (blueprint B3), Selection/Event
+  flows (B4), Index/Codex (B5). The engine underneath them is done.
 - Party polish: cross-server invites / persisted parties (currently single-lobby-server, in-memory).
 - Currency shop, player-level display, trading hub, loadout picker UI (replaces the
   interim auto-loadout).
@@ -120,29 +129,31 @@ Studio harness: flip the `DevDismiss` attribute (same `dismiss()` path a click t
 
 ## Phase A: SIGNED OFF (A9, 2026-08-06)
 
-Every §8 item passes; nothing here is outstanding for Phase A. Two A9 results worth keeping: all
-**7 screens** still load after A7 removed `GetCollection`, and **`Worthiness` shows REAL values
-here with zero Lobby changes** because `GetUnitViews` already carried the field — the contract
-paying for itself. Full evidence in the A9 changelog entry.
+Nothing outstanding. Evidence in the A9 changelog entry + `docs/ROADMAP.md`.
 
 ## Open PENDINGs (see STATE.md — this is the Lobby-relevant subset)
 
 - **AD-UI:** real per-unit models (everything uses `UnitModels.Placeholder`) and functional Units
   action buttons (animation-only today). `Kit_UnitIcon` has no consumer — user decision.
-- **CLEARED at B2 (2026-08-08):** `Kit_ItemIcon` is mirrored to the Game and the reward-popup pair
-  is retired. Drift is **22/22 GREEN in both Places**; current `Kit_ItemIcon` canon is `5623f4b4`.
 - **AD-UI (small):** the hotbar hover TRIGGER is unverified (tooling cannot fire `MouseEnter`);
   `Kit_ItemHoverCard`'s master/clone split means editing the master does not update the screen.
 - **USER (BLOCKING):** save + **republish BOTH Places** — A7 deleted `GetCollection` here, which
   is Studio canon and not in git. Schema v2 + teleport v2 also do not interoperate with v1, so a
   partial publish breaks live launches with `[CONTRACT] PayloadVersion mismatch`.
 - **USER:** run the teleport v2 loop LIVE once (only v1 was ever live-verified, 2026-07-18).
-- **Unscheduled:** no writer for `Data.Items` in normal play, so the Items screen shows all zeroes.
+- **Unscheduled:** still no writer for `Data.Items` in NORMAL PLAY, so the Items screen shows all
+  zeroes. `GrantService` (B3) is the first code that CAN write it and is verified doing so, but no
+  shipping flow grants an item yet — a banner paying tickets would be the first.
   (`Data.Loadout` now HAS a writer — `LoadoutService`, 2026-08-06 — so `Equipped` is real.)
+- **AD-Integration:** the Game place still grants through its own `PlayerInventoryService` /
+  `RewardCalculator`, so cross-phase invariant 1 ("every grant flows through GrantService") holds
+  in the Lobby only. Converging them is a real cross-Place task, not a Lobby one.
+- **AD-Traits:** promoting the trait rarity table to shared would switch on trait-on-summon here.
 
 ## Ownership notes
 
-- Lobby owns: teleport contract, shop/banner catalog (when built), lobby UI/scene.
-- Lobby consumes (never edits): save schema, tower configs, progression config.
-- Currency/XP/tower grants in the Lobby MUST go through the same profile — never a
-  second store.
+- Lobby owns: teleport contract, lobby UI/scene. **AD-Gacha owns the banner catalog + grant
+  pipeline** (`docs/systems/gacha.md`), home Place Lobby, built B3.
+- Lobby consumes (never edits): save schema, tower configs, progression config, trait configs.
+- Currency/XP/tower grants in the Lobby MUST go through the same profile — never a second store —
+  and since B3, through **`GrantService`**, never inline.

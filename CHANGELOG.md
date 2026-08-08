@@ -1,5 +1,118 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-09 [lobby] B3 — the BANNER ENGINE. `MetaMath` promoted to shared; Lobby drift 23/23 GREEN.
+
+Bootstrap drift **22/22 GREEN**, exactly as expected (15 modules + 7 templates, `Kit_ItemIcon` at
+`5623f4b4`). Integration gate: **"No Integration needed — proceeding."** At landing the Lobby reads
+**23/23 GREEN** — one entry ADDED, nothing drifted.
+
+**THE SESSION OPENED BY STOPPING.** The prompt asked for "the banner engine". The blueprint's Phase
+B session list is `B1 MetaMath+GrantService+PityConfig · B2 banner registry+summon service+odds
+harness · B3 summon UI · B4 Selection/Event · B5 Index`. **None of B1 existed** — grep found no
+`MetaMath`, no `GrantService`, no `PityConfig`, no `RS.Configs.Banners`. And B2's algorithm calls
+into B1 at nearly every step: `Pick` and the deterministic featured rotation are specified as living
+in `MetaMath`, the pity override reads `PityConfig`, banners carry `PityRef`, and the grant step is
+`GrantService`, which cross-phase invariant 1 makes mandatory. Building B2 first meant either
+improvising those inline (breaking invariant 1 and "never improvise a module name or data shape") or
+doing two session-tasks at once. **The user was asked and chose both in one session.**
+
+Worth recording because it will confuse the next reader: **the changelog's `B0/B1/B2/B3` are Phase-B
+SESSION COUNTERS; the blueprint's `B1–B5` are SESSION-TASK names.** Two different sequences reusing
+the same letters. In blueprint terms this session did B1 + B2, and the next task is the summon UI.
+
+**What was built** — `RS.Shared.MetaMath` (SHARED) + `RS.Configs.{Meta.MetaConfig,
+Gacha.{PityConfig,GachaConfig}, Banners.{BannerRegistry,Standard}}` + `SSS.Server.Meta.{GrantService,
+SummonEngine, SummonService}` + `RS.Remotes.RequestSummon` (Remotes 12 → 13). Full doc:
+**`docs/systems/gacha.md`**.
+
+- **`MetaMath` is the one shared-canon addition**, `6badac1d`, disk and Studio byte-identical at
+  4705 bytes. Deterministic `Slot` + weighted `Pick`, pure (no services, no state, no config reads —
+  the reset-hour knob is passed IN, which is what keeps it Place-neutral). **Deployed to the LOBBY
+  ONLY, deliberately**: nothing in the Game reads it until Phase D challenges, so `deployed.Game` is
+  `null` and the Game's drift check now reads **22/23 with `MetaMath=MISSING`, which is the EXPECTED
+  state, not drift.** A PENDING says so in as many words, because a future session WILL see that
+  number and reach for the reconcile procedure.
+- **One non-blueprint addition to `MetaMath`, and it is load-bearing:** `RngForSlot` takes a `salt`.
+  The blueprint says "seeded picks: `Random.new(slot)`" — with one banner that is fine, but two
+  banners sharing a `RotationPeriod` would then draw the *identical* featured set every rotation
+  forever. Salted with the banner id. Verified: same salt stable, different salts differ.
+- **`GrantService` is THE one grant path** and `Spend()` lives there too — invariant 1 greps for
+  direct `Currencies.` writes, so putting the debit anywhere else breaks it on day one. Validation
+  is **all-or-nothing**: every entry is checked before anything is written, verified by a
+  `(good, bad)` pair leaving a gold delta of exactly 0. An uncatalogued id is REFUSED rather than
+  silently creating a profile field (invariant 4, enforced rather than merely stated).
+- **`SummonEngine` was split out of `SummonService`** so the blueprint's mandatory 10k odds harness
+  can assert the REAL algorithm — a Script is not requireable, and the alternative is a harness that
+  is a second copy of the logic and drifts from it.
+
+**Three real conflicts surfaced. None were papered over.**
+
+1. **A counter-key collision, and the blueprint lost.** The blueprint says gacha increments
+   `Counters.Global.Summons`. **A8 already owns that key** for in-match minion summons — it read
+   `1152` on the live dev profile. Writing pulls there would have made A8's verified totals stop
+   meaning what they were verified to mean and would have let a banner pull complete a "summon 100
+   minions" quest. User chose a new key: **`Counters.Global.GachaPulls`**, recorded as **ADR-0008**.
+   No schema bump — `Counters.Global` is an open map. Verified: 11 pulls moved `GachaPulls` absent
+   → 11 while `Summons` held at 1152.
+2. **Trait-on-summon cannot work in this Place and was NOT faked.** The trait rarity table is
+   AD-Traits canon in the GAME place; the Lobby has none. The step is a lazy+optional lookup that
+   finds nothing and grants `Trait = nil` — exactly what `StarterChoiceService` has always done, so
+   summoned units are not a special case. **The RNG draw is still consumed** so the stream will not
+   shift the day the table lands. A local trait table would have been the easy wrong answer.
+3. **There is no Secret-tier tower**, so a Secret roll has nowhere to land. It falls to the nearest
+   **lower** stocked tier; `Validate()` reports it as a content-gap NOTE, not an error. The subtle
+   part: **the pity ledger records the AWARDED tier, pre-fallback** — otherwise the Secret counter
+   could never reset and every subsequent pull would re-trigger it forever.
+
+**`LuckMult` is an interpretation, flagged as one.** The blueprint declares the key without
+semantics. Multiplying every weight is a no-op (`Pick` normalises), so it multiplies the PITY tiers
+only. Shipped at `1` = inert, so nothing observable depends on it — but confirm before shipping a
+banner with `LuckMult ~= 1`.
+
+**Reveal transport — a decision, not an invention.** Gacha resolves server-side; `ShowRewards` is a
+client-side Bindable and B1 chose client-side-only. Rather than quietly adding a push remote, the
+user was asked and chose: **`RequestSummon` is a RemoteFunction that RETURNS the views**, and the
+client fires the existing `ShowRewards` with `result.Rewards` unchanged. No new remote surface,
+`ObtainRewardsGUI`/`ObtainRewardsController` consumed and never modified. **This does not solve
+unsolicited grants** (quests, daily login, codes) — they have no requester to return to, and that is
+now a named PENDING rather than a trap.
+
+**Acceptance — verified LIVE in Play from temporary harnesses, deleted at landing.**
+
+- **10k dry rolls, `0` distribution failures**, every tier inside 4σ: Common 5967/6000, Rare
+  2557/2500, Epic 992/1000, Legendary 404/400, Mythic 80/99.5, Secret 0/0.5 (tolerance floored at 5
+  so an ultra-rare tier is not asserted into noise). Shiny 0.870% vs 1.000% configured.
+- GrantService: currency; item; **`MaxOwned` cap** (99999 tickets → granted 9996, total 9999,
+  `Capped=true`); tower with opts (L40 shiny Necromancer); **duplicates in one call** (Archer ×2,
+  distinct uuids — B0's uuid work paying off); uncatalogued id, negative qty and non-atomic batch
+  all refused; spend + `insufficient_funds`.
+- Pity: forced 49/50 upgraded a **Rare** roll to **Legendary**; all-three-due awarded **Secret** and
+  fell back to the Mythic pool; `ApplyPity` 10/20/30 → 11/0/31 → 12/1/32 (blueprint's "reset the hit
+  tier, increment the others", taken literally — a Mythic does NOT reset Legendary).
+- End-to-end through the REAL remote: x1 and x10 → real reveal.
+  `ObtainRewards SHOW n=10 cols=5 rows=2 scrollbar=false` — one popup, 10 entries, 2 rows, no
+  scroll, matching B1's measured behaviour. Client-derived featured matched the server's exactly
+  (`Babaylan/Archer/Meteor`). Refusals: unknown banner, count 7, count 999999.
+- Persisted: units 8 → 22, Gold 50000 → 48800, `GachaPulls` 11, `Pity.Default` L11/M11/S11.
+
+**A tuning observation the user should see:** `Featured.Boost = 5` is aggressive. With 2 Commons and
+Archer featured, Archer takes ~83% of its tier — **49.6% of ALL pulls** over 10k. It is one number
+in the banner file.
+
+**Contract impact: NONE.** No schema bump — `Pity`, `Currencies`, `Items` and the open
+`Counters.Global` map were all already in schema v2, which is the A1 investment paying out. No
+teleport payload change. One shared module ADDED (a drift-procedure item, not a contract item).
+
+**PENDINGs: 4 NEW, 1 revised, 0 cleared.** New: deploy `MetaMath` to the Game when something needs
+it; AD-Integration to converge the Game's grant paths (invariant 1 is Lobby-only today); AD-Traits
+to promote the trait table; a reveal answer for unsolicited grants. Revised: `Data.Items` now HAS
+code that can write it, verified — but **no shipping flow grants an item, so that note is NOT
+closed.** Also trimmed `STATE.md` and `places/lobby/CONTEXT.md` back under their caps (both had
+drifted over): removed a resolved B2 PENDING, collapsed the retired-`GetCollection` block, and
+corrected two stale counts (kit "6+8" → 5+7, Remotes 12 → 13).
+
+**USER must republish BOTH Places** — B3's work, like A7/A8/B0/B1/B2's, is Studio canon, not git.
+
 ## 2026-08-08 [integration] B2 — kit mirrored + RewardPopup RETIRED (24 → 22). Both Places 22/22 GREEN.
 
 Cleared BOTH of B1's Integration PENDINGs in one session, as B1 recommended (they both touch the

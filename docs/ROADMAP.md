@@ -184,14 +184,31 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
   frame, row 4+ freezes Y and scrolls with `CanvasSize` still covering every row. Click-anywhere
   dismiss after a 0.35s dead period; back-to-back grants QUEUE. Verified live at n = 1/3/5/6/11/15/
   20 plus queue, dead-period and unknown-id cases. **No caller yet — gacha is the intended first.**
-- 🔲 Banner engine: one config file per banner (auto-scanned); Standard (3 mythics/hour,
-  deterministic rotation), Selection (player-chosen featured, 24h lock, +2 daily
-  randoms), Event (EventTokens, start/end, drop-in file per update)
-- 🔲 Rates + pity (config: 0/50 leg, 0/400 mythic, 0/15000 secret ~0.005%; per-banner-type
-  counters in profile; carry across rotations; luck-multiplier hook)
-- 🔲 Shiny on summon + trait-on-summon (trait rarity table applies)
-- 🔲 Summon UX: x1/x10, skip toggle, rarity reveal; Summon NPC + teleport button
-- 🔲 Unit Index/Codex: all units, obtained silhouettes, sources, full rates disclosure
+- ✅ **B3 — the BANNER ENGINE (AD-Gacha, Lobby, 2026-08-09).** The blueprint's B1 + B2
+  session-tasks together (user decision). `docs/systems/gacha.md`.
+  **`RS.Shared.MetaMath`** is new shared canon (`6badac1d`, Lobby-only — the Game reports MISSING
+  and that is expected): deterministic `Slot` rotations + weighted `Pick`, cross-phase invariant 3.
+  **`GrantService.Grant/Spend`** is THE one grant path (invariant 1) — all-or-nothing, routes by
+  `ItemCatalog.Kind`, refuses uncatalogued ids (invariant 4), caps `MaxOwned`; it is also the
+  first code that can write `Data.Items`. **`BannerRegistry`** auto-scans `RS.Configs.Banners`.
+  **`SummonEngine`** is the pure roll half, split out precisely so the odds harness can assert the
+  REAL algorithm. Verified live: **10k dry rolls, 0 distribution failures**, every tier inside 4σ;
+  pity forced/priority/reset; x1 + x10 through the real remote into the real reveal
+  (`n=10 cols=5 rows=2`, no scroll); units 8→22, Gold spent, `Pity.Default` persisted.
+- 🔲 Summon UX (blueprint B3): x1/x10 buttons, skip toggle, rarity reveal, Summon NPC + banner
+  carousel screen. **This is the next Phase B task** — the engine under it is done and is driven
+  by `RS.Remotes.RequestSummon` (a RemoteFunction that RETURNS the views; the client fires the
+  existing `ShowRewards` itself, so no push remote exists or should be added).
+- 🔲 Selection + Event banners (blueprint B4) — both types are already registered and validated,
+  and deliberately REFUSED at summon (`banner_type_not_supported_yet`) until their flows exist.
+- 🔲 Unit Index/Codex (blueprint B5): all units, obtained silhouettes, sources, full rates
+  disclosure. Also the point at which `Kit_UnitIcon`'s fate (ADR-0007) gets settled.
+- 🔲 Trait-on-summon — **inert, not missing**: the chance is tuned and the RNG draw is already
+  consumed, but the trait rarity table is AD-Traits canon in the GAME place. Promoting it switches
+  this on with no Lobby change. (Shiny-on-summon IS live: 0.870% measured vs 1% configured.)
+- 🔲 No Secret / Exclusive / Bathala tower exists, so those tiers are unreachable content. A
+  Secret roll falls down to the nearest stocked tier and is logged; `Validate()` reports it as a
+  content-gap NOTE, not an error.
 
 ### Phase C — Unit depth
 - 🔲 Trait reroll NPC/UI (filter-protect + confirm + auto-stop on filtered, hold-to-

@@ -22,6 +22,10 @@
   (`RS.Shared.UIKit`, `shared/src` files) + 8 real instance templates (`RS.UITemplates.Kit`, the
   INSTANCE is canon per ADR-0005), the shared hotbar, the configs it depends on, and the rules
   that keep it healthy. Split out of `lobby-ui.md` at A7 once BOTH Places used the kit.
+- `gacha.md` — **AD-Gacha canon**: the banner engine (B3). `MetaMath` (shared), `GrantService` (THE
+  one grant path), `BannerRegistry` + banner file shape, the exact summon order, pity, the
+  empty-pool fallback, and the "remote returns the views" reveal decision. Read before touching
+  anything that grants, spends, rotates or rolls.
 - `lobby-ui.md` — the LOBBY's screens only (Units, Items, Collection, Hotbar, CurrencyBar, HUD
   buttons, the legacy script-built four) + the `DevAutoOpen` Studio harness. Split out of
   `places/lobby/CONTEXT.md` at A5 when that file passed its 150-line cap.
@@ -38,6 +42,9 @@
   `GetCollection` is dead code. ACCEPTED 2026-08-06 (AD-Lobby), **EXECUTED at A7 the same day**
 - `ADR-0005-instance-tree-hashing.md` — GuiObject subtrees are drift-controlled canon: the format,
   the property whitelist, and why ViewportFrame 3D contents are excluded
+- `ADR-0008-gacha-pull-counter-key.md` — gacha pulls count on `Counters.Global.GachaPulls`, NOT
+  `Summons` (A8 already owns that key for in-match minion summons). Recorded deviation from the
+  blueprint's literal wording (user, 2026-08-09)
 - `ADR-0006-state-md-cap.md` — `STATE.md` stays ONE file (the bootstrap ritual reads it), cap
   100→120, and a resolved PENDING is DELETED rather than struck through (AD-Integration, A7)
 - `ADR-0007-kit-uniticon-parked.md` — `Kit_UnitIcon` is PARKED (not adopted, not deleted) until

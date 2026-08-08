@@ -16,8 +16,10 @@ task touches — resolved at bootstrap per the constitution.
 | Rewards / match stats | AD-Game | Game | Studio (Game) `Server.Rewards`, `Server.Stats` |
 | Teleport payload contract | AD-Lobby | both | `docs/contracts/teleport.md` |
 | Lobby scene & flow (stage select, parties) | AD-Lobby | Lobby | Studio (Lobby) |
-| Shop / banner catalog (future) | AD-Gacha | Lobby | TBD when built |
-| Gacha / banners / pity / Ascension (future) | AD-Gacha | Lobby | TBD when built |
+| Shop catalog (future) | AD-Gacha | Lobby | TBD when built |
+| Gacha: banners / pity / grant pipeline | AD-Gacha | Lobby | Studio (Lobby) `SSS.Server.Meta.{GrantService,SummonEngine,SummonService}` + `RS.Configs.{Gacha.*,Banners.*,Meta.MetaConfig}` + `docs/systems/gacha.md` (built B3, 2026-08-09) |
+| Ascension (future) | AD-Gacha | Lobby | TBD when built |
+| `MetaMath` (Slot/Pick — every meta rotation + weighted roll) | AD-Gacha | both | `shared/src/MetaMath.luau` (SHARED since B3; **Lobby-only deploy so far** — Game reports MISSING by design) |
 | ItemCatalog / TierConfig / icon-UI kit (Phase A) | AD-UI | both | `shared/src/{ItemCatalog,TierConfig}.luau` (SHARED since 2026-08-01) + kit in Studio |
 | StatGradeConfig / AscensionConfig | AD-Game | both | `shared/src/` (SHARED since 2026-08-01) |
 | TowerStatResolver (+ MetaScaling, Traits) | AD-Game | Game | Studio (Game) `RS.Shared.TowerStatResolver` — NOT shared; see the numbers PENDING in STATE.md |
