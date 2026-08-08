@@ -1,5 +1,113 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-08 [lobby] B1 — the reward-reveal surface is BUILT. `Kit_ItemIcon` canon bumped; Game now stale.
+
+Bootstrap drift check **23/24**, and the one mismatch was the story of the session (below). At
+landing the hashes are **byte-identical to bootstrap** — this session touched ZERO shared canon.
+Integration gate: **run an AD-Integration session AFTER this task** (trigger 1 fired, but the build
+is independent of the drifted properties, so the checklist's "trigger fired / task independent"
+clause applied and it was reported instead of blocking).
+
+**The drift, and why it became a canon bump rather than a revert.** `Kit_ItemIcon` read
+`c5e81264` in the Lobby against the manifest's `ee1ccd33`. The Game still held `ee1ccd33`
+(confirmed by a read-only trip into that Place — no writes while bound there), so the LOBBY was the
+side that moved. A full serialisation diff isolated it to **7 properties on 3 nodes**: root
+`Size`/`Position`/`Visible`, `QtyBadge` `Size`/`Position` (including −150/−210 *pixel* offsets on a
+bottom-right-anchored badge), and `IconImage` `Image`(→`rbxassetid://101838893546724`)/`Position`.
+It looked like an accidental drag, so it was NOT assumed either way: the user was shown each change
+with its specific risk and **confirmed all four groups intentional**. Canon therefore moved
+`ee1ccd33` → **`c5e81264` with the LOBBY as source**, per the "owner edits shared canon" checklist
+(manifest hash + `deployed.Lobby` updated, `deployed.Game` LEFT stale, PENDING raised) rather than
+by re-copying from the Game. `Kit_ItemIcon` has no `shared/src` file — the instance is the canon
+(ADR-0005) — so there was no file to rewrite.
+
+**Contract impact:** none. No schema bump, no teleport payload change, no shared MODULE touched.
+One shared TEMPLATE's canon hash moved, which is a drift-procedure item, not a contract item.
+
+**What was built —** `StarterGui.ObtainRewardsGUI` + `ObtainRewardsController` (LocalScript).
+
+- **Entry point** `RS.ClientEvents.ShowRewards` (new BindableEvent), matching the house pattern
+  (`OpenUnitsWithUuid`, `OpenStageSelect`). `Fire({ { Id = "Archer", Level = 12 }, { Id = "Gold",
+  Qty = 250 } })`; a bare string id also works. **User decision: client-side only, no caller wired
+  this session** — gacha, quests, daily login and codes each wire themselves in as they ship.
+- **Mixed cells.** Kind is inferred from `ItemCatalog` (`Kind == "Tower"` → unit cell) and can be
+  forced with an explicit `Kind`. An id absent from the catalog **still renders** (name falls back
+  to the id, tier Common) — `UIKitRewardPopup`'s correct behaviour, carried over to its successor.
+- **The footprint trap was real but defused cheaply.** `UnitTemplate` carries its own
+  `UISizeConstraint` at Min = Max = **150×150**, so the cell size was READ off the user's design
+  rather than invented, and `UIGridLayout.CellSize` was set to match. `Kit_ItemIcon` already
+  carries `UIAspectRatioConstraint AR=1 FitWithinMaxSize`, so in a **square** cell that constraint
+  is a no-op instead of a letterbox. **The shared icon was never resized** — the CELL was sized to
+  the unit card. Measured at every batch size: unit `150×150`, item `150×150`, `match=true`.
+- **Item cells are cloned FRESH from the shared master on every show**, deliberately not baked in
+  at build time — that is exactly what produced `Kit_ItemHoverCard`'s known stale-master PENDING.
+- **No UI is generated in scripts.** Every cell is a clone of a real designed instance, and every
+  metric is read from one: `UIGridLayout.CellSize`/`CellPadding`/`FillDirectionMaxCells`,
+  `UIPadding`, `RewardsFrame:GetAttribute("MaxVisibleRows")` (3),
+  `ObtainRewardsGUI:GetAttribute("InputDeadSeconds")` (0.35). Retune spacing in Studio, no code change.
+- **Container rebuilt** (user-authorised, container only — `UnitTemplate` itself untouched except
+  `Visible = false`, which a template requires): `UIListLayout` (wrapping, non-deterministic column
+  count) → `UIGridLayout` at 5 cells/row; `UIPadding` 1px → 8px uniform; `AutomaticSize` and
+  `AutomaticCanvasSize` turned OFF so the controller owns the formula. `Main` became the
+  full-screen click catcher (`Active = true`) and its **0.3% offset was zeroed** — a
+  dismiss-anywhere catcher cannot have a gap along the top/left edge.
+
+**Acceptance — every case verified LIVE in Play from a temporary harness, not by reading code.**
+Frame sizes are measured `AbsoluteSize`; canvas is measured `AbsoluteCanvasSize` vs
+`AbsoluteWindowSize`. All batches MIXED units + items (alternating).
+
+| n | cols | rows | visible | frame | canvasY / window | scrollbar | verdict |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 1 | 1 | 1 | 166×166 | 166 / 166 | no | **PASS** |
+| 3 | **3** | 1 | 1 | **482**×166 | 166 / 166 | no | **PASS** — 3 wide, not 5 with gaps |
+| 5 | 5 | 1 | 1 | 798×166 | 166 / 166 | no | **PASS** |
+| 6 | 5 | 2 | 2 | 798×**324** | 324 / 324 | no | **PASS** — row 2 grew Y |
+| 11 | 5 | 3 | 3 | 798×**482** | 482 / 482 | no | **PASS** — row 3 grew Y, still no bar |
+| 15 | 5 | 3 | 3 | 798×482 | 482 / 482 | no | **PASS** |
+| 20 | 5 | **4** | 3 | 806×**482** | **640** / 482 | **yes** | **PASS** — Y FROZEN, bar appeared |
+
+- **Rows 1→3 grow, row 4 does not:** height went 166 → 324 → 482 and then **stayed 482** at n=20
+  while `rows` went 3 → 4. Width grew by 8px (798 → 806) purely because the scrollbar took its inset.
+- **`CanvasSize` still covers every row:** at n=20 canvas 640 vs window 482; scrolled to the end,
+  the last cell's bottom measured **599** against a frame bottom of **607** — fully visible.
+- **Click-anywhere dismissal + dead period: PASS.** Dismissing 0.05s after open left the popup
+  OPEN; dismissing at 0.65s CLOSED it. Both went through the same `dismiss()` the click path uses.
+- **Queueing, not merging: PASS.** Three batches fired back to back (2, then 7 and 4 while open)
+  showed **2 → 7 → 4 cells in order**, then closed on the third dismiss. `Show` is safe to call
+  while a popup is up.
+- **Unknown id: PASS.** `NotInCatalog_XYZ` rendered as an item cell beside a real Archer.
+
+**Decisions stated plainly, per the session brief:**
+
+1. **The adopted unit card stays LOBBY-LOCAL — NOT promoted to shared canon, no manifest entry.**
+   The reveal screen is Lobby-only by user decision, so promoting it would add a 25th
+   drift-controlled entry plus a permanent mirror obligation into a Place with no consumer.
+   ADR-0007's own logic says the component gets built when a real consumer needs it — promote on
+   the SECOND consumer (the unit index), which is also the moment to settle `Kit_UnitIcon`.
+2. **`Kit_UnitIcon` was NOT deleted and NOT adopted — it stays PARKED alongside the shipped card.**
+   ADR-0007 stands. The user asked for it to be kept and it is untouched (`24281a2b`, unchanged).
+
+**Notes for whoever is next:**
+
+- **The harness is DELETED** (`StarterPlayerScripts.ObtainRewardsHarness`), no stray `Reward_` cells
+  remain in the Edit datamodel, and every `Dev*` attribute is OFF. `DevDismiss` is a *hook* on the
+  controller, not a stored attribute — it does nothing unless something sets it.
+- `MouseButton1` still cannot be fired from tooling, which is why `DevDismiss` exists at all; it
+  routes through the real `dismiss()` so the dead-period check is genuinely exercised. The one
+  thing NOT proven by machine is that a literal mouse click lands — same limitation as the hotbar
+  hover trigger PENDING. One manual click closes it.
+- `UISizeConstraint` on `RewardsFrame` is 900×600, which clears the 806×482 a full 5×3 grid needs.
+  If `CellSize` is ever raised, raise that too — and note `UnitTemplate`'s own 150×150
+  `UISizeConstraint` would then fight the grid. That is the one coupling in the design.
+
+- **PENDINGs:** **TWO NEW, both AD-Integration.** (1) mirror `Kit_ItemIcon` Lobby → Game and set
+  `deployed.Game = c5e81264`; **until then the GAME reads 23/24 and that is EXPECTED, not new
+  drift.** (2) retire `UIKitRewardPopup` + `Kit_RewardPopup` (24 → 22) — now UNBLOCKED, since a
+  working replacement exists. Best done in one session; both touch the Game's kit. Untouched:
+  hotbar hover trigger, `Kit_ItemHoverCard` master/clone, `Data.Items` writer, max-level XP loss,
+  teleport v2 live loop + republish (USER).
+- **USER must republish the LOBBY place** — all of B1 is Studio canon, not git.
+
 ## 2026-08-08 [game] B0 — PLACEMENT IS uuid-ADDRESSED. The last Phase A correctness defect is closed.
 
 Drift **24/24 GREEN** at bootstrap and at landing, byte-identical both times — including

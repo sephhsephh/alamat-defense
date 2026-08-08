@@ -3,7 +3,12 @@
 <!-- author: AD-Game (raised while Studio MCP was down; NOT the owner) -->
 <!-- target owner: AD-UI (build) + AD-Integration (the shared-canon retirement) | place: Lobby -->
 <!-- raised: 2026-08-08 -->
-<!-- status: DECIDED 2026-08-08 (user) on the four questions below. Awaiting AD-UI. -->
+<!-- status: BUILT 2026-08-08 (B1, AD-UI, Lobby). Screen + controller implemented and verified live
+     against every acceptance case. OPEN #1 (who calls it) ANSWERED by the user: build the screen +
+     a Show(rewards) entry point now, each system wires itself in as it ships. The RETIREMENT half
+     (UIKitRewardPopup + Kit_RewardPopup, 24 -> 22) is still OPEN and belongs to AD-Integration.
+     AD-UI's sharing decision: the adopted unit card stays LOBBY-LOCAL, not shared canon -- see
+     docs/systems/ui-kit.md. Details in the B1 CHANGELOG entry. -->
 
 ## Why this exists and who wrote it
 

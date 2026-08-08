@@ -168,14 +168,14 @@
       "kind": "template"
     },
     "Kit_ItemIcon": {
-      "hash": "ee1ccd33",
+      "hash": "c5e81264",
       "owner": "ui",
       "deployPath": "ReplicatedStorage.UITemplates.Kit.ItemIcon",
       "deployed": {
         "Game": "ee1ccd33",
-        "Lobby": "ee1ccd33"
+        "Lobby": "c5e81264"
       },
-      "comment": "Kit TEMPLATE (item card: Main/BG + IconImage + QtyBadge, tier stroke). No shared/src file exists -- the INSTANCE is the canon (ADR-0005); copy it between Places and verify by hash, never rebuild by hand. Promoted 2026-08-06.",
+      "comment": "Kit TEMPLATE (item card: Main/BG + IconImage + QtyBadge, tier stroke). No shared/src file exists -- the INSTANCE is the canon (ADR-0005); copy it between Places and verify by hash, never rebuild by hand. Promoted 2026-08-06. **CANON BUMPED ee1ccd33 -> c5e81264 on 2026-08-08 (B1, AD-UI)**: the Lobby's copy had diverged in 7 properties across 3 nodes (root Size/Position/Visible, QtyBadge Size/Position incl. -150/-210 px offsets, IconImage Image=rbxassetid://101838893546724 + Position). AD-UI found this at bootstrap drift check and the USER confirmed ALL of it intentional after being shown each change and the risks (a Visible=true master, and negative pixel offsets on a bottom-right-anchored badge). The LOBBY is therefore canon and the GAME is now STALE at ee1ccd33. PENDING: AD-Integration must copy Lobby -> Game and set deployed.Game = c5e81264.",
       "kind": "template"
     },
     "Kit_ItemHoverCard": {

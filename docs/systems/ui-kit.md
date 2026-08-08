@@ -10,7 +10,8 @@ source (ADR-0001); this doc says what exists and why.
 
 ## What the kit is
 
-Two halves, both under drift control (24 manifest entries total, all GREEN in both Places):
+Two halves, both under drift control (24 manifest entries total). **23 are GREEN in both Places;
+`Kit_ItemIcon` is deliberately NOT** — see the canon bump below.
 
 - **CONTROLLERS** — client ModuleScripts in `ReplicatedStorage.Shared.UIKit`, with `shared/src`
   files as disk canon. Hashed as SOURCE.
@@ -52,12 +53,33 @@ Attribute vocabulary for `UIKitButton`: `HoverScale`, `HoverStrokeMult`, `HoverS
   The Game hotbar used it until the move to `HotbarSlot`; the only remaining mention is the
   *disabled* `Hotbar_RETIRED` script. It is neither adopted nor deleted — the question is deferred
   to **Phase B**, where the gacha reveal / unit index are the first real consumers.
+  - **2026-08-08 (B1): the first consumer ARRIVED and `Kit_UnitIcon` was NOT adopted and NOT
+    deleted — it remains PARKED, alongside the card that shipped.** The Lobby's `ObtainRewardsGUI`
+    reveal grid uses the user's own `RewardsFrame.UnitTemplate` (150×150, locked by its own
+    `UISizeConstraint`), adopted as-is per ADR-0007. **AD-UI'S CALL, stated plainly: that adopted
+    card stays LOBBY-LOCAL — it is NOT promoted to shared canon and gets NO manifest entry.**
+    Reasoning: the reveal screen is Lobby-only by user decision, so promoting the card would add a
+    25th drift-controlled entry and a mirror obligation into a Place with no consumer for it —
+    pure drift surface for zero benefit. ADR-0007's own logic (build the component when a real
+    consumer needs it) says promote on the SECOND consumer, not the first. The unit index, when it
+    ships, is that second consumer and the natural moment to promote — and it is also the moment
+    to settle `Kit_UnitIcon`'s fate for good.
   - **Do NOT delete it** without a fresh user decision (it carries a rig).
   - **Do NOT build a `UIKit.UnitIcon` controller speculatively** — the first real consumer designs
     it. The absence of a controller for this template is intentional, not an oversight.
   - **When a unit card IS built, this template is NOT the reference.** The Lobby's shipping Units
     card is lifted into the kit as-is (same move as `HotbarSlot`); fields this icon has and that
     card lacks are ADDED to the user's tree, never used to replace it. See ADR-0007.
+- **`ItemIcon`** — **CANON BUMPED `ee1ccd33` → `c5e81264` (2026-08-08, B1). The LOBBY is canon; the
+  GAME is STALE.** AD-UI's bootstrap drift check caught the Lobby copy diverging in 7 properties
+  across 3 nodes (root `Size`/`Position`/`Visible`, `QtyBadge` `Size`/`Position` including −150/−210
+  px offsets, `IconImage.Image` + `Position`). The user was shown each change with its risks and
+  confirmed **all of it intentional**, so the divergence was recorded as a canon bump rather than
+  reverted. **PENDING: AD-Integration copies Lobby → Game and sets `deployed.Game = c5e81264`.**
+  Until then `hash_shared.luau` reads 23/24 in the Game and 24/24 in the Lobby — that is EXPECTED,
+  not new drift. Note the master now sits at `Visible = true`, which is unusual for a template; it
+  is harmless while the master lives in `ReplicatedStorage` (nothing renders there) and every
+  consumer clones it, but do not parent the master itself into a ScreenGui.
 - **`ItemHoverCard`** — **no runtime lookup.** `ItemsGUI.HoverPreview` is a CLONE taken once at
   build time, so **editing this master does NOT update the deployed screen**. Re-clone or edit
   both. This master/clone split is a known sharp edge of template canon; it already caused a

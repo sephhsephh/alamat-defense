@@ -102,8 +102,10 @@ catalog/configs, icon kit, session plan A1–A7). Phases B–F:
   shared-hotbar work replaced it with `Kit_HotbarSlot`, so it now has **no consumer**. **PARKED by
   user decision (ADR-0007)**: not adopted, not deleted, revisited in Phase B. Do not delete it and
   do not build a controller for it speculatively.
-  ✅ **`RewardPopup`** (A6) — `Kit_RewardPopup` + `UIKitRewardPopup`, catalog-id driven, shared
-  canon in both Places; no caller yet by design (Phase B gacha).
+  🟡 **`RewardPopup`** (A6) — `Kit_RewardPopup` + `UIKitRewardPopup`, catalog-id driven, shared
+  canon in both Places, never wired. **SUPERSEDED at B1 by the Lobby's `ObtainRewardsGUI` and now
+  awaiting RETIREMENT by AD-Integration (24 → 22).** Its catalog-resolution behaviour — including
+  "an id absent from the catalog still renders" — was carried over to the replacement.
   ✅ **`CurrencyBar`** (A6) — built **Lobby-local** (`HUD.Top.CurrencyBar`), not shared: a
   single-Place widget under drift control costs a cross-Place sync forever.
   Still 🔲: UnitHoverCard, ViewportPreview, NPCPrompt; a `UIKit.UnitIcon` controller (deferred —
@@ -173,6 +175,14 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
   **306.45 vs 14.27**, limits **1/1 (Godly) vs 1/4**, kills **215 vs 6** each matching the tracker,
   and the real `RequestPlace` remote accepted the uuid while rejecting a bare TowerId, a forged
   uuid and a non-string. No shared module touched — drift stayed 24/24 and the Lobby needed nothing.
+- ✅ **B1 — the reward-reveal surface is BUILT (AD-UI, Lobby, 2026-08-08).**
+  `StarterGui.ObtainRewardsGUI` + `ObtainRewardsController`, driven by
+  `RS.ClientEvents.ShowRewards`. ONE grid, MIXED units + items; unit cell = the user's own
+  `UnitTemplate` (150×150, adopted as-is per ADR-0007, kept **Lobby-local**), item cell = a fresh
+  clone of shared `Kit.ItemIcon` — same footprint, no distortion. 5 columns; rows 1–3 grow the
+  frame, row 4+ freezes Y and scrolls with `CanvasSize` still covering every row. Click-anywhere
+  dismiss after a 0.35s dead period; back-to-back grants QUEUE. Verified live at n = 1/3/5/6/11/15/
+  20 plus queue, dead-period and unknown-id cases. **No caller yet — gacha is the intended first.**
 - 🔲 Banner engine: one config file per banner (auto-scanned); Standard (3 mythics/hour,
   deterministic rotation), Selection (player-chosen featured, 24h lock, +2 daily
   randoms), Event (EventTokens, start/end, drop-in file per update)

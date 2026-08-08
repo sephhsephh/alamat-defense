@@ -92,6 +92,22 @@ and deleted. Each of Units/Items/Collection honours a `DevAutoOpen` Studio harne
 **A7 finding:** the Units screen's cards are screen-local, NOT `Kit.UnitIcon` clones — see
 `lobby-ui.md`; that template still has no consumer and its fate is a user decision.
 
+**`ObtainRewardsGUI` — the reward-reveal surface (B1, 2026-08-08, AD-UI). BUILT + verified live.**
+One grid, MIXED units + items. Entry point is client-side and Lobby-local:
+`RS.ClientEvents.ShowRewards:Fire({ { Id = "Archer", Level = 12 }, { Id = "Gold", Qty = 250 } })`
+(a bare string id also works). Cell = unit → this screen's own `RewardsFrame.UnitTemplate`
+(150×150, locked by its own `UISizeConstraint`, adopted as-is per ADR-0007 and kept **Lobby-local**,
+NOT promoted to shared canon); anything else → a FRESH clone of shared `Kit.ItemIcon`. Kind is
+inferred from `ItemCatalog` (`Kind == "Tower"` → unit) and can be forced with `Kind`. An id absent
+from the catalog still renders (name falls back to the id, tier Common). Layout is 5 columns;
+rows 1–3 grow the frame, row 4+ freezes Y at the 3-row height and scrolls. **Every metric is READ
+from the instances** (`UIGridLayout.CellSize`/`CellPadding`/`FillDirectionMaxCells`, `UIPadding`,
+`RewardsFrame:GetAttribute("MaxVisibleRows")`, `ObtainRewardsGUI:GetAttribute("InputDeadSeconds")`)
+— retune spacing in Studio, no code change. Dismiss = click ANYWHERE (`Main` is the full-screen
+catcher, `Active = true`) after a 0.35s input-dead period; back-to-back grants QUEUE, never merge.
+Studio harness: flip the `DevDismiss` attribute (same `dismiss()` path a click takes). Left OFF.
+**No production caller yet** — each system wires itself in as it ships (user decision).
+
 ## v2 candidates (not built)
 
 - Gacha/banners (uses `GrantUnit` semantics + Items tickets) — schema v2 has landed, so this
@@ -104,17 +120,19 @@ and deleted. Each of Units/Items/Collection honours a `DevAutoOpen` Studio harne
 
 ## Phase A: SIGNED OFF (A9, 2026-08-06)
 
-Every §8 item passes. Nothing in this Place is outstanding for Phase A. Two A9 results worth
-keeping: all **7 screens** still load after A7 removed `GetCollection` (all five read remotes
-round-trip `ok=true`, hotbar 6/6 kit-shaped), and **`Worthiness` now shows REAL values here with
-zero Lobby changes** — A8 wrote it in the Game place, and because `GetUnitViews` already carried the
-field, Archer `1d6c4076` reads `3.96` and Necromancer `035673d9` reads `1.72`, the exact uuids and
-values the Game committed. That is the contract paying for itself.
+Every §8 item passes; nothing here is outstanding for Phase A. Two A9 results worth keeping: all
+**7 screens** still load after A7 removed `GetCollection`, and **`Worthiness` shows REAL values
+here with zero Lobby changes** because `GetUnitViews` already carried the field — the contract
+paying for itself. Full evidence in the A9 changelog entry.
 
 ## Open PENDINGs (see STATE.md — this is the Lobby-relevant subset)
 
 - **AD-UI:** real per-unit models (everything uses `UnitModels.Placeholder`) and functional Units
   action buttons (animation-only today). `Kit_UnitIcon` has no consumer — user decision.
+- **AD-Integration (NEW, B1):** `Kit_ItemIcon` canon bumped `ee1ccd33` → **`c5e81264`**; the LOBBY
+  is canon and the **GAME is STALE**. Copy Lobby → Game, set `deployed.Game`. Until then the Game
+  reads 23/24 — expected, not new drift. Also still open: retire `UIKitRewardPopup` +
+  `Kit_RewardPopup` (24 → 22), now that a working replacement exists.
 - **AD-UI (small):** the hotbar hover TRIGGER is unverified (tooling cannot fire `MouseEnter`);
   `Kit_ItemHoverCard`'s master/clone split means editing the master does not update the screen.
 - **USER (BLOCKING):** save + **republish BOTH Places** — A7 deleted `GetCollection` here, which
