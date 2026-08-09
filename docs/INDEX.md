@@ -51,6 +51,9 @@
   blueprint's literal wording (user, 2026-08-09)
 - `ADR-0006-state-md-cap.md` — `STATE.md` stays ONE file (the bootstrap ritual reads it), cap
   100→120, and a resolved PENDING is DELETED rather than struck through (AD-Integration, A7)
+- `ADR-0010-ascension-npc-screen.md` — ascension is its OWN NPC-opened screen, not a pane in the
+  Units GUI. Deliberate deviation from blueprint C3 (user, 2026-08-09) that makes Phase C consistent,
+  since C1/C2 are already specified "NPC → UI". **C1/C2 should copy this shape.**
 - `ADR-0009-kit-uniticon-adopted.md` — **supersedes ADR-0007's PARKED status**: `Kit_UnitIcon` is
   ADOPTED as the shared unit ICON after two real consumers (B6 chips, B8 index), with **no
   controller** and **no byte changed**. It is an icon, not the unit CARD (ADR-0007 clause 3 stands)

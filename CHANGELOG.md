@@ -1,5 +1,85 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-09 [lobby] B11 — four user fixes: equip colours, ONE UNIT PER FAMILY, ascension moves to an NPC.
+
+Bootstrap drift **23/23 GREEN**, unchanged at landing. Integration gate: **"No Integration needed —
+proceeding."** All four changes are Lobby-local; `UIKitHotbar` is shared canon and was **not**
+touched (only the Lobby-local `HotbarController`).
+
+**1. The equip button is GREEN for EQUIP, RED for UNEQUIP.** Gradient AND stroke are set on every
+refresh rather than toggled, so it cannot strand on the wrong colour. Green runs **dark first** as
+asked — `0 = rgb(0,62,0)` → `1 = rgb(0,170,0)`, stroke `rgb(0,170,0)`; red keeps its designed
+`rgb(170,0,0)` → `rgb(62,0,0)`. Note the green's stop order is the *mirror* of the red's
+bright→dark; both constants sit together at the top of `refreshEquipButton` if you want them to run
+the same way.
+
+**2. ONE UNIT PER FAMILY, and an evolved form counts as the same unit.** Equipping a unit whose
+family is already equipped **replaces the incumbent in its slot** rather than being refused —
+"equip this one instead" is what the player means.
+
+- Enforced **server-side in `LoadoutService`**, because that service is the only writer of
+  `Data.Loadout`; a client check alone would be advisory. The response now carries `ReplacedUuid`
+  so the UI can say a unit was swapped rather than the player noticing one vanish from the hotbar.
+- The newcomer takes the **incumbent's slot**, so a swap looks like a swap.
+- **Family resolution is `RS.Configs.Meta.UnitFamilyConfig`** (new, Lobby-local): explicit overrides
+  first, then a naming convention (everything before `(` or `_`), then the id itself. That is why
+  `Warchief(Warlord)` groups with `Warchief` **before any evolved tower is catalogued**.
+  Evolutions are Phase F, so the real base→evolved data does not exist yet; putting the map here
+  rather than in `ItemCatalog` kept this a Lobby-only session, since `ItemCatalog` is SHARED canon.
+  **When Phase F lands, point `FamilyOf` at the Evolutions registry and delete `Overrides`** — every
+  caller already goes through that one function.
+- The client's "loadout full" guard now **exempts a same-family swap**, since a swap does not grow
+  the list. Otherwise a full bar would have blocked the very replacement the rule exists to allow.
+
+**3. Ascension moved OUT of the Units GUI into its own NPC-opened screen — ADR-0010.** The blueprint
+put it in the Units detail pane and B9 built it there. It is now `StarterGui.AscensionScreen`,
+reachable only by walking up to **`Workspace.Lobby.NPC_Ascension`** and using its ProximityPrompt —
+**the Lobby's first NPC and first prompt; there was no NPC system at all before.**
+
+Worth saying plainly: **this makes Phase C more consistent, not less.** The blueprint already
+specifies *"NPC → UI"* for the trait reroll (C1) and the stat reroll (C2); ascension was the odd one
+out. C1/C2 should now copy this shape.
+
+It also retired three problems B9 had shipped with:
+
+- the pane needed AD-UI's `UnitsController` to publish its selection just to know what to act on
+- it had to re-bind on every spawn because `UnitsGUI.ResetOnSpawn = true`
+- it could not refresh AD-UI's grid after destroying a duplicate, so it shipped a *"reopen Units to
+  refresh"* caveat — **gone**, because the screen now owns its own picker and just rebuilds it
+
+B9's one-line selection publish **stays**: unused by ascension now, but C2's and C4's panes want
+exactly it, and removing it would only mean re-adding it.
+
+**4. Two mistakes of mine, both caught by the harness rather than by reading.**
+
+- **`;(expr)` is not valid Luau.** I used the `;(cell :: GuiButton).Activated:Connect(...)` idiom in
+  the picker loop; it fails to compile and the ONLY symptom is the whole controller silently never
+  running. **This is the second time this exact idiom has cost a session** (B8's harness was the
+  first), so it is now written into the code as a warning rather than left as folklore.
+- **Writing a full replacement with an empty `old_string` onto an EXISTING script APPENDS instead of
+  replacing.** `AscensionController` ended up 27,174 bytes containing both the new B11 version and
+  the whole B9 one — two `ready` prints, an orphaned `[AscensionPane] AscensionPanel missing`
+  warning, and B9's code still hunting for a pane B11 had deleted. Found because the console showed
+  the controller reporting ready twice. Truncated at the new version's final line and re-verified:
+  16,351 bytes, one `ready`, zero `[AscensionPane]`.
+
+**Acceptance — verified LIVE in Play, harness since deleted, all `Dev*` OFF/empty:**
+`FamilyOf` correct for `Warchief` / `Warchief(Warlord)` / `Warchief_Warlord` / unrelated towers ·
+equipping a second Archer **replaced the first, took its slot 1, left the list size at 2, stayed
+dense, and left the unrelated unit untouched** · re-equipping the same uuid produced no duplicate ·
+button read `UNEQUIP` + red for an equipped unit and `EQUIP` + green (dark first) for an unequipped
+one · `AscensionPanel` gone from `UnitsGUI` · `AscensionScreen` present at `DisplayOrder 70`, closed
+by default · NPC + prompt present (range 12, *"Ascend a unit"*) · opening listed **4 eligible
+Mythic+ units** with the detail pane reading `A3 / A3  DMG x3.00`.
+
+**Contract impact: NONE.** No schema, no shared module, no template. One new Lobby-local config, one
+new screen, one new BindableEvent, one new NPC model.
+
+**PENDINGs: 0 new, 1 amended** (AD-UI review → five items). Docs: new `ADR-0010`, `ascension.md`
+rewritten around the new screen, `lobby-ui.md` updated and trimmed back under its cap.
+
+**USER must republish the LOBBY** — B11, like everything since A7, is Studio canon and not in git.
+
 ## 2026-08-09 [lobby] B10 — EQUIPPING WORKS. A button nobody had ever connected.
 
 Bootstrap drift **23/23 GREEN**, unchanged at landing. Integration gate: **"No Integration needed —

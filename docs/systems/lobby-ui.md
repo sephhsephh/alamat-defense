@@ -95,28 +95,26 @@ problem, because the server re-derives everything at pull time. This screen's en
   an UNKNOWN code prints the raw code rather than a friendly lie, so a new server reason is
   visible instead of "failed". Non-`Standard` banners and closed windows show `ClosedOverlay`
   rather than a dead button.
-- **Studio harness:** `DevPull` (a pull count) runs the same `doPull()` a button press runs;
-  `DevPage` flips the carousel; `DevAutoOpen` opens on boot. All left OFF/0.
-- **This screen was authored by AD-UI as a plain but functional real-instance tree, for the user
-  to restyle** (user decision, 2026-08-09) — the `StarterChoiceScreen` precedent. Restyling it in
-  Studio is safe: the controller reads its metrics off the instances.
+- Authored as a plain but functional real-instance tree, **for the user to restyle**; the controller
+  reads its metrics off the instances. Harness hooks are listed at the bottom of this file.
 
-**Known gap:** the HUD `CurrencyBar` does not refresh after a summon (it refreshes on join), so it
-shows stale Gold until the next refresh. The SummonScreen's own balance IS correct. Fixing it wants
-a `CurrencyChanged` client event — not built, noted in `STATE.md`.
+**Known gap:** the HUD `CurrencyBar` does not refresh after a summon, so it shows stale Gold (the
+SummonScreen's own balance IS correct). Wants a `CurrencyChanged` event — noted in `STATE.md`.
+
+## `AscensionScreen` — NPC-opened (B11, ADR-0010)
+
+Blueprint C3 put ascension in the Units detail pane and B9 built it there; **B11 moved it to its own
+screen, reachable only from `Workspace.Lobby.NPC_Ascension`'s ProximityPrompt** — the Lobby's first
+NPC. That makes Phase C consistent: the blueprint already specifies "NPC → UI" for C1 and C2.
+It owns its own Mythic+ picker, so it needs nothing from the Units screen. Full detail:
+`docs/systems/ascension.md`. `DisplayOrder 70`; entry point `ClientEvents.OpenAscension`.
 
 ## `ObtainRewardsGUI` — the reward-reveal surface
 
-Built at **B1 (2026-08-08)**; animated at **B4 (2026-08-09)**. Moved here from
-`places/lobby/CONTEXT.md` at B4 — this is a Lobby SCREEN, and CONTEXT.md was over its cap.
-
-**Entry point** (client-side, Lobby-local, matching the `ClientEvents` house pattern):
-
-```lua
-RS.ClientEvents.ShowRewards:Fire({ { Id = "Archer", Level = 12 }, { Id = "Gold", Qty = 250 } })
-```
-
-A bare string id also works. **First production caller = gacha (B3)**, which passes
+Built at **B1 (2026-08-08)**; animated at **B4 (2026-08-09)**.
+**Entry point** (client-side, matching the `ClientEvents` house pattern):
+`RS.ClientEvents.ShowRewards:Fire({ { Id = "Archer", Level = 12 }, { Id = "Gold", Qty = 250 } })` —
+a bare string id also works. **First production caller = gacha (B3)**, which passes
 `RequestSummon`'s returned views straight through unchanged.
 
 - **ONE grid, MIXED units + items.** Unit cell = this screen's own `RewardsFrame.UnitTemplate`
@@ -134,15 +132,12 @@ A bare string id also works. **First production caller = gacha (B3)**, which pas
 
 ### Reveal animation + two-stage click (B4, 2026-08-09 — REVIEWED + APPROVED by AD-UI at B5)
 
-> **Review status:** B4 was written by AD-Gacha inside AD-UI's canon on the user's explicit
-> authorisation. AD-UI re-tested every claim independently at B5 (2026-08-09) rather than trusting
-> the changelog — stagger, no-reflow, overshoot magnitude, skip, gated close, layout invariance,
-> n=1, click-catcher integrity and shared-canon cleanliness **all PASS**. Approved as written; the
+> **Review status:** written by AD-Gacha inside AD-UI's canon on the user's authorisation; AD-UI
+> re-tested every claim independently at B5 rather than trusting the changelog — **all PASS**. The
 > only change was the padding fix below, which was a B1 defect, not a B4 one.
 
-
-Cells reveal **one at a time** (pop-in, `UIScale` `RevealStartScale` → 1, Back/Out) instead of the
-whole grid appearing at once. Then **click 1 = SKIP**, **click 2 = CLOSE**.
+Cells reveal **one at a time** (pop-in, `UIScale` `RevealStartScale` → 1, Back/Out). Then
+**click 1 = SKIP**, **click 2 = CLOSE**.
 
 - **Skip is NOT dead-period gated; close is.** Skipping only ever shows you *more*, so a stray click
   cannot rob you of a rare pull — but the close click is gated by `InputDeadSeconds` measured **from
@@ -156,25 +151,19 @@ whole grid appearing at once. Then **click 1 = SKIP**, **click 2 = CLOSE**.
 - **Why `UIScale` and not `Size`:** `UIGridLayout` FORCES `CellSize` onto every child, so a `Size`
   tween is overwritten every frame. `UIScale` is the only size animation that survives a grid.
 - **It is created on the runtime CLONE, never on a template.** `Kit_ItemIcon` is hashed **shared
-  canon** (`5623f4b4`, also used by the Items screen) — adding anything to it would be drift.
-  The controller already creates `UIGradient`/`WorldModel`/`Camera` on clones, so this matches its
-  own established practice rather than inventing one.
+  canon** — adding anything to it would be drift. The controller already creates
+  `UIGradient`/`WorldModel`/`Camera` on clones, so this matches its own practice.
 - **Why it pops from the centre:** the `UIScale` goes on the cell's `Main` child after re-anchoring
-  it to `(0.5,0.5)` at position `(0.5,0.5)` — geometrically identical coverage (Main is
-  `{1,0},{1,0}` at anchor `(0,0)`), but it now grows from the middle instead of the top-left corner.
-  **The grid-positioned ROOT is never re-anchored** — that would shift the cell out of its slot.
+  it to `(0.5,0.5)` at `(0.5,0.5)` — identical coverage, but it grows from the middle. **The
+  grid-positioned ROOT is never re-anchored** — that would shift the cell out of its slot.
 - **Keep the overshoot small.** `RewardsFrame.ClipsDescendants = true`, so Back/Out from 0.6 (peak
   measured live at **1.0400**) must fit inside the padding. A much lower start scale or a stronger
   easing **will clip** on the outer edges.
 - **`UIPadding` is 15px, not the 8px it was built with — and the reason is not decoration.**
-  `UnitTemplate.UnitLevel` sits at x `−0.072`, i.e. the level badge **overflows its own 150px cell
-  by 10.8px to the left**, and at peak overshoot by 14.2px. With 8px padding the leftmost column's
-  badge was permanently cut by **2.8px at rest** and **6.2px during the pop**. 15px clears both
-  (measured after: **−4.2px** at rest, **−0.8px** through the reveal — negative means clearance).
-  **Do not drop it back below ~15px**, and if `RevealStartScale` is lowered or the easing
-  strengthened, re-measure. Found by AD-UI's B5 review; it predated the animation (B1 shipped it)
-  and B4 only made it briefly more visible. Fixed on the CONTAINER on purpose — `UnitTemplate` is
-  the user's design, adopted as-is under ADR-0007, so it is not the place to fix this.
+  `UnitTemplate.UnitLevel` overflows its own 150px cell by **10.8px to the left** (14.2px at peak
+  overshoot), so at 8px the leftmost badge was permanently clipped. **Do not drop below ~15px**, and
+  re-measure if `RevealStartScale` is lowered. Found by AD-UI's B5 review; it predated the animation.
+  Fixed on the CONTAINER on purpose — `UnitTemplate` is the user's design, adopted under ADR-0007.
 - **Cells are hidden until their turn, and this does NOT reflow.** `UIGridLayout` skips invisible
   children, but because cells reveal in ascending `LayoutOrder` each one lands in the next free slot
   and the ones already shown never move. Asserted live, not assumed: cell 1 held its
@@ -223,8 +212,17 @@ the last cell's bottom at 599 inside a frame bottom of 607. Drift stayed **23/23
       write a hole, and do not "fix" the left-to-right fill.
     - **Equipping into a full loadout is refused client-side**, not sent. `LoadoutService` would
       clamp the insert and silently drop whoever holds the last slot — that clamp is a dense-list
-      SAFETY rail, not a designed swap, and losing a unit you did not choose to unequip is a nasty
-      surprise. Explicit unequip first; no server behaviour was changed.
+      SAFETY rail, not a designed swap. Explicit unequip first; no server behaviour was changed.
+      (A same-FAMILY swap is exempt — it does not grow the list, so it is allowed at the cap.)
+    - **B11 — ONE UNIT PER FAMILY.** Equipping a unit whose family is already equipped **REPLACES**
+      the incumbent in its slot. Families group a base tower with its future evolved form
+      (`Warchief` / `Warchief(Warlord)`) via `RS.Configs.Meta.UnitFamilyConfig`. Enforced
+      SERVER-side in `LoadoutService`; the response carries `ReplacedUuid` so the UI can say a unit
+      was swapped out instead of the player noticing it vanished.
+    - **B11 — the button is GREEN for EQUIP, RED for UNEQUIP.** Both the gradient and the stroke are
+      set on every refresh (never toggled), so it cannot strand on the wrong colour. Green runs
+      **dark first**: `0 = rgb(0,62,0)` → `1 = rgb(0,170,0)`; red keeps its designed
+      `rgb(170,0,0)` → `rgb(62,0,0)`.
     - Harness: `DevEquip` (a uuid) runs the same `doEquipToggle()` a press runs.
   - **A5/A6:** stat rows are dual-slot — `Stats.BaseStatsFrame.{DMG,RNG,SPA}` each carry a `Grade`
     label for the letter and a `TextLabel` for the number (rows without `Grade` keep the old
@@ -244,8 +242,9 @@ the last cell's bottom at 599 inside a frame bottom of 607. Drift stayed **23/23
     lifted into the kit; the user's design is the source of truth.
   - Still open: real per-unit models (everything uses `UnitModels.Placeholder`), and the
     `Upgrade` / `Lock` / `ViewPassives` buttons are still animation-only (equip works as of B10).
-  - **`AscensionPanel`** also lives in `SelectedUnitFrame` — B9, AD-Gacha. See
-    `docs/systems/ascension.md`; its controller is in `StarterPlayerScripts`, not this screen.
+  - **Ascension is NO LONGER here.** B9 put an `AscensionPanel` in `SelectedUnitFrame`; **B11 moved
+    it out** to its own NPC-opened `AscensionScreen` (ADR-0010). Do not put a reroll or feeding pane
+    back into this frame either — copy the NPC pattern. See `docs/systems/ascension.md`.
 
 - **Items screen** (`StarterGui.ItemsGUI.ItemsController`, A5) — opens from **HUD.Inventory**.
   Chrome cloned from the Units screen so the design matches. The LIST is every `ItemCatalog` entry

@@ -53,6 +53,11 @@ everything untradeable at launch).
   client-side rather than letting LoadoutService's dense-list clamp silently drop the last unit.
   Verified live incl. unequipping the MIDDLE slot closing the list up with no hole.
   **Lesson worth keeping: "verified live" and "reachable by a player" are different claims.**
+  **B11 added: ONE UNIT PER FAMILY** — equipping a unit whose family is already equipped REPLACES
+  the incumbent in its slot, and an evolved form counts as the same unit (`Warchief` /
+  `Warchief(Warlord)`) via the new Lobby-local `UnitFamilyConfig`. Enforced server-side in
+  `LoadoutService`; the response carries `ReplacedUuid` so the UI can say what was swapped. Also
+  B11: the button is GREEN for EQUIP / RED for UNEQUIP.
   Still animation-only: the `Upgrade` / `Lock` / `ViewPassives` buttons beside it.
 - 🔲 Item economy: nothing writes `Data.Items` in normal play (a latent Victory-drop path exists
   in the Game's `RewardCalculator`, but it has never fired), so every count is 0
@@ -285,6 +290,12 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
   review PENDING**. Verified live end-to-end incl. every protection and the maxed-unit display.
   **NOTE the config, not the blueprint, is authoritative on cost:** `AscensionConfig` ships
   `{ Dupes = 1, Items = {} }` and has **no Silver field**; adding one is AD-Game's shared-canon call.
+- ✅ **B11 — ascension moved to its OWN NPC-opened screen (ADR-0010).** `StarterGui.AscensionScreen`
+  + `Workspace.Lobby.NPC_Ascension` (the Lobby's FIRST NPC and ProximityPrompt). Deliberate
+  deviation from C3's "UI in Units screen detail pane" — and it makes Phase C consistent, since the
+  blueprint already says "NPC → UI" for C1 and C2. **C1/C2 should copy this shape.** It also retired
+  three B9 problems: no dependency on AD-UI's selection, no ResetOnSpawn re-binding, and no "reopen
+  Units to refresh" caveat (the screen owns its own picker). Server unchanged.
 - ⛔ **Sell dupes (C3's other half) — BLOCKED:** needs `SellValueByTier` in `TierConfig`, which does
   not exist and is shared canon, so it spans both Places. `UnitsGUI.QuickSellButton` waits, unwired.
 - ⛔ **Trait reroll (C1) + Stat reroll (C2) — BLOCKED AND NOT AD-GACHA'S.** The trait rarity table is

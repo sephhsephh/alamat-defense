@@ -41,20 +41,22 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   `docs/proposals/2026-08-09-selection-banner-choices.md`. Turning Selection on afterwards is one
   line (`SUPPORTED_TYPES`); the summon screen needs no change.
 
-- **PENDING (AD-UI review, four user-authorised items):** **B7** `SummonController` delegates its
+- **PENDING (AD-UI review, five user-authorised items):** **B7** `SummonController` delegates its
   banner-type test to `BannerRegistry.BlockedReason` · **B8** a `RATES / INDEX` button INSTANCE on
   `SummonScreen` · **B9** one line in `UnitsController.selectUnit` publishing the selected uuid ·
-  **B10** `UnitsController` equip/unequip wiring + a `LoadoutChanged` listener in `HotbarController`.
+  **B10** `UnitsController` equip/unequip wiring + a `LoadoutChanged` listener in `HotbarController` ·
+  **B11** equip-button colour states + the one-per-family client guard, and `AscensionPanel` REMOVED
+  from `SelectedUnitFrame` (ADR-0010).
   **Quests / login / codes still need a NEW reveal answer:** the return-value trick only serves
   player-INITIATED grants; do not bolt a push remote onto `SummonService`.
 
 - **PENDING (AD-UI + both Places): `SellValueByTier` in `TierConfig`** — blocks C3's SELL-DUPES half.
-  Shared canon, so it spans both Places. `UnitsGUI.QuickSellButton` exists, unwired, waiting.
+  Shared canon. `UnitsGUI.QuickSellButton` exists, unwired.
 
 - **PENDING (AD-Traits, BLOCKS blueprint C1+C2):** the trait rarity table is AD-Traits canon in the
   GAME place and **does not exist in the Lobby at all** — trait reroll cannot be built here and
-  trait-on-summon stays inert. Promoting it is an Integration task. `SummonEngine` ASSUMES the API
-  is `TraitTable.RollTrait(rng)` — unverified since B3; check when promoting. C1/C2 are AD-Traits' ROW.
+  trait-on-summon stays inert. Promoting it is an Integration task. `SummonEngine` ASSUMES
+  `TraitTable.RollTrait(rng)` — unverified since B3. C1/C2 are AD-Traits' ROW.
 
 - **PENDING (AD-Game → AD-Integration → AD-UI): ONE settings system for BOTH Places** (user,
   2026-08-09) — same structure + GUI in both, entries scoped `Both`/`GameOnly`/`LobbyOnly`, covering
@@ -65,8 +67,8 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 - **PENDING (AD-UI, small):** the HUD `CurrencyBar` does not refresh after a summon (only on join),
   so Gold reads stale. Wants a `ClientEvents.CurrencyChanged` — copy B10's `LoadoutChanged` shape.
 
-- **PENDING (probably AD-Meta at Phase D):** deploy `MetaMath` to the GAME + flip `deployed.Game`;
-  until then the Game's 22/23 `MetaMath=MISSING` is EXPECTED — do not "reconcile" it.
+- **PENDING (AD-Meta at Phase D):** deploy `MetaMath` to the GAME + flip `deployed.Game`; until then
+  the Game's 22/23 `MetaMath=MISSING` is EXPECTED — do not "reconcile" it.
 
 - **PENDING (AD-Integration, not urgent):** invariant 1 ("every grant flows through `GrantService`")
   holds in the **Lobby only** — the Game still grants via `PlayerInventoryService` /
@@ -75,8 +77,8 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 - **PENDING (AD-UI, small):** the hotbar **hover TRIGGER** is unverified in BOTH Places (`MouseEnter`
   cannot be fired from tooling). Also `Kit_ItemHoverCard`'s build-time-clone master/clone split.
 
-- **PENDING (AD-Game, small):** a unit at `MAX_META_LEVEL` **loses its stored XP** (Archer Lv100 went
-  `XP 400 → 0`) — `ApplyXP` discards overflow at max. Cosmetic, but the Units screen shows it.
+- **PENDING (AD-Game, small):** a unit at `MAX_META_LEVEL` **loses its stored XP** — `ApplyXP`
+  discards overflow at max. Cosmetic, but the Units screen shows it.
 - **PENDING (AD-PlayerLevel, small):** promote `TowerProgressionConfig` to shared for a real XP bar.
 - **PENDING (Game):** real-DataStore round-trip for the PLAYER profile (A7 used a scratch key), plus
   the `ServerStorage.Documentation` → `docs/systems/` migration.
@@ -85,12 +87,10 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   CAN write it (and B9 added `SpendItems`), but no shipping flow grants an item — B7's Event banner
   pays Gold, and B9's ascension costs list no items.
 
-- **NOT a bug, do not "fix" it:** the Units screen's stat NUMBERS are per-TOWER (the catalog's
-  mid-roll reference), so two instances of one tower show equal numbers while their GRADE letters
-  differ. ADR-0003's accepted trade. Details in `docs/systems/lobby-ui.md`.
-
-- **NOT a bug:** `Data.Loadout` fills **LEFT TO RIGHT with no gaps** — a schema-v2 `{ string }`
-  contract field the match launcher reads, so it must stay dense. Fixed slots = schema bump.
+- **NOT a bug:** the Units screen's stat NUMBERS are per-TOWER (the catalog's mid-roll reference), so
+  two instances of one tower show equal numbers while their GRADE letters differ (ADR-0003). And
+  `Data.Loadout` fills **LEFT TO RIGHT with no gaps** — a schema-v2 `{ string }` the match launcher
+  reads, so it must stay dense; fixed slot positions would need a schema bump.
 
 ## Contracts (versions only — detail in `docs/contracts/`)
 
@@ -115,6 +115,6 @@ are SESSION-TASK names. Different sequences, same letters.
 3. **Blueprint B4 HALF DONE** — Event ✅, Selection ⛔ (schema PENDING above). **B5 ✅ (B8)**, which
    also settled `Kit_UnitIcon` — ADOPTED, ADR-0009.
 4. **Phase C started (B9): blueprint C3 ascension ✅** (`docs/systems/ascension.md`); its sell-dupes
-   half is blocked on `SellValueByTier`. **C1 + C2 are AD-TRAITS' row AND blocked** (no trait table
-   in this Place). **C4 feeding** is the next AD-Gacha-adjacent option — check `FeedValue` in
-   `ItemCatalog` and the `AddTowerXP` path exist here before committing to it.
+   half is blocked on `SellValueByTier`. **B11 moved it to its own NPC-opened screen (ADR-0010) —
+   C1/C2 should copy that shape, not put panes in the Units frame.** **C1 + C2 are AD-TRAITS' row AND
+   blocked** (no trait table here). **C4 feeding** needs `FeedValue` + `AddTowerXP` checked first.
