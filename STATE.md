@@ -32,29 +32,35 @@ never rebuild them by hand. Both procedures: `tools/checklists.md`.
 Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 
 - **PENDING (USER, BLOCKING, one pass covers both):** **republish BOTH Places**, then run the
-  **teleport v2 loop live** once. Everything since A7 is Studio canon, not git (ADR-0001); v2 is
-  Studio-verified only, and a `[CONTRACT]` mismatch would block every launch.
+  **teleport v2 loop live** once. Everything since A7 is Studio canon, not git; a `[CONTRACT]`
+  mismatch would block every launch.
 
-- **PENDING (AD-Game or AD-Integration, BLOCKS the Selection banner): add `BannerChoices` to the
-  save schema** (v2→v3, additive-optional = Reconcile + bump + a no-op `Migrations[2]`), deployed to
-  **BOTH Places in one session** — invariant 5 forbids leaving them out of sync, which is exactly
-  why B7 shipped Event and stopped at Selection. Full plan + the rejected `Counters.Global`
-  shortcut: `docs/proposals/2026-08-09-selection-banner-choices.md`. Then AD-Gacha builds the flow;
-  turning it on is one line (`SUPPORTED_TYPES`), and the summon screen needs no change.
+- **PENDING (AD-Game/AD-Integration, BLOCKS the Selection banner): add `BannerChoices` to the save
+  schema** (v2→v3, additive-optional = Reconcile + bump + no-op `Migrations[2]`), deployed to **BOTH
+  Places in ONE session** — invariant 5. Plan + the rejected `Counters.Global` shortcut:
+  `docs/proposals/2026-08-09-selection-banner-choices.md`. Turning Selection on afterwards is one
+  line (`SUPPORTED_TYPES`); the summon screen needs no change.
 
-- **PENDING (AD-UI review, two items):** **B7** changed `SummonController` (its hardcoded
-  banner-type test now delegates to `BannerRegistry.BlockedReason`), and **B8** added a
-  `RATES / INDEX` button instance to `SummonScreen` — B8 changed no AD-UI controller CODE (the
-  index wires that button from its own controller). Both were user-authorised.
-  **Quests / login / codes still need a NEW reveal answer:** "the remote returns the views" only
-  serves player-INITIATED grants; do not bolt a push remote onto `SummonService`.
+- **PENDING (AD-UI review, three user-authorised items):** **B7** `SummonController` delegates its
+  banner-type test to `BannerRegistry.BlockedReason` · **B8** a `RATES / INDEX` button INSTANCE on
+  `SummonScreen` (no code changed) · **B9** ONE line in `UnitsController.selectUnit` publishing
+  `selectedFrame:SetAttribute("Uuid"/"TowerId")` — Phase C's stat-reroll and feeding panes need it.
+  **Quests / login / codes still need a NEW reveal answer:** the return-value trick only serves
+  player-INITIATED grants; do not bolt a push remote onto `SummonService`.
 
-- **PENDING (AD-Game → AD-Integration → AD-UI): ONE settings system for BOTH Places** — user
-  decision 2026-08-09. Same structure + GUI in both, entries scoped `Both`/`GameOnly`/`LobbyOnly`,
-  covering preferences (persisted) AND actions. The Lobby has none today; the Game's
-  `SettingsService` is AD-Game canon. Plan:
-  `docs/proposals/2026-08-09-unified-settings-both-places.md`. The reveal skip-anim toggle waits on
-  it — **nothing is blocked**, B4's click-to-skip covers the need.
+- **PENDING (AD-UI + both Places): `SellValueByTier` in `TierConfig`** — blocks C3's SELL-DUPES half.
+  Shared canon, so it spans both Places. `UnitsGUI.QuickSellButton` exists, unwired, waiting.
+
+- **PENDING (AD-Traits, BLOCKS blueprint C1+C2):** the trait rarity table is AD-Traits canon in the
+  GAME place and **does not exist in the Lobby at all** — trait reroll cannot be built here and
+  trait-on-summon stays inert. Promoting it is an Integration task. `SummonEngine` ASSUMES the API
+  is `TraitTable.RollTrait(rng)` — unverified since B3; check when promoting. C1/C2 are AD-Traits' ROW.
+
+- **PENDING (AD-Game → AD-Integration → AD-UI): ONE settings system for BOTH Places** (user,
+  2026-08-09) — same structure + GUI in both, entries scoped `Both`/`GameOnly`/`LobbyOnly`, covering
+  preferences AND actions. The Lobby has none; the Game's `SettingsService` is AD-Game canon. Plan:
+  `docs/proposals/2026-08-09-unified-settings-both-places.md`. **Nothing is blocked** — B4's
+  click-to-skip covers the reveal toggle.
 
 - **PENDING (AD-UI, small):** the HUD `CurrencyBar` does not refresh after a summon (only on join),
   so Gold reads stale. SummonScreen's own balance IS correct. Wants `ClientEvents.CurrencyChanged`.
@@ -66,25 +72,18 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   holds in the **Lobby only** — the Game still grants via `PlayerInventoryService` /
   `RewardCalculator`. Converging spans both Places.
 
-- **PENDING (AD-Traits, small):** promote the trait rarity table to shared → trait-on-summon
-  switches on here (chance tuned, RNG draw consumed). Until then, `Trait = nil`.
+- **PENDING (AD-UI, small):** the hotbar **hover TRIGGER** is unverified in BOTH Places (`MouseEnter`
+  cannot be fired from tooling). Also `Kit_ItemHoverCard`'s build-time-clone master/clone split.
 
-- **PENDING (AD-UI, small):** the hotbar **hover TRIGGER** is unverified in BOTH Places
-  (`MouseEnter` cannot be fired from tooling) — one manual hover each closes it. Also
-  `Kit_ItemHoverCard`'s master/clone split: `ItemsGUI.HoverPreview` is a build-time clone.
-
-- **PENDING (AD-Game, small):** a unit at `MAX_META_LEVEL` **loses its stored XP** (Archer Lv100
-  went `XP 400 → 0`) — `ApplyXP` discards overflow at max. Cosmetic, but the Units screen shows it.
-
-- **PENDING (AD-PlayerLevel, small):** promote `TowerProgressionConfig` to shared so the Lobby can
-  compute `XpPct`. The unitView sends raw `XP` + `Level` only.
-
+- **PENDING (AD-Game, small):** a unit at `MAX_META_LEVEL` **loses its stored XP** (Archer Lv100 went
+  `XP 400 → 0`) — `ApplyXP` discards overflow at max. Cosmetic, but the Units screen shows it.
+- **PENDING (AD-PlayerLevel, small):** promote `TowerProgressionConfig` to shared for a real XP bar.
 - **PENDING (Game):** real-DataStore round-trip for the PLAYER profile (A7 used a scratch key), plus
   the `ServerStorage.Documentation` → `docs/systems/` migration.
 
-- **PENDING (NEEDS SCHEDULING):** still no writer for `Data.Items` in NORMAL PLAY (Items screen
-  shows zeroes). `GrantService` CAN write it (verified incl. `MaxOwned`) but no shipping flow grants
-  an item — a banner paying TICKETS would be the first. B7's Event banner pays Gold, so not yet.
+- **PENDING (NEEDS SCHEDULING):** still no writer for `Data.Items` in NORMAL PLAY. `GrantService`
+  CAN write it (and B9 added `SpendItems`), but no shipping flow grants an item — B7's Event banner
+  pays Gold, and B9's ascension costs list no items.
 
 - **NOT a bug, do not "fix" it:** the Units screen's stat NUMBERS are per-TOWER (the catalog's
   mid-roll reference), so two instances of one tower show equal numbers while their GRADE letters
@@ -113,9 +112,9 @@ are SESSION-TASK names. Different sequences, same letters.
 2. **Phase B** (`docs/blueprints/phases-b-f-meta.md`). Landed: B0 uuid placement · B1 reveal
    surface · B2 Integration · B3 banner engine · B4 reveal animation · B5 AD-UI review + clip fix ·
    B6 summon UI · B7 EVENT banners · **B8 unit INDEX**. Docs: `gacha.md`, `lobby-ui.md`.
-3. **Blueprint B4 is HALF DONE.** Event ✅ (`EventFirstLight`). **Selection ⛔ — blocked on the
-   schema PENDING above, not on effort.** **Blueprint B5 ✅ (B8): the unit INDEX/codex**, which also
-   settled `Kit_UnitIcon` — **ADOPTED, ADR-0009** (no controller, no byte changed).
-4. **PHASE B's blueprint tasks are now all done except Selection.** Next is either the schema bump
-   that unblocks Selection (needs BOTH Places) or **Phase C** — `docs/blueprints/phases-b-f-meta.md`
-   C1 trait reroll · C2 stat reroll + worthiness · C3 ascension + sell · C4 feeding.
+3. **Blueprint B4 HALF DONE** — Event ✅, Selection ⛔ (schema PENDING above). **B5 ✅ (B8)**, which
+   also settled `Kit_UnitIcon` — ADOPTED, ADR-0009.
+4. **Phase C started (B9): blueprint C3 ascension ✅** (`docs/systems/ascension.md`); its sell-dupes
+   half is blocked on `SellValueByTier`. **C1 + C2 are AD-TRAITS' row AND blocked** (no trait table
+   in this Place). **C4 feeding** is the next AD-Gacha-adjacent option — check `FeedValue` in
+   `ItemCatalog` and the `AddTowerXP` path exist here before committing to it.

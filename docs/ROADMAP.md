@@ -259,15 +259,33 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
   content-gap NOTE, not an error.
 
 ### Phase C — Unit depth
-- 🔲 Trait reroll NPC/UI (filter-protect + confirm + auto-stop on filtered, hold-to-
-  reroll, trait index w/ odds, viewport select)
-- 🔲 Stat reroll NPC/UI (D C B A S SS SSS + Apex; StatGradeConfig odds/ranges/colors)
-- 🔲 Worthiness meter (kills → 100% = guaranteed A-floor + boosted top-grade odds;
-  resets on reroll; shown on hover card)
-- 🔲 **Ascension**: Mythic+ only, max 3 levels; 1 duplicate + artifact materials per
-  level; per-level stat multipliers in AscensionConfig (e.g. A1 ×1.05 → A3 ×3);
-  dupes sellable for Silver; locked/favorited protection
-- 🔲 Feeding (per-stage exp food via catalog; mass-feed w/ protections)
+
+**Ownership split (blueprint's own header):** trait/stat rerolls + worthiness are **AD-Traits**;
+**ascension is AD-Gacha**. C1 and C2 are also BLOCKED — see below.
+
+- ✅ **B9 — ASCENSION (AD-Gacha, 2026-08-09).** Blueprint C3's ascension half.
+  `docs/systems/ascension.md`. Mythic+ only (`AscensionConfig.MinTier`), max A3, one duplicate per
+  level, `Ascension += 1`. **The dupe rule is the dangerous part and is server-authoritative:** skips
+  the unit itself, and anything Locked / Favorited / **in `Data.Loadout`** (equipped was added beyond
+  the blueprint — eating the unit you are about to play with is the same mistake), then takes the
+  OLDEST by `ObtainedAt` with uuid as a stable tiebreak. **Confirm is enforced server-side** — the
+  commit re-derives its own pick and refuses `dupe_changed` rather than destroying a different unit
+  than the one shown. Items are spent BEFORE the dupe, so a shortfall cannot eat it for nothing.
+  `AscensionRules` is split from the service because `OnServerInvoke` is write-only and "which unit
+  do we destroy" must be harness-testable. New `GrantService.SpendItems` (all-or-nothing; zero
+  stores `nil`). ONE authorised line in `UnitsController` publishes the selected uuid — **AD-UI
+  review PENDING**. Verified live end-to-end incl. every protection and the maxed-unit display.
+  **NOTE the config, not the blueprint, is authoritative on cost:** `AscensionConfig` ships
+  `{ Dupes = 1, Items = {} }` and has **no Silver field**; adding one is AD-Game's shared-canon call.
+- ⛔ **Sell dupes (C3's other half) — BLOCKED:** needs `SellValueByTier` in `TierConfig`, which does
+  not exist and is shared canon, so it spans both Places. `UnitsGUI.QuickSellButton` waits, unwired.
+- ⛔ **Trait reroll (C1) + Stat reroll (C2) — BLOCKED AND NOT AD-GACHA'S.** The trait rarity table is
+  AD-Traits canon in the GAME place and **does not exist in the Lobby at all**, which is also why
+  trait-on-summon is inert. Promoting it is an Integration task. `SummonEngine` has ASSUMED
+  `TraitTable.RollTrait(rng)` since B3 — verify that against the real module when promoting.
+- 🔲 Worthiness meter (kills → 100% = guaranteed A-floor + boosted top-grade odds; resets on reroll).
+- 🔲 Feeding (C4) — per-stage exp food via catalog; mass-feed w/ protections. Check `FeedValue` in
+  `ItemCatalog` and the `AddTowerXP` path actually exist in the Lobby before committing to it.
 
 ### Phase D — Economy loops
 - 🔲 Crafting (fragments→artifacts→rainbow; CraftingRecipes config; caps via catalog)

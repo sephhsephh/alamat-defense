@@ -18,7 +18,7 @@ task touches — resolved at bootstrap per the constitution.
 | Lobby scene & flow (stage select, parties) | AD-Lobby | Lobby | Studio (Lobby) |
 | Shop catalog (future) | AD-Gacha | Lobby | TBD when built |
 | Gacha: banners / pity / grant pipeline | AD-Gacha | Lobby | Studio (Lobby) `SSS.Server.Meta.{GrantService,SummonEngine,SummonService}` + `RS.Configs.{Gacha.*,Banners.*,Meta.MetaConfig}` + `docs/systems/gacha.md` (built B3, 2026-08-09) |
-| Ascension (future) | AD-Gacha | Lobby | TBD when built |
+| Ascension | AD-Gacha | Lobby | Studio (Lobby) `SSS.Server.Meta.{AscensionRules,AscensionService}` + `StarterPlayerScripts.AscensionController` + `docs/systems/ascension.md` (built B9, 2026-08-09) |
 | `MetaMath` (Slot/Pick — every meta rotation + weighted roll) | AD-Gacha | both | `shared/src/MetaMath.luau` (SHARED since B3; **Lobby-only deploy so far** — Game reports MISSING by design) |
 | ItemCatalog / TierConfig / icon-UI kit (Phase A) | AD-UI | both | `shared/src/{ItemCatalog,TierConfig}.luau` (SHARED since 2026-08-01) + kit in Studio |
 | StatGradeConfig / AscensionConfig | AD-Game | both | `shared/src/` (SHARED since 2026-08-01) |

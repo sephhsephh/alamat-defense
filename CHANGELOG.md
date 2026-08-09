@@ -1,5 +1,103 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-09 [lobby] B9 — ASCENSION (blueprint C3). The session opened by refusing its own task.
+
+Bootstrap drift **23/23 GREEN**, unchanged at landing. Integration gate: **"No Integration needed —
+proceeding."**
+
+**THE ASSIGNED TASK WAS C1 (trait reroll). IT WAS REFUSED, FOR THREE REASONS.**
+
+1. **No trait table exists in the Lobby.** `RS.Configs.Traits` is absent and nothing trait-shaped is
+   in `shared/src`. A repo-wide grep found the concept only in comments explaining its absence.
+2. **Its shape is unknowable from here** — it lives in the Game place, which this session may not
+   open. Worth recording: `SummonEngine` has ASSUMED `TraitTable.RollTrait(rng)` since B3 and that
+   guess has never been checked against the real module.
+3. **C1 is not AD-Gacha's system.** The blueprint's own Phase C header reads *"[AD-Traits
+   rerolls/worthiness; **AD-Gacha ascension**; home Lobby]"*, and `OWNERSHIP.md` assigns "Trait &
+   stat rerolls / worthiness" to AD-Traits. Building it would have been a single-writer violation on
+   top of a blocked dependency.
+
+Meanwhile **C3 Ascension is AD-Gacha's row and was fully unblocked**: `AscensionConfig` shared and
+drift-green, uuid duplicates since B0, `GrantService` for spending, and consuming a dupe is just
+removing a `Data.Units[uuid]` — no schema change. User chose to switch. **That is the whole reason
+this session shipped anything.**
+
+**THE CONFIG DISAGREES WITH THE BLUEPRINT, AND THE CONFIG WON.** The blueprint says the cost is
+*"1 dupe … + items + Silver via AscensionConfig"*. The shipped config carries
+`Cost = { Dupes = 1, Items = {} }` and **has no Silver field at all**. `AscensionConfig` is SHARED
+canon owned by AD-Game, so adding Silver would be a cross-Place change this session cannot make.
+Implemented the config; the Items path works and is tested but is unexercised because every level
+ships `Items = {}`.
+
+**The dupe rule is the dangerous part, and it got the most attention.** Ascending PERMANENTLY
+DESTROYS a unit. `AscensionRules.PickDupe` skips the unit being ascended, anything of a different
+`TowerId`, and anything **Locked**, **Favorited** or **currently in `Data.Loadout`** — the blueprint
+names only locked+unfavourited; **equipped was added** because eating the unit someone is about to
+play with is the same class of mistake. Among survivors it takes the **oldest by `ObtainedAt`** with
+**uuid as a stable tiebreak**, so the pick cannot differ between preview and commit.
+
+**Confirmation is enforced server-side.** `RequestAscend(uuid, expectedDupeUuid)` re-derives its own
+pick and refuses with `dupe_changed` if it no longer matches what the player was shown; omitting it
+gives `confirm_required`. The client's uuid is never trusted, only compared. On commit, **items are
+spent before the dupe is destroyed** so a material shortfall cannot leave the duplicate already gone.
+
+**`AscensionRules` is split out of `AscensionService`** because **`RemoteFunction.OnServerInvoke` is
+write-only** — logic inside a remote handler cannot be reached by a harness, and "which unit do we
+destroy" must be testable directly. Same split, same reason, as `SummonEngine`/`SummonService`. It
+also guarantees ONE implementation shared by the preview and the commit.
+
+**`GrantService.SpendItems` added** — the inverse of an Item grant, living in `GrantService` for the
+same reason `Spend()` does (invariant 1 greps for writes that bypass it). All-or-nothing; spending
+to zero stores **`nil`, not `0`**.
+
+**ONE line was added to AD-UI's `UnitsController`** (user-authorised): `selectUnit` now publishes
+`selectedFrame:SetAttribute("Uuid"/"TowerId")`. `selectedId` was a private local, so no pane could
+know which unit was on screen. It is the same idiom `loadUnits` already uses on every card, and it
+pays for Phase C's remaining panes. **The controller itself lives in `StarterPlayerScripts`**, so
+AD-UI's ScreenGui holds no AD-Gacha script — B8's split, reused.
+
+**THREE FAILURES WORTH RECORDING, because two were mine and one was procedural.**
+
+- **The active Studio silently switched to the GAME place mid-session.** Two `start_stop_play` calls
+  timed out, and the console that came back was `MatchDirector`/`WaveDirector` — a *match*. Nothing
+  was written (Play is a sandbox and no edit followed), but the Place binding was re-resolved and
+  re-asserted before continuing. This is exactly what the constitution's "resolve Place binding at
+  every bootstrap, never assume" rule is defending against, and it fired for real.
+- **`local a, b: T?, T?` is a syntax error in Luau** — one type per declaration. It stopped
+  `AscensionController` compiling, and the ONLY symptom was a pane that silently never appeared. I
+  had already diagnosed a plausible-but-wrong cause (`ResetOnSpawn`) and rewritten for it before the
+  compile error surfaced in the log. The rebind was KEPT because `UnitsGUI.ResetOnSpawn = true` is
+  real — it is the only meta screen set that way — and the live run shows `bound to UnitsGUI`
+  printing twice, so it does real work. But it was **not** the fix, and the changelog should not
+  pretend it was.
+- **A bug in my own code that would have read as "ascension does nothing":** `BuildInfo` returned
+  early at max level *before* computing `CurrentMult`, so a fully-ascended unit displayed
+  **`DMG x1.00`** instead of x3.00. Found only because the harness printed the pane's actual text.
+
+**A harness that passed vacuously, and why that matters.** The first protection run "passed" while
+testing nothing: the dev profile carries Necromancers from earlier sessions, and a previous run of
+this same harness had left some at `ObtainedAt = 1000`, so the picker kept correctly choosing a
+leftover while the harness locked units that were never candidates. Fixed by normalising every
+pre-existing unit to "now" first. **A green test on a dirty profile is not evidence.**
+
+**Acceptance — verified LIVE in Play (server + client harnesses, since deleted):**
+oldest-first · **Locked skipped** · **Favorited skipped** · **equipped skipped** · never the unit
+itself · Common refused *"Mythic+ units only"* · **stale confirm → `dupe_changed` with the dupe
+still alive** · missing confirm → `confirm_required` · real ascend consumed **exactly** the previewed
+uuid · A1→A2→A3 then *"Fully ascended"* · consumed units gone from `GetUnitViews` · unit count −3 ·
+`Counters.Global.Ascensions` incremented · `SpendItems` partial / insufficient-unchanged /
+atomic-unchanged / zero-stores-nil · pane renders for a Mythic, **hidden for a Common**, and a maxed
+unit reads **`DMG x3.00`**.
+
+**Contract impact: NONE.** No schema bump, no shared module, no template. `Counters.Global` is an
+open map (the ADR-0008 precedent), so `Ascensions` is purely additive.
+
+**PENDINGs: 2 NEW** (`SellValueByTier` in shared `TierConfig`, which blocks C3's sell-dupes half;
+AD-Traits' trait table, which blocks C1+C2 entirely), **1 amended** (the AD-UI review now covers
+three items). Docs: new `docs/systems/ascension.md`; `OWNERSHIP.md` Ascension row filled in.
+
+**USER must republish the LOBBY** — B9, like everything since A7, is Studio canon and not in git.
+
 ## 2026-08-09 [lobby] B8 — the UNIT INDEX (blueprint B5). `Kit_UnitIcon` ADOPTED after 3 days parked.
 
 Bootstrap drift **23/23 GREEN**, unchanged at landing. Integration gate: **"No Integration needed —

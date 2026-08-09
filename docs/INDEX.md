@@ -22,6 +22,10 @@
   (`RS.Shared.UIKit`, `shared/src` files) + 8 real instance templates (`RS.UITemplates.Kit`, the
   INSTANCE is canon per ADR-0005), the shared hotbar, the configs it depends on, and the rules
   that keep it healthy. Split out of `lobby-ui.md` at A7 once BOTH Places used the kit.
+- `ascension.md` — **AD-Gacha canon**: dupe-fed ascension (blueprint C3, B9). The dupe-protection
+  rules (locked/favourited/**equipped**, oldest-first), the server-enforced confirm, why
+  `AscensionRules` is split from the service, and the one authorised line in `UnitsController`.
+  Read before touching anything that destroys a player's unit.
 - `gacha.md` — **AD-Gacha canon**: the banner engine (B3). `MetaMath` (shared), `GrantService` (THE
   one grant path), `BannerRegistry` + banner file shape, the exact summon order, pity, the
   empty-pool fallback, and the "remote returns the views" reveal decision. Read before touching
