@@ -37,7 +37,14 @@ A bare string id also works. **First production caller = gacha (B3)**, which pas
   `RewardsFrame:GetAttribute("MaxVisibleRows")`) — retune spacing in Studio, no code change.
 - **Back-to-back grants QUEUE, never merge**, so each reward source stays visually distinct.
 
-### Reveal animation + two-stage click (B4, 2026-08-09)
+### Reveal animation + two-stage click (B4, 2026-08-09 — REVIEWED + APPROVED by AD-UI at B5)
+
+> **Review status:** B4 was written by AD-Gacha inside AD-UI's canon on the user's explicit
+> authorisation. AD-UI re-tested every claim independently at B5 (2026-08-09) rather than trusting
+> the changelog — stagger, no-reflow, overshoot magnitude, skip, gated close, layout invariance,
+> n=1, click-catcher integrity and shared-canon cleanliness **all PASS**. Approved as written; the
+> only change was the padding fix below, which was a B1 defect, not a B4 one.
+
 
 Cells reveal **one at a time** (pop-in, `UIScale` `RevealStartScale` → 1, Back/Out) instead of the
 whole grid appearing at once. Then **click 1 = SKIP**, **click 2 = CLOSE**.
@@ -61,9 +68,18 @@ whole grid appearing at once. Then **click 1 = SKIP**, **click 2 = CLOSE**.
   it to `(0.5,0.5)` at position `(0.5,0.5)` — geometrically identical coverage (Main is
   `{1,0},{1,0}` at anchor `(0,0)`), but it now grows from the middle instead of the top-left corner.
   **The grid-positioned ROOT is never re-anchored** — that would shift the cell out of its slot.
-- **Keep the overshoot small.** `RewardsFrame.ClipsDescendants = true` and padding is 8px, so
-  Back/Out from 0.6 (peak ≈ 1.04 ≈ 3px per side on a 150px cell) fits. A much lower start scale or a
-  stronger easing **will clip** on the outer edges.
+- **Keep the overshoot small.** `RewardsFrame.ClipsDescendants = true`, so Back/Out from 0.6 (peak
+  measured live at **1.0400**) must fit inside the padding. A much lower start scale or a stronger
+  easing **will clip** on the outer edges.
+- **`UIPadding` is 15px, not the 8px it was built with — and the reason is not decoration.**
+  `UnitTemplate.UnitLevel` sits at x `−0.072`, i.e. the level badge **overflows its own 150px cell
+  by 10.8px to the left**, and at peak overshoot by 14.2px. With 8px padding the leftmost column's
+  badge was permanently cut by **2.8px at rest** and **6.2px during the pop**. 15px clears both
+  (measured after: **−4.2px** at rest, **−0.8px** through the reveal — negative means clearance).
+  **Do not drop it back below ~15px**, and if `RevealStartScale` is lowered or the easing
+  strengthened, re-measure. Found by AD-UI's B5 review; it predated the animation (B1 shipped it)
+  and B4 only made it briefly more visible. Fixed on the CONTAINER on purpose — `UnitTemplate` is
+  the user's design, adopted as-is under ADR-0007, so it is not the place to fix this.
 - **Cells are hidden until their turn, and this does NOT reflow.** `UIGridLayout` skips invisible
   children, but because cells reveal in ascending `LayoutOrder` each one lands in the next free slot
   and the ones already shown never move. Asserted live, not assumed: cell 1 held its

@@ -40,10 +40,10 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 
 - **PENDING (AD-UI / AD-Gacha):** the unit card stays **Lobby-local not shared** (B1) — revisit at
   the unit INDEX (blueprint B5), which is also when `Kit_UnitIcon`'s fate (ADR-0007, PARKED, do not
-  delete) gets settled. **AD-UI should REVIEW B4's reveal animation** — AD-Gacha wrote it inside
-  AD-UI's canon on the user's explicit authorisation (same pattern as `LoadoutService`).
-  **Quests / login / codes need a NEW reveal answer:** B3's "the remote returns the views" only
-  works for player-INITIATED grants. Do not bolt a push remote onto `SummonService` for them.
+  delete) gets settled. **Quests / login / codes need a NEW reveal answer:** B3's "the remote
+  returns the views" only works for player-INITIATED grants. Do not bolt a push remote onto
+  `SummonService` for them. (B4's animation was REVIEWED + APPROVED by AD-UI at B5 — that half is
+  closed; the review found and fixed a clipped level badge that predated it.)
 
 - **PENDING (whoever needs it FIRST, probably AD-Meta at Phase D):** deploy `MetaMath` to the GAME
   place and flip `deployed.Game` in `shared/manifest.json`. Until then the Game's drift reads

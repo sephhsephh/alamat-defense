@@ -1,5 +1,75 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-09 [lobby] B5 (AD-UI) — B4's animation REVIEWED + APPROVED. Fixed a clipped level badge that predated it.
+
+Bootstrap drift **23/23 GREEN**, unchanged at landing. Integration gate: **"No Integration needed —
+proceeding."** This session touched **zero shared canon and zero code** — the only change is one
+container property. Clearing the AD-UI half of the `ObtainRewardsGUI` PENDING.
+
+**The review.** B4 was written by AD-Gacha inside AD-UI's canon on the user's explicit
+authorisation, and left a PENDING asking the owner to check it. Every claim was **re-tested live
+rather than read**, from a temporary harness driven through the controller's own `DevDismiss` hook
+so the real `advance()` path ran:
+
+| Claim | Verdict | Evidence |
+| --- | --- | --- |
+| Cells reveal one at a time | **PASS** | visible-count progression `1-2-3-4-5-6-7-8-9-10` |
+| Hiding cells does not reflow | **PASS** | cell 1's `AbsolutePosition` never moved |
+| Back/Out overshoot stays small | **PASS** | peak `UIScale` **1.0398** — B4 predicted ≈1.04 |
+| Skip is instant, NOT gated | **PASS** | n=15: 2 visible → 15, all at scale 1.000, still open |
+| Close IS gated, from reveal END | **PASS** | refused inside the dead period, accepted after |
+| Animation disturbs no layout | **PASS** | n=20 still `806×482`, canvas 640, `CanvasPosition` 0 |
+| n=1 edge case | **PASS** | `166×166`, one cell, full scale |
+| Shared canon untouched | **PASS** | drift 23/23; `Kit_ItemIcon` still `5623f4b4` |
+| Click catcher intact | **PASS** | `Main.Active=true`, Pos `0,0`, Size `1,1` |
+
+**Approved as written.** The `UIScale`-on-the-clone decision is correct, and putting it on `Main`
+rather than the grid-positioned root is the right call for exactly the reason B4 gave.
+
+**Two honest caveats on the review itself, recorded rather than glossed:**
+
+1. **The queue-race test was badly built and did NOT isolate what it claimed.** The harness sent two
+   dismisses; the second skipped batch 2, so the stale-loop race was never exercised. Reading the
+   code, that race is in fact **unreachable** — the only route to the next batch is `dismiss()`,
+   which requires `not revealing` — so `revealToken` is belt-and-braces, not load-bearing. Correct
+   either way, but proven by inspection, not by the run.
+2. **`startReveal` has no `pcall`.** If it ever threw mid-loop, `revealing` would stick `true` and
+   `dismiss()` would be blocked — but `advance()` → `finishReveal()` still fires, so a single click
+   recovers it. Self-healing; left alone deliberately rather than adding a guard nothing needs yet.
+
+**THE REAL FINDING — a clipped level badge, and it is B1's defect, not B4's.**
+`UnitTemplate.UnitLevel` sits at x `−0.072`: the badge **overflows its own 150px cell by 10.8px to
+the left**, and by 14.2px at peak overshoot. With `RewardsFrame` at 8px padding and
+`ClipsDescendants = true`, the leftmost column's badge was **permanently cut by 2.8px at rest** and
+**6.2px during the pop**. B1 shipped that; B4's animation only made an existing cut briefly wider,
+and its own ≈1.04 estimate was accurate.
+
+- **Fixed on the CONTAINER: `UIPadding` 8px → 15px.** Not on `UnitTemplate` — that is the user's
+  design, adopted as-is under ADR-0007, and redesigning it to suit the frame would be backwards.
+  The controller already reads `UIPadding` off the instance, so **this is a zero-code-change fix**
+  and stays retunable in Studio, which is the whole point of B1's read-from-the-instances rule.
+- **Verified live after:** worst clip **−4.2px at rest** and **−0.8px sampled through the entire
+  reveal** (negative = clearance), peak scale `1.0400`. Frame for n=7 measured `812×338`, matching
+  `5·150 + 4·8 + 2·15` and `2·150 + 8 + 2·15` exactly. A full 5×3 grid needs `820×496`, inside the
+  `900×600` `UISizeConstraint`.
+- **Do not drop the padding back below ~15px**, and re-measure if `RevealStartScale` is lowered or
+  the easing strengthened. Written into `docs/systems/lobby-ui.md` with the numbers.
+
+**NEW USER RULE (2026-08-09), now in `CLAUDE.md`: Studio AUTOSAVES — do NOT ask the user to save
+before `start_stop_play`, just Play.** The standing-permission line said "ask the user to SAVE
+first"; that instruction is retired. Stop when done and leave every `Dev*` attribute OFF as before.
+
+**Contract impact: NONE.** No schema, no teleport payload, no shared module, no template, no code.
+One `UIPadding` value on a Lobby-local screen.
+
+**PENDINGs: the AD-UI review half is CLEARED** (deleted from the `ObtainRewardsGUI` entry per
+ADR-0006; this entry is its record). Still open in that entry: the unit card's shared-vs-local
+status at the unit INDEX, and the reveal answer for quests/login/codes. Nothing new. Untouched:
+hotbar hover trigger, `Kit_ItemHoverCard` master/clone, `MetaMath` → Game, `Data.Items` writer,
+max-level XP loss, GrantService convergence, trait rarity table.
+
+**USER must republish the LOBBY** — B5, like everything since A7, is Studio canon and not in git.
+
 ## 2026-08-09 [lobby] B4 — reward reveal ANIMATES (one cell at a time) + two-stage click. Drift untouched.
 
 Bootstrap drift **23/23 GREEN**, unchanged at landing — **this session touched ZERO shared canon**,
