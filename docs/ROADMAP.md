@@ -42,10 +42,18 @@ everything untradeable at launch).
 - ✅ Collection screen rebuilt on real instances + the `GetUnitViews` view-model (A5, 2026-08-03)
 - ✅ Items screen (A5, 2026-08-03) — catalog-driven; real counts land when an item economy does
 - 🟡 v1: parties (in-memory, single-server; cross-server/persisted = later phase)
-- ✅ **Equipping (2026-08-06)** — `Server.Lobby.LoadoutService` (`SetLoadoutSlot`) is the FIRST
-  writer of `Data.Loadout`, so `Equipped` is finally real. Slots fill LEFT TO RIGHT (dense uuid
-  list — a contract requirement). The shared hotbar is the picker UI. **A7 verified the full chain
-  live: equip in the Lobby → the Game place starts a match from those exact uuids.**
+- ✅ **Equipping — server 2026-08-06, REACHABLE BY A PLAYER only at B10 (2026-08-09).**
+  `Server.Lobby.LoadoutService` (`SetLoadoutSlot`) is the first writer of `Data.Loadout`; slots fill
+  LEFT TO RIGHT as a dense uuid list (a contract the match launcher reads). A7 verified the full
+  chain live — equip in the Lobby → the Game starts a match from those exact uuids — **but that ran
+  through a test harness, and no client code ever called the remote.** `UN/EquipButton` sat
+  unreferenced by any script for three days while the docs read "✅ Equipping". **B10 wired it:**
+  EQUIP / UNEQUIP / LOADOUT FULL, `loadUnits()` on change so the grid and sort follow, and a new
+  `ClientEvents.LoadoutChanged` the hotbar listens to. Equipping into a full loadout is refused
+  client-side rather than letting LoadoutService's dense-list clamp silently drop the last unit.
+  Verified live incl. unequipping the MIDDLE slot closing the list up with no hole.
+  **Lesson worth keeping: "verified live" and "reachable by a player" are different claims.**
+  Still animation-only: the `Upgrade` / `Lock` / `ViewPassives` buttons beside it.
 - 🔲 Item economy: nothing writes `Data.Items` in normal play (a latent Victory-drop path exists
   in the Game's `RewardCalculator`, but it has never fired), so every count is 0
 

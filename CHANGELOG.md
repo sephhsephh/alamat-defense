@@ -1,5 +1,74 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-09 [lobby] B10 — EQUIPPING WORKS. A button nobody had ever connected.
+
+Bootstrap drift **23/23 GREEN**, unchanged at landing. Integration gate: **"No Integration needed —
+proceeding."** No shared canon touched — `UIKitHotbar` is shared, so only the Lobby-local
+`HotbarController` was edited.
+
+**THE FINDING THAT PROMPTED THIS SESSION.** `Server.Lobby.LoadoutService` + `Remotes.SetLoadoutSlot`
+shipped **2026-08-06**, and **A7 proved the whole chain live** — equip in the Lobby, and the Game
+place starts a match from those exact uuids. That proof ran through a **test harness**. A grep for
+callers of `SetLoadoutSlot` returned the service itself and nothing else: `UN/EquipButton` sat in the
+Units detail pane **unreferenced by any script**. For three days the loadout system was complete,
+verified, documented as done — and **no player could equip anything**, because the last button was
+never connected. The docs said "✅ Equipping" and meant it about the plumbing.
+
+Worth keeping as a lesson: *"verified live"* and *"reachable by a player"* are different claims, and
+a harness that drives a remote directly cannot tell them apart.
+
+**What shipped.** `UnitsController` now wires the button: EQUIP / UNEQUIP / **LOADOUT FULL** derived
+from the selected unit, a call to `SetLoadoutSlot`, then `loadUnits()` so `Equipped`, the sort order
+(equipped first) and every card update — and a new **`ClientEvents.LoadoutChanged`** that
+`HotbarController` listens to.
+
+Nice detail: `HotbarController` already carried `-- Re-read after the Units screen closes: equipping
+there changes what belongs in the slots`, hooked to `OpenUnitsWithUuid`. **That refresh was written
+in 2026-08-06 anticipating exactly this, back when nothing could equip.** It stays (it still covers
+a loadout changed by anything else), but the real signal is now a dedicated event rather than
+reusing an "open screen" ping as a refresh — that ping also re-opens and re-selects, which is a side
+effect nobody wanted here.
+
+**Two rules the implementation had to respect, both of them other people's:**
+
+- **`Data.Loadout` must stay DENSE.** It is a schema-v2 `{ string }` the MATCH LAUNCHER reads.
+  Unequipping the middle slot makes the list close up; re-equipping appends at the end. Verified
+  explicitly — the harness asserts no holes and no duplicates after every single operation, because
+  a hole here breaks match launches in the *other* Place.
+- **Equipping into a full loadout is refused CLIENT-SIDE rather than sent.** `LoadoutService` would
+  clamp the insert and silently drop whoever holds the last slot. Reading its code, that clamp is a
+  dense-list SAFETY rail, not a designed swap — so relying on it would mean a player loses a unit
+  they never chose to unequip. The button reads `LOADOUT FULL` and goes inactive instead. **No
+  server behaviour was changed**; the guard is purely additive.
+
+**Ownership, raised before writing anything.** Equip is **AD-Lobby canon** (`LoadoutService`) inside
+**AD-UI's screen** (`UnitsGUI`) — it is not AD-Gacha's row on either axis, exactly like B9's refusal
+of C1. The user was asked and chose "do it properly, editing `UnitsController`" over a zero-touch
+workaround that would have left the grid showing stale `Equipped` state. Precedent for the
+cross-ownership edit is `LoadoutService` itself, which AD-UI wrote into AD-Lobby's canon in
+2026-08-06 with the same kind of sign-off. **AD-UI's review PENDING now lists four items.**
+
+**Acceptance — verified LIVE in Play, harness since deleted, driven through the real button path
+(`DevEquip` runs the same `doEquipToggle()` a press runs, since `GuiButton.Activated` cannot be
+fired from tooling):**
+
+- equip A, B, C → `[1:A 2:B 3:C]`, order preserved, **dense after every step**
+- **unequip the MIDDLE one → the list CLOSES UP** to `[1:A 2:C]`, no hole
+- re-equip → appends at the END, not back into the gap
+- at the 3/3 cap with a spare selected: label reads **`LOADOUT FULL`**, button **inactive**, and a
+  press leaves the loadout **byte-identical** — nobody silently dropped
+- direct write to **locked slot 4** → `slot_locked`, `RequiredLevel = 5`
+- **unowned uuid** → `not_owned`
+- **hotbar filled slots == `#Data.Loadout`** (3 == 3) after the dust settled
+
+**Contract impact: NONE.** No schema, no shared module, no template. One new client-side
+BindableEvent.
+
+**PENDINGs: 0 new, 1 amended** (AD-UI review → four items). Docs: `docs/systems/lobby-ui.md` gained
+the equip section plus a `ClientEvents` list, and was trimmed back to exactly its 300-line cap.
+
+**USER must republish the LOBBY** — B10, like everything since A7, is Studio canon and not in git.
+
 ## 2026-08-09 [lobby] B9 — ASCENSION (blueprint C3). The session opened by refusing its own task.
 
 Bootstrap drift **23/23 GREEN**, unchanged at landing. Integration gate: **"No Integration needed —

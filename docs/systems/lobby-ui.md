@@ -1,20 +1,16 @@
 # SYSTEM — Lobby UI (screens)
 
-<!-- owner: AD-UI | scope: lobby | last-verified: 2026-08-09 (B6) -->
+<!-- owner: AD-UI | scope: lobby | last-verified: 2026-08-09 (B10) -->
 
-Split out of `places/lobby/CONTEXT.md` at A5 when that file passed its 150-line cap. **At A7
-(2026-08-06) the KIT half moved out to `docs/systems/ui-kit.md`** — the kit is used by both Places
-now, so describing it from a Lobby viewpoint had become wrong. This file is the Lobby's SCREENS.
-Read `ui-kit.md` first for the components they build on.
-
-Studio is canon for the actual instances and controller code (ADR-0001); this describes what is
-there and why.
+Split out of `places/lobby/CONTEXT.md` at A5; the KIT half moved to `docs/systems/ui-kit.md` at A7.
+This file is the Lobby's SCREENS — read `ui-kit.md` first for the components they build on. Studio
+is canon for the instances and controller code (ADR-0001); this describes what is there and why.
 
 ## `IndexScreen` — the unit index / codex (B8, 2026-08-09)
 
-Blueprint Phase B task **"B5 Index/Codex"**, verbatim: *"iterate ItemCatalog Towers → obtained
-silhouettes (own any instance), source text, exact per-banner rates table (computed from configs,
-not hand-written)."* `StarterGui.IndexScreen` + `IndexController`. All four are DERIVED:
+Blueprint Phase B task **"B5 Index/Codex"**: *"iterate ItemCatalog Towers → obtained silhouettes
+(own any instance), source text, exact per-banner rates table (computed from configs, not
+hand-written)."* `StarterGui.IndexScreen` + `IndexController`. All four are DERIVED:
 
 | On screen | Derived from |
 | --- | --- |
@@ -25,18 +21,16 @@ not hand-written)."* `StarterGui.IndexScreen` + `IndexController`. All four are 
 
 Catalog a tower or ship a banner file and this screen updates itself. No code change.
 
-**The rate maths is the real deliverable.** A player's chance of a specific unit on a specific
-banner is TWO rolls, not one:
+**The rate maths is the real deliverable** — a specific unit on a specific banner is TWO rolls:
 
 ```
 P(unit) = (tierWeight / totalTierWeight) × (unitWeight / totalWeightInTier)
 ```
 
-where `unitWeight` is `Featured.Boost` for a featured id and `1` otherwise. That is why a featured
-unit's number **moves between rotations**, and why the row is tagged `★ featured` rather than
-quietly showing a figure that will be wrong in an hour. **Pity is deliberately NOT folded in** — it
-is a floor on tier across many pulls, not a per-pull probability, and blending them would produce a
-number honest about neither.
+`unitWeight` is `Featured.Boost` for a featured id, else `1` — which is why a featured unit's number
+**moves between rotations** and the row is tagged `★ featured` rather than quietly showing a figure
+that will be wrong in an hour. **Pity is deliberately NOT folded in**: it is a floor on tier across
+many pulls, not a per-pull probability, and blending them is honest about neither.
 
 **Honesty rules — the point of a codex.** A tower in **no** pool says *"Not currently obtainable"*
 (`0%` would imply merely rare). A banner that cannot be pulled right now **still lists its rates**,
@@ -56,13 +50,11 @@ consumer and is what un-parked it — ADR-0009.** The silhouette is one property
   `SummonController` uses for the HUD's Summon button — which is why **B8 changed no AD-UI
   controller code**; only a new real instance appeared in their screen (user-authorised).
 - `DisplayOrder = 60`: above `SummonScreen` (50), below `ObtainRewardsGUI` (100).
-- **Studio harness:** `DevSelect` (tower id) selects via the same `renderDetail()` a click runs
-  (`GuiButton.Activated` cannot be fired from tooling, and there is no `GuiButton:Activate()`).
-  `DevFakeUnobtained` (tower id) forces one unit unowned so the **silhouette branch can be tested on
-  a profile that owns everything** — same category as `DevSimulateFirstJoin`. `DevAutoOpen` opens on
-  boot. All left OFF/empty.
-- Plain but functional real-instance tree, **for the user to restyle** (the `SummonScreen`
-  precedent); the controller reads its metrics off the instances.
+- **Harness:** `DevFakeUnobtained` forces one unit unowned so the **silhouette branch can be tested
+  on a profile that owns everything** (same category as `DevSimulateFirstJoin`). See the harness
+  section at the bottom for the rest.
+- Plain but functional real-instance tree, **for the user to restyle**; the controller reads its
+  metrics off the instances.
 
 ## `SummonScreen` — the banner carousel (B6, 2026-08-09)
 
@@ -86,25 +78,19 @@ header says so) — the client deriving the same featured set as the server is *
 problem, because the server re-derives everything at pull time. This screen's entire authority is
 "a banner id and a pull count".
 
-- **ENTRY POINT IS AN EVENT, NOT A CALL: `RS.ClientEvents.OpenSummon:Fire()`.** The HUD's existing
-  `Summon` button fires it and has no other privilege. **This is what makes the blueprint's NPC a
-  later drop-in** (user decision, 2026-08-09): give a model a `ProximityPrompt` and fire the same
-  event — no change to this screen. The Lobby has no NPC or prompt system today, which is why the
-  HUD button ships first.
+- **ENTRY POINT IS AN EVENT, NOT A CALL: `RS.ClientEvents.OpenSummon:Fire()`.** The HUD's `Summon`
+  button fires it and has no other privilege — **which is what makes the blueprint's NPC a later
+  drop-in**: give a model a `ProximityPrompt` and fire the same event, no change here.
 - **The reveal is not ours.** `RequestSummon` is a RemoteFunction that RETURNS the granted views;
   the controller fires `ClientEvents.ShowRewards` with `result.Rewards` **unchanged** and touches
   nothing inside `ObtainRewardsGUI`. x10 = ONE call, ONE reveal with 10 entries.
-- **Featured chips are clones of the SHARED `Kit.UnitIcon`** (cross-phase invariant 2: icons render
-  through the kit). This gives that template its **first real consumer** — but it does **NOT**
-  settle ADR-0007: whether the *reveal / index* unit card should be `Kit_UnitIcon` or the user's
-  `UnitTemplate` is still open and still belongs to blueprint B5. No `UIKit.UnitIcon` controller
-  was built; the chips are cloned and filled locally, exactly as `ObtainRewardsController` does
-  with `Kit_ItemIcon`. Chip size is read from `FeaturedRow`'s `ChipWidth`/`ChipHeight` attributes.
+- **Featured chips are clones of the SHARED `Kit.UnitIcon`** (invariant 2) — its FIRST real
+  consumer; B8's index was the second, and ADR-0009 then adopted it. Cloned and filled locally, no
+  controller. Chip size reads `FeaturedRow`'s `ChipWidth`/`ChipHeight` attributes.
 - **Templates** (real, editable, `Visible = false`): `BannerCardTemplate` (with its own
   `RateRowTemplate`, `FeaturedRow`, `ClosedOverlay`) and `PullButtonTemplate`.
-- **Balance** comes from `GetUnitViews`, the Lobby's SINGLE profile read path (ADR-0004) — no
-  second read path was added for a currency number — then from `result.Currencies` after a pull,
-  so a successful summon needs no extra round trip.
+- **Balance** comes from `GetUnitViews` (the SINGLE read path, ADR-0004 — no second path for a
+  currency number), then from `result.Currencies` after a pull, so no extra round trip.
 - **Refusals are surfaced, not swallowed.** Server reason codes map to player-readable text;
   an UNKNOWN code prints the raw code rather than a friendly lie, so a new server reason is
   visible instead of "failed". Non-`Standard` banners and closed windows show `ClosedOverlay`
@@ -225,29 +211,41 @@ the last cell's bottom at 599 inside a frame bottom of 607. Drift stayed **23/23
   `UnitPreviewTemplate` popup; click → `SelectedUnitFrame`. Live SearchBar. FILTERS button → the
   shared `UIKit.FilterPanel` (tier + equipped/favourited/locked).
 
-  - **A5:** stat rows are dual-slot — each of `Stats.BaseStatsFrame.{DMG,RNG,SPA}` has a `Grade`
-    TextLabel for the letter and a `TextLabel` for the number. Rows WITHOUT a `Grade` child (the
-    hover preview's Attack/Element/MaxPlacement) keep the old single-label behaviour.
-  - **A6:** the number slot is filled from the shared `UnitStatsCatalog.Get(towerId)` (ADR-0003) —
-    resolver-PRODUCED base values, **SPA already inverted**, not raw `BaseStats`. `formatStat`
-    trims decimals (`15`, `1.4`, `2.5`) and renders `--` for a missing value, so Farm (no DMG/SPA)
-    or an unknown towerId **never prints "nil"**. Verified live A7: `20 / 22 / 2.5` with grades.
+  - **B10 — EQUIPPING WORKS FROM THE UI AT LAST.** `LoadoutService` + `SetLoadoutSlot` shipped
+    2026-08-06 and A7 proved the chain live (equip here → the Game starts a match from those exact
+    uuids) — but that ran through a **test harness**, and **no client code ever called the remote**.
+    `UN/EquipButton` sat in the detail pane unreferenced by any script, so **a player could not
+    equip at all** for three days. Now wired: the button reads EQUIP / UNEQUIP / LOADOUT FULL from
+    the selected unit, and a change re-runs `loadUnits()` (so `Equipped`, the sort and the cards
+    update) and fires the new **`ClientEvents.LoadoutChanged`**, which `HotbarController` listens to.
+    - **`Data.Loadout` must stay DENSE** — it is a schema-v2 `{ string }` the match launcher reads.
+      Unequipping the middle slot makes the list CLOSE UP; re-equipping appends at the end. Never
+      write a hole, and do not "fix" the left-to-right fill.
+    - **Equipping into a full loadout is refused client-side**, not sent. `LoadoutService` would
+      clamp the insert and silently drop whoever holds the last slot — that clamp is a dense-list
+      SAFETY rail, not a designed swap, and losing a unit you did not choose to unequip is a nasty
+      surprise. Explicit unequip first; no server behaviour was changed.
+    - Harness: `DevEquip` (a uuid) runs the same `doEquipToggle()` a press runs.
+  - **A5/A6:** stat rows are dual-slot — `Stats.BaseStatsFrame.{DMG,RNG,SPA}` each carry a `Grade`
+    label for the letter and a `TextLabel` for the number (rows without `Grade` keep the old
+    single-label behaviour). The number comes from shared `UnitStatsCatalog.Get(towerId)`
+    (ADR-0003) — resolver-PRODUCED, **SPA already inverted**. `formatStat` trims decimals and
+    renders `--` for a missing value, so Farm or an unknown towerId **never prints "nil"**.
   - **Read this before "fixing" a bug report:** the number is **per-TOWER, not per-unit**. Two
     instances of one tower show the SAME number while their GRADE letters differ — the grade comes
     from that unit's roll, the number is the catalog's mid-roll reference (tier 1 / ML 1 / no
     trait / asc 0). ADR-0003's accepted trade; per-unit numbers would need the Min/Max ranges
     promoted too, which ADR-0003 deliberately rejected.
-  - **The cards are NOT `Kit.UnitIcon` clones — and that is now a SETTLED decision (ADR-0007).**
-    They are a screen-local design (`PlacementPrice` + a level `TextLabel`); the kit's
-    `NameLabel`/`LevelBadge`/`CostLabel`/`ShinyBadge` are absent. So the Units screen goes "through
-    the kit" for its **FilterPanel** and the shared **TierConfig/StatGradeConfig/UnitStatsCatalog**,
-    but not for its cards. A7 flagged this as the last §8 PARTIAL; the user decided 2026-08-06 to
-    **PARK it**: §8 reads pragmatically and this screen **PASSES**, `Kit_UnitIcon` is neither
-    adopted nor deleted, and the unit-card question moves to Phase B. **Do not "fix" this by
-    rebuilding the cards on `Kit.UnitIcon`.** If a shared card is ever built, THIS card is the one
-    lifted into the kit — the user's design is the source of truth.
-  - Still open: real per-unit models (everything uses `UnitModels.Placeholder`) and functional
-    action buttons (animation-only today).
+  - **The cards are NOT `Kit.UnitIcon` clones — SETTLED (ADR-0007, and ADR-0009 which adopted the
+    kit icon for OTHER screens without touching this).** They are a screen-local design; the Units
+    screen goes "through the kit" for its **FilterPanel** and the shared
+    **TierConfig/StatGradeConfig/UnitStatsCatalog**, not for its cards. **Do not "fix" this by
+    rebuilding them on `Kit.UnitIcon`** — if a shared unit CARD is ever built, THIS card is the one
+    lifted into the kit; the user's design is the source of truth.
+  - Still open: real per-unit models (everything uses `UnitModels.Placeholder`), and the
+    `Upgrade` / `Lock` / `ViewPassives` buttons are still animation-only (equip works as of B10).
+  - **`AscensionPanel`** also lives in `SelectedUnitFrame` — B9, AD-Gacha. See
+    `docs/systems/ascension.md`; its controller is in `StarterPlayerScripts`, not this screen.
 
 - **Items screen** (`StarterGui.ItemsGUI.ItemsController`, A5) — opens from **HUD.Inventory**.
   Chrome cloned from the Units screen so the design matches. The LIST is every `ItemCatalog` entry
@@ -257,40 +255,42 @@ the last cell's bottom at 599 inside a frame bottom of 607. Drift stayed **23/23
   Hover pops `HoverPreview` (the kit's `ItemHoverCard`) to the RIGHT; click fills
   `SelectedItemFrame`. Search + `UIKit.FilterPanel` (tier / kind / owned-only). Sort: owned first,
   then tier high→low, then name.
-  **Every ITEM count reads 0** and that is correct — `Data.Items` has no writer in either Place.
-  (A drop path exists in the Game's `RewardCalculator` → `AddItem`, but it only fires on a
-  **Victory** roll against the stage drop table, which has never landed. Confirmed empty at A7.)
+  **Every ITEM count reads 0** and that is correct — no shipping flow writes `Data.Items` (the
+  Game's latent `RewardCalculator` → `AddItem` Victory drop has never fired).
 
-- **Collection screen** (`StarterGui.CollectionScreen.Controller`, A5 rebuild) — was script-built,
-  now REAL instances (`Panel.Grid.CardTemplate`) filled from `GetUnitViews`: one card per uuid with
-  tier border/BG, `Lv N`, the three GRADE letters, and a status line (EQUIPPED / FAVOURITED /
-  LOCKED / ASC n). Meta line shows unit count + Gold/Silver + account level. This removed the last
-  reader of `GetCollection`'s compat fields. **A7 note:** its controller references **no kit
-  component at all** — it is entirely screen-local. Fine today; worth folding into the kit if a
-  third card-grid screen ever appears.
+- **Collection screen** (`StarterGui.CollectionScreen.Controller`, A5 rebuild) — REAL instances
+  (`Panel.Grid.CardTemplate`) from `GetUnitViews`: one card per uuid with tier border/BG, `Lv N`,
+  the GRADE letters and a status line (EQUIPPED / FAVOURITED / LOCKED / ASC n), plus a meta line.
+  **A7 note:** it references **no kit component at all** — entirely screen-local. Fine today; worth
+  folding into the kit if a third card-grid screen ever appears.
 
 - **StageSelect / Party / Return / StarterChoice** — still legacy script-built screens, on the
   "convert to instance trees when next touched" list (rule 2026-07-18). `ReturnScreen` builds its
   banner only when a `MatchReturn` payload is present, so it legitimately has **0 GuiObjects** on a
   normal boot — that is not a fault.
 
-- **CurrencyBar** (`StarterGui.HUD.Top.CurrencyBar` + controller, A6) — **Lobby-local on purpose**,
-  not shared: a single-Place widget under drift control costs a cross-Place sync forever for
-  something the Game never renders. Refresh is deliberately **one-shot on join** — nothing in the
-  Lobby SPENDS Gold or Silver yet, so there is no change event to subscribe to. Wire a RemoteEvent
-  when a shop or gacha lands; **do not poll.** Amounts abbreviate (`12.3K`, `1.2M`). Promote it
-  into the Kit the day the Game place wants one.
+- **CurrencyBar** (`StarterGui.HUD.Top.CurrencyBar` + controller, A6) — **Lobby-local on purpose**:
+  a single-Place widget under drift control costs a cross-Place sync forever. Refresh is **one-shot
+  on join**, which was fine when nothing spent currency — **it is now stale after a summon** (the
+  SummonScreen's own balance is correct). Wants a `ClientEvents.CurrencyChanged`, the same shape as
+  B10's `LoadoutChanged`; **do not poll.** Amounts abbreviate (`12.3K`, `1.2M`).
 
 - **HUD buttons** (`HUD.Left.Buttons.{Play,Units,Inventory,Areas,Summon,Store}`) tagged
-  `UIKitButton` + animated; `Frame.BorderDesignInside` hidden; hover = white stroke (no thicken).
-  (The sixth button is `Store`, not `Shop`.) 34 tagged buttons attach at boot.
+  `UIKitButton` + animated; hover = white stroke. (The sixth is `Store`, not `Shop`.)
 
-## Studio harnesses (all left OFF)
+## Client events (the screens' shared nervous system)
 
-`UnitsGUI` / `ItemsGUI` / `CollectionScreen` each honour a **`DevAutoOpen` attribute** — set it
-true to open that screen on boot with no HUD click, so a Play session can be verified without
-synthetic input (`VirtualInputManager` is blocked for tooling). Same pattern as
-`DevSimulateReturn` (MatchReturnService) and `DevSimulateFirstJoin` (StarterChoiceService).
+`RS.ClientEvents`: `OpenStageSelect` · `OpenUnitsWithUuid` · `OpenSummon` · `OpenIndex` ·
+`ShowRewards` · **`LoadoutChanged`** (B10). Screens are opened by FIRING an event, never by calling
+another screen — that is what lets an NPC or a different button drive them later with no change.
+
+## Studio harnesses (all left OFF/empty)
+
+`DevAutoOpen` on `UnitsGUI`/`ItemsGUI`/`CollectionScreen`/`SummonScreen`/`IndexScreen` opens that
+screen on boot. Action hooks, each running the SAME function a real press runs (a `GuiButton`'s
+`Activated` cannot be fired from tooling, and there is no `GuiButton:Activate()`): **`DevEquip`**
+(UnitsGUI, a uuid) · `DevSelect` / `DevFakeUnobtained` (IndexScreen) · `DevPull` / `DevPage`
+(SummonScreen) · `DevDismiss` (ObtainRewardsGUI).
 
 ## Server read path
 

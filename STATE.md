@@ -41,10 +41,10 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   `docs/proposals/2026-08-09-selection-banner-choices.md`. Turning Selection on afterwards is one
   line (`SUPPORTED_TYPES`); the summon screen needs no change.
 
-- **PENDING (AD-UI review, three user-authorised items):** **B7** `SummonController` delegates its
+- **PENDING (AD-UI review, four user-authorised items):** **B7** `SummonController` delegates its
   banner-type test to `BannerRegistry.BlockedReason` · **B8** a `RATES / INDEX` button INSTANCE on
-  `SummonScreen` (no code changed) · **B9** ONE line in `UnitsController.selectUnit` publishing
-  `selectedFrame:SetAttribute("Uuid"/"TowerId")` — Phase C's stat-reroll and feeding panes need it.
+  `SummonScreen` · **B9** one line in `UnitsController.selectUnit` publishing the selected uuid ·
+  **B10** `UnitsController` equip/unequip wiring + a `LoadoutChanged` listener in `HotbarController`.
   **Quests / login / codes still need a NEW reveal answer:** the return-value trick only serves
   player-INITIATED grants; do not bolt a push remote onto `SummonService`.
 
@@ -63,7 +63,7 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   click-to-skip covers the reveal toggle.
 
 - **PENDING (AD-UI, small):** the HUD `CurrencyBar` does not refresh after a summon (only on join),
-  so Gold reads stale. SummonScreen's own balance IS correct. Wants `ClientEvents.CurrencyChanged`.
+  so Gold reads stale. Wants a `ClientEvents.CurrencyChanged` — copy B10's `LoadoutChanged` shape.
 
 - **PENDING (probably AD-Meta at Phase D):** deploy `MetaMath` to the GAME + flip `deployed.Game`;
   until then the Game's 22/23 `MetaMath=MISSING` is EXPECTED — do not "reconcile" it.
