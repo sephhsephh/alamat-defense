@@ -61,22 +61,26 @@ Lobby's `UIKitBootstrap` tagged-button count dropped 34 → 33, which is `Kit_Re
   `ViewportFrame`, `TraitIcon`, `LockOverlay` (dark + lock icon + "Lv N") and `SlotNumber`.
 - **`UnitIcon`** — the blueprint §5 UnitIcon: `ViewportFrame` + `BG`/tier border + `TraitIcon` +
   `LevelBadge` + `CostLabel` + `NameLabel` + `ShinyBadge`, plus `KeyLabel`/`CountLabel` that
-  default **hidden**. **STATUS: NO CONSUMER — PARKED by user decision (ADR-0007, 2026-08-06).**
-  The Game hotbar used it until the move to `HotbarSlot`; the only remaining mention is the
-  *disabled* `Hotbar_RETIRED` script. It is neither adopted nor deleted — the question is deferred
-  to **Phase B**, where the gacha reveal / unit index are the first real consumers.
-  - **2026-08-08 (B1): the first consumer ARRIVED and `Kit_UnitIcon` was NOT adopted and NOT
-    deleted — it remains PARKED, alongside the card that shipped.** The Lobby's `ObtainRewardsGUI`
-    reveal grid uses the user's own `RewardsFrame.UnitTemplate` (150×150, locked by its own
-    `UISizeConstraint`), adopted as-is per ADR-0007. **AD-UI'S CALL, stated plainly: that adopted
-    card stays LOBBY-LOCAL — it is NOT promoted to shared canon and gets NO manifest entry.**
-    Reasoning: the reveal screen is Lobby-only by user decision, so promoting the card would add a
-    25th drift-controlled entry and a mirror obligation into a Place with no consumer for it —
-    pure drift surface for zero benefit. ADR-0007's own logic (build the component when a real
-    consumer needs it) says promote on the SECOND consumer, not the first. The unit index, when it
-    ships, is that second consumer and the natural moment to promote — and it is also the moment
-    to settle `Kit_UnitIcon`'s fate for good.
-  - **Do NOT delete it** without a fresh user decision (it carries a rig).
+  default **hidden**. **STATUS: ADOPTED as the shared unit ICON — user decision 2026-08-09,
+  ADR-0009, which un-parks ADR-0007.** Two real consumers, both in the Lobby:
+  `SummonScreen`'s featured chips (B6) and every `IndexScreen` codex entry (B8).
+  - **There is still NO `UIKit.UnitIcon` controller, deliberately.** Both consumers clone and fill
+    it locally (`clone → paintTier → setViewportModel → hide what they don't need`), and the fields
+    they hide are *different each time* — a controller would have to be configured into doing
+    nothing in two slightly different ways. Revisit on a third consumer that wants the same
+    BEHAVIOUR, not merely the same template. Cloning and filling is the house pattern for kit
+    templates without controllers (`ObtainRewardsController` does it with `Kit_ItemIcon` too).
+  - **Adoption changed no bytes.** It means *being used*, not *being edited*: the template still
+    hashes `24281a2b` in both Places, verified at B8's landing. Zero drift, no Integration needed.
+  - **It is an ICON, not the unit CARD.** ADR-0007 clause 3 still stands: if a shared unit *card*
+    (the large Units-screen style) is ever built, the **user's shipping design wins** and this is
+    not the reference. The Lobby's `ObtainRewardsGUI` reveal card (`RewardsFrame.UnitTemplate`,
+    150×150) remains **Lobby-local with no manifest entry** — B1's call, unchanged: promoting it
+    would buy a mirror obligation into a Place with no consumer.
+  - **Do NOT delete it** without a fresh user decision (it carries a rig). ADR-0009 is that
+    instruction's home now.
+  - Handy: `ViewportFrame.ImageColor3` turns a clone into a **silhouette** with one property —
+    which is how the index shows unobtained units without a second template.
   - **Do NOT build a `UIKit.UnitIcon` controller speculatively** — the first real consumer designs
     it. The absence of a controller for this template is intentional, not an oversight.
   - **When a unit card IS built, this template is NOT the reference.** The Lobby's shipping Units

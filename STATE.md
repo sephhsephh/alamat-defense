@@ -42,12 +42,12 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   shortcut: `docs/proposals/2026-08-09-selection-banner-choices.md`. Then AD-Gacha builds the flow;
   turning it on is one line (`SUPPORTED_TYPES`), and the summon screen needs no change.
 
-- **PENDING (AD-UI / AD-Gacha):** the unit card stays **Lobby-local not shared** (B1) — revisit at
-  the unit INDEX (blueprint B5), which also settles `Kit_UnitIcon`'s fate (ADR-0007, PARKED, do NOT
-  delete). B6 gave it a consumer but did NOT settle it. **Quests / login / codes need a NEW reveal
-  answer:** "the remote returns the views" only serves player-INITIATED grants; do not bolt a push
-  remote onto `SummonService`. **B7 also changed `SummonController` (AD-UI canon) — please review:**
-  its hardcoded banner-type test now delegates to `BannerRegistry.BlockedReason`.
+- **PENDING (AD-UI review, two items):** **B7** changed `SummonController` (its hardcoded
+  banner-type test now delegates to `BannerRegistry.BlockedReason`), and **B8** added a
+  `RATES / INDEX` button instance to `SummonScreen` — B8 changed no AD-UI controller CODE (the
+  index wires that button from its own controller). Both were user-authorised.
+  **Quests / login / codes still need a NEW reveal answer:** "the remote returns the views" only
+  serves player-INITIATED grants; do not bolt a push remote onto `SummonService`.
 
 - **PENDING (AD-Game → AD-Integration → AD-UI): ONE settings system for BOTH Places** — user
   decision 2026-08-09. Same structure + GUI in both, entries scoped `Both`/`GameOnly`/`LobbyOnly`,
@@ -64,24 +64,23 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 
 - **PENDING (AD-Integration, not urgent):** invariant 1 ("every grant flows through `GrantService`")
   holds in the **Lobby only** — the Game still grants via `PlayerInventoryService` /
-  `RewardCalculator`. Converging spans both Places + AD-Game's canon.
+  `RewardCalculator`. Converging spans both Places.
 
 - **PENDING (AD-Traits, small):** promote the trait rarity table to shared → trait-on-summon
   switches on here (chance tuned, RNG draw consumed). Until then, `Trait = nil`.
 
 - **PENDING (AD-UI, small):** the hotbar **hover TRIGGER** is unverified in BOTH Places
   (`MouseEnter` cannot be fired from tooling) — one manual hover each closes it. Also
-  `Kit_ItemHoverCard`'s master/clone split: `ItemsGUI.HoverPreview` is a build-time clone, so
-  editing the master does NOT update the screen (caused a stale-size bug at A5).
+  `Kit_ItemHoverCard`'s master/clone split: `ItemsGUI.HoverPreview` is a build-time clone.
 
 - **PENDING (AD-Game, small):** a unit at `MAX_META_LEVEL` **loses its stored XP** (Archer Lv100
   went `XP 400 → 0`) — `ApplyXP` discards overflow at max. Cosmetic, but the Units screen shows it.
 
 - **PENDING (AD-PlayerLevel, small):** promote `TowerProgressionConfig` to shared so the Lobby can
-  compute `XpPct` for a real XP bar. The unitView sends raw `XP` + `Level` only.
+  compute `XpPct`. The unitView sends raw `XP` + `Level` only.
 
-- **PENDING (Game):** real-DataStore round-trip for the PLAYER profile (A7 used a scratch key),
-  plus the progressive `ServerStorage.Documentation` → `docs/systems/` migration.
+- **PENDING (Game):** real-DataStore round-trip for the PLAYER profile (A7 used a scratch key), plus
+  the `ServerStorage.Documentation` → `docs/systems/` migration.
 
 - **PENDING (NEEDS SCHEDULING):** still no writer for `Data.Items` in NORMAL PLAY (Items screen
   shows zeroes). `GrantService` CAN write it (verified incl. `MaxOwned`) but no shipping flow grants
@@ -107,14 +106,16 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 
 **✅ PHASE A SIGNED OFF (A9).** Blueprint `phase-a-foundations.md` is history; detail in CHANGELOG.
 
-**LABEL COLLISION:** the changelog's `B0…B7` are Phase-B SESSION COUNTERS; the blueprint's `B1…B5`
+**LABEL COLLISION:** the changelog's `B0…B8` are Phase-B SESSION COUNTERS; the blueprint's `B1…B5`
 are SESSION-TASK names. Different sequences, same letters.
 
 1. **USER** — republish both Places, then run the teleport v2 loop live once.
 2. **Phase B** (`docs/blueprints/phases-b-f-meta.md`). Landed: B0 uuid placement · B1 reveal
-   surface · B2 Integration · B3 banner engine (`docs/systems/gacha.md`) · B4 reveal animation ·
-   B5 AD-UI review + clip fix · B6 summon UI (`docs/systems/lobby-ui.md`) · **B7 EVENT banners**.
-3. **Blueprint B4 is HALF DONE.** Event ✅ (`EventFirstLight`, window-gated, live-verified).
-   **Selection ⛔ — blocked on the schema PENDING above, not on effort.**
-4. **Next is blueprint B5** (Index/Codex) — unblocked, and where the shared-unit-card /
-   `Kit_UnitIcon` question finally gets settled. Selection lands whenever the schema bump does.
+   surface · B2 Integration · B3 banner engine · B4 reveal animation · B5 AD-UI review + clip fix ·
+   B6 summon UI · B7 EVENT banners · **B8 unit INDEX**. Docs: `gacha.md`, `lobby-ui.md`.
+3. **Blueprint B4 is HALF DONE.** Event ✅ (`EventFirstLight`). **Selection ⛔ — blocked on the
+   schema PENDING above, not on effort.** **Blueprint B5 ✅ (B8): the unit INDEX/codex**, which also
+   settled `Kit_UnitIcon` — **ADOPTED, ADR-0009** (no controller, no byte changed).
+4. **PHASE B's blueprint tasks are now all done except Selection.** Next is either the schema bump
+   that unblocks Selection (needs BOTH Places) or **Phase C** — `docs/blueprints/phases-b-f-meta.md`
+   C1 trait reroll · C2 stat reroll + worthiness · C3 ascension + sell · C4 feeding.

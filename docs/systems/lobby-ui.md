@@ -10,6 +10,60 @@ Read `ui-kit.md` first for the components they build on.
 Studio is canon for the actual instances and controller code (ADR-0001); this describes what is
 there and why.
 
+## `IndexScreen` — the unit index / codex (B8, 2026-08-09)
+
+Blueprint Phase B task **"B5 Index/Codex"**, verbatim: *"iterate ItemCatalog Towers → obtained
+silhouettes (own any instance), source text, exact per-banner rates table (computed from configs,
+not hand-written)."* `StarterGui.IndexScreen` + `IndexController`. All four are DERIVED:
+
+| On screen | Derived from |
+| --- | --- |
+| which units exist | `ItemCatalog.Entries` where `Kind == "Tower"` |
+| obtained? | `GetUnitViews` — the SINGLE profile read path (ADR-0004), own ANY instance |
+| source text | `BannerRegistry.ResolvePool()` across `BannerRegistry.List()` |
+| drop rates | `cfg.Rates` × the in-tier pick weight, per banner |
+
+Catalog a tower or ship a banner file and this screen updates itself. No code change.
+
+**The rate maths is the real deliverable.** A player's chance of a specific unit on a specific
+banner is TWO rolls, not one:
+
+```
+P(unit) = (tierWeight / totalTierWeight) × (unitWeight / totalWeightInTier)
+```
+
+where `unitWeight` is `Featured.Boost` for a featured id and `1` otherwise. That is why a featured
+unit's number **moves between rotations**, and why the row is tagged `★ featured` rather than
+quietly showing a figure that will be wrong in an hour. **Pity is deliberately NOT folded in** — it
+is a floor on tier across many pulls, not a per-pull probability, and blending them would produce a
+number honest about neither.
+
+**Honesty rules — the point of a codex.** A tower in **no** pool says *"Not currently obtainable"*
+(`0%` would imply merely rare). A banner that cannot be pulled right now **still lists its rates**,
+dimmed and tagged with `BlockedReason` — hiding it would misrepresent the odds when it opens.
+`Secret`/`Exclusive`/`Bathala` have no catalogued towers so produce **no entries at all**. Rates use
+`SummonController`'s "don't round a rare tier into a lie" formatting, so Secret's 0.005% never
+prints as 0.01%.
+
+**Entries are clones of the shared `Kit.UnitIcon`** (invariant 2). **This screen is its second real
+consumer and is what un-parked it — ADR-0009.** The silhouette is one property,
+`ViewportFrame.ImageColor3` → black: no second template, no model mutation. Still no
+`UIKit.UnitIcon` controller; entries are cloned and filled locally.
+
+- **Entry point is an event: `RS.ClientEvents.OpenIndex:Fire()`.** The `RATES / INDEX` button on
+  `SummonScreen.Main.Panel` fires it and has no other privilege, so an NPC or HUD button can open it
+  later with no change here. **`IndexController` wires that button itself** — the same reach-across
+  `SummonController` uses for the HUD's Summon button — which is why **B8 changed no AD-UI
+  controller code**; only a new real instance appeared in their screen (user-authorised).
+- `DisplayOrder = 60`: above `SummonScreen` (50), below `ObtainRewardsGUI` (100).
+- **Studio harness:** `DevSelect` (tower id) selects via the same `renderDetail()` a click runs
+  (`GuiButton.Activated` cannot be fired from tooling, and there is no `GuiButton:Activate()`).
+  `DevFakeUnobtained` (tower id) forces one unit unowned so the **silhouette branch can be tested on
+  a profile that owns everything** — same category as `DevSimulateFirstJoin`. `DevAutoOpen` opens on
+  boot. All left OFF/empty.
+- Plain but functional real-instance tree, **for the user to restyle** (the `SummonScreen`
+  precedent); the controller reads its metrics off the instances.
+
 ## `SummonScreen` — the banner carousel (B6, 2026-08-09)
 
 Blueprint Phase B task **"B3 summon UI + RewardPopup wiring"**. `StarterGui.SummonScreen` +

@@ -47,6 +47,9 @@
   blueprint's literal wording (user, 2026-08-09)
 - `ADR-0006-state-md-cap.md` — `STATE.md` stays ONE file (the bootstrap ritual reads it), cap
   100→120, and a resolved PENDING is DELETED rather than struck through (AD-Integration, A7)
+- `ADR-0009-kit-uniticon-adopted.md` — **supersedes ADR-0007's PARKED status**: `Kit_UnitIcon` is
+  ADOPTED as the shared unit ICON after two real consumers (B6 chips, B8 index), with **no
+  controller** and **no byte changed**. It is an icon, not the unit CARD (ADR-0007 clause 3 stands)
 - `ADR-0007-kit-uniticon-parked.md` — `Kit_UnitIcon` is PARKED (not adopted, not deleted) until
   Phase B; §8's "renders through the kit" reads pragmatically so the Units screen PASSES; and when
   a shared unit card IS built, **the user's shipping design is lifted into the kit**, not replaced

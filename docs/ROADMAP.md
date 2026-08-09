@@ -236,8 +236,21 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
   schema sync across a session boundary, so a Lobby-only session must not start the bump. Plan:
   `docs/proposals/2026-08-09-selection-banner-choices.md`. They stay registered, validated and
   refused (`banner_type_not_supported_yet`) meanwhile; turning them on afterwards is one line.
-- 🔲 Unit Index/Codex (blueprint B5): all units, obtained silhouettes, sources, full rates
-  disclosure. Also the point at which `Kit_UnitIcon`'s fate (ADR-0007) gets settled.
+- ✅ **B8 — the UNIT INDEX / CODEX (AD-Gacha, 2026-08-09).** Blueprint B5, all four requirements
+  DERIVED not typed: every `ItemCatalog` Tower, obtained silhouettes (own ANY instance, via
+  `GetUnitViews`), source text from the banner pools, and **exact per-banner rates computed from
+  configs** — `P = (tierWeight/total) × (unitWeight/inTierTotal)`, where featured ids carry
+  `Boost`. Quoting the TIER rate as the UNIT rate is the classic disclosure bug; every number was
+  re-derived independently in the harness and matched. Standard's chances sum to `0.999950` —
+  exactly 1 minus Secret's empty-pool weight. **Honesty rules:** unobtainable units say so rather
+  than showing 0%; closed/unsupported banners still list their odds, dimmed; tiers with no
+  catalogued tower produce no entries at all. Opens from a `RATES / INDEX` button on SummonScreen
+  via `ClientEvents.OpenIndex` — **and B8 changed no AD-UI controller code**, because the index
+  wires that button from its own controller.
+- ✅ **`Kit_UnitIcon` ADOPTED — ADR-0009 un-parks ADR-0007 (user, 2026-08-09).** Two real consumers
+  (B6 chips, B8 index), **no `UIKit.UnitIcon` controller** (both clone-and-fill and hide different
+  fields), and **no byte changed** — still `24281a2b` in both Places. It is an ICON, not the unit
+  CARD; ADR-0007 clause 3 (the user's shipping design wins for a CARD) still stands.
 - 🔲 Trait-on-summon — **inert, not missing**: the chance is tuned and the RNG draw is already
   consumed, but the trait rarity table is AD-Traits canon in the GAME place. Promoting it switches
   this on with no Lobby change. (Shiny-on-summon IS live: 0.870% measured vs 1% configured.)

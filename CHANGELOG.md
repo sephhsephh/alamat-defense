@@ -1,5 +1,97 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-09 [lobby] B8 — the UNIT INDEX (blueprint B5). `Kit_UnitIcon` ADOPTED after 3 days parked.
+
+Bootstrap drift **23/23 GREEN**, unchanged at landing. Integration gate: **"No Integration needed —
+proceeding."** Blueprint task **B5 is done**, which leaves Selection as the only unfinished Phase-B
+blueprint task — and it is contract-blocked, not effort-blocked.
+
+**`StarterGui.IndexScreen` + `IndexController`.** The blueprint's four requirements, all DERIVED,
+none typed out: iterate `ItemCatalog` Towers · obtained silhouettes (own ANY instance) · source
+text · exact per-banner rates computed from configs.
+
+**THE RATE MATHS IS THE ACTUAL DELIVERABLE, and it is two rolls, not one.**
+
+```
+P(unit on banner) = (tierWeight / totalTierWeight) × (unitWeight / totalWeightInTier)
+```
+
+`unitWeight` is `Featured.Boost` for a featured id and 1 otherwise. Getting this wrong is the
+classic gacha-disclosure bug: quoting the TIER rate as if it were the UNIT rate overstates a
+specific unit by the size of its tier's pool. **Verified by re-deriving every number independently
+inside the harness and comparing to what the screen renders** — a wrong formula cannot pass by
+agreeing with itself. Two structural checks came out exactly right and are worth keeping:
+
+- **Standard's per-unit chances sum to `0.999950`** — precisely 1 minus Secret's `0.00005` weight,
+  which is the *empty-pool tier being honestly excluded*, visible in the arithmetic.
+- **EventFirstLight's sum to `1.000000`** exactly (its curated pool has no empty tier).
+- Archer on Standard = **30.00%**, not 50%: Common is 60%, but BOTH Commons happened to be featured
+  this rotation, so the boost cancels within the tier. Farm on Standard = **20.83%** (Rare 25% ×
+  5/6, featured against an unfeatured Mage). Both matched the independent derivation to 4dp.
+
+**Pity is deliberately NOT folded in.** It is a floor on TIER across many pulls, not a per-pull
+probability; blending them yields a number that is honest about neither.
+
+**Honesty rules, because a codex that flatters is worse than none.**
+
+- A tower in NO pool reads *"Not currently obtainable"*. `0%` would imply merely rare.
+- A banner that cannot be pulled right now **still lists its rates**, dimmed and tagged with
+  `BlockedReason`. Hiding it would misrepresent the odds a player meets when it opens.
+- `Secret`/`Exclusive`/`Bathala` have no catalogued towers, so they produce **no entries at all** —
+  confirmed live. The screen never implies content exists that doesn't.
+- Rates reuse `SummonController`'s sub-0.01% formatting, so Secret's 0.005% never prints as 0.01%.
+- Source text is derived from the SAME pass that builds the rates rows, so the two cannot drift —
+  and it visibly reflects B7's curation: **Farm shows only `Alamat Standard`**, because the Event
+  banner deliberately excludes support towers.
+
+**`Kit_UnitIcon` IS ADOPTED — ADR-0009, un-parking ADR-0007 after three days.** ADR-0007 parked it
+with no consumer and said Phase B would *"tell us what the component actually has to do"*. It has:
+B1 declined it as the reveal card, B6 used it for featured chips, and this index is its **second
+real consumer**. Both consumers clone-and-fill and **neither wanted a controller** — and they hide
+*different* fields, so a controller would have to be configured into doing nothing two ways.
+Decision: adopted, still **no `UIKit.UnitIcon` controller**, revisit only on a third consumer
+wanting the same BEHAVIOUR. **Adoption changed no bytes** — it means being USED, not edited;
+`Kit_UnitIcon` still hashes `24281a2b` in both Places, verified at landing. Zero drift, no
+Integration. ADR-0007 clause 3 is untouched: this is an ICON, not the unit CARD.
+
+The silhouette costs nothing: **`ViewportFrame.ImageColor3` → black** turns a clone into a
+silhouette with one property. No second template, no model mutation.
+
+**NO AD-UI CONTROLLER CODE WAS TOUCHED, by design.** The user chose to open the index from
+SummonScreen. Rather than edit `SummonController`, `IndexController` **wires the button itself** —
+the same reach-across `SummonController` already uses for the HUD's Summon button. So AD-UI's screen
+gained one new real instance (`RATES / INDEX`) and zero lines of changed code. Entry point is
+`ClientEvents.OpenIndex`, so an NPC or HUD button can open it later with no change here.
+
+**Two harness bugs worth recording, because both are traps rather than typos.**
+
+- `table.insert(t, string.gsub(...))` — `gsub` returns **(string, count)**, so the count arrived as
+  `insert`'s third argument and threw *"number expected, got string"*. Needs parens.
+- **`GuiButton:Activate()` does not exist** and `Activated` cannot be fired from tooling, so entry
+  selection could not be clicked. Added a `DevSelect` hook routing through the SAME `renderDetail()`
+  a click runs — the established convention (`DevDismiss`, `DevPull`).
+
+**A gap I closed rather than waved past:** this dev profile owns **all 8** towers, so the first run
+only ever exercised the *obtained* branch — the silhouette, the headline feature, was untested and
+would have passed trivially. Added `DevFakeUnobtained` (same category as `DevSimulateFirstJoin`: a
+hook for a state you cannot otherwise reach) and verified the whole chain — `ImageColor3 = 0,0,0`,
+name `"???"`, summary `7 / 8`, detail `NOT YET OBTAINED`, **and rates still listed while unobtained**
+(odds must be visible BEFORE you own it) — then restored and re-checked `1,1,1` / `8 / 8`.
+
+**Acceptance — verified LIVE in Play, harness since deleted, all `Dev*` OFF/empty:**
+8 catalogued Towers = 8 entries, exact id match · **0 silhouette-state mismatches** against the
+profile · summary `8 / 8` · both rate sums as above · per-unit rates matching independent derivation
+· source text correct incl. Farm's single source · empty tiers producing no entries ·
+`DisplayOrder 60` (above SummonScreen 50, below the reveal 100).
+
+**Contract impact: NONE.** No schema, no shared module, no template byte. Drift 23/23 GREEN.
+
+**PENDINGs: 0 new, 1 amended** (the AD-UI review now covers B7's `SummonController` delegation and
+B8's button instance — B8 changed no controller code). `Data.Items` still has no writer in normal
+play; nothing here changes that.
+
+**USER must republish the LOBBY** — B8, like everything since A7, is Studio canon and not in git.
+
 ## 2026-08-09 [lobby] B7 — EVENT banners are live. Selection deferred on a CONTRACT wall, not on effort.
 
 Bootstrap drift **23/23 GREEN**, unchanged at landing — zero shared canon touched. Integration gate:
