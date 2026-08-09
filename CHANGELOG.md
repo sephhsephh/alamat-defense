@@ -1,5 +1,108 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-09 [lobby] B7 — EVENT banners are live. Selection deferred on a CONTRACT wall, not on effort.
+
+Bootstrap drift **23/23 GREEN**, unchanged at landing — zero shared canon touched. Integration gate:
+**"No Integration needed — proceeding."** Blueprint task **B4** ("Selection banner choice flow +
+Event banner window") is now **half done, deliberately**.
+
+**THE SESSION'S REAL FINDING, BEFORE ANY CODE.** `BannerChoices` — where the blueprint says a
+Selection banner stores the player's pick — **does not exist in schema v2**. A repo-wide grep found
+exactly one mention: the blueprint line specifying it. Adding a top-level profile field is a
+contract change, and the blueprint's own cross-phase invariant 5 ends with *"Never both Places out
+of schema sync across a session boundary."* This was a **Lobby-only** session forbidden from
+touching the Game place, and both Places share ONE live ProfileStore. So the compliant move was to
+**stop and ask**, not to bump the schema half-way and leave a live risk window over the boundary.
+
+The user chose: **ship Event now, defer Selection with a proposal**
+(`docs/proposals/2026-08-09-selection-banner-choices.md`, which also records the rejected
+`Counters.Global` shortcut and why — a banner choice is not a counter, and ADR-0008 exists precisely
+because overloading one key with two meanings corrupted a verified counter).
+
+**Event banners needed NO schema change at all**, which is what made the split clean: an Event
+banner is just a banner with a `Window`, and `Window` was already in the config shape.
+
+**What shipped.**
+
+- **`BannerRegistry.SUPPORTED_TYPES`** — ONE source of truth for which banner types are summonable,
+  read by BOTH `SummonService` (to refuse) and `SummonController` (to grey a card out). The server
+  and the screen can no longer disagree about what is pullable.
+- **`WindowState(cfg, nowSec?)`** → `Open` / `NotStarted` / `Ended` plus seconds-to-next-change;
+  `IsOpen` is now a wrapper on it. `SummonService` refuses with **`banner_not_started`** (carrying
+  `SecondsUntilOpen`) or **`banner_ended`** — two genuinely different situations to a player, so two
+  codes instead of one flat `banner_closed`.
+- **`BlockedReason(cfg)`** — the single player-facing "why not" string, and **`EndsInText(cfg)`**
+  for an open, time-limited banner's *"Ends in 22d"*.
+- **`Validate()`** now rejects a malformed window at boot (non-number bounds, `EndUtc <= StartUtc`)
+  and NOTES a valid banner sitting outside its own window — which otherwise looks identical to a
+  broken one.
+- **`EventFirstLight` ("Festival of First Light")** — Gold at 120/pull, 2 featured on a **daily**
+  rotation, `PityRef = "Default"` shared with Standard on purpose (a player grinding an event should
+  not have hard-pity progress stranded when it ends), window 2026-08-01 → 2026-09-01. **Running an
+  event is editing two numbers.** Dropping in another file makes a second event.
+- **It is also the first CURATED pool.** Standard is `"AllSummonable"`, so the explicit
+  `Pool = { [tier] = { ids } }` form had **never actually executed** until now. It does, and
+  **Farm is excluded on purpose** — a support tower is a dud as an event prize.
+
+**A latent bug found and fixed while adding the first daily rotation.** `FeaturedFor` passed
+`0` as the slot offset instead of `MetaConfig.ResetOffsetSec`. That was invisible while every banner
+rotated hourly, but a DAILY rotation would have flipped at **00:00 UTC while the game's day boundary
+is 16:00 UTC**. Invariant 3 makes `MetaMath.Slot` the one rotation primitive and `ResetOffsetSec`
+the knob it is meant to read. Verified flipping at 16:00 UTC. **Accepted cosmetic side effect,
+predicted before the run and confirmed by it:** Standard's featured trio moved once
+(`Babaylan/Archer/Meteor` → `Farm/Archer/Knight`) because the slot NUMBER shifted and the slot is the
+seed. Hourly boundaries themselves did not move.
+
+**ONE change to AD-UI's canon, authorised and minimal.** `SummonController` hardcoded
+`BannerType ~= "Standard"`, so an Event banner would have read "coming soon" forever no matter what
+the server did — no config value could flip it. With the user's authorisation the local
+`blockedReason()` now delegates to `BannerRegistry.BlockedReason`, plus the `Reason` label falls back
+to the countdown and three refusal codes were added to the `FRIENDLY` map. That is the whole diff.
+It makes the screen MORE config-driven, which was B6's stated goal: **adding a banner type is now a
+registry change and nothing else.** AD-UI review is a PENDING.
+
+**THE `execute_luau` REQUIRE-CACHE HAZARD BIT, AND IS WORTH RECORDING AS EVIDENCE.** A pure-config
+probe reported the registry had only `Standard` and that `IsSupported` was `nil` — while the same
+probe confirmed the SOURCE was 13,466 bytes and contained both `IsSupported` and `BlockedReason`,
+and that `EventFirstLight` required cleanly as an `Event` banner. The MCP's Luau VM had served a
+**cached pre-edit copy** of the module. Nothing was wrong with the code. This is exactly what
+CLAUDE.md warns about, and the fix was to stop probing and verify from a REAL Script, which is what
+the rule says to do in the first place.
+
+**Acceptance — verified LIVE in Play from temporary harnesses (server + client), since deleted.**
+
+- Registry: both banners registered; `Validate` ok with only Standard's pre-existing Secret
+  empty-pool note; `IsSupported` Standard/Event true, Selection false;
+  `BlockedReason(Selection)` = *"Selection banners are coming soon"*.
+- Curated pool: **7 ids, Farm excluded**.
+- Window at synthetic times — before start → `NotStarted` *"Opens in 1h"*; exactly start → `Open`;
+  mid → `Open` *"Ends in 15d"*; **exactly end → `Ended`** (boundary is exclusive, as intended);
+  after → `Ended`. Standard (no window) → `Open`, never blocked.
+- Featured: Standard hourly `Farm/Archer/Knight`, Event daily `Warchief/Necromancer`; two synthetic
+  banners on the SAME period drew different sets, so the salt is doing its job. Daily flip at
+  **16:00 UTC**.
+- **The new banner FILE reached the summon screen with no UI registration work**: 2 cards incl.
+  `Banner_EventFirstLight`, `ClosedOverlay.Visible = false`, `Reason` = *"Ends in 22d"*.
+- Real pulls through the real remote: Event x1 (120 Gold) and x10 (1200 Gold, featured Warchief
+  hit), Standard x1 unaffected.
+- **Real refusals**: window forced ENDED → `banner_ended` while **Standard kept working**; forced
+  NOT-STARTED → `banner_not_started` with `untilOpen=99992`; restored → OK again; unknown banner →
+  `unknown_banner`. The harness mutated the SERVER VM's cached config only — the shipped file was
+  confirmed intact at cleanup.
+
+**Contract impact: NONE.** No schema bump, no shared module, no template. That was the point.
+
+**Docs:** `docs/systems/gacha.md` was **stale** — it still said *"there is no gacha UI at all yet"*
+three sessions after B6 built one. Corrected and brought current as part of this landing, since it
+is AD-Gacha's doc. `places/lobby/CONTEXT.md` untouched (at its 150-line cap); STATE.md additions
+paid for by compressing existing entries, per ADR-0006.
+
+**PENDINGs: 1 NEW (the `BannerChoices` schema bump, which BLOCKS Selection), 1 amended (AD-UI to
+review the `SummonController` delegation), 0 cleared.** Note for the standing `Data.Items` item:
+B7's Event banner pays **Gold**, so it is still not the first writer.
+
+**USER must republish the LOBBY** — B7, like everything since A7, is Studio canon and not in git.
+
 ## 2026-08-09 [lobby] B6 (AD-UI) — the SUMMON UI. Banner carousel + x1/x10, config-driven. Drift untouched.
 
 Bootstrap drift **23/23 GREEN**, unchanged at landing — **no shared module or template was

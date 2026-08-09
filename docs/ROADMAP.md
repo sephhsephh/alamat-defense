@@ -217,8 +217,25 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
     for (`docs/proposals/2026-08-09-unified-settings-both-places.md`). Not blocking: B4's
     click-to-skip already covers the need.
   - Rarity colours come from `TierConfig` throughout (chips, rates, and the reveal's own painting).
-- 🔲 Selection + Event banners (blueprint B4) — both types are already registered and validated,
-  and deliberately REFUSED at summon (`banner_type_not_supported_yet`) until their flows exist.
+- ✅ **B7 — EVENT banners are LIVE (AD-Gacha, 2026-08-09).** Blueprint B4's Event half.
+  An Event banner is just a banner with a `Window`, so **running an event is editing two numbers**
+  and a second event is a second file — no scheduler, no MessagingService, no deploy.
+  `BannerRegistry.SUPPORTED_TYPES` is now the ONE source of truth for what is summonable (read by
+  the server AND the screen, so they cannot disagree); `WindowState` gives `Open`/`NotStarted`/
+  `Ended`, and `SummonService` refuses with `banner_not_started` (+ `SecondsUntilOpen`) or
+  `banner_ended` rather than one flat code. Shipped **`EventFirstLight`** — Gold 120/pull, 2 daily
+  featured, richer top-end rates, and the **first CURATED pool** (`Pool = { [tier] = { ids } }` had
+  never executed before; Farm excluded on purpose). **Fixed while adding the first daily rotation:**
+  `FeaturedFor` used slot offset `0` instead of `MetaConfig.ResetOffsetSec`, so a daily rotation
+  would have flipped at 00:00 UTC instead of the game's 16:00 UTC day boundary — Standard's featured
+  trio shifted once as an accepted cosmetic side effect. Verified live incl. both refusal paths.
+  One authorised change to `SummonController` (AD-UI canon) delegating banner-type policy to the
+  registry — **AD-UI review PENDING**.
+- ⛔ **Selection banners (blueprint B4's other half) — BLOCKED ON A CONTRACT, not on effort.**
+  Schema v2 has no `BannerChoices` field, and invariant 5 forbids leaving the two Places out of
+  schema sync across a session boundary, so a Lobby-only session must not start the bump. Plan:
+  `docs/proposals/2026-08-09-selection-banner-choices.md`. They stay registered, validated and
+  refused (`banner_type_not_supported_yet`) meanwhile; turning them on afterwards is one line.
 - 🔲 Unit Index/Codex (blueprint B5): all units, obtained silhouettes, sources, full rates
   disclosure. Also the point at which `Kit_UnitIcon`'s fate (ADR-0007) gets settled.
 - 🔲 Trait-on-summon — **inert, not missing**: the chance is tuned and the RNG draw is already

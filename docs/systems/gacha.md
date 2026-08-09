@@ -1,12 +1,20 @@
 # SYSTEM — Gacha (banner engine + the grant pipeline)
 
 <!-- owner: AD-Gacha | home Place: Lobby | scope: lobby (MetaMath is shared) -->
-<!-- last-verified: 2026-08-09 (B3, live Play) | blueprint: docs/blueprints/phases-b-f-meta.md -->
+<!-- last-verified: 2026-08-09 (B7, live Play) | blueprint: docs/blueprints/phases-b-f-meta.md -->
 
-Built at **B3 (2026-08-09)** — the blueprint's B1 (MetaMath + GrantService + PityConfig) and B2
-(banner registry + summon service + odds harness) session-tasks, done together by user decision.
-**Summon UX / NPC / carousel (blueprint B3), Selection + Event flows (B4) and the Index/Codex (B5)
-are NOT built.** There is no gacha UI at all yet — the engine is driven by a remote.
+Engine built at **B3** (the blueprint's B1 + B2 session-tasks, done together by user decision).
+The **summon UI** landed at **B6** (`docs/systems/lobby-ui.md` — this doc was left stale by that
+session and was corrected at B7). **Event banners went live at B7.**
+
+Blueprint status: B1 ✅ · B2 ✅ · B3 (summon UI) ✅ · **B4 half-done — Event ✅, Selection ⛔** ·
+B5 (Index/Codex) 🔲.
+
+**Selection is deliberately still refused.** It needs a per-player stored pick and schema v2 has no
+`BannerChoices` field; adding one is a contract change spanning BOTH Places, and invariant 5 forbids
+leaving them out of schema sync across a session boundary. Full plan:
+`docs/proposals/2026-08-09-selection-banner-choices.md`. Turning it on afterwards is one line —
+add `Selection` to `SUPPORTED_TYPES`.
 
 ## Where everything lives
 
@@ -102,8 +110,61 @@ the client's word for anything.
 > **Boost = 5 is aggressive.** With 2 Commons and Archer featured, Archer takes ~83% of the Common
 > tier — measured 49.6% of ALL pulls over 10k. Tune `Boost` in the banner file; nothing else moves.
 
-`BannerType` `Selection` and `Event` are **recognised and validated but refused at summon**
-(`banner_type_not_supported_yet`) until B4, rather than half-served with Standard behaviour.
+### Which banner types are summonable — ONE source of truth (B7)
+
+`BannerRegistry.SUPPORTED_TYPES` (currently `Standard` + `Event`) is read by **both**
+`SummonService` (to refuse) and `SummonController` (to grey the card out), so the server and the
+screen can never disagree about what is pullable. `BannerRegistry.BlockedReason(cfg)` returns the
+single player-facing string for *why*, and the screen delegates to it — B7 removed the hardcoded
+`BannerType ~= "Standard"` test from the UI (AD-UI canon, changed with the user's authorisation).
+**Adding a banner type is now a registry change and nothing else.**
+
+## Event banners (B7) — a banner with a `Window`
+
+There is no separate "event system". An Event banner is an ordinary banner that carries a `Window`,
+and **running an event is editing two numbers**:
+
+```lua
+Window = { StartUtc = 1785542400, EndUtc = 1788220800 }  -- absent or {} = always open
+```
+
+Every server opens and closes it at the same instant off the clock alone — no scheduler, no
+MessagingService, no deploy. Dropping in another file makes a second event, with no code change.
+
+- `BannerRegistry.WindowState(cfg, nowSec?)` → `"Open" | "NotStarted" | "Ended"` plus seconds until
+  the next change. `IsOpen` is now a thin wrapper on it.
+- `SummonService` refuses with **`banner_not_started`** (carrying `SecondsUntilOpen`) or
+  **`banner_ended`** — two different situations to a player, so two codes rather than one flat
+  `banner_closed`.
+- `BannerRegistry.EndsInText(cfg)` gives an open, time-limited banner its *"Ends in 22d"* countdown.
+- `Validate()` rejects a malformed window at boot (non-number bounds, `EndUtc <= StartUtc`) and
+  *notes* a valid banner that is currently outside its window — that looks identical to a broken
+  one otherwise.
+
+**Shipped: `EventFirstLight` ("Festival of First Light")** — Gold at 120/pull, 2 featured on a
+**daily** rotation with Boost 4, `PityRef = "Default"` (shared with Standard on purpose: a player
+grinding an event should not have hard-pity progress stranded when it ends), window
+2026-08-01 → 2026-09-01. Rates are richer than Standard at the top (Mythic 2% vs 0.995%), which is
+what justifies the higher cost.
+
+**It is also the first CURATED pool.** Standard uses `Pool = "AllSummonable"`, so the explicit
+`Pool = { [tier] = { ids } }` form had never actually executed until B7. `EventFirstLight` uses it,
+and **excludes Farm on purpose** — a support tower is a dud as an event prize. It also carries no
+`Secret` weight, which is why it produces none of Standard's empty-pool content-gap note.
+
+> **Currency:** Gold, not an event token. The blueprint allows `Currency = { Event = tokenId }` and
+> the registry validates that shape, but nothing can spend it yet: a token needs a catalogued id and
+> `ItemCatalog` is SHARED canon, so it would make the Game place stale. `SummonService` refuses a
+> table currency with `unsupported_currency` rather than half-serving it. Note EventTokens live in
+> `Currencies`, so this does **not** touch the standing "no writer for `Data.Items`" item.
+
+### Rotation slots use the configured reset hour (B7 fix)
+
+`FeaturedFor` now offsets its slot by `MetaConfig.ResetOffsetSec` instead of `0`. B3 passed `0`,
+which was invisible while every banner rotated hourly — but the first **daily** rotation would have
+flipped at 00:00 UTC while the game's day boundary is 16:00 UTC. Verified flipping at 16:00 UTC.
+**Accepted cosmetic side effect:** Standard's featured trio changed once at that landing, because
+the slot *number* shifted and the slot is the seed. Hourly boundaries themselves did not move.
 
 ## Summon algorithm
 
