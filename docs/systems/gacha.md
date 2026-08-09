@@ -174,9 +174,20 @@ x10 = ONE remote call, ONE reveal with 10 entries (blueprint: *"one RewardPopup"
   **`Summons` unchanged at 1152** (ADR-0008), `Pity.Default` L11/M11/S11.
 - Drift **23/23 GREEN** in the Lobby at landing.
 
+## The UI on top of this (B6, 2026-08-09 — blueprint task B3 DONE)
+
+`StarterGui.SummonScreen` + `SummonController` (AD-UI, `docs/systems/lobby-ui.md`). It reads
+`BannerRegistry` / `GachaConfig` **directly** — which is what this module's ReplicatedStorage
+placement was for — and sends only a banner id and a pull count. Opened by firing
+`RS.ClientEvents.OpenSummon`, so the blueprint's NPC is a later drop-in with no screen change.
+It consumes `RequestSummon`'s return value and passes `result.Rewards` to `ShowRewards`
+unchanged, exactly as the reveal contract above specifies. Verified live: x1 and x10 through the
+real remote, Gold `48800 → 46700` across 21 pulls, refusals surfaced, featured set derived on the
+client matching the server's `FEATURED` tags.
+
 ## Open
 
-- No gacha UI (blueprint B3) · no Selection/Event flows (B4) · no Index/Codex (B5).
+- ~~No gacha UI~~ **built at B6** · no Selection/Event flows (B4) · no Index/Codex (B5).
 - Trait-on-summon inert until AD-Traits promotes the rarity table.
 - Game-side `GrantService` convergence (invariant 1 is Lobby-only today).
 - No Secret/Exclusive/Bathala tower exists, so those tiers are unreachable content.

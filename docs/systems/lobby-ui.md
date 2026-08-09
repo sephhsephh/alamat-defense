@@ -1,6 +1,6 @@
 # SYSTEM — Lobby UI (screens)
 
-<!-- owner: AD-UI | scope: lobby | last-verified: 2026-08-09 (B4) -->
+<!-- owner: AD-UI | scope: lobby | last-verified: 2026-08-09 (B6) -->
 
 Split out of `places/lobby/CONTEXT.md` at A5 when that file passed its 150-line cap. **At A7
 (2026-08-06) the KIT half moved out to `docs/systems/ui-kit.md`** — the kit is used by both Places
@@ -9,6 +9,61 @@ Read `ui-kit.md` first for the components they build on.
 
 Studio is canon for the actual instances and controller code (ADR-0001); this describes what is
 there and why.
+
+## `SummonScreen` — the banner carousel (B6, 2026-08-09)
+
+Blueprint Phase B task **"B3 summon UI + RewardPopup wiring"**. `StarterGui.SummonScreen` +
+`SummonController`. The engine underneath it is AD-Gacha's — see `docs/systems/gacha.md`.
+
+**It is config-driven, not hand-written.** Everything on screen derives from
+`RS.Configs.Banners` + `RS.Configs.Gacha`:
+
+| On screen | Derived from |
+| --- | --- |
+| which banners exist, and their order | `BannerRegistry.List()` (auto-scans its own folder) |
+| the featured units this rotation | `BannerRegistry.FeaturedFor(cfg)` — clock + config only |
+| open / closed | `BannerRegistry.IsOpen(cfg)` |
+| the rates table | `cfg.Rates`, normalised — **never typed out** |
+| how many pull buttons exist | `GachaConfig.AllowedPullCounts` |
+
+Drop in a banner file and it appears. Add `100` to `AllowedPullCounts` and a third button appears.
+Neither needs a code change. `BannerRegistry` lives in ReplicatedStorage for exactly this (its own
+header says so) — the client deriving the same featured set as the server is **not** a trust
+problem, because the server re-derives everything at pull time. This screen's entire authority is
+"a banner id and a pull count".
+
+- **ENTRY POINT IS AN EVENT, NOT A CALL: `RS.ClientEvents.OpenSummon:Fire()`.** The HUD's existing
+  `Summon` button fires it and has no other privilege. **This is what makes the blueprint's NPC a
+  later drop-in** (user decision, 2026-08-09): give a model a `ProximityPrompt` and fire the same
+  event — no change to this screen. The Lobby has no NPC or prompt system today, which is why the
+  HUD button ships first.
+- **The reveal is not ours.** `RequestSummon` is a RemoteFunction that RETURNS the granted views;
+  the controller fires `ClientEvents.ShowRewards` with `result.Rewards` **unchanged** and touches
+  nothing inside `ObtainRewardsGUI`. x10 = ONE call, ONE reveal with 10 entries.
+- **Featured chips are clones of the SHARED `Kit.UnitIcon`** (cross-phase invariant 2: icons render
+  through the kit). This gives that template its **first real consumer** — but it does **NOT**
+  settle ADR-0007: whether the *reveal / index* unit card should be `Kit_UnitIcon` or the user's
+  `UnitTemplate` is still open and still belongs to blueprint B5. No `UIKit.UnitIcon` controller
+  was built; the chips are cloned and filled locally, exactly as `ObtainRewardsController` does
+  with `Kit_ItemIcon`. Chip size is read from `FeaturedRow`'s `ChipWidth`/`ChipHeight` attributes.
+- **Templates** (real, editable, `Visible = false`): `BannerCardTemplate` (with its own
+  `RateRowTemplate`, `FeaturedRow`, `ClosedOverlay`) and `PullButtonTemplate`.
+- **Balance** comes from `GetUnitViews`, the Lobby's SINGLE profile read path (ADR-0004) — no
+  second read path was added for a currency number — then from `result.Currencies` after a pull,
+  so a successful summon needs no extra round trip.
+- **Refusals are surfaced, not swallowed.** Server reason codes map to player-readable text;
+  an UNKNOWN code prints the raw code rather than a friendly lie, so a new server reason is
+  visible instead of "failed". Non-`Standard` banners and closed windows show `ClosedOverlay`
+  rather than a dead button.
+- **Studio harness:** `DevPull` (a pull count) runs the same `doPull()` a button press runs;
+  `DevPage` flips the carousel; `DevAutoOpen` opens on boot. All left OFF/0.
+- **This screen was authored by AD-UI as a plain but functional real-instance tree, for the user
+  to restyle** (user decision, 2026-08-09) — the `StarterChoiceScreen` precedent. Restyling it in
+  Studio is safe: the controller reads its metrics off the instances.
+
+**Known gap:** the HUD `CurrencyBar` does not refresh after a summon (it refreshes on join), so it
+shows stale Gold until the next refresh. The SummonScreen's own balance IS correct. Fixing it wants
+a `CurrencyChanged` client event — not built, noted in `STATE.md`.
 
 ## `ObtainRewardsGUI` — the reward-reveal surface
 

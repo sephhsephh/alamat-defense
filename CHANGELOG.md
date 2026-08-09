@@ -1,5 +1,94 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-09 [lobby] B6 (AD-UI) — the SUMMON UI. Banner carousel + x1/x10, config-driven. Drift untouched.
+
+Bootstrap drift **23/23 GREEN**, unchanged at landing — **no shared module or template was
+touched**. Integration gate: **"No Integration needed — proceeding."** This is the blueprint's
+Phase-B task **B3, "summon UI + RewardPopup wiring"** (changelog counter B6 — the two sequences
+reuse the same letters; `STATE.md` now warns about that up front).
+
+**THE SESSION OPENED BY ASKING, because three parts of the blueprint had no foundation here.**
+Grep and inspection first, then the user decided:
+
+1. **"Summon NPC (NPCPrompt)"** — the Lobby has **zero ProximityPrompts** and no NPC rig at all.
+   The HUD already has a `Summon` button. User: use the button now, **but make an NPC a drop-in
+   later**. So the entry point is an EVENT, not a call: `RS.ClientEvents.OpenSummon:Fire()`. The
+   HUD button fires exactly that and gets no other privilege — an NPC's prompt will fire the same
+   event with **zero changes to the screen**. That indirection is the whole point of the decision.
+2. **"skip-anim toggle (Settings)"** — the Lobby has **no settings system whatsoever** (verified:
+   nothing matching `setting` in `ServerScriptService`, `ReplicatedStorage` or `StarterPlayer`).
+   The user wants something bigger than a toggle: **ONE settings system for BOTH Places**, same
+   structure and same GUI, entries scoped per Place. That is cross-Place shared canon and
+   `SettingsService` is AD-Game's, so it was raised properly instead of bolted onto a gacha screen
+   → **`docs/proposals/2026-08-09-unified-settings-both-places.md`** + a PENDING. Nothing is
+   blocked: B4's click-to-skip already covers the functional need.
+3. **Who designs the screen** — every good-looking screen here was hand-designed by the user. They
+   chose: **AD-UI authors a plain but functional real-instance tree, user restyles later** (the
+   `StarterChoiceScreen` precedent). Restyling is safe because the controller reads its metrics off
+   the instances.
+
+**What was built** — `StarterGui.SummonScreen` + `SummonController`, and
+`RS.ClientEvents.OpenSummon`.
+
+**It is config-driven, which is the part that matters for maintenance.** Nothing on screen is
+typed out:
+
+| On screen | Derived from |
+| --- | --- |
+| which banners exist + order | `BannerRegistry.List()` (auto-scans its folder) |
+| featured units this rotation | `BannerRegistry.FeaturedFor(cfg)` — clock + config only |
+| open / closed | `BannerRegistry.IsOpen(cfg)` |
+| the rates table | `cfg.Rates`, normalised |
+| how many pull buttons | `GachaConfig.AllowedPullCounts` |
+
+Ship a banner file and it appears; add `100` to `AllowedPullCounts` and a third button appears.
+Neither needs code. **No new remote was added** — `BannerRegistry` is in ReplicatedStorage for
+exactly this, and the client deriving the same featured set is not a trust problem because the
+server re-derives at pull time. This screen's entire authority is a banner id and a pull count.
+
+- **The reveal is consumed, never modified.** `RequestSummon` returns the views;
+  `ShowRewards:Fire(result.Rewards)` **unchanged**. x10 = ONE call, ONE reveal.
+- **Featured chips are clones of the SHARED `Kit.UnitIcon`** (cross-phase invariant 2). That gives
+  the template its **first real consumer** — but it **does NOT settle ADR-0007**; whether the
+  reveal/index card is `Kit_UnitIcon` or the user's `UnitTemplate` is still blueprint B5's call,
+  and is recorded as still-open. No `UIKit.UnitIcon` controller was built (ui-kit.md forbids
+  building one speculatively); chips are cloned and filled locally, exactly as
+  `ObtainRewardsController` does with `Kit_ItemIcon`. Chip size reads from `FeaturedRow`'s
+  attributes.
+- **Balance uses `GetUnitViews`**, the Lobby's SINGLE profile read path (ADR-0004) — no second read
+  path for a currency number — then `result.Currencies` after a pull, so success costs no extra
+  round trip.
+- **Refusals surface rather than swallow.** Reason codes map to readable text; an UNKNOWN code
+  prints the raw code instead of a friendly lie, so a new server reason stays visible.
+
+**Verified LIVE in Play through the REAL remote** (a `DevPull` attribute routes through the same
+`doPull()` a button press runs, because `MouseButton1` cannot be fired from tooling — the
+`DevDismiss` convention B4 established and B5 approved):
+
+| Check | Result |
+| --- | --- |
+| carousel renders from config | **PASS** — "Alamat Standard", type Standard, `ClosedOverlay` off |
+| featured chips | **PASS** — Archer / Babaylan / Warchief, 120×120, viewport models loaded |
+| client featured == server featured | **PASS** — server logged `FEATURED` on exactly those ids |
+| rates from weights | **PASS** — 60/25/10/4/1.00/**0.0050%** (Secret needs 4dp, not 2) |
+| x1 | **PASS** — Gold 48800 → 48700, reveal 1 cell |
+| x10 | **PASS** — Gold → 47700, reveal 10 cells, frame `812×338`, 2 rows, no scroll |
+| disallowed count (x7) | **PASS** — refused server-side, "That pull count is not allowed", **balance unchanged** |
+| totals | **PASS** — 21 pulls × 100 = 2100; 48800 → 46700 exactly |
+| prev/next with 1 banner | **PASS** — hidden, not dead |
+
+**Contract impact: NONE.** No schema, no teleport payload, no shared module, no template. One new
+client-side BindableEvent and one new Lobby-local screen.
+
+**PENDINGs: 3 NEW, 0 cleared.** (1) the unified settings system (proposal above); (2) the HUD
+`CurrencyBar` does not refresh after a summon — SummonScreen's own balance IS correct, but the HUD
+reads stale Gold until rejoin, and it wants a `ClientEvents.CurrencyChanged`; (3) recorded on the
+existing entry: `Kit_UnitIcon` now has a consumer but ADR-0007 is still open. `STATE.md` was
+trimmed back to **120/120** to fit them (ADR-0006) — the "Next up" history moved into this file,
+where it belongs.
+
+**USER must republish the LOBBY** — B6, like everything since A7, is Studio canon and not in git.
+
 ## 2026-08-09 [lobby] B5 (AD-UI) — B4's animation REVIEWED + APPROVED. Fixed a clipped level badge that predated it.
 
 Bootstrap drift **23/23 GREEN**, unchanged at landing. Integration gate: **"No Integration needed —

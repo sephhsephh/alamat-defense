@@ -204,10 +204,19 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
   REAL algorithm. Verified live: **10k dry rolls, 0 distribution failures**, every tier inside 4σ;
   pity forced/priority/reset; x1 + x10 through the real remote into the real reveal
   (`n=10 cols=5 rows=2`, no scroll); units 8→22, Gold spent, `Pity.Default` persisted.
-- 🔲 Summon UX (blueprint B3): x1/x10 buttons, skip toggle, rarity reveal, Summon NPC + banner
-  carousel screen. **This is the next Phase B task** — the engine under it is done and is driven
-  by `RS.Remotes.RequestSummon` (a RemoteFunction that RETURNS the views; the client fires the
-  existing `ShowRewards` itself, so no push remote exists or should be added).
+- 🟡 **Summon UX (blueprint B3) — BUILT at B6 (2026-08-09), two pieces deliberately deferred.**
+  `StarterGui.SummonScreen` + `SummonController`: banner carousel, x1/x10, featured chips, rates
+  table, refusal handling — all **config-driven** from `BannerRegistry` + `GachaConfig`, so a new
+  banner file or a new allowed pull count needs no code. Verified live through the real remote
+  (Gold 48800 → 46700 over 21 pulls; x7 refused with the balance untouched).
+  **Opened by firing `RS.ClientEvents.OpenSummon`**, never by calling the screen — which is what
+  makes the two deferred pieces cheap:
+  - 🔲 **Summon NPC** — the Lobby has no NPC or ProximityPrompt system at all, so the HUD `Summon`
+    button ships first. Adding an NPC later means firing the same event; **no screen change**.
+  - 🔲 **Skip-anim toggle** — deferred into the bigger **unified settings system** the user asked
+    for (`docs/proposals/2026-08-09-unified-settings-both-places.md`). Not blocking: B4's
+    click-to-skip already covers the need.
+  - Rarity colours come from `TierConfig` throughout (chips, rates, and the reveal's own painting).
 - 🔲 Selection + Event banners (blueprint B4) — both types are already registered and validated,
   and deliberately REFUSED at summon (`banner_type_not_supported_yet`) until their flows exist.
 - 🔲 Unit Index/Codex (blueprint B5): all units, obtained silhouettes, sources, full rates
