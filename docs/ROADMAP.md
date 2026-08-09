@@ -296,12 +296,15 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
   blueprint already says "NPC → UI" for C1 and C2. **C1/C2 should copy this shape.** It also retired
   three B9 problems: no dependency on AD-UI's selection, no ResetOnSpawn re-binding, and no "reopen
   Units to refresh" caveat (the screen owns its own picker). Server unchanged.
-- ⛔ **Sell dupes (C3's other half) — BLOCKED:** needs `SellValueByTier` in `TierConfig`, which does
-  not exist and is shared canon, so it spans both Places. `UnitsGUI.QuickSellButton` waits, unwired.
-- ⛔ **Trait reroll (C1) + Stat reroll (C2) — BLOCKED AND NOT AD-GACHA'S.** The trait rarity table is
-  AD-Traits canon in the GAME place and **does not exist in the Lobby at all**, which is also why
-  trait-on-summon is inert. Promoting it is an Integration task. `SummonEngine` has ASSUMED
-  `TraitTable.RollTrait(rng)` since B3 — verify that against the real module when promoting.
+- 🔲 **Sell dupes (C3's other half) — UNBLOCKED B12 (2026-08-09).** `TierConfig.SellValueByTier` +
+  `GetSellValue(tier)` are shared canon in BOTH Places (Silver: Common 10 → Bathala 3000; unknown
+  tier pays 0 by design so it can never mint currency). Still to build: wire the unwired
+  `UnitsGUI.QuickSellButton` + a `GrantService` sell path, with Locked/Favorited/in-Loadout
+  unselectable. Copy B11's NPC-screen shape (ADR-0010), not a pane in the Units frame.
+- 🔲 **Trait reroll (C1) + Stat reroll (C2) — UNBLOCKED B12, still AD-TRAITS' ROW (not AD-Gacha's).**
+  The trait rarity table (`TraitRegistry` + `TraitDefinitions`) is now shared canon in both Places.
+  **API is `TraitRegistry.Roll(rng)` — there is NO `RollTrait`;** `SummonEngine` assumed that name
+  from B3 and, inside a pcall, failed SILENTLY until B12 fixed it. Trait-on-summon is now LIVE.
 - 🔲 Worthiness meter (kills → 100% = guaranteed A-floor + boosted top-grade odds; resets on reroll).
 - 🔲 Feeding (C4) — per-stage exp food via catalog; mass-feed w/ protections. Check `FeedValue` in
   `ItemCatalog` and the `AddTowerXP` path actually exist in the Lobby before committing to it.

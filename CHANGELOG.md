@@ -1,5 +1,79 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-09 [integration] B12 — both-places backlog: `SellValueByTier` + the TRAIT TABLE promoted. Trait-on-summon was silently dead since B3.
+
+Bootstrap drift as expected: **Lobby 23/23 GREEN, Game 22/23 with `MetaMath=MISSING`.**
+Integration gate: **"Integration IS the task — proceeding."** User picked items **1 + 4** of the
+four-item backlog (2 = the v2→v3 schema bump and 3 = the MetaMath deploy were deliberately NOT
+taken; see "Not done"). Shared canon **23 → 25 entries (18 modules + 7 templates)**; at landing
+**Lobby 25/25 GREEN, Game 24/25** (`MetaMath` still Lobby-only, still expected).
+
+**1. `SellValueByTier` + `GetSellValue(tier)` in `TierConfig`** — unblocks blueprint C3's sell-dupes
+half. `a0d6e3a3 → 490f1f9d`, deployed and **hash-matched in BOTH Places**.
+
+- Silver by tier, ~×2.5 per step: Common 10 · Rare 25 · Epic 60 · Legendary 150 · Mythic 400 ·
+  Secret 1000 · Exclusive 1500 · Bathala 3000. **Retune that one table, never the callers.**
+- **`GetSellValue` falls back to 0, NOT to Common** — deliberately unlike `GetColor`/`get`, which
+  fall back so the UI cannot nil-error. This one pays CURRENCY: an unknown or typo'd tier quietly
+  minting Silver is far worse than one that pays nothing, and a 0 payout is visible and reportable.
+- Numbers are mine, not the blueprint's (it specifies only the name, location and "Silver by tier").
+  Nothing consumes them yet — `UnitsGUI.QuickSellButton` is still unwired — so they are safe to
+  change. Flagged for the user rather than asked about, since no shipping flow depends on them.
+
+**2. The TRAIT RARITY TABLE is now shared canon** — `TraitRegistry eca681ad` + `TraitDefinitions
+56e81e37`, byte-identical in both Places. This unblocks **C1 (trait reroll)** and **C2 (stat
+reroll)** and switched **trait-on-summon LIVE with no other Lobby change**.
+
+- **Two entries, not one:** `TraitRegistry` requires its sibling via `script.Parent`, so they
+  promote and deploy TOGETHER — one without the other is a broken require.
+- The Game's copies were the SOURCE and were **not modified**; disk canon was proven a byte-exact
+  reproduction by hash + length before either Place was touched.
+- `TraitRegistry`'s own header already said the roll lives there "so the Game place and Lobby share
+  ONE definition of trait rarity". The intent was written down long ago; only the sharing was missing.
+
+**3. THE FIND: `SummonEngine` has been calling a function that does not exist, since B3.**
+
+The prompt asked me to verify the assumed `TraitTable.RollTrait(rng)` API. It is **wrong**, and worse
+than wrong — the module lookup was correct all along (`RS.Configs.Traits.TraitRegistry`), so only the
+FUNCTION name was bad: the real API is **`Roll(rng)`**. Because the call sits inside a `pcall`, it
+**failed silently**: every summoned unit got `Trait = nil` and nothing anywhere reported a problem.
+Had the table been promoted without checking, trait-on-summon would have stayed dead and looked fine.
+
+- Fixed to `ctx.TraitTable.Roll(rng)`; the pcall failure path now **`warn`s once per server** rather
+  than shrugging, so the next API drift is loud instead of invisible.
+- **Measured live over 20,000 rolls:** 15.15% of summons enter the trait branch (matching
+  `TraitOnSummonChance = 0.15`), but the table is ~84% `None`, so a REAL trait lands on **2.43% of
+  all summons** — Blitz 213, Sniper 198, Deadeye 66, Godly 9. Anyone tuning `TraitOnSummonChance`
+  should know it is multiplied by that ~16%, not applied to the real-trait rate directly.
+- **`"None"` is normalised to nil, not stored.** Fixing the call surfaced a second problem I had just
+  created: ~12.7% of ALL summons would have persisted the sentinel STRING `"None"` into the profile,
+  while every other grant path — starter choice, `DevSetOwnedTowers`, `GrantUnit`'s default — writes
+  nil. Two spellings of "no trait" in one field is how `Trait ~= nil` silently stops meaning "has a
+  trait". Gameplay is identical either way (`TraitRegistry.Get` maps both to the None definition);
+  this is about the profile staying honest. Re-ran on the same seed afterwards: identical real-trait
+  counts (213/198/66/9), so the normalisation dropped only the `"None"` writes and did not shift the
+  RNG stream.
+
+**Verification.** A temporary real Script (`A9IntegrationCheck`, since DELETED) + `get_console_output`
+— never `execute_luau` for module behaviour, which caches requires and served B7 a stale module.
+All 8 sell values exact, unknown tier → 0; `Roll` present and `RollTrait` confirmed absent; roll
+distribution within band on 20k samples; trait-on-summon PASS. Every `Dev*` attribute swept and
+confirmed off.
+
+**Not done, deliberately:** item 2 (the `BannerChoices` v2→v3 schema bump) and item 3 (deploying
+`MetaMath` to the Game). The user chose "prefer fewer, fully verified". **A schema bump deserves a
+session where it is the only risky thing** — invariant 5 means a half-finished one strands the two
+Places on different `SCHEMA_VERSION`s across a session boundary. Item 3 remains optional housekeeping
+by `STATE.md`'s own account (`MetaMath=MISSING` in the Game is EXPECTED until Phase D). The AD-UI
+B7–B11 review backlog was stretch work and was not reached.
+
+- **Contract impact:** NONE. No schema bump, no template change, no version moved. Two shared-module
+  ADDITIONS + one shared-module EDIT, all deployed to both Places in this session.
+- **PENDINGs:** CLEARED — `SellValueByTier`, and the AD-Traits trait-table promotion. NEW — AD-Gacha
+  should review Integration's `SummonEngine` edit (user-authorised). Carried: republish + live
+  teleport loop (USER), `BannerChoices` v2→v3, `MetaMath` at Phase D, the B7–B11 AD-UI review.
+- Push pending (sandbox git auth); commit is local.
+
 ## 2026-08-09 [lobby] B11 — four user fixes: equip colours, ONE UNIT PER FAMILY, ascension moves to an NPC.
 
 Bootstrap drift **23/23 GREEN**, unchanged at landing. Integration gate: **"No Integration needed —

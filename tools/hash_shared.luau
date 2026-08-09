@@ -213,6 +213,12 @@ local MODULES = {
 	-- 2026-08-06: ONE hotbar for both Places. Same look/hover/animation everywhere; each Place
 	-- only supplies what a click does. Game deploy PENDING with Kit_HotbarSlot.
 	UIKitHotbar = "ReplicatedStorage.Shared.UIKit.Hotbar",
+	-- Promoted 2026-08-09 (Integration, owner AD-Traits): the trait rarity table. It was GAME-only,
+	-- which is exactly why the Lobby could not build trait reroll (C1) or stat reroll (C2) and why
+	-- trait-on-summon sat inert. The two promote TOGETHER -- TraitRegistry requires its sibling
+	-- TraitDefinitions via script.Parent, so deploying one without the other breaks the require.
+	TraitDefinitions = "ReplicatedStorage.Configs.Traits.TraitDefinitions",
+	TraitRegistry = "ReplicatedStorage.Configs.Traits.TraitRegistry",
 }
 
 -- GuiObject subtrees. Promoted by AD-UI 2026-08-06; a Place that has not received the kit

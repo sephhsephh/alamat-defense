@@ -2,88 +2,6 @@
   "hashAlgorithm": "fnv1a32",
   "comment": "Hashes are FNV-1a 32-bit. MODULES ('kind':'module') hash the exact ModuleScript Source bytes. TEMPLATES ('kind':'template') hash a CANONICAL SERIALISATION of a GuiObject subtree (sorted children, whitelisted+sorted properties, attributes, tags; ViewportFrame 3D contents excluded) -- see docs/decisions/ADR-0005-instance-tree-hashing.md. tools/hash_shared.luau computes both inside Studio and marks template hashes with a trailing '*'. 'deployed' records the hash last verified in each Place; null = not yet deployed. Any mismatch between file hash and a deployed hash = DRIFT: stop and reconcile before working on shared systems.",
   "modules": {
-    "ProfileTemplate": {
-      "file": "shared/src/ProfileTemplate.luau",
-      "hash": "63a0c98a",
-      "owner": "game",
-      "deployPath": "ReplicatedStorage.Shared.ProfileTemplate",
-      "deployed": {
-        "Game": "63a0c98a",
-        "Lobby": "63a0c98a"
-      },
-      "comment": "SCHEMA_VERSION=2 (A1, 2026-08-01): Towers(towerId) -> Units(uuid) instances, Currency -> Currencies map, +PlayerLevel/Loadout/Pity/Counters/Quests/LoginStreak/ShopStock/Titles/Spirits/Battlepass; Migrations[1] converts v1->v2. STORE_NAME stays Beta1_PlayerData(Dev1). Deployed byte-identical (63a0c98a) in GAME (A1) and LOBBY (A2, 2026-08-01) -- drift-green in both Places. Prior hashes: 184cdfad = beta store rename (v1), 8ac5d3e9 = starter-seed removal (v1), 376e717d = original v1.",
-      "kind": "module"
-    },
-    "PlayerDataService": {
-      "file": "shared/src/PlayerDataService.luau",
-      "hash": "613f0d39",
-      "owner": "game",
-      "deployPath": "ServerScriptService.Server.Data.PlayerDataService",
-      "deployed": {
-        "Game": "613f0d39",
-        "Lobby": "613f0d39"
-      },
-      "kind": "module"
-    },
-    "ProfileStore": {
-      "file": "shared/src/ProfileStore.luau",
-      "hash": "1e3a6f3f",
-      "owner": "vendor (loleris / MAD STUDIO)",
-      "deployPath": "ServerScriptService.Server.Data.ProfileStore",
-      "deployed": {
-        "Game": "1e3a6f3f",
-        "Lobby": "1e3a6f3f"
-      },
-      "kind": "module"
-    },
-    "Signal": {
-      "file": "shared/src/Signal.luau",
-      "hash": "91becf7a",
-      "owner": "game",
-      "deployPath": "ReplicatedStorage.Shared.Signal",
-      "deployed": {
-        "Game": "91becf7a",
-        "Lobby": "91becf7a"
-      },
-      "comment": "Lua-side pub/sub used by PlayerDataService. Promoted into shared canon 2026-07-17 (AD-Lobby session) from the verified live Game source; covered by the shared/src deploys row in OWNERSHIP.md (owner AD-Game).",
-      "kind": "module"
-    },
-    "MetaMath": {
-      "file": "shared/src/MetaMath.luau",
-      "hash": "6badac1d",
-      "owner": "gacha",
-      "deployPath": "ReplicatedStorage.Shared.MetaMath",
-      "deployed": {
-        "Game": null,
-        "Lobby": "6badac1d"
-      },
-      "comment": "Added B3 2026-08-09 (AD-Gacha, Lobby). The algorithms the blueprint says to implement ONCE for every meta system: Slot(period, offsetSec) deterministic time buckets (rotations/resets agree across servers with no MessagingService and no stored state), RngForSlot(slot, salt), Pick(rng, {{v,w}}) weighted choice, PickDistinct. Cross-phase invariant 3 routes every reset/rotation through Slot(). PURE -- no services, no state, no config reads; the reset-hour knob is MetaConfig.ResetOffsetSec and is passed IN, which is what keeps this Place-neutral. NOTE the `salt` argument on RngForSlot: without it two banners sharing a RotationPeriod would draw the identical featured set forever. GAME DEPLOY PENDING -- deliberately NOT deployed there yet: nothing in the Game reads it until Phase D challenges need Slot(), so the Game reporting MISSING is the EXPECTED state, not drift. Deploy it (and flip deployed.Game) in the session that first needs it.",
-      "kind": "module"
-    },
-    "TierConfig": {
-      "file": "shared/src/TierConfig.luau",
-      "hash": "a0d6e3a3",
-      "owner": "ui",
-      "deployPath": "ReplicatedStorage.Configs.Meta.TierConfig",
-      "deployed": {
-        "Game": "a0d6e3a3",
-        "Lobby": "a0d6e3a3"
-      },
-      "comment": "Promoted to shared canon 2026-08-01 (A-phase Integration). RECONCILED from two predecessors: the Game's A3 TierConfig (Order/SortOrder + PascalCase API) and the Lobby's interim TierConfig (multi-colour palettes + ColorSequence helpers, incl. Mythic rainbow / Secret red+dark-red). Every tier authors a Colors LIST; .Color is derived from Colors[1]. Both predecessors are REPLACED.",
-      "kind": "module"
-    },
-    "StatGradeConfig": {
-      "file": "shared/src/StatGradeConfig.luau",
-      "hash": "49a6edfd",
-      "owner": "game",
-      "deployPath": "ReplicatedStorage.Configs.Meta.StatGradeConfig",
-      "deployed": {
-        "Game": "49a6edfd",
-        "Lobby": "49a6edfd"
-      },
-      "comment": "Promoted to shared canon 2026-08-01 (A-phase Integration), byte-identical to the A3 original. Maps a 0..1 roll to D..Apex. The Lobby needs it to grade rolls WITHOUT tower configs - grades come from the roll alone.",
-      "kind": "module"
-    },
     "AscensionConfig": {
       "file": "shared/src/AscensionConfig.luau",
       "hash": "59aa8e15",
@@ -108,66 +26,6 @@
       "comment": "Promoted to shared canon 2026-08-01 (A-phase Integration). THE authority on a grantable's Name/Tier/Icon; replaces the Lobby's interim UnitCatalog for name+tier. CHANGED at promotion: the TowerConfigRegistry require is now LAZY + OPTIONAL so the module loads in the Lobby (which has no tower configs); Validate() returns (ok, errors, notes) and reports the skipped Tower->TowerConfig cross-check. Added GetName/GetTier convenience readers.",
       "kind": "module"
     },
-    "UnitStatsCatalog": {
-      "file": "shared/src/UnitStatsCatalog.luau",
-      "hash": "3bb9b140",
-      "owner": "game",
-      "deployPath": "ReplicatedStorage.Configs.Meta.UnitStatsCatalog",
-      "deployed": {
-        "Game": "3bb9b140",
-        "Lobby": "3bb9b140"
-      },
-      "comment": "GENERATED cache of per-tower RESOLVED base stats (DMG/RNG/SPA at tier1/ML1/no-trait/mid-roll/asc0) so the Lobby fills the Units-screen number slots without the full stat stack (ADR-0003). Added A6 2026-08-03 (owner AD-Game). Load-bearing validator SSS.Server.UnitStatsCatalogValidate regenerates from the live tower configs at boot in the Game place and errors LOUD on drift -- it stays GAME-ONLY canon (the Lobby has no tower configs to validate against). Deployed byte-identical (3bb9b140) in GAME (A6) and LOBBY (A6b, 2026-08-06) -- drift-green 9/9 in both Places. Regenerate + rehash whenever a tower's Damage/Range/SPA or BaseStats changes.",
-      "kind": "module"
-    },
-    "UIKitButton": {
-      "file": "shared/src/UIKitButton.luau",
-      "hash": "4968d8c3",
-      "owner": "ui",
-      "deployPath": "ReplicatedStorage.Shared.UIKit.Button",
-      "deployed": {
-        "Game": "4968d8c3",
-        "Lobby": "4968d8c3"
-      },
-      "comment": "Kit CONTROLLER. ONE reusable behaviour controller for every GuiButton (hover scale/stroke/icon-rotate, press, seamless animated gradient); all tuning via Attributes. Tag any GuiButton 'UIKitButton' and UIKitBootstrap attaches it. Promoted to shared canon 2026-08-06 with the rest of the kit so the Game place can build on it (blueprint section 9 A6).",
-      "kind": "module"
-    },
-    "UIKitItemIcon": {
-      "file": "shared/src/UIKitItemIcon.luau",
-      "hash": "b717ebe9",
-      "owner": "ui",
-      "deployPath": "ReplicatedStorage.Shared.UIKit.ItemIcon",
-      "deployed": {
-        "Game": "b717ebe9",
-        "Lobby": "b717ebe9"
-      },
-      "comment": "Kit CONTROLLER. Item card: flat ImageLabel icon (items have no model, so NO ViewportFrame), QtyBadge that hides at qty 0, tier border/BG from the shared TierConfig. Requires Configs.Meta.{ItemCatalog,TierConfig} -- both already shared. Promoted 2026-08-06.",
-      "kind": "module"
-    },
-    "UIKitFilterPanel": {
-      "file": "shared/src/UIKitFilterPanel.luau",
-      "hash": "72b49660",
-      "owner": "ui",
-      "deployPath": "ReplicatedStorage.Shared.UIKit.FilterPanel",
-      "deployed": {
-        "Game": "72b49660",
-        "Lobby": "72b49660"
-      },
-      "comment": "Kit CONTROLLER. Reusable filter panel (GroupTemplate + ToggleTemplate + Apply/Reset/Cancel, pending-vs-applied state). Used by BOTH the Units and Items screens in the Lobby. Promoted 2026-08-06.",
-      "kind": "module"
-    },
-    "UIKitBootstrap": {
-      "file": "shared/src/UIKitBootstrap.luau",
-      "hash": "f930ff7b",
-      "owner": "ui",
-      "deployPath": "StarterPlayer.StarterPlayerScripts.UIKitBootstrap",
-      "deployed": {
-        "Game": "f930ff7b",
-        "Lobby": "f930ff7b"
-      },
-      "comment": "Kit CONTROLLER (LocalScript, not a ModuleScript -- still hashed as source). Attaches UIKit.Button to every instance tagged 'UIKitButton', including clones added later. Without this in a Place, tagged buttons are inert. Promoted 2026-08-06.",
-      "kind": "module"
-    },
     "Kit_Button": {
       "hash": "812d0780",
       "owner": "ui",
@@ -177,28 +35,6 @@
         "Lobby": "812d0780"
       },
       "comment": "Kit TEMPLATE (the generic button design UIKit.Button.create() clones). No shared/src file exists -- the INSTANCE is the canon (ADR-0005); copy it between Places and verify by hash, never rebuild by hand. Promoted 2026-08-06.",
-      "kind": "template"
-    },
-    "Kit_ItemIcon": {
-      "hash": "5623f4b4",
-      "owner": "ui",
-      "deployPath": "ReplicatedStorage.UITemplates.Kit.ItemIcon",
-      "deployed": {
-        "Game": "5623f4b4",
-        "Lobby": "5623f4b4"
-      },
-      "comment": "Kit TEMPLATE (item card: Main/BG + IconImage + QtyBadge, tier stroke). No shared/src file exists -- the INSTANCE is the canon (ADR-0005); copy it between Places and verify by hash, never rebuild by hand. Promoted 2026-08-06. HISTORY: ee1ccd33 = original. c5e81264 = B1 2026-08-08, the Lobby's copy had diverged in 7 properties on 3 nodes and the USER confirmed all of it intentional, so canon moved with the Lobby as source. **5623f4b4 = B2 2026-08-08 (AD-Integration), the CURRENT canon**: mirrored to the Game, then QtyBadge.Position was REVERTED from (0.8565,-150),(0.96,-210) back to (0.96,0),(0.96,0) in BOTH Places. Reason, measured live: those negative PIXEL offsets put every quantity badge OUTSIDE its own card -- offset (-72,-99) from the cell, INSIDE_ITS_CELL=false on all four -- so in the ObtainRewardsGUI reward grid the x7 badge painted on the NEIGHBOURING card and x500/x2 were clipped away entirely. QtyBadge.Size stays at the user's 0.3365 (smaller badge kept); only the position offsets were reverted. Deployed byte-identical in BOTH Places.",
-      "kind": "template"
-    },
-    "Kit_ItemHoverCard": {
-      "hash": "0c9d7818",
-      "owner": "ui",
-      "deployPath": "ReplicatedStorage.UITemplates.Kit.ItemHoverCard",
-      "deployed": {
-        "Game": "0c9d7818",
-        "Lobby": "0c9d7818"
-      },
-      "comment": "Kit TEMPLATE (item hover panel: ItemName/TierName/IconImage/Description/OwnedLabel). No shared/src file exists -- the INSTANCE is the canon (ADR-0005); copy it between Places and verify by hash, never rebuild by hand. Promoted 2026-08-06. STATUS 2026-08-06: no RUNTIME lookup. ItemsGUI.HoverPreview is a CLONE taken once at build time, so editing this master does NOT update the deployed screen -- re-clone or edit both. This master/clone split is a known sharp edge of template canon (it already caused a stale-size bug at A5).",
       "kind": "template"
     },
     "Kit_FilterPanel": {
@@ -212,15 +48,37 @@
       "comment": "Kit TEMPLATE (filter panel incl. GroupTemplate + ToggleTemplate + Apply/Reset/Cancel). No shared/src file exists -- the INSTANCE is the canon (ADR-0005); copy it between Places and verify by hash, never rebuild by hand. Promoted 2026-08-06.",
       "kind": "template"
     },
-    "Kit_UnitPreviewTemplate": {
-      "hash": "55e17da8",
+    "Kit_HotbarSlot": {
+      "hash": "8c562d59",
       "owner": "ui",
-      "deployPath": "ReplicatedStorage.UITemplates.Kit.UnitPreviewTemplate",
+      "deployPath": "ReplicatedStorage.UITemplates.Kit.HotbarSlot",
       "deployed": {
-        "Game": "55e17da8",
-        "Lobby": "55e17da8"
+        "Game": "8c562d59",
+        "Lobby": "8c562d59"
       },
-      "comment": "Kit TEMPLATE (unit hover panel (its ViewportFrame 3D contents are NOT hashed -- ADR-0005)). No shared/src file exists -- the INSTANCE is the canon (ADR-0005); copy it between Places and verify by hash, never rebuild by hand. Promoted 2026-08-06. STATUS 2026-08-06: now has a real consumer again -- UIKitHotbar clones it for the hover preview in BOTH Places. NOTE it has no UnitLevelBar (the Lobby's separate UnitsGUI.HoverPreview does), so the hotbar preview shows name/tier/stats but NOT level; add one to this template if level is wanted there.",
+      "comment": "Kit TEMPLATE: the USER'S OWN hotbar slot design, lifted from the Lobby's Slot1 so BOTH Places draw an identical slot (user rule 2026-08-06: same look, different action). Adds LockOverlay (dark + lock icon + 'Lv N') and SlotNumber; the broken legacy per-slot script was stripped. GAME DEPLOY PENDING -- the user copy/pastes it, then hashes must match.",
+      "kind": "template"
+    },
+    "Kit_ItemHoverCard": {
+      "hash": "0c9d7818",
+      "owner": "ui",
+      "deployPath": "ReplicatedStorage.UITemplates.Kit.ItemHoverCard",
+      "deployed": {
+        "Game": "0c9d7818",
+        "Lobby": "0c9d7818"
+      },
+      "comment": "Kit TEMPLATE (item hover panel: ItemName/TierName/IconImage/Description/OwnedLabel). No shared/src file exists -- the INSTANCE is the canon (ADR-0005); copy it between Places and verify by hash, never rebuild by hand. Promoted 2026-08-06. STATUS 2026-08-06: no RUNTIME lookup. ItemsGUI.HoverPreview is a CLONE taken once at build time, so editing this master does NOT update the deployed screen -- re-clone or edit both. This master/clone split is a known sharp edge of template canon (it already caused a stale-size bug at A5).",
+      "kind": "template"
+    },
+    "Kit_ItemIcon": {
+      "hash": "5623f4b4",
+      "owner": "ui",
+      "deployPath": "ReplicatedStorage.UITemplates.Kit.ItemIcon",
+      "deployed": {
+        "Game": "5623f4b4",
+        "Lobby": "5623f4b4"
+      },
+      "comment": "Kit TEMPLATE (item card: Main/BG + IconImage + QtyBadge, tier stroke). No shared/src file exists -- the INSTANCE is the canon (ADR-0005); copy it between Places and verify by hash, never rebuild by hand. Promoted 2026-08-06. HISTORY: ee1ccd33 = original. c5e81264 = B1 2026-08-08, the Lobby's copy had diverged in 7 properties on 3 nodes and the USER confirmed all of it intentional, so canon moved with the Lobby as source. **5623f4b4 = B2 2026-08-08 (AD-Integration), the CURRENT canon**: mirrored to the Game, then QtyBadge.Position was REVERTED from (0.8565,-150),(0.96,-210) back to (0.96,0),(0.96,0) in BOTH Places. Reason, measured live: those negative PIXEL offsets put every quantity badge OUTSIDE its own card -- offset (-72,-99) from the cell, INSIDE_ITS_CELL=false on all four -- so in the ObtainRewardsGUI reward grid the x7 badge painted on the NEIGHBOURING card and x500/x2 were clipped away entirely. QtyBadge.Size stays at the user's 0.3365 (smaller badge kept); only the position offsets were reverted. Deployed byte-identical in BOTH Places.",
       "kind": "template"
     },
     "Kit_UnitIcon": {
@@ -232,6 +90,17 @@
         "Lobby": "24281a2b"
       },
       "comment": "Kit TEMPLATE (the blueprint section 5 UnitIcon: ViewportFrame + BG/tier border + TraitIcon + LevelBadge + CostLabel + NameLabel + ShinyBadge, plus KeyLabel/CountLabel that default HIDDEN for the hotbar). A6 2026-08-06: renamed from the A5 leftover 'Unit/ItemIconTemplate' (which had zero readers) and put to work as the Game hotbar slot. Built by running one IDENTICAL deterministic script in BOTH Places and hash-matching the result -- the base tree was verified identical (be620746) first. ViewportFrame 3D contents are not hashed (ADR-0005). STATUS 2026-08-09 (B8, ADR-0009): **ADOPTED as the shared unit ICON** -- un-parks ADR-0007. Two real consumers, both Lobby: SummonScreen featured chips (B6) and every IndexScreen codex entry (B8). There is still NO UIKit.UnitIcon controller, deliberately: both consumers clone and fill locally and hide DIFFERENT fields, so a controller would be configured into doing nothing two ways -- revisit on a third consumer wanting the same BEHAVIOUR. ADOPTION CHANGED NO BYTES: it means being USED, not edited; still 24281a2b in both Places, verified at B8's landing, zero drift. It is an ICON, not the unit CARD -- ADR-0007 clause 3 stands: if a shared unit CARD is ever built the USER'S shipping design wins and this is NOT the reference. DO NOT DELETE without a fresh user decision (it carries a rig); ADR-0009 is that instruction's home. Tip: ViewportFrame.ImageColor3 makes a clone a silhouette with one property.",
+      "kind": "template"
+    },
+    "Kit_UnitPreviewTemplate": {
+      "hash": "55e17da8",
+      "owner": "ui",
+      "deployPath": "ReplicatedStorage.UITemplates.Kit.UnitPreviewTemplate",
+      "deployed": {
+        "Game": "55e17da8",
+        "Lobby": "55e17da8"
+      },
+      "comment": "Kit TEMPLATE (unit hover panel (its ViewportFrame 3D contents are NOT hashed -- ADR-0005)). No shared/src file exists -- the INSTANCE is the canon (ADR-0005); copy it between Places and verify by hash, never rebuild by hand. Promoted 2026-08-06. STATUS 2026-08-06: now has a real consumer again -- UIKitHotbar clones it for the hover preview in BOTH Places. NOTE it has no UnitLevelBar (the Lobby's separate UnitsGUI.HoverPreview does), so the hotbar preview shows name/tier/stats but NOT level; add one to this template if level is wanted there.",
       "kind": "template"
     },
     "LoadoutConfig": {
@@ -246,16 +115,147 @@
       "comment": "Hotbar slot count (6) + per-slot account-level unlocks {1,1,1,5,20,50} + helpers. SHARED because both Places draw the same 6 slots and the same locks -- if only one knew, the two hotbars would disagree. Written by AD-UI 2026-08-06 with the user's authorisation; owner is AD-Lobby (it gates a profile write). Verified Lv1->3 slots, Lv5->4, Lv20->5, Lv50->6.",
       "kind": "module"
     },
-    "Kit_HotbarSlot": {
-      "hash": "8c562d59",
-      "owner": "ui",
-      "deployPath": "ReplicatedStorage.UITemplates.Kit.HotbarSlot",
+    "MetaMath": {
+      "file": "shared/src/MetaMath.luau",
+      "hash": "6badac1d",
+      "owner": "gacha",
+      "deployPath": "ReplicatedStorage.Shared.MetaMath",
       "deployed": {
-        "Game": "8c562d59",
-        "Lobby": "8c562d59"
+        "Game": null,
+        "Lobby": "6badac1d"
       },
-      "comment": "Kit TEMPLATE: the USER'S OWN hotbar slot design, lifted from the Lobby's Slot1 so BOTH Places draw an identical slot (user rule 2026-08-06: same look, different action). Adds LockOverlay (dark + lock icon + 'Lv N') and SlotNumber; the broken legacy per-slot script was stripped. GAME DEPLOY PENDING -- the user copy/pastes it, then hashes must match.",
-      "kind": "template"
+      "comment": "Added B3 2026-08-09 (AD-Gacha, Lobby). The algorithms the blueprint says to implement ONCE for every meta system: Slot(period, offsetSec) deterministic time buckets (rotations/resets agree across servers with no MessagingService and no stored state), RngForSlot(slot, salt), Pick(rng, {{v,w}}) weighted choice, PickDistinct. Cross-phase invariant 3 routes every reset/rotation through Slot(). PURE -- no services, no state, no config reads; the reset-hour knob is MetaConfig.ResetOffsetSec and is passed IN, which is what keeps this Place-neutral. NOTE the `salt` argument on RngForSlot: without it two banners sharing a RotationPeriod would draw the identical featured set forever. GAME DEPLOY PENDING -- deliberately NOT deployed there yet: nothing in the Game reads it until Phase D challenges need Slot(), so the Game reporting MISSING is the EXPECTED state, not drift. Deploy it (and flip deployed.Game) in the session that first needs it.",
+      "kind": "module"
+    },
+    "PlayerDataService": {
+      "file": "shared/src/PlayerDataService.luau",
+      "hash": "613f0d39",
+      "owner": "game",
+      "deployPath": "ServerScriptService.Server.Data.PlayerDataService",
+      "deployed": {
+        "Game": "613f0d39",
+        "Lobby": "613f0d39"
+      },
+      "kind": "module"
+    },
+    "ProfileStore": {
+      "file": "shared/src/ProfileStore.luau",
+      "hash": "1e3a6f3f",
+      "owner": "vendor (loleris / MAD STUDIO)",
+      "deployPath": "ServerScriptService.Server.Data.ProfileStore",
+      "deployed": {
+        "Game": "1e3a6f3f",
+        "Lobby": "1e3a6f3f"
+      },
+      "kind": "module"
+    },
+    "ProfileTemplate": {
+      "file": "shared/src/ProfileTemplate.luau",
+      "hash": "63a0c98a",
+      "owner": "game",
+      "deployPath": "ReplicatedStorage.Shared.ProfileTemplate",
+      "deployed": {
+        "Game": "63a0c98a",
+        "Lobby": "63a0c98a"
+      },
+      "comment": "SCHEMA_VERSION=2 (A1, 2026-08-01): Towers(towerId) -> Units(uuid) instances, Currency -> Currencies map, +PlayerLevel/Loadout/Pity/Counters/Quests/LoginStreak/ShopStock/Titles/Spirits/Battlepass; Migrations[1] converts v1->v2. STORE_NAME stays Beta1_PlayerData(Dev1). Deployed byte-identical (63a0c98a) in GAME (A1) and LOBBY (A2, 2026-08-01) -- drift-green in both Places. Prior hashes: 184cdfad = beta store rename (v1), 8ac5d3e9 = starter-seed removal (v1), 376e717d = original v1.",
+      "kind": "module"
+    },
+    "Signal": {
+      "file": "shared/src/Signal.luau",
+      "hash": "91becf7a",
+      "owner": "game",
+      "deployPath": "ReplicatedStorage.Shared.Signal",
+      "deployed": {
+        "Game": "91becf7a",
+        "Lobby": "91becf7a"
+      },
+      "comment": "Lua-side pub/sub used by PlayerDataService. Promoted into shared canon 2026-07-17 (AD-Lobby session) from the verified live Game source; covered by the shared/src deploys row in OWNERSHIP.md (owner AD-Game).",
+      "kind": "module"
+    },
+    "StatGradeConfig": {
+      "file": "shared/src/StatGradeConfig.luau",
+      "hash": "49a6edfd",
+      "owner": "game",
+      "deployPath": "ReplicatedStorage.Configs.Meta.StatGradeConfig",
+      "deployed": {
+        "Game": "49a6edfd",
+        "Lobby": "49a6edfd"
+      },
+      "comment": "Promoted to shared canon 2026-08-01 (A-phase Integration), byte-identical to the A3 original. Maps a 0..1 roll to D..Apex. The Lobby needs it to grade rolls WITHOUT tower configs - grades come from the roll alone.",
+      "kind": "module"
+    },
+    "TierConfig": {
+      "file": "shared/src/TierConfig.luau",
+      "hash": "490f1f9d",
+      "owner": "ui",
+      "deployPath": "ReplicatedStorage.Configs.Meta.TierConfig",
+      "deployed": {
+        "Game": "490f1f9d",
+        "Lobby": "490f1f9d"
+      },
+      "comment": "Promoted to shared canon 2026-08-01 (A-phase Integration). RECONCILED from two predecessors: the Game's A3 TierConfig (Order/SortOrder + PascalCase API) and the Lobby's interim TierConfig (multi-colour palettes + ColorSequence helpers, incl. Mythic rainbow / Secret red+dark-red). Every tier authors a Colors LIST; .Color is derived from Colors[1]. Both predecessors are REPLACED. 2026-08-09 (Integration): +SellValueByTier (Silver per tier, blueprint C3 sell-dupes) and GetSellValue(tier), which falls back to 0 -- NOT to Common like GetColor/get -- because this one pays CURRENCY and an unknown tier must never mint Silver. Retune the table, not callers. Prior hash: a0d6e3a3 = the A-phase reconciliation.",
+      "kind": "module"
+    },
+    "TraitDefinitions": {
+      "file": "shared/src/TraitDefinitions.luau",
+      "hash": "56e81e37",
+      "owner": "traits",
+      "deployPath": "ReplicatedStorage.Configs.Traits.TraitDefinitions",
+      "deployed": {
+        "Game": "56e81e37",
+        "Lobby": "56e81e37"
+      },
+      "comment": "AD-Traits canon. The trait table itself: Id/DisplayName/Rarity/Weight/StatMultipliers, plus Godly's PlacementLimitOverride. PROMOTED to shared canon 2026-08-09 (Integration) -- it was GAME-only, which is why the Lobby could not build trait reroll (blueprint C1) or stat reroll (C2) and why trait-on-summon was inert. Weight is the reroll weight; total 1188 today, so None is ~84%. Deployed byte-identical in BOTH Places; the Game copy was the source and was NOT modified by the promotion.",
+      "kind": "module"
+    },
+    "TraitRegistry": {
+      "file": "shared/src/TraitRegistry.luau",
+      "hash": "eca681ad",
+      "owner": "traits",
+      "deployPath": "ReplicatedStorage.Configs.Traits.TraitRegistry",
+      "deployed": {
+        "Game": "eca681ad",
+        "Lobby": "eca681ad"
+      },
+      "comment": "AD-Traits canon. Lookup + the WEIGHTED ROLL over TraitDefinitions. API is Roll(rng) -> traitId; there is NO RollTrait -- SummonEngine assumed that name from B3 until 2026-08-09 and, because the call sat inside a pcall, trait-on-summon failed SILENTLY the whole time. Requires its sibling TraitDefinitions, so the two promote together. GetEffectivePlacementLimit takes a towerConfig from the caller, so it is harmless in the Lobby (which has no tower configs). PROMOTED 2026-08-09 (Integration); the Game copy was the source and was NOT modified.",
+      "kind": "module"
+    },
+    "UIKitBootstrap": {
+      "file": "shared/src/UIKitBootstrap.luau",
+      "hash": "f930ff7b",
+      "owner": "ui",
+      "deployPath": "StarterPlayer.StarterPlayerScripts.UIKitBootstrap",
+      "deployed": {
+        "Game": "f930ff7b",
+        "Lobby": "f930ff7b"
+      },
+      "comment": "Kit CONTROLLER (LocalScript, not a ModuleScript -- still hashed as source). Attaches UIKit.Button to every instance tagged 'UIKitButton', including clones added later. Without this in a Place, tagged buttons are inert. Promoted 2026-08-06.",
+      "kind": "module"
+    },
+    "UIKitButton": {
+      "file": "shared/src/UIKitButton.luau",
+      "hash": "4968d8c3",
+      "owner": "ui",
+      "deployPath": "ReplicatedStorage.Shared.UIKit.Button",
+      "deployed": {
+        "Game": "4968d8c3",
+        "Lobby": "4968d8c3"
+      },
+      "comment": "Kit CONTROLLER. ONE reusable behaviour controller for every GuiButton (hover scale/stroke/icon-rotate, press, seamless animated gradient); all tuning via Attributes. Tag any GuiButton 'UIKitButton' and UIKitBootstrap attaches it. Promoted to shared canon 2026-08-06 with the rest of the kit so the Game place can build on it (blueprint section 9 A6).",
+      "kind": "module"
+    },
+    "UIKitFilterPanel": {
+      "file": "shared/src/UIKitFilterPanel.luau",
+      "hash": "72b49660",
+      "owner": "ui",
+      "deployPath": "ReplicatedStorage.Shared.UIKit.FilterPanel",
+      "deployed": {
+        "Game": "72b49660",
+        "Lobby": "72b49660"
+      },
+      "comment": "Kit CONTROLLER. Reusable filter panel (GroupTemplate + ToggleTemplate + Apply/Reset/Cancel, pending-vs-applied state). Used by BOTH the Units and Items screens in the Lobby. Promoted 2026-08-06.",
+      "kind": "module"
     },
     "UIKitHotbar": {
       "file": "shared/src/UIKitHotbar.luau",
@@ -267,6 +267,30 @@
         "Lobby": "616b06bf"
       },
       "comment": "Kit CONTROLLER. ONE hotbar for BOTH Places so they look and feel identical (user rule 2026-08-06): same slot design, hover, press animation and locked/empty states. Each Place supplies only OnActivated -- Lobby opens the Units screen on that unit, Game starts placement. Always draws LoadoutConfig.MaxSlots slots; a slot is never hidden, only filled/empty/locked. GAME DEPLOY PENDING alongside Kit_HotbarSlot. 2026-08-06 fix: paint BG's OWN UIGradient from the tier too -- only the stroke's gradient was being set, so the slot background stayed at the template's authored red for every unit. BG's gradient and the stroke's gradient are DIFFERENT instances; do not merge the lookups. 2026-08-06: hover preview RESTORED (the first version of this controller dropped the popup the Lobby hotbar used to have). It clones the shared Kit.UnitPreviewTemplate, so both Places pop the same card. Only shown for a FILLED, UNLOCKED slot.",
+      "kind": "module"
+    },
+    "UIKitItemIcon": {
+      "file": "shared/src/UIKitItemIcon.luau",
+      "hash": "b717ebe9",
+      "owner": "ui",
+      "deployPath": "ReplicatedStorage.Shared.UIKit.ItemIcon",
+      "deployed": {
+        "Game": "b717ebe9",
+        "Lobby": "b717ebe9"
+      },
+      "comment": "Kit CONTROLLER. Item card: flat ImageLabel icon (items have no model, so NO ViewportFrame), QtyBadge that hides at qty 0, tier border/BG from the shared TierConfig. Requires Configs.Meta.{ItemCatalog,TierConfig} -- both already shared. Promoted 2026-08-06.",
+      "kind": "module"
+    },
+    "UnitStatsCatalog": {
+      "file": "shared/src/UnitStatsCatalog.luau",
+      "hash": "3bb9b140",
+      "owner": "game",
+      "deployPath": "ReplicatedStorage.Configs.Meta.UnitStatsCatalog",
+      "deployed": {
+        "Game": "3bb9b140",
+        "Lobby": "3bb9b140"
+      },
+      "comment": "GENERATED cache of per-tower RESOLVED base stats (DMG/RNG/SPA at tier1/ML1/no-trait/mid-roll/asc0) so the Lobby fills the Units-screen number slots without the full stat stack (ADR-0003). Added A6 2026-08-03 (owner AD-Game). Load-bearing validator SSS.Server.UnitStatsCatalogValidate regenerates from the live tower configs at boot in the Game place and errors LOUD on drift -- it stays GAME-ONLY canon (the Lobby has no tower configs to validate against). Deployed byte-identical (3bb9b140) in GAME (A6) and LOBBY (A6b, 2026-08-06) -- drift-green 9/9 in both Places. Regenerate + rehash whenever a tower's Damage/Range/SPA or BaseStats changes.",
       "kind": "module"
     }
   },

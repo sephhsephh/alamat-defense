@@ -6,10 +6,12 @@ stage + difficulty, form parties, and teleport into the Game place.
 
 ## Current live state
 
-- **Shared canon deployed & drift-free — 23/23 GREEN at B3 (2026-08-09).** Exact hashes live in
-  `shared/manifest.json`; do not duplicate them here. 16 modules + 7 templates, all byte-identical
-  to the manifest. **`MetaMath` (B3) is Lobby-only so far** — the Game reports MISSING for it and
-  that is EXPECTED, not drift; every OTHER entry must match in both Places.
+- **Shared canon deployed & drift-free — 25/25 GREEN at B12.** Exact hashes live in
+  `shared/manifest.json`; do not duplicate them. 18 modules + 7 templates. **`MetaMath` (B3) is
+  Lobby-only** — the Game reports MISSING (24/25), EXPECTED not drift; every OTHER entry must match.
+- **Trait rarity table arrived B12:** `RS.Configs.Traits.{TraitRegistry,TraitDefinitions}` are SHARED
+  canon now — un-blocks C1/C2 and made **trait-on-summon LIVE** with no other Lobby change.
+  API is `TraitRegistry.Roll(rng)`; there is no `RollTrait`.
 - **`UnitStatsCatalog`** is a GENERATED read-only cache of each tower's resolved base DMG/RNG/SPA
   at tier 1 / ML 1 / no trait / mid-roll / asc 0 — **SPA is already inverted, these are not raw
   BaseStats**. Owner is AD-Game; the Lobby only consumes it. `Get(towerId)` returns nil for unknown
@@ -28,15 +30,13 @@ stage + difficulty, form parties, and teleport into the Game place.
     `Grades = {DMG,RNG,SPA}` letters from `StatGradeConfig` — plus `Loadout`, `Currencies`,
     `PlayerXP/PlayerLevel`, `MaxLoadout`. **No resolved DMG/RNG/SPA and no XpPct** (deferred —
     see STATE PENDINGs). Clients never read profiles; render this view only.
-  - **`GetUnitViews.Items` (A5, 2026-08-03):** the same remote also returns the profile's
-    `{ [itemId] = count }` map (copied, defensive if absent) for the Items screen. Additive and
-    read-only; no contract bump. **Nothing WRITES `Data.Items` in either Place**, so it is
-    legitimately empty today. Added by AD-UI with the user's authorisation; **AD-Lobby reviewed
-    it at A6b and KEPT IT AS-IS** — the shape is right, so `ItemsController` needs no change.
-    `GetUnitViews` is now the Lobby's SINGLE profile read path and load-bearing for every
-    screen: additive changes are free, but a breaking one needs contract treatment (ADR-0004).
-  - **`GetCollection` — RETIRED A7 (2026-08-06, ADR-0004)**, handler + RemoteFunction both GONE.
-    **Do not add a second profile read path.** `RS.Remotes` holds **13** entries (+RequestSummon, B3).
+  - **`GetUnitViews.Items` (A5):** the same remote returns the profile's `{ [itemId] = count }` map
+    (copied, defensive if absent). Additive, read-only, no contract bump; reviewed and KEPT AS-IS at
+    A6b. **Nothing WRITES `Data.Items` in normal play**, so it is legitimately empty today.
+  - **`GetUnitViews` is the SINGLE profile read path** and load-bearing for every screen: additive
+    changes are free, a breaking one needs contract treatment. **`GetCollection` RETIRED A7**
+    (ADR-0004), handler + RemoteFunction both GONE — **do not add a second read path.**
+    `RS.Remotes` holds **13** entries (+RequestSummon, B3).
   - Stage select + difficulty (`RS.Configs.StageRegistry` mirror, `GetStages`,
     `StarterGui.StageSelectScreen`) — captures (StageId, DifficultyPercent).
   - Parties + reserved-server launch (`Server.Lobby.PartyService`, `RS.Configs.LobbyConfig`,

@@ -23,7 +23,7 @@ task touches — resolved at bootstrap per the constitution.
 | ItemCatalog / TierConfig / icon-UI kit (Phase A) | AD-UI | both | `shared/src/{ItemCatalog,TierConfig}.luau` (SHARED since 2026-08-01) + kit in Studio |
 | StatGradeConfig / AscensionConfig | AD-Game | both | `shared/src/` (SHARED since 2026-08-01) |
 | TowerStatResolver (+ MetaScaling, Traits) | AD-Game | Game | Studio (Game) `RS.Shared.TowerStatResolver` — NOT shared; see the numbers PENDING in STATE.md |
-| Trait & stat rerolls / worthiness (future) | AD-Traits | Lobby | TBD when built |
+| Trait & stat rerolls / worthiness (C1/C2) | AD-Traits | Lobby | TBD when built — **UNBLOCKED B12** (rarity table is shared now). Copy B11's NPC-opened-screen shape (ADR-0010). |
 | Quests / login / codes / battlepass (future) | AD-Meta | Lobby | TBD when built |
 | Evolution / spirits (future) | AD-Gacha | Lobby | TBD when built |
 | UI (StarterGui screens, HUD, panels) | AD-UI | both | Studio (per Place) StarterGui + `docs/systems/ui.md` (when migrated) |
@@ -31,7 +31,7 @@ task touches — resolved at bootstrap per the constitution.
 | Tower models / rigs / animations | AD-TowerModels | Game | Studio (Game) `RS.TowerModels`, `ServerStorage.Archive` sources |
 | Tower configs & combat (targeting, attacks, passives, abilities, summons) | AD-Game | Game | Studio (Game) `RS.Configs.Towers`, `Server.Towers`, `Server.Summons` |
 | Enemies (configs, controller, behaviors) | AD-Enemies | Game | Studio (Game) `RS.Configs.Enemies`, `Server.Enemies` |
-| Traits | AD-Traits | Game | Studio (Game) `RS.Configs.Traits` |
+| Traits (rarity table) | AD-Traits | **both** | `shared/src/{TraitRegistry,TraitDefinitions}.luau` — **SHARED since B12, 2026-08-09**, deployed byte-identical in both Places. Was Game-only, which blocked C1/C2 and left trait-on-summon inert. API is `TraitRegistry.Roll(rng)`; there is no `RollTrait`. The two deploy TOGETHER (Registry requires its sibling). |
 | Maps / stages / waves content | AD-Game | Game | Studio (Game) `RS.Configs.{Maps,Stages,Waves}`, `ServerStorage.Maps` |
 | Settings (client settings pipeline) | AD-Game | both | Studio (Game) `Server.Settings` + profile `Settings` field |
 | Repo / constitution / tooling | AD-Integration | — | this repo root + `tools/` |

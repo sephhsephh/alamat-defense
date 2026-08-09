@@ -41,6 +41,27 @@ for _, tier in pairs(TierConfig.Tiers) do
 	tier.Color = tier.Colors[1]
 end
 
+-- ===== SELL VALUE (blueprint Phase C, C3 sell-dupes half) =====
+-- SILVER paid for selling ONE duplicate unit of this tier. Blueprint: "multi-select in Units
+-- screen -> Silver by tier (`SellValueByTier` in TierConfig)". Lives here rather than in a
+-- Lobby-local module because the Game place will also need it the day match rewards or an
+-- auto-sell option pay out by tier, and two copies of a price list is how the two Places
+-- start quoting different prices for the same unit.
+--
+-- RETUNE HERE -- this table is the single authored source. Roughly x2.5 per tier: a Common
+-- dupe is pocket change, a Mythic dupe is a real decision because it is ALSO ascension fodder
+-- (AscensionConfig consumes one dupe per level), so selling it has to feel like giving that up.
+TierConfig.SellValueByTier = {
+	Common    = 10,
+	Rare      = 25,
+	Epic      = 60,
+	Legendary = 150,
+	Mythic    = 400,
+	Secret    = 1000,
+	Exclusive = 1500,
+	Bathala   = 3000,
+}
+
 local FALLBACK_TIER = "Common"
 
 -- ===== A3 API (strict lookups; Get returns nil for an unknown tier) =====
@@ -61,6 +82,14 @@ end
 function TierConfig.GetSortOrder(tier: string): number
 	local t = TierConfig.Tiers[tier]
 	return (t and t.SortOrder) or 0
+end
+
+-- Silver paid for one duplicate of this tier.
+-- DELIBERATELY falls back to 0, NOT to Common, unlike GetColor/`get`. Those fall back so the UI
+-- never nil-errors on a bad tier; this one pays CURRENCY, and a typo'd or unknown tier quietly
+-- minting Silver is far worse than one that pays nothing. A 0 payout is visible and reportable.
+function TierConfig.GetSellValue(tier: string): number
+	return TierConfig.SellValueByTier[tier] or 0
 end
 
 -- ===== UI helpers (lifted from the Lobby interim module) =====

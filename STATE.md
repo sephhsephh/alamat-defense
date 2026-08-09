@@ -18,7 +18,7 @@ a shared UI kit, and the gacha banner engine + summon UI.
   and gacha (`docs/systems/gacha.md`, `docs/systems/lobby-ui.md`). **`GetUnitViews` is its SINGLE
   profile read path** (ADR-0004); **`GrantService` is its SINGLE grant/spend path**.
 - **Shared canon** (`shared/manifest.json`, drift-checked by `tools/hash_shared.luau`):
-  **23 entries = 16 modules + 7 templates. Lobby 23/23 GREEN.** **The Game reads 22/23 and that is
+  **25 entries = 18 modules + 7 templates. Lobby 25/25 GREEN.** **The Game reads 24/25 and that is
   EXPECTED, not drift:** `MetaMath` is Lobby-only until Phase D needs it. Every other entry is
   byte-identical in both. Templates hash as INSTANCE trees with no `shared/src` file (ADR-0005).
   `UnitStatsCatalogValidate` is Game-only by design — do not "fix" its absence in the Lobby.
@@ -50,13 +50,10 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   **Quests / login / codes still need a NEW reveal answer:** the return-value trick only serves
   player-INITIATED grants; do not bolt a push remote onto `SummonService`.
 
-- **PENDING (AD-UI + both Places): `SellValueByTier` in `TierConfig`** — blocks C3's SELL-DUPES half.
-  Shared canon. `UnitsGUI.QuickSellButton` exists, unwired.
-
-- **PENDING (AD-Traits, BLOCKS blueprint C1+C2):** the trait rarity table is AD-Traits canon in the
-  GAME place and **does not exist in the Lobby at all** — trait reroll cannot be built here and
-  trait-on-summon stays inert. Promoting it is an Integration task. `SummonEngine` ASSUMES
-  `TraitTable.RollTrait(rng)` — unverified since B3. C1/C2 are AD-Traits' ROW.
+- **PENDING (AD-Gacha review, ONE user-authorised item):** Integration fixed trait-on-summon in
+  `SummonEngine` (its canon): call is now `TraitRegistry.Roll(rng)` (it assumed a non-existent
+  `RollTrait` since B3 and, inside a pcall, failed SILENTLY); a `"None"` roll normalises to **nil**
+  so summons match every other grant path; the pcall failure now WARNS once. Verified live.
 
 - **PENDING (AD-Game → AD-Integration → AD-UI): ONE settings system for BOTH Places** (user,
   2026-08-09) — same structure + GUI in both, entries scoped `Both`/`GameOnly`/`LobbyOnly`, covering
@@ -68,7 +65,7 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   so Gold reads stale. Wants a `ClientEvents.CurrencyChanged` — copy B10's `LoadoutChanged` shape.
 
 - **PENDING (AD-Meta at Phase D):** deploy `MetaMath` to the GAME + flip `deployed.Game`; until then
-  the Game's 22/23 `MetaMath=MISSING` is EXPECTED — do not "reconcile" it.
+  the Game's 24/25 `MetaMath=MISSING` is EXPECTED — do not "reconcile" it.
 
 - **PENDING (AD-Integration, not urgent):** invariant 1 ("every grant flows through `GrantService`")
   holds in the **Lobby only** — the Game still grants via `PlayerInventoryService` /
@@ -114,7 +111,10 @@ are SESSION-TASK names. Different sequences, same letters.
    B6 summon UI · B7 EVENT banners · **B8 unit INDEX**. Docs: `gacha.md`, `lobby-ui.md`.
 3. **Blueprint B4 HALF DONE** — Event ✅, Selection ⛔ (schema PENDING above). **B5 ✅ (B8)**, which
    also settled `Kit_UnitIcon` — ADOPTED, ADR-0009.
-4. **Phase C started (B9): blueprint C3 ascension ✅** (`docs/systems/ascension.md`); its sell-dupes
-   half is blocked on `SellValueByTier`. **B11 moved it to its own NPC-opened screen (ADR-0010) —
-   C1/C2 should copy that shape, not put panes in the Units frame.** **C1 + C2 are AD-TRAITS' row AND
-   blocked** (no trait table here). **C4 feeding** needs `FeedValue` + `AddTowerXP` checked first.
+4. **Phase C started (B9): blueprint C3 ascension ✅** (`docs/systems/ascension.md`).
+   **B11 moved it to its own NPC-opened screen (ADR-0010) — C1/C2/C4 should copy that shape, not
+   put panes in the Units frame.** **C1 + C2 are AD-TRAITS' row and are now UNBLOCKED** — B12
+   promoted the trait table to shared canon, so the Lobby can read trait rarity. **C3's sell-dupes
+   half is UNBLOCKED too** (`TierConfig.GetSellValue`); it needs the unwired
+   `UnitsGUI.QuickSellButton` + a `GrantService` sell path. **C4 feeding** needs `FeedValue` +
+   `AddTowerXP` checked first.

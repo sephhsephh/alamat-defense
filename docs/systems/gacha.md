@@ -190,10 +190,21 @@ not. The split is what stops the harness from becoming a second copy of the logi
   The **pity ledger records the AWARDED tier, pre-fallback** — otherwise the Secret counter could
   never reset and every later pull would re-trigger it. `Validate()` reports this as a **content
   gap note**, not an error; it disappears the day a Secret tower is catalogued.
-- **Trait-on-summon is INERT in the Lobby.** The trait rarity table is AD-Traits canon in the GAME
-  place (`RS.Configs.Traits`); this Place has none, so the lookup finds nothing and units get
-  `Trait = nil` — exactly what the starter grant has always done. The RNG draw is still **consumed**
-  so the stream does not shift the day the table lands. Do NOT invent a local trait table.
+- **Trait-on-summon is LIVE since B12 (2026-08-09).** The trait rarity table
+  (`RS.Configs.Traits.{TraitRegistry,TraitDefinitions}`) was promoted to SHARED canon, so the Lobby
+  can finally roll traits. The lookup stays lazy + optional, and the RNG draw is still **consumed
+  unconditionally**, so the stream does not shift with the table's presence. Do NOT invent a local
+  trait table.
+  - **API is `TraitRegistry.Roll(rng)`. There is NO `RollTrait`** — this module assumed that name
+    from B3, and because the call sits inside a `pcall` it failed **SILENTLY**: every summon got
+    `Trait = nil` and nothing ever reported it. The failure path now `warn`s once per server.
+  - **Measured over 20k rolls:** 15% enter the trait branch (`GachaConfig.TraitOnSummonChance`), but
+    the table is ~84% `None`, so a REAL trait lands on **~2.4% of all summons** — Blitz/Sniper ~1%
+    each, Deadeye ~0.33%, Godly ~0.045%. Tune `TraitOnSummonChance` knowing it is multiplied by
+    that ~16%, not applied to the real-trait rate directly.
+  - A `"None"` roll is normalised to **nil**, not stored. Otherwise ~12.7% of all summons would
+    persist the sentinel STRING while every other grant path writes nil, and `Trait ~= nil` would
+    quietly stop meaning "has a trait".
 - **`LuckMult` interpretation (recorded — the blueprint declares the key, not its semantics):** it
   multiplies the weight of the **pity tiers only** (Legendary/Mythic/Secret). Multiplying every
   weight would be a no-op, since `Pick` normalises. Shipped at `1` = inert, so nothing observable
@@ -249,6 +260,6 @@ client matching the server's `FEATURED` tags.
 ## Open
 
 - ~~No gacha UI~~ **built at B6** · no Selection/Event flows (B4) · no Index/Codex (B5).
-- Trait-on-summon inert until AD-Traits promotes the rarity table.
+- Trait-on-summon: **DONE at B12** — rarity table promoted to shared canon, traits roll for real.
 - Game-side `GrantService` convergence (invariant 1 is Lobby-only today).
 - No Secret/Exclusive/Bathala tower exists, so those tiers are unreachable content.

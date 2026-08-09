@@ -131,6 +131,14 @@ opening lists **4 eligible Mythic+ units** and the detail pane reads `A3 / A3  D
 
 ## Deferred
 
-**Sell dupes** (the other half of blueprint C3) needs `SellValueByTier` in `TierConfig` — which does
-not exist, and `TierConfig` is **shared canon**, so adding it spans both Places. `UnitsGUI` already
-has an unwired `QuickSellButton` waiting for it. PENDING in `STATE.md`.
+**Sell dupes** (the other half of blueprint C3) is **UNBLOCKED since B12 (2026-08-09)**:
+`TierConfig.SellValueByTier` and `TierConfig.GetSellValue(tier)` are shared canon, deployed and
+hash-matched in BOTH Places. Silver by tier — Common 10, Rare 25, Epic 60, Legendary 150,
+Mythic 400, Secret 1000, Exclusive 1500, Bathala 3000; **retune that one table, never the callers**.
+`GetSellValue` falls back to **0** for an unknown tier (deliberately unlike `GetColor`/`get`, which
+fall back to Common) because this one pays currency and an unknown tier must never mint Silver.
+
+Still to build: `UnitsGUI` has an unwired `QuickSellButton` waiting, plus a `GrantService` sell path,
+with Locked / Favorited / in-Loadout units unselectable. Note the tension with ascension — a Mythic
+dupe is ALSO the ascension material this system consumes, which is why its sell price is high enough
+to make selling one a real decision rather than free money.
