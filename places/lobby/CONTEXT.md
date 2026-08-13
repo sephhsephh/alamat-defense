@@ -60,12 +60,11 @@ difficulty, form parties, and teleport into the Game place.
   - **Starter tower choice (2026-07-18):** dev-editable `RS.Configs.StarterTowerConfig`
     (Archer/Knight/Mage), `Server.Lobby.StarterChoiceService` +
     `Remotes.{GetStarterOffer,ChooseStarterTower}`, modal `StarterGui.StarterChoiceScreen` (no
-    dismiss; REAL instance tree — `Root.Panel.CardsRow.CardTemplate` is the editable card design).
-    Eligibility = profile owns ZERO **units** (v2 ships no starter, so fresh accounts always see
-    it). Grants a uuid `UnitInstance` mirroring the Game's `GrantUnit` (**StatRolls via shared
-    `StatGradeConfig.RollAll` off one module-level Random**); never clobbers an existing instance.
-    Harness = `DevSimulateFirstJoin`. The auto-loadout is interim until a picker UI writes
-    `Data.Loadout`. `MaxLoadoutSize = 6`.
+    dismiss; REAL instance tree — `Root.Panel.CardsRow.CardTemplate` is the card design).
+    Eligibility = profile owns ZERO **units**. Grants a uuid `UnitInstance` mirroring the Game's
+    `GrantUnit` (**StatRolls via shared `StatGradeConfig.RollAll` off one module-level Random**);
+    never clobbers an existing instance. Harness = `DevSimulateFirstJoin`. The auto-loadout is
+    interim until a picker UI writes `Data.Loadout`. `MaxLoadoutSize = 6`.
 
 Run the constitution's bootstrap ritual + `tools/hash_shared.luau` at the start of every
 session; reconcile before any work if a shared hash drifts.
@@ -96,9 +95,13 @@ lerped, released on exit AND on every `CharacterAdded`. **P3** added `StoryModeC
 grouped by `StageNumber`, acts per stage (`ActName`, never `DisplayName`), `SelectedAct` filled and
 publishing `SelectedActId`/`SelectedStageNumber`/`RecommendedDifficultyWire` (**WIRE** 1–1000) for
 P4/P6. **Labels with no data source are HIDDEN, not zeroed** — this Place tracks no stage clears and
-has no reward table, so the reward panel renders zero cells until P5. `SelectedDifficultyLable` is
-left to P4 (needs the ADR-0011 remap); `StartButton`/`InviteButton` stay UNWIRED until P6 (existing
-PartyService flow). `LoadingScreen` is Lobby-local, NOT drift-controlled (§4).
+has no reward table, so the reward panel renders zero cells until P5. **P4** added the difficulty
+slider + Normal/Insane and `PlayGUI.DifficultyScale` — **THE ONE ADR-0011 conversion** (UI 1–100
+display ↔ wire 100–1000; `StageRegistry` Min/Default/Max stay 1/100/1000). **Never write a second
+conversion**; P6 reads the published `DifficultyWire` and must not re-derive it. Mode is a separate
+axis and never enters the conversion. Act changes are edge-triggered on **`SelectionSerial`**, not
+`SelectedActId` (an unchanged attribute fires no signal). `StartButton`/`InviteButton` stay UNWIRED
+until P6 (existing PartyService flow). `LoadingScreen` is Lobby-local, NOT drift-controlled (§4).
 
 ## Gacha — banner ENGINE built (B3, 2026-08-09). **Full doc: `docs/systems/gacha.md` — read it**
 
@@ -126,10 +129,9 @@ session must not get wrong:
 
 ## Open PENDINGs (see STATE.md — this is the Lobby-relevant subset)
 
-- **AD-UI:** real per-unit models (everything uses `UnitModels.Placeholder`); the Units action
-  buttons are animation-only (equip works since B10). Hotbar hover TRIGGER still unverified (tooling
-  cannot fire `MouseEnter`); `Kit_ItemHoverCard`'s master/clone split means editing the master does
-  not update the screen.
+- **AD-UI:** real per-unit models (all use `UnitModels.Placeholder`); Units action buttons are
+  animation-only (equip works since B10). Hotbar hover TRIGGER unverified (tooling cannot fire
+  `MouseEnter`); `Kit_ItemHoverCard`'s master/clone split means editing the master does not update it.
 - **USER (BLOCKING):** **republish BOTH Places** (everything since A7 is Studio canon, not git), then
   run the **teleport v2 loop LIVE** once — only v1 was ever live-verified (2026-07-18). v1/v2 do not
   interoperate, so a partial publish breaks launches with `[CONTRACT] PayloadVersion mismatch`.
@@ -137,13 +139,12 @@ session must not get wrong:
   zeroes. `GrantService` (B3) CAN write it and is verified doing so, but no shipping flow grants an
   item yet — a banner paying tickets would be the first. (`Data.Loadout` HAS a writer since B10.)
 - **AD-Integration:** the Game still grants through its own `PlayerInventoryService` /
-  `RewardCalculator`, so invariant 1 ("every grant flows through GrantService") holds in the Lobby
-  only. Converging them is a cross-Place task, not a Lobby one.
+  `RewardCalculator`, so invariant 1 holds in the Lobby ONLY. Converging them is cross-Place work.
 
 ## Ownership notes
 
 - Lobby owns: teleport contract, lobby UI/scene. **AD-Gacha owns the banner catalog + grant
   pipeline** (`docs/systems/gacha.md`), home Place Lobby, built B3.
 - Lobby consumes (never edits): save schema, tower configs, progression config, trait configs.
-- Currency/XP/tower grants in the Lobby MUST go through the same profile — never a second store —
-  and since B3, through **`GrantService`**, never inline.
+- Currency/XP/tower grants MUST go through the same profile (never a second store) and, since B3,
+  through **`GrantService`**, never inline.

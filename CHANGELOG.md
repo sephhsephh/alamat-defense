@@ -1,5 +1,96 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-13 [lobby] B17 — PlayGUI **P4**: difficulty slider + Normal/Insane, with the ADR-0011 remap isolated in ONE module. Two real bugs caught by the first run.
+
+Bootstrap drift **Lobby 25/25 GREEN**, re-checked byte-identical at landing. Integration gate:
+**No Integration needed — proceeding** (no shared module, template or contract touched; nothing
+added to the kit). Place binding: the active instance WAS the Lobby, checked and re-set explicitly
+rather than trusted, and every `execute_luau` opened with the aborting Lobby assertion.
+
+**THE GATE BLOCKED FIRST, THEN THE USER DELEGATED IT.** `SelectedAct.DifficultyGradient` still held
+only a `UIGradient` — no `Fill`, no `Handle` — so the session stopped and reported before any work,
+as B-4 requires. The user then asked for the parts to be authored here. Two things worth recording:
+- **`DifficultyGradient` does not read like a groove.** It is a full-width frame **78% of the panel
+  tall** at **`ZIndex 0`** carrying a vertical black→lime gradient — a backdrop, not a track. The
+  blueprint calls it "the slider track" and that is still workable, but anyone expecting a thin bar
+  will be surprised.
+- **Its vertical centre lands inside `DifficultyButtons`.** Local Y 0.5 = SelectedAct Y 0.609, and
+  the buttons occupy 0.570–0.745. The parts were therefore placed at local Y **0.2316** — SelectedAct
+  Y 0.400, the clear gap between `SelectedDifficultyLable` (ends 0.229) and the buttons (start
+  0.570) — and given `ZIndex 2/3` so they draw above the ZIndex-0 track. Authored PLAIN and
+  functional per the house rule; **the controller reads their AUTHORED geometry, so restyling or
+  repositioning them in Studio needs no code change.**
+
+**`DifficultyScale` — a ModuleScript, and that is the point.** ADR-0011 requires the UI↔wire remap
+to live in exactly ONE function. Making it a module rather than a local makes that **greppable** and
+makes P6's launch path physically unable to re-derive it. Formula verbatim from the ADR,
+`wire = 100 + (ui - 1) * 900 / 99`: **UI 1% → 100 (normal)**, **UI 100% → 1000**. `ToUI` is the
+inverse; both **clamp instead of extrapolating**. Verified by grep that the formula appears in
+exactly one file and every other reference calls `ToWire`/`ToUI`.
+- **Mode is a separate axis and never enters the conversion.** Asserted live: wire at slider 1% is
+  100 under BOTH Normal and Insane. Insane changes REWARDS (§8) — **P5's row** — not difficulty.
+- **`StageRegistry.DifficultyMin/Default/Max` are asserted STILL 1/100/1000.** ADR-0011 exists
+  because redefining the wire field instead is a SILENT, live-breaking change: the Places publish
+  separately, so a republished Lobby sending `DifficultyPercent = 100` meaning "hardest" to a Game
+  still reading 100 as "normal" runs every match at 10× enemy health with nothing erroring.
+- Publishes on `SelectedAct`: `DifficultyUI` (1–100), `DifficultyWire` (produced by the one
+  conversion) and `DifficultyMode`. **P6 reads `DifficultyWire` and must not convert again.**
+
+**`DifficultyController`.** Click anywhere on the track or drag the `Handle`; the controller drives
+exactly one number on each part (`Fill.Size.X.Scale`, `Handle.Position.X.Scale`) and always lands on
+the exact value for the chosen percent. `NormalButton`/`InsaneButton` drive their existing
+`InactiveOverlay` — exactly one active, and the authored default (Normal active) was already right.
+
+**THE `SelectedDifficultyLable` NAME COLLISION IS LOAD-BEARING.** There are **three** instances with
+that name in the subtree: the panel's own (a direct child of `SelectedAct`) plus one inside EACH
+mode button. P3's text helper uses a RECURSIVE `FindFirstChild`, which returns an arbitrary match —
+so a naive fill would have silently rewritten a button's caption instead of the panel label, the
+same class of bug as the triple `StageNameLabel` (B-3). Every lookup in this controller is
+deliberately non-recursive, and the test asserts both button captions still read "Normal"/"Insane"
+after the panel label is written.
+
+**TWO REAL BUGS, CAUGHT BY THE FIRST RUN (23 pass / 3 fail) AND FIXED.** Both were genuine defects,
+not test artefacts:
+- **A stale `dragging` flag hijacked the slider.** `DevSetDifficulty(25)` was overwritten to **2%**
+  by a phantom "drag" on the very next mouse move. Cause: `dragging` is set by a press on the track
+  and cleared by `InputEnded`, but if the player releases outside the window that event never
+  arrives and bare cursor motion keeps driving the value forever. The mouse branch now re-checks
+  `UserInputService:IsMouseButtonPressed` and **self-heals the flag**. Regression test added: a set
+  value must still be set 1.5 s later.
+- **Re-selecting the SAME act did not re-sync the difficulty.** `SetAttribute` with an UNCHANGED
+  value fires no `GetAttributeChangedSignal`, so edge-triggering on `SelectedActId` silently missed
+  the case (re-picking Act 1 left the slider at 42%). `StoryModeController` now bumps a monotonic
+  **`SelectionSerial`** LAST in `fillSelectedAct` and P4 listens to that. `SelectedActId` remains
+  the single source of truth for WHICH act — this is the same channel made reliable, not a second
+  one. **Anything else that must react to a selection should use `SelectionSerial`.**
+
+**Verified live (Play, Lobby) from a REAL LocalScript + `get_console_output`** — never
+`execute_luau`. The temporary `StarterPlayerScripts.P4AcceptanceHarness` drove the same functions a
+real drag/click runs and was **DELETED at landing** (all three P2/P3/P4 harnesses confirmed absent).
+**`[Test] P4 RESULT: PASS (27 pass, 0 fail)`** on the re-run:
+- (a) exactly one mode active, the other overlaid, both directions; mode published.
+- (b) UI 1/25/50/100 each landed `Fill.Size.X.Scale` and `Handle.Position.X.Scale` on `(ui-1)/99`
+  with the authored Y preserved, and the published wire matched `ToWire(ui)` every time.
+- (c) panel label read `"Insane  42%"` while both button captions stayed untouched.
+- (d) `ToWire(1)=100`, `ToWire(100)=1000`, `ToUI(100)=1`, `ToUI(1000)=100`, out-of-range clamped,
+  wire scale unmoved, and 1% = normal under both modes.
+- (e) each act re-synced the slider to its `Recommended` (wire 100/150/200 → UI 1/7/12; integer
+  quantisation is expected), **including re-selecting the already-selected act**; P3's act rows
+  still render and P2's transition + Leave still work.
+- Every `Dev*` attribute across all nine harness hosts swept OFF; the authored resting state
+  (`Fill`/`Handle` present, panel label "Normal", Normal active) confirmed after the Play round trip.
+
+- **Contract impact: NONE.** No shared module, template, schema or teleport change. Drift **25/25**
+  before and after; the Game's 24/25 `MetaMath=MISSING` untouched and still expected.
+- **PENDINGs:** the USER-authoring PENDING is narrowed again — only the **P6 player-row template**
+  is left.
+- **Note for P4's own scope:** §9 lists a "live reward preview reading P5's config" under P4. P5
+  does not exist, so the preview stays empty; §9 explicitly permits shipping P4 without it. Wiring
+  it later is one call to P3's existing `renderRewards(list)`.
+- Commit is **local — push pending**. **Seven unpushed now** (origin/main still at B12's `ae65343`).
+- Housekeeping: `.git/_stale_locks_*` dirs going back to A8 cannot be unlinked on this mount. They
+  are harmless (git ignores unknown dirs under `.git`); the tree verifies clean.
+
 ## 2026-08-13 [lobby] B16 — PlayGUI **P3**: StoryModeFrame is populated. Stage/act lists, SelectedAct fill, and the two authoring blockers cleared.
 
 Bootstrap drift **Lobby 25/25 GREEN**, re-checked byte-identical at landing. Integration gate:

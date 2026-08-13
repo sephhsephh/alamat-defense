@@ -39,8 +39,14 @@ by their text: `"Total Clears : 0"` → `TotalClearsLabel`, `"Clear Time : 00:00
 `ClearTimeLabel`; the genuine `"Stage Name"` one kept its name. Exactly one `StageNameLabel` now.
 
 **B-4. Missing template instances** (must be authored as real Instances, `Visible = false`):
-- **STILL OPEN (P4):** a slider **Fill** + **Handle** under `SelectedAct.DifficultyGradient` (it
-  currently holds only a `UIGradient`; there is no slider yet)
+- ✅ **RESOLVED at P4 (2026-08-13, user-delegated):** `Fill` + `Handle` authored under
+  `SelectedAct.DifficultyGradient`. **Note that `DifficultyGradient` does not read like a groove** —
+  it is a full-width frame 78% of the panel tall at `ZIndex 0` with a vertical black→lime gradient,
+  i.e. a backdrop. The parts were authored plain and functional (`Fill` grows on `Size.X.Scale`,
+  `Handle` moves on `Position.X.Scale`, both at `ZIndex 2/3` so they are visible above the
+  ZIndex-0 track) and placed at local Y `0.2316` — the clear gap between `SelectedDifficultyLable`
+  (ends 0.229) and `DifficultyButtons` (starts 0.570). The controller reads their AUTHORED geometry,
+  so **restyle or reposition them freely in Studio; no code change is needed.**
 - **STILL OPEN (P6):** a **player row template** under `LobbyFrame.SelectedAct.PlayersFrame.PlayersFrame`
 - ✅ **RESOLVED at P3:** `RewardsFrame.RewardsScrollingFrame.ItemIcon` (an **ImageButton**) renamed
   to **`ItemIconTemplate`** with `Visible = false`.
@@ -165,8 +171,14 @@ AD-Game's canon and must not be improvised by a UI session.
   authored image because no per-act art source exists; and `SelectedDifficultyLable` is left to
   **P4**, because filling it needs the ADR-0011 remap and a second remap is the exact bug that ADR
   exists to prevent. The reward panel is PLUMBING only and renders zero cells until **P5**.
-- **P4 [AD-UI]** — difficulty slider (Fill/Handle authored per B-4) + Normal/Insane buttons +
-  the ADR-0011 remap function + live reward preview reading P5's config.
+- **P4 [AD-UI] ✅ DONE 2026-08-13 (B17)** — difficulty slider (Fill/Handle authored at the top of
+  the session, user-delegated) + Normal/Insane + the ADR-0011 remap, which lives in the
+  `DifficultyScale` **ModuleScript** so "exactly one conversion" is greppable and P6 cannot
+  re-derive it. Publishes `DifficultyUI`/`DifficultyWire`/`DifficultyMode` on `SelectedAct`.
+  Verified from a real LocalScript: 27 asserts, 0 failures.
+  **The live reward preview is NOT part of this** — it needs P5's config, which does not exist yet.
+  P4 shipped without it, exactly as §9 allows ("P4 may ship with the preview reading the config as
+  soon as it exists"). Wiring it later is a call to the existing `renderRewards(list)` from P3.
 - **P5 [AD-GAME]** — reward scaling by difficulty in `StageConfig.Rewards` + `RewardCalculator`
   (§8). **Blocks P4's preview from showing true numbers**; P4 may ship with the preview reading the
   config as soon as it exists.

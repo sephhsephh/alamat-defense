@@ -1,5 +1,5 @@
 # SYSTEM — Play menu (PlayGUI + LoadingScreen)
-<!-- owner: AD-UI | scope: lobby | last-verified: 2026-08-13 (B16/P3) -->
+<!-- owner: AD-UI | scope: lobby | last-verified: 2026-08-13 (B17/P4) -->
 
 Split out of `docs/systems/lobby-ui.md` at B15 when that file passed its 300-line cap (ADR-0006
 governs STATE.md only; every other doc splits). Implementation law is `docs/blueprints/playgui.md`
@@ -103,4 +103,45 @@ content. Renamed by their text: `"Total Clears : 0"` → **`TotalClearsLabel`**,
 `"Clear Time : 00:00:00"` → **`ClearTimeLabel`**; the real `"Stage Name"` one kept its name.
 `RewardsScrollingFrame.ItemIcon` (an **ImageButton**, not a label) → **`ItemIconTemplate`**,
 `Visible = false`.
+
+## Difficulty — slider + Normal/Insane (P4/B17). Blueprint §7, **ADR-0011 is law**
+
+`StarterGui.PlayGUI.DifficultyController` + the `DifficultyScale` **ModuleScript** beside it.
+
+- **`DifficultyScale` is THE one conversion.** ADR-0011 requires the UI↔wire remap to live in
+  exactly one function; making it a ModuleScript makes that greppable and makes P6's launch path
+  physically unable to re-derive it. `ToWire(ui)` / `ToUI(wire)` / `Format(ui, mode)`, formula
+  verbatim from the ADR: `wire = 100 + (ui - 1) * 900 / 99`, so **UI 1% → wire 100 (normal)** and
+  **UI 100% → wire 1000**. Both clamp rather than extrapolate. **Never write a second conversion** —
+  redefining the wire field instead is a silent 10×-enemy-health bug across a partial republish.
+- **The two scales:** player-facing **UI 1–100**; `DifficultyPercent` on the wire stays **100–1000**.
+  `StageRegistry.DifficultyMin/Default/Max` are unchanged at 1/100/1000 and asserted so in the test.
+- **Mode is a SEPARATE axis.** An act sits at its normal difficulty at slider 1% under BOTH Normal
+  and Insane; mode never enters the conversion. It changes REWARDS (§8) — **P5's row**, not read here.
+- **Slider:** click anywhere on `DifficultyGradient` or drag `Handle`. The controller captures the
+  AUTHORED geometry once and drives exactly one number on each — `Fill.Size.X.Scale` and
+  `Handle.Position.X.Scale` — so restyling or repositioning them in Studio needs no code change.
+- **`SelectedAct.SelectedDifficultyLable` is looked up NON-RECURSIVELY, and that is load-bearing.**
+  Three instances share that name: the panel's own (a direct child) plus one inside each mode
+  button. A recursive `FindFirstChild` returns an arbitrary one and would silently rewrite a
+  button's caption — the same class of bug as the triple `StageNameLabel` (B-3). The test asserts
+  both button captions still read "Normal"/"Insane" after the panel label is written.
+- **Publishes for P6:** `DifficultyUI` (1–100), `DifficultyWire` (100–1000, produced by the one
+  conversion — the launch path reads it and MUST NOT convert again) and `DifficultyMode`.
+- **Follows P3 via `SelectionSerial`, not `SelectedActId`.** Selecting an act resets the slider to
+  that act's `Recommended` (wire 100/150/200 → UI 1/7/12; integer quantisation is expected).
+- Harness: `DevSetDifficulty` (a UI 1–100 number), `DevSetMode` ("Normal"/"Insane").
+
+### Two bugs the first P4 run caught — do not reintroduce
+
+- **A stale `dragging` flag hijacked the slider.** Press on the track and release outside the
+  window and `InputEnded` never arrives, so bare cursor motion kept driving the value (a set 25%
+  was overwritten to 2% on the next mouse move). The mouse branch now re-checks
+  `IsMouseButtonPressed` and self-heals the flag. There is a regression test that a set value is
+  still set 1.5s later.
+- **Re-selecting the SAME act did not re-sync the difficulty.** `SetAttribute` with an unchanged
+  value fires no `GetAttributeChangedSignal`, so edge-triggering on `SelectedActId` silently missed
+  it. `StoryModeController` now bumps a monotonic **`SelectionSerial`** last in `fillSelectedAct`
+  and P4 listens to that. `SelectedActId` remains the single source of truth for *which* act.
+  **Anything else that needs to react to a selection should use `SelectionSerial` too.**
 

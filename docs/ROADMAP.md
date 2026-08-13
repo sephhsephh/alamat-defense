@@ -50,9 +50,14 @@ everything untradeable at launch).
   publishing `SelectedActId`/`SelectedStageNumber`/`RecommendedDifficultyWire` for P4/P6. Labels
   with no data source are HIDDEN, not zeroed, and the reward panel is plumbing that renders zero
   cells until P5. 29/29 live asserts. The user cleared blockers B-3 and B-4's rename first.
-  **🔲 P4–P7 remain**; P4 [AD-UI] is next and needs the user to author the slider Fill/Handle.
-  Difficulty reads 1–100 for DISPLAY only (ADR-0011); the wire format is unchanged. Replaces the
-  script-built `StageSelectScreen`, deleted at P6.
+  **✅ P4 [AD-UI] (B17, 2026-08-13)** — difficulty slider + Normal/Insane, with the ADR-0011 remap
+  isolated in a `DifficultyScale` ModuleScript (UI 1–100 → wire 100–1000; the wire scale is
+  asserted unmoved). Publishes `DifficultyUI`/`DifficultyWire`/`DifficultyMode` for P6's launch.
+  27/27 live asserts. The slider Fill/Handle were authored this session (user-delegated).
+  **🔲 P5–P7 remain. P5 [AD-GAME] is next and is a DIFFERENT chat + the OTHER Place** (reward
+  scaling in `StageConfig.Rewards` + `RewardCalculator`); the reward preview stays empty until it
+  lands. Difficulty reads 1–100 for DISPLAY only (ADR-0011); the wire format is unchanged. Replaces
+  the script-built `StageSelectScreen`, deleted at P6.
 - 🔲 **Global matchmaking queue** — designed in `playgui.md` §11, **build deferred to P7**.
   `FindMatchButton` ships disabled with a visible "COMING SOON" overlay as of P2.
 

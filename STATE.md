@@ -46,21 +46,20 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   guard, `AscensionPanel` out of `SelectedUnitFrame` (ADR-0010). **Quests/login/codes still need a
   NEW reveal answer** — the return-value trick only serves player-INITIATED grants.
 
-- **PENDING (USER, NOW BLOCKS PlayGUI P4 and P6):** two authoring items left — author the slider
-  **Fill + Handle** under `SelectedAct.DifficultyGradient` (P4; it holds only a `UIGradient` today)
-  and a **player-row template** in `LobbyFrame.SelectedAct.PlayersFrame` (P6). Detail:
-  `docs/blueprints/playgui.md` §2 B-4. The two P3 blockers were CLEARED at B16 (user-authorised:
-  the triple `StageNameLabel` and the `ItemIconTemplate` rename). `HUD.Top.CurrencyBar` is
-  **already compliant** — it clones a designed `CurrencyTemplate`; do NOT "convert" it.
+- **PENDING (USER, NOW BLOCKS PlayGUI P6 ONLY):** author a **player-row template** in
+  `LobbyFrame.SelectedAct.PlayersFrame` (`docs/blueprints/playgui.md` §2 B-4). P3's two blockers
+  cleared at B16 and P4's slider `Fill`/`Handle` at B17, both user-delegated — the slider parts are
+  plain and **meant to be restyled in Studio; the controller reads their authored geometry, so no
+  code change is needed.** `HUD.Top.CurrencyBar` is **already compliant** — it clones a designed
+  `CurrencyTemplate`; do NOT "convert" it.
 
 - **PENDING (AD-Gacha review, ONE user-authorised item):** Integration fixed trait-on-summon in
-  `SummonEngine` (its canon): call is now `TraitRegistry.Roll(rng)` (it assumed a non-existent
-  `RollTrait` since B3 and, inside a pcall, failed SILENTLY); a `"None"` roll normalises to **nil**
-  so summons match every other grant path; the pcall failure now WARNS once. Verified live.
+  `SummonEngine`: the call is now `TraitRegistry.Roll(rng)` (it assumed a non-existent `RollTrait`
+  since B3 and, inside a pcall, failed SILENTLY); `"None"` → **nil**; failures WARN. Verified live.
 
 - **PENDING (AD-Game → AD-Integration → AD-UI): ONE settings system for BOTH Places** (user) — same
   structure + GUI in both, entries scoped `Both`/`GameOnly`/`LobbyOnly`, preferences AND actions.
-  Plan: `docs/proposals/2026-08-09-unified-settings-both-places.md`. **Nothing is blocked.**
+  Plan: `docs/proposals/2026-08-09-unified-settings-both-places.md`. Nothing is blocked.
 
 - **PENDING (AD-UI, small):** HUD `CurrencyBar` does not refresh after a summon (join only), so Gold
   reads stale. Wants a `ClientEvents.CurrencyChanged` — copy B10's `LoadoutChanged` shape.
@@ -108,9 +107,10 @@ names. Different sequences, same letters. PlayGUI uses `P1…P7` to avoid a thir
 1. **USER** — republish both Places, then run the teleport v2 loop live once.
 2. **PLAYGUI (user priority 2026-08-09)** — `docs/blueprints/playgui.md` is LAW. P1–P7 across
    AD-Lobby / AD-UI / AD-Game. **P1 ✅ (B14)** structure + camera part. **P2 ✅ (B15)** the shell.
-   **P3 ✅ (B16)** stage/act lists + SelectedAct fill; publishes `SelectedActId` /
-   `RecommendedDifficultyWire` for P4/P6. Doc `docs/systems/play-menu.md`. **NEXT = P4 [AD-UI]
-   (difficulty slider + ADR-0011 remap), BLOCKED on the USER slider authoring above.**
+   **P3 ✅ (B16)** stage/act lists + SelectedAct fill. **P4 ✅ (B17)** difficulty slider +
+   Normal/Insane; the ADR-0011 remap is isolated in `PlayGUI.DifficultyScale` — **the ONE
+   conversion; never write a second.** Publishes `DifficultyUI`/`DifficultyWire`/`DifficultyMode`.
+   Doc `docs/systems/play-menu.md`. **NEXT = P5 [AD-GAME] — a DIFFERENT chat and the GAME Place.**
 3. **Phase B** (`phases-b-f-meta.md`). Landed: B0 uuid placement · B1 reveal · B2 Integration ·
    B3 banner engine · B4 reveal anim · B5 AD-UI review · B6 summon UI · B7 EVENT · **B8 INDEX**.
    Blueprint B4 half done — Event ✅, Selection ⛔ (schema PENDING above). B5 ✅ (B8).
