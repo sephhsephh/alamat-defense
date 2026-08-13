@@ -1,12 +1,12 @@
 # CONTEXT — Lobby place (LIVE, booted 2026-07-17)
-<!-- owner: lobby | scope: lobby | last-verified: 2026-08-09 (B14/P1) -->
+<!-- owner: lobby | scope: lobby | last-verified: 2026-08-13 (B15/P2) -->
 
-The social/meta Place: players land here, view their collection, roll banners, pick a
-stage + difficulty, form parties, and teleport into the Game place.
+The social/meta Place: players land here, view their collection, roll banners, pick a stage +
+difficulty, form parties, and teleport into the Game place.
 
 ## Current live state
 
-- **Shared canon deployed & drift-free — 25/25 GREEN at B12.** Exact hashes live in
+- **Shared canon deployed & drift-free — 25/25 GREEN, re-verified B15.** Hashes live in
   `shared/manifest.json`; do not duplicate them. 18 modules + 7 templates. **`MetaMath` (B3) is
   Lobby-only** — the Game reports MISSING (24/25), EXPECTED not drift; every OTHER entry must match.
 - **Trait rarity table arrived B12:** `RS.Configs.Traits.{TraitRegistry,TraitDefinitions}` are SHARED
@@ -79,24 +79,28 @@ session; reconcile before any work if a shared hash drifts.
 
 ## UI kit + screens (AD-UI)
 
-Two docs since A7 (2026-08-06): **`docs/systems/ui-kit.md`** is the Place-neutral kit (5 shared
-controllers in `RS.Shared.UIKit` + 7 real instance templates in `RS.UITemplates.Kit`, all under
-drift control — was 6+8 until B2 retired the RewardPopup pair);
-**`docs/systems/lobby-ui.md`** is this Place's SCREENS — **Units** (uuid cards +
-grades + numbers + filters), **Items** (catalog + counts + filters), **Collection**, **Hotbar**
-(the shared component), **CurrencyBar** (Lobby-local by design), plus the legacy script-built
-StageSelect / Party / Return / StarterChoice. `StarterGui.UITemplates` was emptied into the Kit
-and deleted. Each of Units/Items/Collection honours a `DevAutoOpen` Studio harness (all left OFF).
-**A7 finding:** the Units screen's cards are screen-local, NOT `Kit.UnitIcon` clones — see
-`lobby-ui.md`; that template still has no consumer and its fate is a user decision.
+Three docs: **`docs/systems/ui-kit.md`** = the Place-neutral kit (5 shared controllers in
+`RS.Shared.UIKit` + 7 templates in `RS.UITemplates.Kit`, all drift-controlled; was 6+8 until B2
+retired the RewardPopup pair). **`docs/systems/lobby-ui.md`** = this Place's SCREENS (Units, Items,
+Collection, Hotbar, CurrencyBar, HUD buttons, legacy StageSelect/Party/Return/StarterChoice).
+**`docs/systems/play-menu.md`** = PlayGUI + LoadingScreen (split off at B15).
+`StarterGui.UITemplates` was emptied into the Kit and deleted. `DevAutoOpen` harnesses all OFF.
+**A7 finding:** the Units screen's cards are screen-local, NOT `Kit.UnitIcon` clones — and
+`Kit_UnitIcon` is now ADOPTED for OTHER screens (ADR-0009), so do not delete or edit it.
 
-**`ObtainRewardsGUI` — the reward-reveal surface (B1 2026-08-08; animated B4 2026-08-09).**
-**Detail lives in `docs/systems/lobby-ui.md` — moved there at B4.** Fire it, never rebuild it:
-`RS.ClientEvents.ShowRewards:Fire({ { Id = "Archer", Level = 12 }, { Id = "Gold", Qty = 250 } })`.
-Mixed units + items, 5 cols, rows 1–3 grow / row 4+ scrolls, grants QUEUE. Cells reveal ONE AT A
-TIME (pop-in), then **click 1 = SKIP, click 2 = CLOSE** (skip instant; close gated from reveal END).
-Tunables are ScreenGui attributes. The pop `UIScale` is made on runtime CLONES only — **never add
-one to `Kit_ItemIcon`, it is hashed shared canon.** First production caller = gacha (B3).
+**`ObtainRewardsGUI` — the reward-reveal surface (B1; animated B4). Detail in `lobby-ui.md`.** Fire
+it, never rebuild it: `RS.ClientEvents.ShowRewards:Fire({ { Id = "Archer", Level = 12 }, { Id =
+"Gold", Qty = 250 } })`. Mixed units + items, grants QUEUE, **click 1 = SKIP, click 2 = CLOSE**. The
+pop `UIScale` is on runtime CLONES only — **never add one to `Kit_ItemIcon`, it is hashed canon.**
+
+**`PlayGUI` + `LoadingScreen` — the Play menu shell (P2, B15). Doc: `docs/systems/play-menu.md`;
+law: `docs/blueprints/playgui.md`.** `HUD.Left.Buttons.Play` (NOT HUD.Right) → veil → every other
+ScreenGui hidden → `Main.MainMenu`; `LeaveButton` restores each screen's REMEMBERED state.
+**`MainMenu`/`StoryModeFrame`/`LobbyFrame` are CanvasGroups, converted from Frame at P2** so §10's
+`GroupTransparency` fade exists; paths, properties and child order all survived. Menu camera is
+Scriptable at `Workspace.PlayGUICamera.CFrame` — **read it, never write it** — parallax clamped and
+lerped, released on exit AND on every `CharacterAdded`. `StartButton`/`InviteButton` stay UNWIRED
+until P6 (existing PartyService flow). `LoadingScreen` is Lobby-local, NOT drift-controlled (§4).
 
 ## Gacha — banner ENGINE built (B3, 2026-08-09). **Full doc: `docs/systems/gacha.md` — read it**
 
@@ -118,26 +122,25 @@ Server-complete, **no UI at all yet**. `SSS.Server.Meta.{GrantService, SummonEng
 - Gacha UI: summon carousel (B6), Event (B7) and Index (B8) all SHIPPED; only **Selection** is left,
   blocked on the `BannerChoices` schema bump.
 - Party polish: cross-server invites / persisted parties (currently single-lobby-server, in-memory).
-- Currency shop, player-level display, trading hub, loadout picker UI (replaces the
-  interim auto-loadout).
+- Currency shop, player-level display, trading hub, loadout picker UI (replaces the auto-loadout).
 - Convert legacy script-built screens when next touched (rule 2026-07-18): StageSelect (dies at
   PlayGUI P6), Party, Return. Collection was converted at A5.
 
 ## Open PENDINGs (see STATE.md — this is the Lobby-relevant subset)
 
-- **AD-UI:** real per-unit models (everything uses `UnitModels.Placeholder`) and functional Units
-  action buttons (animation-only today). `Kit_UnitIcon` has no consumer — user decision.
-- **AD-UI (small):** the hotbar hover TRIGGER is unverified (tooling cannot fire `MouseEnter`);
-  `Kit_ItemHoverCard`'s master/clone split means editing the master does not update the screen.
+- **AD-UI:** real per-unit models (everything uses `UnitModels.Placeholder`); the Units action
+  buttons are animation-only (equip works since B10). Hotbar hover TRIGGER still unverified (tooling
+  cannot fire `MouseEnter`); `Kit_ItemHoverCard`'s master/clone split means editing the master does
+  not update the screen.
 - **USER (BLOCKING):** **republish BOTH Places** (everything since A7 is Studio canon, not git), then
   run the **teleport v2 loop LIVE** once — only v1 was ever live-verified (2026-07-18). v1/v2 do not
   interoperate, so a partial publish breaks launches with `[CONTRACT] PayloadVersion mismatch`.
 - **Unscheduled:** still no writer for `Data.Items` in NORMAL PLAY, so the Items screen shows all
   zeroes. `GrantService` (B3) CAN write it and is verified doing so, but no shipping flow grants an
   item yet — a banner paying tickets would be the first. (`Data.Loadout` HAS a writer since B10.)
-- **AD-Integration:** the Game place still grants through its own `PlayerInventoryService` /
-  `RewardCalculator`, so cross-phase invariant 1 ("every grant flows through GrantService") holds
-  in the Lobby only. Converging them is a real cross-Place task, not a Lobby one.
+- **AD-Integration:** the Game still grants through its own `PlayerInventoryService` /
+  `RewardCalculator`, so invariant 1 ("every grant flows through GrantService") holds in the Lobby
+  only. Converging them is a cross-Place task, not a Lobby one.
 
 ## Ownership notes
 

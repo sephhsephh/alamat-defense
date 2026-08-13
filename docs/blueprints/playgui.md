@@ -148,8 +148,12 @@ AD-Game's canon and must not be improvised by a UI session.
   `ActNumber`/`ActName` (B-1) and `PlayGUICamera`'s part properties are fixed (B-2). Verified from a
   real Script: 3 entries, all four fields populated, existing keys intact, chain
   Act1→Act2→Act3→nil, wire difficulty scale unmoved at 1/1000/100.
-- **P2 [AD-UI]** — `LoadingScreen` (§4) + the Play-button entry, camera swap + parallax (§5), GUI
-  hide/show, and the MainMenu ↔ StoryModeFrame ↔ LobbyFrame **transitions** (§10). No stage data yet.
+- **P2 [AD-UI] ✅ DONE 2026-08-13 (B15)** — `LoadingScreen` (§4) + the Play-button entry, camera
+  swap + parallax (§5), GUI hide/show, the MainMenu ↔ StoryModeFrame ↔ LobbyFrame **transitions**
+  (§10), and the disabled mode buttons + `FindMatchButton` (§6/§11). Verified from a real
+  LocalScript: 40 asserts, 0 failures. **§10 required a CanvasGroup, so the three frames were
+  CONVERTED Frame → CanvasGroup in the Edit datamodel** (authoring; every property, child and the
+  child order carried across unchanged, so every path in §7/§8 still resolves). No stage data yet.
 - **P3 [AD-UI]** — StoryModeFrame lists: stages + acts from P1's data, `SelectedAct` fill (§7).
   Requires B-3 and B-4's `ItemIconTemplate` rename to be done first.
 - **P4 [AD-UI]** — difficulty slider (Fill/Handle authored per B-4) + Normal/Insane buttons +

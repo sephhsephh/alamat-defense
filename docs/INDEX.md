@@ -38,6 +38,10 @@
 - `lobby-ui.md` — the LOBBY's screens only (Units, Items, Collection, Hotbar, CurrencyBar, HUD
   buttons, the legacy script-built four) + the `DevAutoOpen` Studio harness. Split out of
   `places/lobby/CONTEXT.md` at A5 when that file passed its 150-line cap.
+- `play-menu.md` — **AD-UI canon for `PlayGUI` + `LoadingScreen`** (P2/B15): the Play-button entry
+  and GUI hide/restore, the veil's `Show`/`Hide` module API, the menu camera + cursor parallax and
+  its respawn release, and the CanvasGroup frame transitions. **Says why `MainMenu`/`StoryModeFrame`/
+  `LobbyFrame` are CanvasGroups rather than Frames.** Split out of `lobby-ui.md` at B15 on its cap.
 - (otherwise — richer system docs still live in the Game place's `ServerStorage.Documentation`
   [Architecture, SystemIndex, GameplaySystems, Networking, GameFlow, HowTo, CodingStandards,
   MCPWorkflow]; migrate on touch: whenever a session works on a system, move its doc here)

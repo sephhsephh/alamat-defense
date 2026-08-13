@@ -37,12 +37,18 @@ everything untradeable at launch).
   **✅ P1 [AD-Lobby] (B14, 2026-08-09)** — the `StageRegistry` mirror now carries
   `StageNumber`/`StageName`/`ActNumber`/`ActName` (Stage 1 "The Farm"; acts "Protecting the Fields",
   "The Scarecrow Awakens", "Harvest of Ruin", verbatim from AD-Game's configs) and
-  `Workspace.PlayGUICamera` is invisible/non-colliding. **🔲 P2–P7 remain**; P2 [AD-UI] is next and
-  is NOT blocked by the user's authoring fixes (those gate P3/P4/P6). Difficulty reads 1–100 for
-  DISPLAY only (ADR-0011); the wire format is unchanged. Replaces the script-built
-  `StageSelectScreen`, deleted at P6.
+  `Workspace.PlayGUICamera` is invisible/non-colliding.
+  **✅ P2 [AD-UI] (B15, 2026-08-13)** — the SHELL works: new `StarterGui.LoadingScreen`
+  (DisplayOrder 200, `Show(reason)`/`Hide()`), `HUD.Left.Buttons.Play` → veil → every other
+  ScreenGui hidden → `PlayGUI` on `MainMenu`, `LeaveButton` reverses it; menu camera Scriptable at
+  `PlayGUICamera` with clamped lerped cursor parallax, released on exit AND on death/respawn; the
+  three frames transition with a `GroupTransparency` fade + 24px slide and always land on their
+  authored values; Challenge/Raids/Events + `FindMatchButton` render visibly disabled. 40/40 live
+  asserts. **🔲 P3–P7 remain**; P3 [AD-UI] is next but is **BLOCKED on the user's authoring fixes**.
+  Difficulty reads 1–100 for DISPLAY only (ADR-0011); the wire format is unchanged. Replaces the
+  script-built `StageSelectScreen`, deleted at P6.
 - 🔲 **Global matchmaking queue** — designed in `playgui.md` §11, **build deferred to P7**.
-  `FindMatchButton` ships disabled with a "coming soon" state until then.
+  `FindMatchButton` ships disabled with a visible "COMING SOON" overlay as of P2.
 
 - ✅ v1: shared-module deploy + boot (drift-free; profile from PlayerData_Dev)
 - ✅ v1: blockout hub (`Workspace.Lobby`) · ✅ collection screen (read-only, end-to-end)

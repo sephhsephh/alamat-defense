@@ -178,11 +178,9 @@ Cells reveal **one at a time** (pop-in, `UIScale` `RevealStartScale` → 1, Back
   does, so it skips while revealing and closes afterwards, dead-period check included
   (`MouseButton1` cannot be fired from tooling). Left OFF.
 
-**Verified live at B4** (n=1/3/6/10/15/20): stagger observed one cell at a time (`0→1→…→20`); cell 1
-never moved; skip mid-reveal at 2 visible → all 15 instantly at full scale and **still open**; close
-during the dead period **refused**; close after it worked; queue animates each batch; and the layout
-numbers are **identical to B1's** — n=10 `798×324`, n=15 `798×482`, n=20 `806×482` canvas 640 with
-the last cell's bottom at 599 inside a frame bottom of 607. Drift stayed **23/23 GREEN**.
+**Verified live at B4** (n=1/3/6/10/15/20): one-at-a-time stagger, cell 1 never moved, mid-reveal
+skip → all instantly full-scale and still open, close refused during the dead period and accepted
+after, queue animates each batch, layout numbers identical to B1's. Drift stayed 23/23 GREEN.
 
 ## Screens
 
@@ -200,13 +198,11 @@ the last cell's bottom at 599 inside a frame bottom of 607. Drift stayed **23/23
   `UnitPreviewTemplate` popup; click → `SelectedUnitFrame`. Live SearchBar. FILTERS button → the
   shared `UIKit.FilterPanel` (tier + equipped/favourited/locked).
 
-  - **B10 — EQUIPPING WORKS FROM THE UI AT LAST.** `LoadoutService` + `SetLoadoutSlot` shipped
-    2026-08-06 and A7 proved the chain live (equip here → the Game starts a match from those exact
-    uuids) — but that ran through a **test harness**, and **no client code ever called the remote**.
-    `UN/EquipButton` sat in the detail pane unreferenced by any script, so **a player could not
-    equip at all** for three days. Now wired: the button reads EQUIP / UNEQUIP / LOADOUT FULL from
-    the selected unit, and a change re-runs `loadUnits()` (so `Equipped`, the sort and the cards
-    update) and fires the new **`ClientEvents.LoadoutChanged`**, which `HotbarController` listens to.
+  - **B10 — EQUIPPING WORKS FROM THE UI AT LAST.** `LoadoutService`/`SetLoadoutSlot` shipped
+    2026-08-06 and A7 proved the chain live, but only through a test harness — `UN/EquipButton` was
+    referenced by no script, so **a player could not equip at all** for three days. Now wired: the
+    button reads EQUIP / UNEQUIP / LOADOUT FULL, and a change re-runs `loadUnits()` and fires
+    **`ClientEvents.LoadoutChanged`**, which `HotbarController` listens to.
     - **`Data.Loadout` must stay DENSE** — it is a schema-v2 `{ string }` the match launcher reads.
       Unequipping the middle slot makes the list CLOSE UP; re-equipping appends at the end. Never
       write a hole, and do not "fix" the left-to-right fill.
@@ -259,14 +255,12 @@ the last cell's bottom at 599 inside a frame bottom of 607. Drift stayed **23/23
 
 - **Collection screen** (`StarterGui.CollectionScreen.Controller`, A5 rebuild) — REAL instances
   (`Panel.Grid.CardTemplate`) from `GetUnitViews`: one card per uuid with tier border/BG, `Lv N`,
-  the GRADE letters and a status line (EQUIPPED / FAVOURITED / LOCKED / ASC n), plus a meta line.
-  **A7 note:** it references **no kit component at all** — entirely screen-local. Fine today; worth
-  folding into the kit if a third card-grid screen ever appears.
+  GRADE letters, a status line (EQUIPPED / FAVOURITED / LOCKED / ASC n) and a meta line. **A7 note:**
+  it references **no kit component at all**; worth folding into the kit at a third card-grid screen.
 
-- **StageSelect / Party / Return / StarterChoice** — still legacy script-built screens, on the
-  "convert to instance trees when next touched" list (rule 2026-07-18). `ReturnScreen` builds its
-  banner only when a `MatchReturn` payload is present, so it legitimately has **0 GuiObjects** on a
-  normal boot — that is not a fault.
+- **StageSelect / Party / Return / StarterChoice** — legacy script-built, on the "convert when next
+  touched" list (rule 2026-07-18). `ReturnScreen` builds its banner only when a `MatchReturn`
+  payload is present, so **0 GuiObjects** on a normal boot is correct, not a fault.
 
 - **CurrencyBar** (`StarterGui.HUD.Top.CurrencyBar` + controller, A6) — **Lobby-local on purpose**:
   a single-Place widget under drift control costs a cross-Place sync forever. Refresh is **one-shot
@@ -276,20 +270,27 @@ the last cell's bottom at 599 inside a frame bottom of 607. Drift stayed **23/23
 
 - **HUD buttons** (`HUD.Left.Buttons.{Play,Units,Inventory,Areas,Summon,Store}`) tagged
   `UIKitButton` + animated; hover = white stroke. (The sixth is `Store`, not `Shop`.)
+  **`Play` opens PlayGUI as of P2** — `HUD.Right` holds Event/Profile/Quests and is NOT the entry.
+
+- **PlayGUI + LoadingScreen → `docs/systems/play-menu.md`** (split out at B15/P2 on this file's
+  300-line cap). Blueprint `playgui.md` is their law.
 
 ## Client events (the screens' shared nervous system)
 
 `RS.ClientEvents`: `OpenStageSelect` · `OpenUnitsWithUuid` · `OpenSummon` · `OpenIndex` ·
 `ShowRewards` · **`LoadoutChanged`** (B10). Screens are opened by FIRING an event, never by calling
 another screen — that is what lets an NPC or a different button drive them later with no change.
+**PlayGUI is the exception so far:** it has no Open event yet, only the HUD button + Dev harness.
+Add one the day a second thing needs to open it.
 
 ## Studio harnesses (all left OFF/empty)
 
-`DevAutoOpen` on `UnitsGUI`/`ItemsGUI`/`CollectionScreen`/`SummonScreen`/`IndexScreen` opens that
-screen on boot. Action hooks, each running the SAME function a real press runs (a `GuiButton`'s
-`Activated` cannot be fired from tooling, and there is no `GuiButton:Activate()`): **`DevEquip`**
-(UnitsGUI, a uuid) · `DevSelect` / `DevFakeUnobtained` (IndexScreen) · `DevPull` / `DevPage`
-(SummonScreen) · `DevDismiss` (ObtainRewardsGUI).
+`DevAutoOpen` on `UnitsGUI`/`ItemsGUI`/`CollectionScreen`/`SummonScreen`/`IndexScreen`/**`PlayGUI`**
+opens that screen on boot. Action hooks, each running the SAME function a real press runs (a
+`GuiButton`'s `Activated` cannot be fired from tooling, and there is no `GuiButton:Activate()`):
+**`DevEquip`** (UnitsGUI, a uuid) · `DevSelect` / `DevFakeUnobtained` (IndexScreen) · `DevPull` /
+`DevPage` (SummonScreen) · `DevDismiss` (ObtainRewardsGUI) · **`DevGoto`** (PlayGUI, a frame name)
+/ **`DevLeave`** (PlayGUI).
 
 ## Server read path
 

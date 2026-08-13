@@ -1,5 +1,113 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-13 [lobby] B15 — PlayGUI **P2**: the menu SHELL works. New LoadingScreen, Play entry, menu camera + parallax, CanvasGroup transitions, disabled mode buttons.
+
+Bootstrap drift **Lobby 25/25 GREEN** (re-run at landing: still 25/25, byte-identical). Integration
+gate: **No Integration needed — proceeding** (P2 touches no shared module, no template and no
+contract; the LoadingScreen is deliberately Lobby-local per blueprint §4, so the "a kit addition
+changes this answer" clause never fired). Blueprint `playgui.md` session-task **P2**, all four parts
+plus the §6/§11 cheap items. Every `execute_luau` opened with the Lobby assertion (`Workspace.Lobby`
++ `SSS.Server.Lobby.LobbyServices` present, `RS.Configs.Towers` ABSENT) that aborts on mismatch;
+**this time the active instance WAS already the Lobby** — the B13/B14 flip did not recur, but it was
+checked before any read and re-set explicitly rather than trusted.
+
+**PART A — `StarterGui.LoadingScreen` is new (§4).** Authored as REAL Instances in the Edit
+datamodel, never `Instance.new` at runtime. `DisplayOrder = 200` (ObtainRewardsGUI's 100 was the
+previous ceiling), `IgnoreGuiInset = true`, **`ResetOnSpawn = false`**. Tree: `Root` (a CanvasGroup,
+so the whole veil fades on ONE property) → `Backdrop` (`Active = true`, sinks input) + `TitleLabel`
++ `TipLabel` + `ProgressTrack.Fill` (indeterminate sweep) + `Spinner`. The API is the child
+ModuleScript `LoadingScreenController`: `Show(reason)` / `Hide()` / `IsShown()` / `SetTitle()`.
+- **Both calls return IMMEDIATELY** and do their waiting on an internal thread, so a caller can use
+  them from a button handler without yielding it.
+- **A `generation` counter is the double-fire guard.** Any Show/Hide thread that finishes and finds
+  the number has moved on drops its result. Without it an overlapping Hide can strand the veil
+  half-faded — and because the backdrop sinks input, that would swallow every click permanently.
+- **Kept Lobby-local on purpose**, per §4: NOT added to `RS.Shared.UIKit` / `RS.UITemplates.Kit` and
+  NOT under drift control. Because the module lives INSIDE the ScreenGui, promoting it to the Game
+  later is just copying the ScreenGui — the API travels with it.
+
+**PART B — the Play entry (§3).** `HUD.Left.Buttons.Play` (**not** `HUD.Right`, which holds
+Event/Profile/Quests) → veil → hide every other ScreenGui → `PlayGUI.Enabled = true` → `MainMenu`.
+`LeaveButton` reverses it. **The hide SNAPSHOTS each screen's `Enabled` and restores that remembered
+value**, rather than blanket re-enabling — otherwise leaving the menu would pop open every screen
+that was legitimately closed (ItemsGUI, SummonScreen, IndexScreen and AscensionScreen are all
+`Enabled = false` at rest). 15 screens hidden and 15 restored, verified.
+- **`PlayGUI` itself was misconfigured and is now fixed:** it shipped `Enabled = true` and
+  **`ResetOnSpawn = true`** — the exact UnitsGUI trap the brief warns about, where Roblox re-clones
+  the ScreenGui every spawn and every reference captured at startup goes stale. Now `Enabled = false`,
+  `ResetOnSpawn = false`, `DisplayOrder = 20`, `IgnoreGuiInset = true`.
+- **Respawn is handled, not hoped for.** `HUD`/`Hotbar`/`ExpBar`/`UnitsGUI` DO have
+  `ResetOnSpawn = true`, so they come back Enabled and their Play button is a NEW instance. The
+  controller re-hides newcomers through `PlayerGui.ChildAdded` while the menu is open and re-binds
+  the Play button to the re-cloned HUD (`[DIAG] PlayGUI re-bound to the respawned HUD's Play button`).
+
+**PART C — camera (§5).** Scriptable at `Workspace.PlayGUICamera.CFrame` on enter; Custom +
+Humanoid on exit. **That CFrame is the USER'S framing and is only ever READ** — P1 set the part's
+properties and left the CFrame alone, and this session kept it that way (asserted unchanged at
+`(-935.44, 5.643, -158.721)`). Parallax is a cursor-derived rotation clamped to
+`ParallaxMaxDegrees` (2.5°) and LERPED toward its target every RenderStepped, applied as
+`baseCF * CFrame.Angles(pitch, yaw, 0)` — **rotation about the camera's own origin, so the camera's
+POSITION never moves** and `|camera − PlayGUICamera| = 0.000000` studs even mid-parallax.
+- **Released on `CharacterAdded` unconditionally**, not just on Leave. §5 is explicit that a player
+  who dies in the menu must not be left with a stuck camera; a menu-open-only guard would have
+  missed exactly that case.
+
+**PART D — transitions (§10).** `MainMenu` ↔ `StoryModeFrame` ↔ `LobbyFrame`, `GroupTransparency`
+0↔1 plus a 24px slide, `0.22s` Quart/Out, the two halves overlapping by half.
+- **§10 specifies `GroupTransparency`, which only a CanvasGroup has, and all three frames were
+  `Frame`s.** There is no way to add a CanvasGroup that fades a frame's own background AND keeps
+  `PlayGUI.Main.MainMenu.GameModesFrame…` resolving — wrapping reparents the children and breaks
+  every path §7/§8 depends on. So the three frames were **CONVERTED Frame → CanvasGroup in the Edit
+  datamodel** (authoring, which is AD-UI's canon, and pre-authorised in the brief). 20 carried
+  properties captured BEFORE and AFTER and diffed: identical on all three, including
+  `StoryModeFrame`/`LobbyFrame`'s odd authored `Position` of `{-0.00052083336, 0},{0, 0}`. Children
+  and child ORDER preserved (the frames are equal-ZIndex siblings, so order IS draw order), and all
+  10 spot-checked blueprint paths still resolve. **Known side effect, written into the doc:** a
+  CanvasGroup rasterises its descendants, so descendant `ZIndex` becomes local to the group and
+  anything outside the group's rect is clipped. All three are full-screen, so nothing overflows.
+- **Every frame's authored `Position` is captured ONCE at startup and force-assigned at the end of
+  every transition.** Offsets are never accumulated — §10's stated failure mode is an interrupted
+  tween that never resets, which drifts frames permanently out of place.
+- Input is ignored while a transition is in flight; `DiagTransitionCount` makes that observable.
+
+**PART E — visibly disabled buttons (§6/§11).** `ChallengeModeButton`, `RaidsModeButton`,
+`EventsModeButton` and `FindMatchButton` each got a real `InactiveOverlay` authored in the Edit
+datamodel, **copying the pattern the DifficultyButtons already use** (black Frame, BGTrans 0.5,
+`Active`/`Selectable` false, matching `UICorner`) plus a `ComingSoonLabel` reading "COMING SOON".
+The controller shows the overlay and sets `Active`/`Interactable`/`AutoButtonColor` false —
+`Interactable = false` also stops the `UIKitButton` hover animation, **which mattered because
+`FindMatchButton` is the only one of the four carrying that tag** (the three mode buttons are
+untagged). Not a silent no-op: they read as disabled and take no input.
+
+**Verified live (Play, Lobby) from a REAL LocalScript + `get_console_output`** — not
+`execute_luau`, whose VM caches requires and served B7 a stale pre-edit module. Tooling cannot
+synthesise clicks, so a temporary `StarterPlayerScripts.P2AcceptanceHarness` drove the SAME
+functions a click runs via `DevAutoOpen`/`DevGoto`/`DevLeave`; it was **DELETED at landing**
+(confirmed absent). **`[Test] P2 RESULT: PASS (40 pass, 0 fail)`**:
+- (a) veil observed `Enabled = true` during entry then back to false; `PlayGUI.Enabled = true`,
+  `Main.Visible = true`, landed on `MainMenu` at its authored position with `GroupTransparency 0`;
+  **all 15 other ScreenGuis hidden**, and after Leave all 15 restored to their remembered values.
+- (b) `CameraType = Scriptable` on enter, `|camera − PlayGUICamera| = 0.000000` studs,
+  `PlayGUICamera` CFrame unmoved; `Custom` + `subject=Humanoid` after a real **death/respawn taken
+  while the menu was open**, and `Custom` again after Leave.
+- (c) all four edges (MainMenu→Story→Lobby→Story→MainMenu) completed; after each one **all three**
+  frames asserted at their exact authored Position and correct `GroupTransparency`/`Visible`; a
+  second `DevGoto` fired 0.02s into a transition moved `DiagTransitionCount` by **+1, not +2**.
+- (d) all four unavailable buttons: overlay visible, label "COMING SOON",
+  `Active`/`Interactable`/`AutoButtonColor` all false — and `StoryModeButton` still live.
+- Boot otherwise clean; `UIKitBootstrap` tagged 45 buttons. Every `Dev*` attribute across all nine
+  harness hosts swept and confirmed OFF/0/"" after the Play round trip.
+
+- **Contract impact: NONE.** No shared module, template, schema or teleport change. Drift re-checked
+  at landing: **Lobby 25/25**, byte-identical to bootstrap; the Game's 24/25 `MetaMath=MISSING` is
+  untouched and still expected.
+- **Docs:** `docs/systems/lobby-ui.md` hit its 300-line cap, so PlayGUI + LoadingScreen were **split
+  into the new `docs/systems/play-menu.md`** and registered in `docs/INDEX.md` (lobby-ui.md back to
+  299, CONTEXT.md compressed back under 150). ROADMAP's PlayGUI row and blueprint §9's P2 both flipped.
+- **PENDINGs:** no new ones. **The standing USER-authoring PENDING now blocks P3 specifically** —
+  P2 needed none of it, P3 needs the triple `StageNameLabel` and the `ItemIconTemplate` rename.
+- Commit is **local — push pending**. **Five unpushed now** (origin/main is still at B12's `ae65343`).
+
 ## 2026-08-09 [lobby] B14 — PlayGUI **P1**: the StageRegistry mirror gets its stage/act structure back, camera part fixed. Both B13 blockers closed.
 
 Bootstrap drift **Lobby 25/25 GREEN**. Integration gate: **No Integration needed — proceeding**
