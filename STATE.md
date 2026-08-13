@@ -18,10 +18,10 @@ a shared UI kit, and the gacha banner engine + summon UI.
   and gacha (`docs/systems/gacha.md`, `docs/systems/lobby-ui.md`). **`GetUnitViews` is its SINGLE
   profile read path** (ADR-0004); **`GrantService` is its SINGLE grant/spend path**.
 - **Shared canon** (`shared/manifest.json`, drift-checked by `tools/hash_shared.luau`):
-  **25 entries = 18 modules + 7 templates. Lobby 25/25 GREEN.** **The Game reads 24/25 and that is
-  EXPECTED, not drift:** `MetaMath` is Lobby-only until Phase D needs it. Every other entry is
-  byte-identical in both. Templates hash as INSTANCE trees with no `shared/src` file (ADR-0005).
-  `UnitStatsCatalogValidate` is Game-only by design — do not "fix" its absence in the Lobby.
+  **26 entries = 19 modules + 7 templates. BOTH Places read 25/26 and both gaps are EXPECTED, not
+  drift:** `MetaMath` is Lobby-only until Phase D; `RewardScalingConfig` Game-only until Integration
+  deploys it (P5/B18). All else byte-identical. Templates hash as INSTANCE trees, no `shared/src`
+  file (ADR-0005). `UnitStatsCatalogValidate` is Game-only by design — do not "fix" its absence.
 
 **DRIFT RULE (applies to everyone):** editing a shared controller **or a template** in one Place
 only is DRIFT. Change → re-hash → copy to the other Place → update the manifest. Copy templates,
@@ -46,12 +46,24 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   guard, `AscensionPanel` out of `SelectedUnitFrame` (ADR-0010). **Quests/login/codes still need a
   NEW reveal answer** — the return-value trick only serves player-INITIATED grants.
 
-- **PENDING (USER, NOW BLOCKS PlayGUI P6 ONLY):** author a **player-row template** in
-  `LobbyFrame.SelectedAct.PlayersFrame` (`docs/blueprints/playgui.md` §2 B-4). P3's two blockers
-  cleared at B16 and P4's slider `Fill`/`Handle` at B17, both user-delegated — the slider parts are
-  plain and **meant to be restyled in Studio; the controller reads their authored geometry, so no
-  code change is needed.** `HUD.Top.CurrencyBar` is **already compliant** — it clones a designed
-  `CurrencyTemplate`; do NOT "convert" it.
+- **PENDING (USER, BLOCKS PlayGUI P6):** author a **player-row template** in
+  `LobbyFrame.SelectedAct.PlayersFrame` (`docs/blueprints/playgui.md` §2 B-4). P3/P4's authoring
+  blockers all cleared (B16/B17); the slider parts are plain and meant to be restyled in Studio —
+  the controller reads their authored geometry, so no code change follows. `HUD.Top.CurrencyBar` is
+  already compliant (clones a designed `CurrencyTemplate`) — do NOT "convert" it.
+
+- **PENDING (AD-Integration): copy `RewardScalingConfig` (`1d789978`) to the LOBBY** —
+  `deployed.Lobby = null`. **Blocks P4's reward PREVIEW**: §8 needs preview and server on the SAME
+  curve. Copy byte-identical, do not re-author. Detail: `docs/systems/rewards.md`.
+
+- **PENDING (teleport v2→v3, BOTH Places ONE session): INSANE is not on the wire.** No mode field,
+  so the Game always sees Normal and P5's Insane items cannot fire live. Code is ready
+  (`matchState.DifficultyMode`). Not a quiet addition — a Game ignoring an unknown field while the
+  Lobby thinks it sent Insane pays wrong rewards silently.
+
+- **PENDING (USER, balance):** `StartingLives` is **3 / 15 / 10** across Acts 1–3 while
+  `BaseHealthScale` climbs 1.0/1.6/2.4. Act 1's `3` looks like a leftover test value. P5 fixed only
+  Act 2's false comment; changing numbers is a design call.
 
 - **PENDING (AD-Gacha review, ONE user-authorised item):** Integration fixed trait-on-summon in
   `SummonEngine`: the call is now `TraitRegistry.Roll(rng)` (it assumed a non-existent `RollTrait`

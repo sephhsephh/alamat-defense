@@ -198,6 +198,10 @@ local MODULES = {
 	ItemCatalog = "ReplicatedStorage.Configs.Meta.ItemCatalog",
 	-- Added A6 2026-08-03 (owner AD-Game): generated resolved-stat cache (ADR-0003).
 	UnitStatsCatalog = "ReplicatedStorage.Configs.Meta.UnitStatsCatalog",
+	-- Added P5 2026-08-13 (owner AD-Game): the difficulty->gold curve + Insane item table. GAME-ONLY
+	-- SO FAR -- the LOBBY reports MISSING until Integration deploys it for the reward preview, which
+	-- is the expected state, not drift. See manifest deployed.Lobby = null.
+	RewardScalingConfig = "ReplicatedStorage.Configs.Global.RewardScalingConfig",
 	-- Kit CONTROLLERS, promoted 2026-08-06 (owner AD-UI). The kit's other half is TEMPLATES below.
 	UIKitButton = "ReplicatedStorage.Shared.UIKit.Button",
 	UIKitItemIcon = "ReplicatedStorage.Shared.UIKit.ItemIcon",

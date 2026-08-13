@@ -292,6 +292,18 @@
       },
       "comment": "GENERATED cache of per-tower RESOLVED base stats (DMG/RNG/SPA at tier1/ML1/no-trait/mid-roll/asc0) so the Lobby fills the Units-screen number slots without the full stat stack (ADR-0003). Added A6 2026-08-03 (owner AD-Game). Load-bearing validator SSS.Server.UnitStatsCatalogValidate regenerates from the live tower configs at boot in the Game place and errors LOUD on drift -- it stays GAME-ONLY canon (the Lobby has no tower configs to validate against). Deployed byte-identical (3bb9b140) in GAME (A6) and LOBBY (A6b, 2026-08-06) -- drift-green 9/9 in both Places. Regenerate + rehash whenever a tower's Damage/Range/SPA or BaseStats changes.",
       "kind": "module"
+    },
+    "RewardScalingConfig": {
+      "file": "shared/src/RewardScalingConfig.luau",
+      "hash": "1d789978",
+      "owner": "game",
+      "deployPath": "ReplicatedStorage.Configs.Global.RewardScalingConfig",
+      "deployed": {
+        "Game": "1d789978",
+        "Lobby": null
+      },
+      "comment": "Difficulty->gold curve + the Insane item table (PlayGUI blueprint section 8). Added P5 2026-08-13 (owner AD-Game). SHARED because section 8 requires the Lobby's reward PREVIEW and the server's actual payout to read the SAME curve -- the preview must not invent numbers. It could NOT live in StageConfig.Rewards: the Lobby's StageRegistry is a hand-maintained MIRROR carrying structure only, with no reward table and no drift check, so gold numbers there would be two uncheckable copies. WorthinessConfig is the counter-example and does not apply (the Lobby reads worthiness as a STORED result; a pre-match preview has nothing stored to read). Owns the Game's ONE wire->t conversion, TFromWire: the wire scale is 100-1000 while the UI scale is 1-100 (ADR-0011), and confusing them pays maximum gold for a normal match. Clamps, never extrapolates. LOBBY DEPLOY IS PENDING (deployed.Lobby = null) -- the Game reads it today and the preview is blocked until Integration copies it across; that is the expected state, not drift.",
+      "kind": "module"
     }
   },
   "templatesNote": "Templates are under drift control since 2026-08-06 (ADR-0005). They have NO shared/src file: the Instance is the canon. Two safe ways to get one into another Place: COPY it (Studio copy/paste) and prove equality by hash, OR build it with an identical DETERMINISTIC script run in both Places and hash-match (used for Kit_UnitIcon). Never rebuild by hand/by eye. See tools/checklists.md."

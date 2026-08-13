@@ -1,5 +1,102 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-13 [game] B18 — PlayGUI **P5**: match rewards scale with difficulty. One new SHARED config, and the scale trap defused.
+
+First GAME-place session since B0; the last four were Lobby. **The active Studio instance WAS the
+Lobby** — caught by `list_roblox_studios` and re-set explicitly, exactly as the prompt warned. Every
+`execute_luau` opened with a two-way assertion (`RS.Configs.Towers` PRESENT **and** `Workspace.Lobby`
+ABSENT), so a mid-session flip would abort rather than write to the wrong Place.
+
+Bootstrap drift **Game 24/25 with `MetaMath=MISSING`, zero mismatches** — the expected state, not
+drift. Integration gate: **No Integration needed — proceeding**, with the caveat called out up front
+that a shared config would create an Integration FOLLOW-UP (it did; see PENDINGs).
+
+**What P5 does.** Victory gold is now rolled from a difficulty-scaled band —
+`min = lerp(100,300,t)`, `max = lerp(300,500,t)` — instead of a flat per-act number.
+`Victory.Currency` survives in every act as **FALLBACK ONLY**.
+
+**A DEFEAT deliberately keeps its flat consolation.** §8's curve describes what a CLEAR pays;
+scaling the loss reward would make losing on max difficulty the best gold-per-minute in the game.
+
+**THE SCALE TRAP, which was the whole risk of P5.** §8 defines the curve on the **UI 1–100** scale,
+but the payload field that reaches this Place is **wire 100–1000** (ADR-0011). So the Game does its
+own conversion, `t = (wire - 100) / 900`, in ONE named function (`RewardScalingConfig.TFromWire`)
+with a header naming both scales. It **clamps and never extrapolates** — the legal wire range is
+actually 1–1000 (`DifficultyConfig.MinPercent = 1`), wider than the 100–1000 the slider can produce,
+so sub-100 values must land on t = 0 rather than going negative. The Lobby's `DifficultyScale` was
+**not** imported: it is Lobby-local by decision, and a client UI module has no business being
+required by a server reward path. There is now one conversion per Place and neither can drift into
+the other. An explicit test asserts that a UI `100` ("hardest") mistaken for a wire value still
+resolves to the **NORMAL** band — the failure mode that would otherwise pay max gold, silently.
+
+**THE DESIGN CALL — the curve is SHARED CANON, not per-`StageConfig`. Reasoning, since the prompt
+asked for it in writing:**
+
+1. §8 is explicit: *"the curve belongs in a config both sides can read."*
+2. `docs/systems/play-menu.md` records that the Lobby's `StageRegistry` is a hand-maintained MIRROR
+   carrying **structure only — no reward table**, deliberately. Putting gold in `StageConfig` would
+   force reward numbers into that mirror: two copies of the same figures in two Places with **no
+   drift check on them**. That is precisely what the manifest exists to prevent.
+3. The curve is **identical for all three acts**. Triplicating it buys no tuning and creates three
+   places to desync.
+4. `WorthinessConfig` is the obvious counter-example and it does **not** apply: the Lobby reads
+   worthiness as a **stored result** off the profile. A pre-match preview has nothing stored to read.
+
+Per-act tuning is preserved without duplicating numbers — `StageConfig.Rewards.GoldCurve` **names**
+a curve, so a future act points at a different one.
+
+**Shared-module procedure followed in full, not halfway:** new
+`RS.Configs.Global.RewardScalingConfig` deployed to the Game; `shared/src/RewardScalingConfig.luau`
+written and **verified byte-identical** (6870 bytes, `1d789978`, hashed independently on both sides);
+manifest **25 → 26** with `deployed.Lobby = null`; added to `tools/hash_shared.luau`; PENDING raised.
+Drift re-read at landing: **Game 25/26, no mismatches.**
+
+**INSANE: implemented, and FLAGGED LOUDLY rather than sneaked in.** §8 gives Insane the same gold
+curve plus item rewards. **The `MatchLaunch` payload (v2) has no mode field**, so this Place always
+sees Normal and the branch cannot fire in production. `RewardCalculator` reads
+`matchState.DifficultyMode` and defaults to Normal — failing SAFE, because the opposite default
+would pay bonus items to every caller that forgot the argument. Making it reachable is a teleport
+contract **v2 → v3**: both Places, ONE session, synchronised republish. **`DifficultyPercent`'s
+meaning, range and name were not touched**, and a test asserts `DifficultyConfig` is still 1/100/1000
+and still means enemy health.
+
+**Acceptance — 24/24 live asserts from a REAL Script (`SSS.Server.P5Rewards`, since DELETED), plus a
+real end-to-end match. Never `execute_luau` for behaviour.**
+
+| § | Item | Verdict | Evidence |
+| --- | --- | --- | --- |
+| (a) | Victory at wire 100 pays the NORMAL band | **PASS** | band `100-300`, Gold **+300** committed |
+| (a) | Victory at wire 1000 pays the TOP band | **PASS** | band `300-500`, Gold **+403** committed |
+| (b) | wire→t at both ends + a midpoint | **PASS** | 100→`0.0000`, 550→`0.5000` (band 200-400), 1000→`1.0000`; wire 1 and 5000 clamp |
+| (b) | cannot be confused with the UI scale | **PASS** | UI `100` fed in as wire → band `100-300` (NORMAL), not 300-500 |
+| (c) | Insane adds items, Normal does not | **PASS** | Insane 3 drops incl. both guaranteed; `BannerTicket` **2 → 4** actually committed to `Data.Items`; same gold band both modes |
+| (d) | `DifficultyPercent` unchanged, contract validates | **PASS** | `1 / 100 / 1000`; 100→1×, 1000→10×; `Schema.ValidateMatchConfig` Ok |
+| (e) | a match still completes end to end | **PASS** | smoke test ran Stage1_Act1, Defeat at wave 2/15, `[DATA] Rewards: outcome=Defeat mode=Normal wire=100 t=0.000 band=100-300 -> gold 15` |
+| — | no `matchState` fails SAFE | **PASS** | band `100-300`, Gold +109 — not the top band |
+| — | a DEFEAT is not scaled | **PASS** | Gold +15 = the flat consolation, 0 drops even at wire 1000 Insane |
+
+Asserts are on the **gold DELTA**, not the absolute, so a dirty dev profile cannot make a red test
+look green. Direct `GrantForPlayer` calls were used for the matrix rather than six 15-wave matches —
+they run the REAL commit path (`AddCurrency`/`AddItem`) in the real server VM, and a full match still
+covered (e).
+
+**Also fixed, flagged at B14 and left unresolved since:** `Stage1_Act2` said `StartingLives = 15
+-- less margin than Act 1`, but Act 1 starts on **3**. The **COMMENT** was corrected, not the number:
+changing starting lives is a balance decision, not a doc fix. **Raised for the user** — 3 / 15 / 10
+across Acts 1–3 against `BaseHealthScale` 1.0 / 1.6 / 2.4 is not a progression, and Act 1's `3` looks
+like a leftover test value.
+
+- **NEW: `docs/systems/rewards.md`** (registered in `docs/INDEX.md`) — nothing owned rewards before.
+- **Contract impact:** NONE. No schema bump, no teleport change. `StageConfig` gained an additive
+  optional `GoldCurve`; `GrantForPlayer` gained an optional trailing arg.
+- **PENDINGs:** **3 NEW** — (1) AD-Integration must copy `RewardScalingConfig` to the Lobby before
+  the preview can show true numbers; (2) teleport v2→v3 for Insane; (3) USER balance call on
+  `StartingLives`. Invariant 1 still holds in the Lobby only — untouched, not made worse.
+- **`STATE.md` is over its 120-line cap (see the advisory)** — it entered this session AT 120, and
+  the three new PENDINGs will not fit. Trimming needs an owner to say which resolved PENDINGs may go;
+  deleting another chat's entry on a guess is exactly what the single-writer rule forbids.
+- **USER must republish the GAME place** — all of P5 is Studio canon, not git.
+
 ## 2026-08-13 [lobby] B17 — PlayGUI **P4**: difficulty slider + Normal/Insane, with the ADR-0011 remap isolated in ONE module. Two real bugs caught by the first run.
 
 Bootstrap drift **Lobby 25/25 GREEN**, re-checked byte-identical at landing. Integration gate:

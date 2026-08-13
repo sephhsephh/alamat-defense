@@ -23,6 +23,11 @@
 - (empty — design pillars/economy docs migrate here from Studio progressively)
 
 ## systems/
+- `rewards.md` — **AD-Game canon**: match-end payouts (P5, B18). `RewardCalculator`, the
+  difficulty→gold curve in the SHARED `RewardScalingConfig`, why the curve is shared rather than
+  per-`StageConfig`, and **the two difficulty scales** (UI 1–100 vs WIRE 100–1000, ADR-0011) —
+  confusing them pays maximum gold for a normal match, silently. Also records that Insane is
+  implemented but UNREACHABLE until teleport v3. Read before touching anything that pays a player.
 - `ui-kit.md` — **Place-NEUTRAL** AD-UI canon for the shared UI kit: 6 controllers
   (`RS.Shared.UIKit`, `shared/src` files) + 8 real instance templates (`RS.UITemplates.Kit`, the
   INSTANCE is canon per ADR-0005), the shared hotbar, the configs it depends on, and the rules

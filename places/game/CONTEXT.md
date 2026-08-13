@@ -92,39 +92,41 @@ confirm profile load + schema version on every boot.
   Play, pressing Lobby now attempts a real TeleportAsync, which fails (pcall'd +
   TeleportInitFailed handled) — expected; real teleports need the published client.
 - Enemies.Behaviors (Flying/Splitting/...) is an empty extension point.
-- **Counters + Worthiness are WRITTEN (blueprint §6, A8 2026-08-06).** The commit lives in
-  `RewardCalculator.GrantForPlayer`, beside the existing tower-XP commit, and runs ONCE per match:
-  `PlayerInventoryService.CommitUnitKills(userId, uuid, kills)` adds `Counters.PerUnit[uuid].Kills`
-  and advances `Worthiness` by `RS.Configs.Global.WorthinessConfig` (0.02/kill, capped 100 inside
-  `WorthinessConfig.Apply`, so the cap cannot be bypassed by a future caller). Then
-  `IncrementGlobalCounter`/`IncrementStageClears` move `Clears` + `ClearsByStage[stageId]`
-  **on Victory only** ("a defeat is not a clear") and `Waves` on any outcome.
-  `Counters.Global.Summons` is the one LIVE increment, in `SummonManager.SpawnForTower` — a spawn
-  has no match-end aggregate to recover it from. **No schema bump**: v2 already declared all of it.
+- **Counters + Worthiness are WRITTEN (blueprint §6, A8).** One commit per match inside
+  `RewardCalculator.GrantForPlayer`: `CommitUnitKills` adds `Counters.PerUnit[uuid].Kills` and
+  advances `Worthiness` (`WorthinessConfig`, 0.02/kill, cap 100 enforced INSIDE `Apply` so no future
+  caller can bypass it); `Clears`/`ClearsByStage` move **on Victory only**, `Waves` on any outcome;
+  `Counters.Global.Summons` is the one LIVE increment (`SummonManager.SpawnForTower`). No schema
+  bump — v2 declared all of it. Full order of operations: `docs/systems/rewards.md`.
 - **PLACEMENT IS uuid-ADDRESSED END TO END (B0, 2026-08-08).** `RequestPlace` carries a unit
-  **uuid**, not a towerId; `PlacementValidator` resolves it with `LoadoutValidator.FindByUuid`
-  against the player's own validated loadout and reads TowerId/MetaLevel/Trait/StatRolls/Ascension
-  off the SERVER's entry. The uuid is a request, never truth — one the player does not own, or owns
-  but did not bring, resolves to nil and is rejected. `TowerController.Uuid` (+ the `UnitUuid`
-  attribute) carries the instance into combat; `AttackResolver.DamageDealt` and
-  `StatusEffectManager.EffectTicked` both emit it; `MatchStatsTracker` KEYS `Towers` by uuid;
-  `TowerManager.CountPlayerTowersOfUnit` counts limits per uuid; `RewardCalculator` gives each uuid
-  XP + counters from its OWN damage/kills. **A8's first-entry rule is GONE** — it was correct only
-  while placement was towerId-addressed. Do not reintroduce a TowerId lookup in `FindByUuid`, and
-  do not re-key the tracker by type: both make duplicates silently wrong again.
-  Uuid-less towers (the Studio harnesses call `PlaceTower` directly) fall back to TowerId keying,
-  so those runs still produce a scoreboard.
-- **`LoadoutAssigned` already carried `Uuid`** — the old "TowerId/MetaLevel/Trait only" comments
-  were stale since schema v2. `ReplicationBridge` fires the whole validated `LoadoutEntry`. The
-  actual gap was `HotbarController` dropping the uuid on the way into `PlacementController.Start`.
-  `PlacementCountsChanged` is now keyed by uuid too (`{ Current, Limit, TowerId }` per uuid).
-  **A9 judged this OUT of Phase A scope but flagged it as the FIRST thing to fix in Phase B** —
-  gacha makes duplicates routine rather than rare.
-- **A9 (2026-08-06) re-verified the whole counters path independently** across three 15-wave
-  Victories: `Waves +15` each, `Clears`/`ClearsByStage +1` on Victory only, `Summons +139`,
-  Worthiness exact (Archer 198 kills → 3.96, Necromancer 86 → 1.72), and each run's totals read
-  back at the NEXT boot through a real ProfileStore round trip — so they persist, not just
-  accumulate in memory.
+  **uuid**; `PlacementValidator` resolves it with `LoadoutValidator.FindByUuid` against the player's
+  own validated loadout and reads every stat off the SERVER's entry — the uuid is a request, never
+  truth. `TowerController.Uuid` (+ `UnitUuid` attribute) carries the instance into combat;
+  `AttackResolver.DamageDealt` and `StatusEffectManager.EffectTicked` emit it; `MatchStatsTracker`
+  KEYS by uuid; limits count per uuid (`CountPlayerTowersOfUnit`); each uuid earns XP + counters
+  from its OWN work. **A8's first-entry rule is GONE.** Do not reintroduce a TowerId lookup in
+  `FindByUuid` or re-key the tracker by type — both make duplicates silently wrong again. Uuid-less
+  towers (harnesses calling `PlaceTower` direct) fall back to TowerId keying.
+- `LoadoutAssigned` carries the whole validated `LoadoutEntry` (incl. `Uuid`) and
+  `PlacementCountsChanged` is keyed by uuid. A9 re-verified the counters path independently across
+  three 15-wave Victories, persisted through real ProfileStore round trips. Detail: CHANGELOG A9/B0.
+- **REWARDS SCALE WITH DIFFICULTY (P5, 2026-08-13) — `docs/systems/rewards.md` is the canon.**
+  Victory gold is rolled from a band: `min = lerp(100,300,t)`, `max = lerp(300,500,t)`. A DEFEAT
+  keeps its flat `Rewards.Defeat.Currency` (scaling a loss would make losing on max difficulty the
+  best gold/minute). `Victory.Currency` survives as FALLBACK ONLY. **⚠ TWO DIFFICULTY SCALES: the
+  UI is 1–100 (Lobby only) and the WIRE `DifficultyPercent` is 100–1000 (ADR-0011).** This Place
+  only ever sees the WIRE value and converts it in exactly ONE function,
+  `RewardScalingConfig.TFromWire` (`t = (wire-100)/900`, clamped). Reading a wire 100 as if it were
+  UI 100 turns NORMAL into HARDEST and pays max gold silently — never add a second conversion.
+  `matchState` is an OPTIONAL arg to `GrantForPlayer` and fails SAFE to normal.
+- **`RewardScalingConfig` is SHARED CANON (`RS.Configs.Global`, hash `1d789978`), Game-deployed
+  only.** §8 requires the Lobby's reward PREVIEW and the server's payout to read the SAME curve, and
+  the Lobby's `StageRegistry` is a structure-only mirror with no drift check — so the curve could
+  not live in `StageConfig`. Each act NAMES a curve (`Rewards.GoldCurve = "Standard"`) instead of
+  copying endpoints. **`deployed.Lobby = null` → the Lobby reports MISSING until Integration copies
+  it; that is expected, not drift.**
+- **INSANE is implemented but UNREACHABLE live**: the teleport payload (v2) has no mode field, so
+  this Place always sees Normal. Reaching it = contract v2→v3 (both Places, ONE session).
 - **HARNESS GOTCHA — `Signal:Fire` runs handlers SEQUENTIALLY on ONE thread.** A `MatchEnded`
   handler that YIELDS blocks every later handler, including `MatchEndPresenter`, which is what
   drives the reward/counter commit. A9 burned three runs "observing" a late commit that its own

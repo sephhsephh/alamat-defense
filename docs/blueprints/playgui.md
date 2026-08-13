@@ -179,9 +179,18 @@ AD-Game's canon and must not be improvised by a UI session.
   **The live reward preview is NOT part of this** — it needs P5's config, which does not exist yet.
   P4 shipped without it, exactly as §9 allows ("P4 may ship with the preview reading the config as
   soon as it exists"). Wiring it later is a call to the existing `renderRewards(list)` from P3.
-- **P5 [AD-GAME]** — reward scaling by difficulty in `StageConfig.Rewards` + `RewardCalculator`
-  (§8). **Blocks P4's preview from showing true numbers**; P4 may ship with the preview reading the
-  config as soon as it exists.
+- **P5 [AD-GAME] ✅ DONE 2026-08-13 (B18)** — reward scaling by difficulty (§8). Victory gold is
+  rolled from `lerp(100,300,t)`–`lerp(300,500,t)`; a DEFEAT keeps its flat consolation (scaling a
+  loss would make losing on max difficulty the best gold/minute). The curve went into a SHARED
+  `RS.Configs.Global.RewardScalingConfig` rather than into each `StageConfig.Rewards`, because §8
+  requires the preview and the server to read the SAME curve and the Lobby's StageRegistry is a
+  structure-only mirror with no drift check; each act NAMES a curve instead of copying endpoints.
+  The Game does its OWN wire→t conversion (`t=(wire-100)/99` would be the UI mistake — it is
+  `(wire-100)/900`), clamped, in one function. Canon: `docs/systems/rewards.md`.
+  **⚠ TWO FOLLOW-UPS, both PENDING in `STATE.md`:** the Lobby must be sent `RewardScalingConfig`
+  (`deployed.Lobby = null`) before the **preview** can read true numbers, and **Insane is coded but
+  UNREACHABLE** — the `MatchLaunch` payload carries no mode field, so making it live is a teleport
+  contract v2→v3 change (both Places, ONE session, synchronised republish).
 - **P6 [AD-LOBBY]** — LobbyFrame: `PlayersFrame` roster (B-4 row template), `InviteButton`,
   `StartButton` → LoadingScreen → existing `PartyService` reserved-server launch. **Then delete
   `StarterGui.StageSelectScreen`** (B-5) and re-verify every remaining screen still loads.

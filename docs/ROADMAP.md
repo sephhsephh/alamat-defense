@@ -54,8 +54,16 @@ everything untradeable at launch).
   isolated in a `DifficultyScale` ModuleScript (UI 1–100 → wire 100–1000; the wire scale is
   asserted unmoved). Publishes `DifficultyUI`/`DifficultyWire`/`DifficultyMode` for P6's launch.
   27/27 live asserts. The slider Fill/Handle were authored this session (user-delegated).
-  **🔲 P5–P7 remain. P5 [AD-GAME] is next and is a DIFFERENT chat + the OTHER Place** (reward
-  scaling in `StageConfig.Rewards` + `RewardCalculator`); the reward preview stays empty until it
+  **✅ P5 [AD-GAME] (B18, 2026-08-13)** — Victory gold now scales with difficulty: band
+  `lerp(100,300,t)`–`lerp(300,500,t)`, rolled server-side; a DEFEAT keeps its flat consolation.
+  The curve is the SHARED `RewardScalingConfig` (`1d789978`) — NOT per-`StageConfig`, because the
+  Lobby's StageRegistry mirror carries structure only and has no drift check, so §8's "both sides
+  read the same curve" needs real shared canon. Each act NAMES a curve. The Game does its own
+  **wire→t** conversion (`t=(wire-100)/900`, clamped) — the wire is 100–1000, the UI 1–100, and
+  confusing them pays max gold for a normal match. 24/24 live asserts + a real end-to-end match.
+  **Insane is coded but UNREACHABLE: no mode field on the wire (needs teleport v3).**
+  **🔲 P6–P7 remain. P6 [AD-LOBBY] is next — a DIFFERENT chat + the OTHER Place**, and is BLOCKED
+  on the user authoring the `PlayersFrame` row template; the reward preview stays empty until
   lands. Difficulty reads 1–100 for DISPLAY only (ADR-0011); the wire format is unchanged. Replaces
   the script-built `StageSelectScreen`, deleted at P6.
 - 🔲 **Global matchmaking queue** — designed in `playgui.md` §11, **build deferred to P7**.
