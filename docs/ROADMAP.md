@@ -44,7 +44,13 @@ everything untradeable at launch).
   `PlayGUICamera` with clamped lerped cursor parallax, released on exit AND on death/respawn; the
   three frames transition with a `GroupTransparency` fade + 24px slide and always land on their
   authored values; Challenge/Raids/Events + `FindMatchButton` render visibly disabled. 40/40 live
-  asserts. **🔲 P3–P7 remain**; P3 [AD-UI] is next but is **BLOCKED on the user's authoring fixes**.
+  asserts.
+  **✅ P3 [AD-UI] (B16, 2026-08-13)** — StoryModeFrame is populated: stages grouped from P1's data
+  (one row, "The Farm"), all three acts with their correct `ActName`, and `SelectedAct` filled +
+  publishing `SelectedActId`/`SelectedStageNumber`/`RecommendedDifficultyWire` for P4/P6. Labels
+  with no data source are HIDDEN, not zeroed, and the reward panel is plumbing that renders zero
+  cells until P5. 29/29 live asserts. The user cleared blockers B-3 and B-4's rename first.
+  **🔲 P4–P7 remain**; P4 [AD-UI] is next and needs the user to author the slider Fill/Handle.
   Difficulty reads 1–100 for DISPLAY only (ADR-0011); the wire format is unchanged. Replaces the
   script-built `StageSelectScreen`, deleted at P6.
 - 🔲 **Global matchmaking queue** — designed in `playgui.md` §11, **build deferred to P7**.

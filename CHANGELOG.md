@@ -1,5 +1,96 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-13 [lobby] B16 — PlayGUI **P3**: StoryModeFrame is populated. Stage/act lists, SelectedAct fill, and the two authoring blockers cleared.
+
+Bootstrap drift **Lobby 25/25 GREEN**, re-checked byte-identical at landing. Integration gate:
+**No Integration needed — proceeding** (no shared module, template or contract touched; nothing was
+added to the kit). Place binding: the active instance WAS the Lobby, checked and re-set explicitly
+rather than trusted, and every `execute_luau` opened with the aborting Lobby assertion. Blueprint
+`playgui.md` session-task **P3**, section 7.
+
+**FIRST — the two blockers were real, and one of them was worse than the blueprint thought.**
+The session stopped at the gate before any work, as instructed. Both were still open:
+- **B-3: `SelectedAct` had THREE children named `StageNameLabel` — but they were NOT duplicates.**
+  The audit read their text: `"Stage Name"`, `"Total Clears : 0"`, `"Clear Time : 00:00:00"`. They
+  are three DIFFERENT labels the user copy-pasted without renaming. **The blueprint's standing
+  advice ("delete or rename the two extras") would, taken literally as "delete", have destroyed two
+  labels the screen clearly wants.** Reported to the user with that finding; the user authorised
+  the renames. Renamed BY TEXT (asserting exactly one match each first, so the wrong label could
+  not be hit): → **`TotalClearsLabel`**, → **`ClearTimeLabel`**. The genuine one kept its name.
+- **B-4: `RewardsScrollingFrame.ItemIcon`** → **`ItemIconTemplate`**, `Visible = false`. Note it is
+  an **ImageButton**, not an ImageLabel — a first attempt at the rename script died reading `.Text`
+  off it, which is also why the label renames landed before the icon one did.
+Blueprint §2 now records B-3 as RESOLVED with the "they were not duplicates" reason, so the wrong
+advice cannot be followed later. B-4's other two items (slider Fill/Handle, player-row template)
+remain OPEN and are re-tagged to the sessions that actually need them: **P4** and **P6**.
+
+**THE WORK — `StarterGui.PlayGUI.StoryModeController`** (a SECOND LocalScript under PlayGUI; P2's
+`PlayGUIController` still owns visibility/position/transitions and this one never writes them).
+- **Stages are GROUPED from the flat act list** by `StageNumber`. All three acts are Stage 1, so
+  there is exactly ONE stage row today — "The Farm". Clicking a stage rebuilds the Acts list;
+  clicking an act fills `SelectedAct`; boot selects stage 1 / act 1.
+- **All three templates are reparented to the controller at runtime** (the SummonController
+  pattern) so they can never render as a stray row, while staying exactly where the user authored
+  them and editable in Studio. `Spacer` (`LayoutOrder = 99`) and both `UIListLayout`s untouched.
+- **`ActName` gets `ActName`, never `DisplayName`** — the P1 trap. Asserted explicitly per act.
+
+**THREE NARROWINGS OF §7's FILL LIST, ALL RECORDED IN THE BLUEPRINT.** §7 says to fill the panel;
+three of its fields had nothing honest to fill from:
+- **Labels with no data source are HIDDEN, not zeroed.** `StageRegistry` carries STRUCTURE ONLY and
+  `GetStages` returns just that — there is no clear tracking anywhere in this Place (a grep for it
+  finds nothing in the schema or the server) and no reward table. So `LevelsClearedLabel`,
+  `ProgressPercentLabel`, `TotalClearsLabel` and `ClearTimeLabel` are hidden. **A zero is a claim;
+  a hidden label is not.** This is section 6's "fill what real data exists and hide the rest"
+  applied to section 7, and matches the IndexScreen's honesty rule.
+- **The reward panel is PLUMBING ONLY and renders ZERO cells.** `renderRewards(list)` clones
+  `ItemIconTemplate` (icon via `UIKit.ItemIcon.ImageFor`, tier paint via `TierConfig`), but the
+  shipping call passes an empty list. **Reward numbers are P5's, and §8 is explicit that the
+  preview shows what the server will ACTUALLY pay** — a plausible gold figure invented here would
+  be a lie to the player. The clone path is proven by a `DevFakeRewards` harness with a synthetic
+  list that the shipping path never uses.
+- **`SelectedDifficultyLable` was deliberately left alone.** Filling it needs the ADR-0011 1–100
+  display remap, which is **P4's named deliverable**; writing a second remap here is precisely the
+  duplicate-conversion bug ADR-0011 exists to prevent. It keeps its authored "Normal".
+- `StageBGImage` keeps its authored image: no per-act art source exists in the mirror or any config.
+
+**Selection is published as attributes on `SelectedAct`** — `SelectedActId`, `SelectedStageNumber`
+and `RecommendedDifficultyWire` (**WIRE scale 1–1000**, ADR-0011; P4 converts, not this file). This
+mirrors B9's "publish the selected uuid" pattern and is the ONLY coupling P4/P6 need — do not add a
+second selection channel. Selected rows also carry a `Selected` attribute and tint their authored
+`UIStrokeInner`, so the look can be restyled in Studio without touching the controller.
+
+**Verified live (Play, Lobby) from a REAL LocalScript + `get_console_output`** — never
+`execute_luau`, whose VM caches requires and served B7 a stale module. The temporary
+`StarterPlayerScripts.P3AcceptanceHarness` drove the same functions a click runs and was **DELETED
+at landing** (confirmed absent, as is B15's). **`[Test] P3 RESULT: PASS (29 pass, 0 fail)`**:
+- (a) one Stages row, `Name=Stage_1`, `StageLabel="The Farm"`; `LevelsClearedLabel` and
+  `ProgressPercentLabel` both `Visible=false`; `Spacer` kept at LayoutOrder 99; `UIListLayout` kept;
+  `StageButtonTemplate` absent from the list.
+- (b) three Act rows, each asserted against the **hardcoded P1 canon** (independent of the module):
+  ActName "Protecting the Fields"/"The Scarecrow Awakens"/"Harvest of Ruin" AND `~=` the
+  DisplayName it would have been ("The First Alamat"/"Rising Legend"/"Myth's End").
+- (c) every act selected in turn filled `StageNameLabel="The Farm"` and
+  `ActNumberActNameLabel="Act N : <ActName>"`, and published the right
+  `SelectedActId`/`SelectedStageNumber`/`RecommendedDifficultyWire` (100/150/200, wire scale).
+  Exactly ONE `StageNameLabel` remains; `SelectedDifficultyLable` still reads the authored "Normal".
+- (d) shipping path renders **0** reward cells; `ItemIconTemplate` is out of the list and still
+  `Visible=false`; `DevFakeRewards` produced 2 real clones (`Reward_Gold`, `Reward_Silver`) with
+  their `IconImage`; re-selecting an act cleared them back to 0.
+- **P2 regression re-checked in the same run:** a transition still completes and `LeaveButton` still
+  closes the menu. Boot clean; every `Dev*` attribute across all nine harness hosts swept OFF after
+  the Play round trip, and the templates confirmed back in place in the Edit datamodel with no
+  stray runtime clones left behind.
+
+- **Contract impact: NONE.** No shared module, template, schema or teleport change. Drift **25/25**
+  before and after; the Game's 24/25 `MetaMath=MISSING` untouched and still expected.
+- **PENDINGs:** the USER-authoring PENDING is NARROWED — its two P3 items are cleared, and it now
+  blocks **P4** (slider Fill/Handle) and **P6** (player-row template) only.
+- **New standing note for whoever adds clear tracking:** the four hidden labels are the consumers.
+  Unhide them in `StoryModeController`; do not invent a clear counter in the UI.
+- Commit is **local — push pending**. **Six unpushed now** (origin/main is still at B12's `ae65343`).
+- Housekeeping: `.git/_stale_locks_P2/` still cannot be unlinked on this mount (zero-byte leftovers,
+  harmless — git ignores unknown dirs under `.git`). A `_stale_locks_P3/` joins it this session.
+
 ## 2026-08-13 [lobby] B15 — PlayGUI **P2**: the menu SHELL works. New LoadingScreen, Play entry, menu camera + parallax, CanvasGroup transitions, disabled mode buttons.
 
 Bootstrap drift **Lobby 25/25 GREEN** (re-run at landing: still 25/25, byte-identical). Integration

@@ -1,5 +1,5 @@
 # SYSTEM — Play menu (PlayGUI + LoadingScreen)
-<!-- owner: AD-UI | scope: lobby | last-verified: 2026-08-13 (B15/P2) -->
+<!-- owner: AD-UI | scope: lobby | last-verified: 2026-08-13 (B16/P3) -->
 
 Split out of `docs/systems/lobby-ui.md` at B15 when that file passed its 300-line cap (ADR-0006
 governs STATE.md only; every other doc splits). Implementation law is `docs/blueprints/playgui.md`
@@ -52,4 +52,55 @@ just copying the ScreenGui. Tunables are ScreenGui attributes: `FadeInTime`, `Fa
   `ComingSoonLabel`, plus `Active`/`Interactable`/`AutoButtonColor = false`. Not a silent no-op.
 - **NOT wired, on purpose:** `StartButton` and `InviteButton` are P6 and must use the EXISTING
   `PartyService` reserved-server flow — do not grow a second launch path.
+
+## `StoryModeFrame` — stage/act lists + SelectedAct (P3/B16). Blueprint `playgui.md` §7
+
+`StarterGui.PlayGUI.StoryModeController` (a SECOND LocalScript under PlayGUI). It owns the frame's
+CONTENTS only — `PlayGUIController` still owns the frame's visibility, position and transitions, and
+this controller never writes `Position`/`GroupTransparency`/`Visible` on `StoryModeFrame`.
+
+- **The three templates are reparented to the controller at runtime** (`StageButtonTemplate`,
+  `ActButtonTemplate`, `ItemIconTemplate`) — the SummonController pattern. They stay exactly where
+  the user authored them, editable in Studio, and can never render as a stray row. `Spacer`
+  (`LayoutOrder = 99`) and both `UIListLayout`s are untouched, so the spacer stays last.
+- **Stages are GROUPED from the flat act list** by `StageNumber`. All three acts are Stage 1, so
+  today there is exactly ONE stage row, "The Farm". Clicking a stage rebuilds the Acts list;
+  clicking an act fills `SelectedAct`. Boot selects stage 1 / act 1.
+- **`ActName` gets `ActName`, never `DisplayName`.** Act 1 is DisplayName "The First Alamat" AND
+  ActName "Protecting the Fields". Collapsing them ships three wrong titles no test would catch.
+- **Labels with no data source are HIDDEN, not zeroed.** The Lobby has NO clear tracking and NO
+  reward table: `StageRegistry` carries structure only and `GetStages` returns just that. So
+  `LevelsClearedLabel`, `ProgressPercentLabel`, `TotalClearsLabel` and `ClearTimeLabel` are hidden.
+  **A zero is a claim; a hidden label is not.** Unhide them when a clear-tracking system lands —
+  do not invent one in the UI.
+- **The reward preview is PLUMBING ONLY.** `renderRewards(list)` clones `ItemIconTemplate` per
+  entry (icon via `UIKit.ItemIcon.ImageFor`, tier paint via `TierConfig`), but the shipping call
+  passes an EMPTY list, so the panel renders no cells. Reward numbers are **P5 (AD-GAME)** —
+  §8 is explicit that the preview shows what the server will actually pay, so a plausible-looking
+  gold figure here would be a lie to the player. The `DevFakeRewards` harness exercises the clone
+  path with a synthetic list and is never used by the shipping path.
+- **`SelectedDifficultyLable` is deliberately NOT filled.** Filling it needs the ADR-0011 1–100
+  display remap, which is P4's named deliverable; writing a second remap here is exactly the
+  duplicate-conversion bug ADR-0011 exists to prevent. It keeps its authored "Normal" until P4.
+  (A recorded, narrow deviation from §7's literal fill list.)
+- **`StageBGImage` is left at its authored image** — no per-act art source exists in the mirror or
+  any config. Wiring it needs an art field someone must author first.
+- **The selection is published as attributes on `SelectedAct`** — `SelectedActId`,
+  `SelectedStageNumber`, and `RecommendedDifficultyWire` (**WIRE scale 1–1000**, ADR-0011; P4
+  converts, not this file). This mirrors B9's "publish the selected uuid" pattern and is the ONLY
+  coupling P4/P6 need. Read it; do not add a second selection channel.
+- Selected rows carry a `Selected` **attribute** and tint their authored `UIStrokeInner`
+  (highlight colour overridable via the `SelectionStrokeColor` attribute on PlayGUI). Restyle off
+  the attribute rather than editing the controller.
+- Harness (all left OFF/""): `DevSelectStage` (a number), `DevSelectAct` (an act id),
+  `DevFakeRewards` — each runs the SAME function a real click runs.
+
+### Authoring fixes the user cleared at B16 (blueprint §2 B-3/B-4)
+
+`SelectedAct` had **three** children named `StageNameLabel`. They were not duplicates — they were
+three different labels copy-pasted without renaming, so "delete two" would have thrown away real
+content. Renamed by their text: `"Total Clears : 0"` → **`TotalClearsLabel`**,
+`"Clear Time : 00:00:00"` → **`ClearTimeLabel`**; the real `"Stage Name"` one kept its name.
+`RewardsScrollingFrame.ItemIcon` (an **ImageButton**, not a label) → **`ItemIconTemplate`**,
+`Visible = false`.
 

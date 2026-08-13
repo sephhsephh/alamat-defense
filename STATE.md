@@ -46,11 +46,11 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   guard, `AscensionPanel` out of `SelectedUnitFrame` (ADR-0010). **Quests/login/codes still need a
   NEW reveal answer** — the return-value trick only serves player-INITIATED grants.
 
-- **PENDING (USER, NOW BLOCKS PlayGUI P3 — P2 is done):** three authoring fixes only you should make —
-  `StoryModeFrame.SelectedAct` has **THREE** children named `StageNameLabel` (delete/rename two, P3);
-  rename `RewardsScrollingFrame.ItemIcon` → `ItemIconTemplate` + `Visible=false` (P3); author the
-  slider Fill/Handle under `DifficultyGradient` (P4) and a player-row template in
-  `LobbyFrame.PlayersFrame` (P6). Detail: `docs/blueprints/playgui.md` §2. `HUD.Top.CurrencyBar` is
+- **PENDING (USER, NOW BLOCKS PlayGUI P4 and P6):** two authoring items left — author the slider
+  **Fill + Handle** under `SelectedAct.DifficultyGradient` (P4; it holds only a `UIGradient` today)
+  and a **player-row template** in `LobbyFrame.SelectedAct.PlayersFrame` (P6). Detail:
+  `docs/blueprints/playgui.md` §2 B-4. The two P3 blockers were CLEARED at B16 (user-authorised:
+  the triple `StageNameLabel` and the `ItemIconTemplate` rename). `HUD.Top.CurrencyBar` is
   **already compliant** — it clones a designed `CurrencyTemplate`; do NOT "convert" it.
 
 - **PENDING (AD-Gacha review, ONE user-authorised item):** Integration fixed trait-on-summon in
@@ -107,10 +107,10 @@ names. Different sequences, same letters. PlayGUI uses `P1…P7` to avoid a thir
 
 1. **USER** — republish both Places, then run the teleport v2 loop live once.
 2. **PLAYGUI (user priority 2026-08-09)** — `docs/blueprints/playgui.md` is LAW. P1–P7 across
-   AD-Lobby / AD-UI / AD-Game. **P1 ✅ (B14)** stage/act structure + camera part. **P2 ✅ (B15)** the
-   shell: LoadingScreen, Play entry/leave, menu camera + parallax, CanvasGroup transitions, disabled
-   mode buttons — doc `docs/systems/play-menu.md`. **NEXT = P3 [AD-UI], BLOCKED on the USER
-   authoring PENDING above.** Difficulty display-only 1–100 (ADR-0011).
+   AD-Lobby / AD-UI / AD-Game. **P1 ✅ (B14)** structure + camera part. **P2 ✅ (B15)** the shell.
+   **P3 ✅ (B16)** stage/act lists + SelectedAct fill; publishes `SelectedActId` /
+   `RecommendedDifficultyWire` for P4/P6. Doc `docs/systems/play-menu.md`. **NEXT = P4 [AD-UI]
+   (difficulty slider + ADR-0011 remap), BLOCKED on the USER slider authoring above.**
 3. **Phase B** (`phases-b-f-meta.md`). Landed: B0 uuid placement · B1 reveal · B2 Integration ·
    B3 banner engine · B4 reveal anim · B5 AD-UI review · B6 summon UI · B7 EVENT · **B8 INDEX**.
    Blueprint B4 half done — Event ✅, Selection ⛔ (schema PENDING above). B5 ✅ (B8).

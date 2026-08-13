@@ -52,27 +52,20 @@ difficulty, form parties, and teleport into the Game place.
     still-owned uuids, else auto by MetaLevel desc, capped at `MaxLoadoutSize`.
     `GamePlaceId` = **125430066355564** (set 2026-07-18); launch path complete and verified.
   - **MatchReturn handling (2026-07-18; v2 since A2):** `Server.Lobby.MatchReturnService` reads
-    `TeleportData.MatchReturn` on join (expected version read from `LobbyConfig`, not hardcoded;
-    validates version / Outcome / stage; drops
-    unknown `SuggestNextActId` — stale mirror fails safe), serves it via `Remotes.GetMatchReturn`
-    (read-only). `StarterGui.ReturnScreen` = welcome-back banner (outcome + stage; CONTINUE on
-    Victory-with-successor fires `RS.ClientEvents.OpenStageSelect`). `StageSelectScreen` listens
-    and pre-selects the suggested next act (also silently on load). Studio harness: toggle the
-    `DevSimulateReturn` attribute on MatchReturnService (`[Test]` log).
+    `TeleportData.MatchReturn` on join (expected version from `LobbyConfig`, not hardcoded;
+    validates version/Outcome/stage; drops unknown `SuggestNextActId` — stale mirror fails safe),
+    serves it via `Remotes.GetMatchReturn` (read-only). `StarterGui.ReturnScreen` = welcome-back
+    banner; CONTINUE on Victory-with-successor fires `RS.ClientEvents.OpenStageSelect`, which
+    `StageSelectScreen` uses to pre-select the next act. Harness: `DevSimulateReturn`.
   - **Starter tower choice (2026-07-18):** dev-editable `RS.Configs.StarterTowerConfig`
-    (currently Archer/Knight/Mage — edit that file to change the offer),
-    `Server.Lobby.StarterChoiceService` + `Remotes.{GetStarterOffer,ChooseStarterTower}`,
-    modal `StarterGui.StarterChoiceScreen` (no dismiss; REAL instance tree per the
-    no-UI-in-scripts rule — `Root.Panel.CardsRow.CardTemplate` is the editable card design,
-    controller clones/fills/wires only). Eligibility = profile owns ZERO **units** (v2 template
-    ships no starter, so fresh accounts always see it). Grants a uuid `UnitInstance` mirroring
-    the Game's `PlayerInventoryService.GrantUnit` (MetaLevel/XP from config; **StatRolls via
-    shared `StatGradeConfig.RollAll` off one module-level Random, 2026-08-03** — grant log
-    prints rolls + grades) and returns its `Uuid`; never clobbers an existing instance;
-    Studio harness = `DevSimulateFirstJoin` attribute (sim-only grant-path card,
-    self-cleaning by TowerId).
-    The auto path is interim until a loadout-picker UI writes `Data.Loadout`; `[DIAG]` logs
-    the loadout actually sent. `MaxLoadoutSize = 6`.
+    (Archer/Knight/Mage), `Server.Lobby.StarterChoiceService` +
+    `Remotes.{GetStarterOffer,ChooseStarterTower}`, modal `StarterGui.StarterChoiceScreen` (no
+    dismiss; REAL instance tree — `Root.Panel.CardsRow.CardTemplate` is the editable card design).
+    Eligibility = profile owns ZERO **units** (v2 ships no starter, so fresh accounts always see
+    it). Grants a uuid `UnitInstance` mirroring the Game's `GrantUnit` (**StatRolls via shared
+    `StatGradeConfig.RollAll` off one module-level Random**); never clobbers an existing instance.
+    Harness = `DevSimulateFirstJoin`. The auto-loadout is interim until a picker UI writes
+    `Data.Loadout`. `MaxLoadoutSize = 6`.
 
 Run the constitution's bootstrap ritual + `tools/hash_shared.luau` at the start of every
 session; reconcile before any work if a shared hash drifts.
@@ -93,28 +86,33 @@ it, never rebuild it: `RS.ClientEvents.ShowRewards:Fire({ { Id = "Archer", Level
 "Gold", Qty = 250 } })`. Mixed units + items, grants QUEUE, **click 1 = SKIP, click 2 = CLOSE**. The
 pop `UIScale` is on runtime CLONES only — **never add one to `Kit_ItemIcon`, it is hashed canon.**
 
-**`PlayGUI` + `LoadingScreen` — the Play menu shell (P2, B15). Doc: `docs/systems/play-menu.md`;
+**`PlayGUI` + `LoadingScreen` — the Play menu (P2 B15, P3 B16). Doc: `docs/systems/play-menu.md`;
 law: `docs/blueprints/playgui.md`.** `HUD.Left.Buttons.Play` (NOT HUD.Right) → veil → every other
 ScreenGui hidden → `Main.MainMenu`; `LeaveButton` restores each screen's REMEMBERED state.
 **`MainMenu`/`StoryModeFrame`/`LobbyFrame` are CanvasGroups, converted from Frame at P2** so §10's
 `GroupTransparency` fade exists; paths, properties and child order all survived. Menu camera is
 Scriptable at `Workspace.PlayGUICamera.CFrame` — **read it, never write it** — parallax clamped and
-lerped, released on exit AND on every `CharacterAdded`. `StartButton`/`InviteButton` stay UNWIRED
-until P6 (existing PartyService flow). `LoadingScreen` is Lobby-local, NOT drift-controlled (§4).
+lerped, released on exit AND on every `CharacterAdded`. **P3** added `StoryModeController`: stages
+grouped by `StageNumber`, acts per stage (`ActName`, never `DisplayName`), `SelectedAct` filled and
+publishing `SelectedActId`/`SelectedStageNumber`/`RecommendedDifficultyWire` (**WIRE** 1–1000) for
+P4/P6. **Labels with no data source are HIDDEN, not zeroed** — this Place tracks no stage clears and
+has no reward table, so the reward panel renders zero cells until P5. `SelectedDifficultyLable` is
+left to P4 (needs the ADR-0011 remap); `StartButton`/`InviteButton` stay UNWIRED until P6 (existing
+PartyService flow). `LoadingScreen` is Lobby-local, NOT drift-controlled (§4).
 
 ## Gacha — banner ENGINE built (B3, 2026-08-09). **Full doc: `docs/systems/gacha.md` — read it**
 
-Server-complete, **no UI at all yet**. `SSS.Server.Meta.{GrantService, SummonEngine, SummonService}`
-+ `RS.Configs.{Gacha.*, Banners.*, Meta.MetaConfig}`, driven by `RS.Remotes.RequestSummon`
-(Remotes 12 → 13). The five things a Lobby session must not get wrong:
+`SSS.Server.Meta.{GrantService, SummonEngine, SummonService}` + `RS.Configs.{Gacha.*, Banners.*,
+Meta.MetaConfig}`, driven by `RS.Remotes.RequestSummon`. UI shipped B6/B7/B8. Four things a Lobby
+session must not get wrong:
 
 - **`GrantService` is THE one grant path** (invariant 1) — never grant or write `Currencies`
   inline. Its unit record stays byte-compatible with `StarterChoiceService` + the Game's `GrantUnit`.
-- **`RS.Shared.MetaMath` is new SHARED canon** (`6badac1d`). **Not deployed to the Game** — it
-  reports MISSING there and that is EXPECTED, not drift.
+- **`RS.Shared.MetaMath` is SHARED canon** (`6badac1d`), **not deployed to the Game** — MISSING
+  there is EXPECTED, not drift.
 - **Reveal = the remote's RETURN VALUE** (client fires the existing `ShowRewards` with
   `result.Rewards`). No push remote exists; `ObtainRewardsGUI` was consumed, never modified.
-- Pity uses the schema-v2 `Data.Pity[ref]` field — **no schema bump**. Pulls count on
+- Pity uses schema-v2 `Data.Pity[ref]` — **no schema bump**. Pulls count on
   `Counters.Global.GachaPulls`, NOT `Summons` (ADR-0008 — A8 already owns that key).
 
 ## v2 candidates (not built)

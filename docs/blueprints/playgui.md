@@ -32,16 +32,18 @@ datamodel** (persisted, editable) — never `Instance.new` at runtime.
 `CanCollide = false`, `CastShadow = false`, `Anchored = true`. Still a Part; its CFrame/Size were
 **not** touched — the framing is the user's.
 
-**B-3. `StoryModeFrame.SelectedAct` has THREE children named `StageNameLabel`.** `FindFirstChild`
-returns an arbitrary one, so a controller will appear to work and then update the wrong label.
-→ the user should delete or rename the two extras before P2. **Do not resolve this in code.**
+**B-3. ✅ RESOLVED at P3 (2026-08-13, user-authorised).** `SelectedAct` had THREE children named
+`StageNameLabel`. **They were not duplicates** — they were three distinct labels copy-pasted without
+renaming, so the original "delete the two extras" advice would have destroyed real content. Renamed
+by their text: `"Total Clears : 0"` → `TotalClearsLabel`, `"Clear Time : 00:00:00"` →
+`ClearTimeLabel`; the genuine `"Stage Name"` one kept its name. Exactly one `StageNameLabel` now.
 
 **B-4. Missing template instances** (must be authored as real Instances, `Visible = false`):
-- a slider **Fill** + **Handle** under `SelectedAct.DifficultyGradient` (it currently holds only a
-  `UIGradient`; there is no slider yet)
-- a **player row template** under `LobbyFrame.SelectedAct.PlayersFrame.PlayersFrame`
-- `RewardsFrame.RewardsScrollingFrame.ItemIcon` exists — rename to **`ItemIconTemplate`** and set
-  `Visible = false`, per the naming rule.
+- **STILL OPEN (P4):** a slider **Fill** + **Handle** under `SelectedAct.DifficultyGradient` (it
+  currently holds only a `UIGradient`; there is no slider yet)
+- **STILL OPEN (P6):** a **player row template** under `LobbyFrame.SelectedAct.PlayersFrame.PlayersFrame`
+- ✅ **RESOLVED at P3:** `RewardsFrame.RewardsScrollingFrame.ItemIcon` (an **ImageButton**) renamed
+  to **`ItemIconTemplate`** with `Visible = false`.
 
 **B-5. `StarterGui.StageSelectScreen` is 100% script-built** — one child, a `Controller` LocalScript,
 1 total descendant. It is the screen PlayGUI replaces. **Delete it only at P6**, after PlayGUI covers
@@ -154,8 +156,15 @@ AD-Game's canon and must not be improvised by a UI session.
   LocalScript: 40 asserts, 0 failures. **§10 required a CanvasGroup, so the three frames were
   CONVERTED Frame → CanvasGroup in the Edit datamodel** (authoring; every property, child and the
   child order carried across unchanged, so every path in §7/§8 still resolves). No stage data yet.
-- **P3 [AD-UI]** — StoryModeFrame lists: stages + acts from P1's data, `SelectedAct` fill (§7).
-  Requires B-3 and B-4's `ItemIconTemplate` rename to be done first.
+- **P3 [AD-UI] ✅ DONE 2026-08-13 (B16)** — StoryModeFrame lists: stages grouped from P1's data,
+  acts per stage, `SelectedAct` fill (§7). B-3 and B-4's rename were cleared at the top of the
+  session (see §2). Verified from a real LocalScript: 29 asserts, 0 failures.
+  **Three recorded narrowings of §7's fill list, all for honesty or scope:** labels with no data
+  source (`LevelsClearedLabel`, `ProgressPercentLabel`, `TotalClearsLabel`, `ClearTimeLabel`) are
+  HIDDEN rather than zeroed — nothing in this Place tracks clears; `StageBGImage` keeps its
+  authored image because no per-act art source exists; and `SelectedDifficultyLable` is left to
+  **P4**, because filling it needs the ADR-0011 remap and a second remap is the exact bug that ADR
+  exists to prevent. The reward panel is PLUMBING only and renders zero cells until **P5**.
 - **P4 [AD-UI]** — difficulty slider (Fill/Handle authored per B-4) + Normal/Insane buttons +
   the ADR-0011 remap function + live reward preview reading P5's config.
 - **P5 [AD-GAME]** — reward scaling by difficulty in `StageConfig.Rewards` + `RewardCalculator`
