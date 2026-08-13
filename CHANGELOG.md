@@ -101,7 +101,12 @@ green and red each matched their button's sequence exactly, switching back resto
 tints differ, the transparency ramp and rotation survived, and P4's mode/overlay/slider behaviour
 was re-asserted unchanged (`UI 50 → wire 545`). Harness deleted, all `Dev*` swept OFF.
 
-- Commit is **local — push pending**. **Eight unpushed now** (origin/main still at B12's `ae65343`).
+- **PUSH STATUS CHANGED MID-SESSION — the long "N unpushed" streak is over.** The USER pushed while
+  B17 was landing: `refs/remotes/origin/main` moved `ae65343 → d614b6c` ("update by push",
+  2026-08-13), so the seven commits B13–B17 that every entry since B12 called "unpushed" are now
+  **on origin**. Only the follow-up commit above is local. Verified from
+  `.git/logs/refs/remotes/origin/main`, not assumed — the count first showed up as a suspicious
+  `1` and was chased down rather than written off.
 - Housekeeping: `.git/_stale_locks_*` dirs going back to A8 cannot be unlinked on this mount. They
   are harmless (git ignores unknown dirs under `.git`); the tree verifies clean.
 
