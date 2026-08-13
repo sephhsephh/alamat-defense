@@ -126,6 +126,14 @@ content. Renamed by their text: `"Total Clears : 0"` → **`TotalClearsLabel`**,
   button. A recursive `FindFirstChild` returns an arbitrary one and would silently rewrite a
   button's caption — the same class of bug as the triple `StageNameLabel` (B-3). The test asserts
   both button captions still read "Normal"/"Insane" after the panel label is written.
+- **The track is TINTED by the active mode — that is what `DifficultyGradient`'s own `UIGradient`
+  is for** (user, 2026-08-13): green while Normal is selected, red while Insane is. The colour is
+  **copied from the mode button's own `UIGradient` at runtime**, never hardcoded, so restyling a
+  button in Studio restyles the track with it and the two cannot disagree. Only `.Color` is copied —
+  the track keeps its authored `Transparency` ramp (1 at the top → 0 at the bottom) and `Rotation`.
+  The lookup is `FindFirstChildOfClass` (direct children only) because both buttons also carry
+  `UIStroke`s that could hold a gradient. **The tint is runtime-only; the authored colour in the
+  Edit datamodel is untouched, and that is the one you edit.**
 - **Publishes for P6:** `DifficultyUI` (1–100), `DifficultyWire` (100–1000, produced by the one
   conversion — the launch path reads it and MUST NOT convert again) and `DifficultyMode`.
 - **Follows P3 via `SelectionSerial`, not `SelectedActId`.** Selecting an act resets the slider to

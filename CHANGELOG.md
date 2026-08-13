@@ -87,7 +87,21 @@ real drag/click runs and was **DELETED at landing** (all three P2/P3/P4 harnesse
 - **Note for P4's own scope:** §9 lists a "live reward preview reading P5's config" under P4. P5
   does not exist, so the preview stays empty; §9 explicitly permits shipping P4 without it. Wiring
   it later is one call to P3's existing `renderRewards(list)`.
-- Commit is **local — push pending**. **Seven unpushed now** (origin/main still at B12's `ae65343`).
+**FOLLOW-UP, same session (user request):** **the mode now TINTS the track.** That is what
+`DifficultyGradient`'s own `UIGradient` was always for — green while Normal is selected, red while
+Insane is. The colour is **copied from the mode button's own `UIGradient` at runtime** rather than
+hardcoded, so restyling a button in Studio restyles the track with it and the two can never
+disagree. Only `.Color` is copied: the track keeps its authored `Transparency` ramp (1 at the top →
+0 at the bottom) and its `Rotation = 90`. The lookup is `FindFirstChildOfClass` — **direct children
+only**, because both buttons also carry `UIStroke`s that could hold their own gradient. A fallback
+restores the authored colour if a button ever loses its gradient, so the track can never strand on
+the previous mode's paint. **The tint is runtime-only; the authored colour in the Edit datamodel is
+untouched (still black → lime), and that is the one to edit.** Verified live, **7 pass / 0 fail**:
+green and red each matched their button's sequence exactly, switching back restored green, the two
+tints differ, the transparency ramp and rotation survived, and P4's mode/overlay/slider behaviour
+was re-asserted unchanged (`UI 50 → wire 545`). Harness deleted, all `Dev*` swept OFF.
+
+- Commit is **local — push pending**. **Eight unpushed now** (origin/main still at B12's `ae65343`).
 - Housekeeping: `.git/_stale_locks_*` dirs going back to A8 cannot be unlinked on this mount. They
   are harmless (git ignores unknown dirs under `.git`); the tree verifies clean.
 
