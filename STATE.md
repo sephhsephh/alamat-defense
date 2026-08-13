@@ -87,10 +87,10 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   CAN write it (and B9 added `SpendItems`), but no shipping flow grants an item — B7's Event banner
   pays Gold, and B9's ascension costs list no items.
 
-- **NOT a bug:** the Units screen's stat NUMBERS are per-TOWER (the catalog's mid-roll reference), so
-  two instances of one tower show equal numbers while their GRADE letters differ (ADR-0003). And
-  `Data.Loadout` fills **LEFT TO RIGHT with no gaps** — a schema-v2 `{ string }` the match launcher
-  reads, so it must stay dense; fixed slot positions would need a schema bump.
+- **NOT a bug:** Units-screen stat NUMBERS are per-TOWER (catalog mid-roll ref), so two instances of
+  one tower show equal numbers while their GRADE letters differ (ADR-0003). And `Data.Loadout` fills
+  **LEFT TO RIGHT, dense** — a schema-v2 `{ string }` the match launcher reads; fixed slot positions
+  would need a schema bump. Difficulty numbers: UI is 1–100, wire is 100–1000 (ADR-0011).
 
 ## Contracts (versions only — detail in `docs/contracts/`)
 
@@ -105,8 +105,8 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 
 **✅ PHASE A SIGNED OFF (A9).** Blueprint `phase-a-foundations.md` is history; detail in CHANGELOG.
 
-**LABEL COLLISION:** the changelog's `B0…B8` are Phase-B SESSION COUNTERS; the blueprint's `B1…B5`
-are SESSION-TASK names. Different sequences, same letters.
+**LABEL COLLISION:** changelog `B0…B13` are SESSION COUNTERS; blueprint `B1…B5` are SESSION-TASK
+names. Different sequences, same letters. PlayGUI uses `P1…P7` to avoid a third collision.
 
 1. **USER** — republish both Places, then run the teleport v2 loop live once.
 2. **PLAYGUI (new, user priority 2026-08-09)** — `docs/blueprints/playgui.md` is LAW for it.
