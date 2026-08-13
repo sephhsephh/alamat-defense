@@ -1,5 +1,73 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-09 [integration] B13 — PlayGUI BLUEPRINTED (not built). ADR-0011 kills a silent 10×-difficulty landmine.
+
+**Docs only — no Studio writes, so drift is untouched: Lobby 25/25, Game 24/25 (`MetaMath`, expected).**
+The user asked for the whole PlayGUI feature; I stopped and blueprinted it instead, because it spans
+**four owner chats** and contained two contract changes. They chose: blueprint now, difficulty as a
+display-only remap, queue designed but not built.
+
+**FIRST: the active Studio instance had silently flipped to the Game, and the ids had changed.**
+Caught it because a `StarterGui` search returned `MatchHUD`/`TowerSelection`/`WavePrep` — Game
+screens. This is the B9 hazard, and it is why every write in this project re-lists the studios first.
+Re-verified B12 survived the restart: `TraitRegistry eca681ad`, `TraitDefinitions 56e81e37`,
+`TierConfig 490f1f9d`, `SummonEngine` calling `Roll(rng)`, harness gone, doc mirrors intact. The
+`RollTrait` string still in `SummonEngine` is **comment-only** — the sole live call is `.Roll(rng)`.
+
+**ADR-0011 — difficulty is remapped for DISPLAY only; the wire format does not move.**
+The ask was a 1%–100% meter where 1% = normal. Today `DifficultyPercent` is **1–1000 with 100 =
+normal**, it rides in the teleport v2 payload, and the Game computes
+`enemyHP × BaseHealthScale × DifficultyPercent/100`. Redefining it in place is **silent and
+live-breaking**: the two Places publish separately, so a republished Lobby sending `100` meaning
+*max* to a Game still reading `100` as *normal* runs every match at **10× enemy health** with no
+error — no `[CONTRACT]` line fires, because the field is present, numeric and in range. Strictly
+worse than the v1→v2 cutover, which at least failed loudly on the version integer.
+So: the UI reads 1–100, one function converts at the payload boundary
+(`100 + (ui-1)*900/99`), and `DifficultyPercent` keeps its name, range and meaning. Zero contract
+risk, zero republish coupling, one seam to cut if it ever needs to become real. The honest cost is
+that the confusion MOVES rather than vanishes — players see 1–100, configs and docs still say
+100–1000 — so every doc quoting a difficulty number must now name its scale.
+
+**`docs/blueprints/playgui.md` — written from a LIVE AUDIT of the tree, not from the description.**
+That audit is most of the value, because four things in the spec did not match reality:
+
+- **The Play button is `HUD.Left.Buttons.Play`**, not `HUD.Right` (Right holds Event/Profile/Quests).
+- **`Workspace.PlayGUICamera` is a visible, solid Part** — `Transparency = 0`, `CanCollide = true`.
+  Players can walk into it and it renders in-world.
+- **`HUD.Top.CurrencyBar` is NOT script-built** and must not be "converted". It is a designed Frame
+  cloning a `CurrencyTemplate` child — the sanctioned pattern. The request to convert the currencies
+  rested on an assumption the audit contradicts. **`StageSelectScreen` genuinely is** script-built:
+  one child, a `Controller` LocalScript, 1 total descendant. That one gets deleted at P6.
+- **The blocker that stops everything: the Lobby's `StageRegistry` mirror has no stage/act
+  structure.** `List()` gives `Id`/`DisplayName`/`ActLabel`/`NextActId`/`Recommended`;
+  `StageNumber`, `StageName`, `ActNumber`, `ActName` are all **nil**. The Game's configs have them
+  (Stage 1 "The Farm" / Act 1 "Protecting the Fields"); the mirror dropped them. **The stage and act
+  lists cannot be populated at all until that is fixed** — which is why it is P1 and why a UI
+  session starting on P2/P3 first would have stalled.
+
+Also flagged for the user to fix in Studio (authoring, not code): **`StoryModeFrame.SelectedAct` has
+THREE children named `StageNameLabel`** — `FindFirstChild` returns an arbitrary one, so a controller
+would look correct and update the wrong label; `RewardsScrollingFrame.ItemIcon` wants renaming to
+`ItemIconTemplate` + `Visible=false`; and the slider Fill/Handle and the lobby player-row template
+do not exist yet (`DifficultyGradient` holds only a `UIGradient`).
+
+- **Session plan P1–P7** by owner: P1 AD-Lobby (registry + camera part), P2 AD-UI (loading screen,
+  camera, transitions), P3 AD-UI (stage/act lists), P4 AD-UI (slider + reward preview), P5 **AD-Game**
+  (reward scaling — `StageConfig.Rewards` is its canon, not a UI session's to improvise), P6 AD-Lobby
+  (LobbyFrame + launch, then delete `StageSelectScreen`), P7 deferred queue.
+- Reward curve fixed on the UI scale: Normal `Gold lerp(100→300)` min / `lerp(300→500)` max across
+  1→100%; Insane same curve plus items.
+- **Queue designed, not built** (§11): MemoryStore keyed by stage|act|mode|difficulty, party-aware,
+  timeout → solo fallback, handing off to the **existing** `PartyService` launch — not a second
+  launch path. `FindMatchButton` ships disabled meanwhile.
+
+- **Contract impact:** NONE. No schema, payload, shared module or template touched.
+- **PENDINGs:** NEW — USER authoring fixes (blocks P2/P3); PlayGUI P1–P7. Carried: republish + live
+  teleport loop (USER), `BannerChoices` v2→v3, AD-Gacha review of B12's `SummonEngine` edit, the
+  AD-UI B7–B11 backlog, `MetaMath` at Phase D.
+- **B13 did NOT do the `BannerChoices` schema bump** it was originally prompted for — the user
+  redirected. It remains the top contract item. Push pending (sandbox auth).
+
 ## 2026-08-09 [integration] B12 — both-places backlog: `SellValueByTier` + the TRAIT TABLE promoted. Trait-on-summon was silently dead since B3.
 
 Bootstrap drift as expected: **Lobby 23/23 GREEN, Game 22/23 with `MetaMath=MISSING`.**

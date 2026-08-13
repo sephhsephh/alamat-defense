@@ -10,6 +10,11 @@
 - `phases-b-f-meta.md` — gacha/rerolls/economy/seasonal/endgame: algorithms (summon order,
   deterministic rotation, GrantService), config shapes, session plans, cross-phase invariants
 
+- `playgui.md` — the PlayGUI main-menu → story-mode → lobby → launch flow: exact instance paths in
+  the user's built `StarterGui.PlayGUI`, the loading screen, camera + parallax, transitions, reward
+  scaling, the deferred matchmaking queue, and session tasks P1–P7 by owner chat. **Read §2 first —
+  it lists the blockers that stop the screen being fillable at all.**
+
 ## contracts/
 - `save-schema.md` — Profile data shape, versions, migration rules (owner: Game). **v2**
 - `teleport.md` — Lobby→Game / Game→Lobby TeleportData payloads (owner: Lobby). **v2**
@@ -61,6 +66,11 @@
   Phase B; §8's "renders through the kit" reads pragmatically so the Units screen PASSES; and when
   a shared unit card IS built, **the user's shipping design is lifted into the kit**, not replaced
   by the kit's (USER, 2026-08-06)
+
+- `ADR-0011-difficulty-display-remap.md` — the difficulty slider reads 1–100 for DISPLAY only; the
+  `DifficultyPercent` wire format stays 100–1000. Redefining it in place would silently run matches
+  at 10× enemy health during the window where one Place is republished and the other is not (USER,
+  2026-08-09)
 
 ## proposals/
 - `2026-08-06-kit-promotion-blocks-a6.md` — AD-UI→AD-Integration: A6's Game hotbar needs the kit,

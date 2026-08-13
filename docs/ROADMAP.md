@@ -31,6 +31,15 @@ everything untradeable at launch).
 
 ## Lobby place
 
+- 🔲 **PlayGUI (user priority, blueprinted 2026-08-09 — `docs/blueprints/playgui.md`)**: Play button
+  → loading screen → menu camera → MainMenu → StoryMode (stage/act lists, difficulty slider, reward
+  preview) → LobbyFrame → launch. The GUI is BUILT by the user; P1–P7 wire it. **P1 [AD-Lobby] is
+  the gate** — the `StageRegistry` mirror carries no `StageNumber/StageName/ActNumber/ActName`, so
+  nothing can populate the stage/act lists yet. Difficulty reads 1–100 for DISPLAY only (ADR-0011);
+  the wire format is unchanged. Replaces the script-built `StageSelectScreen`, deleted at P6.
+- 🔲 **Global matchmaking queue** — designed in `playgui.md` §11, **build deferred to P7**.
+  `FindMatchButton` ships disabled with a "coming soon" state until then.
+
 - ✅ v1: shared-module deploy + boot (drift-free; profile from PlayerData_Dev)
 - ✅ v1: blockout hub (`Workspace.Lobby`) · ✅ collection screen (read-only, end-to-end)
 - ✅ v1: stage select + difficulty slider

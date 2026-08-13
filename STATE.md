@@ -36,33 +36,36 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   mismatch would block every launch.
 
 - **PENDING (AD-Game/AD-Integration, BLOCKS the Selection banner): add `BannerChoices` to the save
-  schema** (v2→v3, additive-optional = Reconcile + bump + no-op `Migrations[2]`), deployed to **BOTH
-  Places in ONE session** — invariant 5. Plan + the rejected `Counters.Global` shortcut:
-  `docs/proposals/2026-08-09-selection-banner-choices.md`. Turning Selection on afterwards is one
-  line (`SUPPORTED_TYPES`); the summon screen needs no change.
+  schema** (v2→v3, additive-optional = Reconcile + bump + no-op `Migrations[2]`), **BOTH Places in
+  ONE session** (invariant 5). Plan + the rejected `Counters.Global` shortcut:
+  `docs/proposals/2026-08-09-selection-banner-choices.md`. Selection is one line after.
 
-- **PENDING (AD-UI review, five user-authorised items):** **B7** `SummonController` delegates its
-  banner-type test to `BannerRegistry.BlockedReason` · **B8** a `RATES / INDEX` button INSTANCE on
-  `SummonScreen` · **B9** one line in `UnitsController.selectUnit` publishing the selected uuid ·
-  **B10** `UnitsController` equip/unequip wiring + a `LoadoutChanged` listener in `HotbarController` ·
-  **B11** equip-button colour states + the one-per-family client guard, and `AscensionPanel` REMOVED
-  from `SelectedUnitFrame` (ADR-0010).
-  **Quests / login / codes still need a NEW reveal answer:** the return-value trick only serves
+- **PENDING (AD-UI review, five user-authorised items):** **B7** `SummonController` →
+  `BannerRegistry.BlockedReason` · **B8** `RATES / INDEX` button instance on `SummonScreen` · **B9**
+  `UnitsController.selectUnit` publishes the selected uuid · **B10** equip/unequip wiring +
+  `LoadoutChanged` listener in `HotbarController` · **B11** equip colours + one-per-family client
+  guard, `AscensionPanel` removed from `SelectedUnitFrame` (ADR-0010).
+  **Quests/login/codes still need a NEW reveal answer** — the return-value trick only serves
   player-INITIATED grants; do not bolt a push remote onto `SummonService`.
+
+- **PENDING (USER, blocks PlayGUI P2/P3):** three authoring fixes only you should make —
+  `StoryModeFrame.SelectedAct` has **THREE** children named `StageNameLabel` (delete/rename two);
+  rename `RewardsScrollingFrame.ItemIcon` → `ItemIconTemplate` + `Visible=false`; author the slider
+  Fill/Handle under `DifficultyGradient` and a player-row template in `LobbyFrame.PlayersFrame`.
+  Detail: `docs/blueprints/playgui.md` §2. `HUD.Top.CurrencyBar` is **already compliant** — it
+  clones a designed `CurrencyTemplate`; do NOT "convert" it.
 
 - **PENDING (AD-Gacha review, ONE user-authorised item):** Integration fixed trait-on-summon in
   `SummonEngine` (its canon): call is now `TraitRegistry.Roll(rng)` (it assumed a non-existent
   `RollTrait` since B3 and, inside a pcall, failed SILENTLY); a `"None"` roll normalises to **nil**
   so summons match every other grant path; the pcall failure now WARNS once. Verified live.
 
-- **PENDING (AD-Game → AD-Integration → AD-UI): ONE settings system for BOTH Places** (user,
-  2026-08-09) — same structure + GUI in both, entries scoped `Both`/`GameOnly`/`LobbyOnly`, covering
-  preferences AND actions. The Lobby has none; the Game's `SettingsService` is AD-Game canon. Plan:
-  `docs/proposals/2026-08-09-unified-settings-both-places.md`. **Nothing is blocked** — B4's
-  click-to-skip covers the reveal toggle.
+- **PENDING (AD-Game → AD-Integration → AD-UI): ONE settings system for BOTH Places** (user) — same
+  structure + GUI in both, entries scoped `Both`/`GameOnly`/`LobbyOnly`, preferences AND actions.
+  Plan: `docs/proposals/2026-08-09-unified-settings-both-places.md`. **Nothing is blocked.**
 
-- **PENDING (AD-UI, small):** the HUD `CurrencyBar` does not refresh after a summon (only on join),
-  so Gold reads stale. Wants a `ClientEvents.CurrencyChanged` — copy B10's `LoadoutChanged` shape.
+- **PENDING (AD-UI, small):** HUD `CurrencyBar` does not refresh after a summon (join only), so Gold
+  reads stale. Wants a `ClientEvents.CurrencyChanged` — copy B10's `LoadoutChanged` shape.
 
 - **PENDING (AD-Meta at Phase D):** deploy `MetaMath` to the GAME + flip `deployed.Game`; until then
   the Game's 24/25 `MetaMath=MISSING` is EXPECTED — do not "reconcile" it.
@@ -77,7 +80,7 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 - **PENDING (AD-Game, small):** a unit at `MAX_META_LEVEL` **loses its stored XP** — `ApplyXP`
   discards overflow at max. Cosmetic, but the Units screen shows it.
 - **PENDING (AD-PlayerLevel, small):** promote `TowerProgressionConfig` to shared for a real XP bar.
-- **PENDING (Game):** real-DataStore round-trip for the PLAYER profile (A7 used a scratch key), plus
+- **PENDING (Game):** real-DataStore round-trip for the PLAYER profile (A7 used a scratch key); plus
   the `ServerStorage.Documentation` → `docs/systems/` migration.
 
 - **PENDING (NEEDS SCHEDULING):** still no writer for `Data.Items` in NORMAL PLAY. `GrantService`
@@ -106,15 +109,14 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 are SESSION-TASK names. Different sequences, same letters.
 
 1. **USER** — republish both Places, then run the teleport v2 loop live once.
-2. **Phase B** (`docs/blueprints/phases-b-f-meta.md`). Landed: B0 uuid placement · B1 reveal
-   surface · B2 Integration · B3 banner engine · B4 reveal animation · B5 AD-UI review + clip fix ·
-   B6 summon UI · B7 EVENT banners · **B8 unit INDEX**. Docs: `gacha.md`, `lobby-ui.md`.
-3. **Blueprint B4 HALF DONE** — Event ✅, Selection ⛔ (schema PENDING above). **B5 ✅ (B8)**, which
-   also settled `Kit_UnitIcon` — ADOPTED, ADR-0009.
-4. **Phase C started (B9): blueprint C3 ascension ✅** (`docs/systems/ascension.md`).
-   **B11 moved it to its own NPC-opened screen (ADR-0010) — C1/C2/C4 should copy that shape, not
-   put panes in the Units frame.** **C1 + C2 are AD-TRAITS' row and are now UNBLOCKED** — B12
-   promoted the trait table to shared canon, so the Lobby can read trait rarity. **C3's sell-dupes
-   half is UNBLOCKED too** (`TierConfig.GetSellValue`); it needs the unwired
-   `UnitsGUI.QuickSellButton` + a `GrantService` sell path. **C4 feeding** needs `FeedValue` +
-   `AddTowerXP` checked first.
+2. **PLAYGUI (new, user priority 2026-08-09)** — `docs/blueprints/playgui.md` is LAW for it.
+   7 session-tasks P1–P7 across AD-Lobby / AD-UI / AD-Game. **P1 [AD-Lobby] is the gate:** the Lobby's
+   `StageRegistry` mirror has no `StageNumber/StageName/ActNumber/ActName`, so the screen cannot be
+   filled. Difficulty is **display-only 1–100** (ADR-0011); the wire format does NOT change.
+3. **Phase B** (`phases-b-f-meta.md`). Landed: B0 uuid placement · B1 reveal · B2 Integration ·
+   B3 banner engine · B4 reveal anim · B5 AD-UI review · B6 summon UI · B7 EVENT · **B8 INDEX**.
+   Blueprint B4 half done — Event ✅, Selection ⛔ (schema PENDING above). B5 ✅ (B8).
+4. **Phase C (B9): C3 ascension ✅** (`ascension.md`); **B11 moved it to an NPC screen (ADR-0010) —
+   C1/C2/C4 copy that shape.** **C1+C2 (AD-Traits) and C3's sell-dupes half are all UNBLOCKED** by
+   B12; sell-dupes needs the unwired `QuickSellButton` + a `GrantService` sell path. **C4** needs
+   `FeedValue` + `AddTowerXP` checked first.
