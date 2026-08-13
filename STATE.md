@@ -31,9 +31,8 @@ never rebuild them by hand. Both procedures: `tools/checklists.md`.
 
 Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 
-- **PENDING (USER, BLOCKING, one pass covers both):** **republish BOTH Places**, then run the
-  **teleport v2 loop live** once. Everything since A7 is Studio canon, not git; a `[CONTRACT]`
-  mismatch would block every launch.
+- **PENDING (USER, BLOCKING):** **republish BOTH Places**, then run the **teleport v2 loop live**
+  once. Everything since A7 is Studio canon, not git; a `[CONTRACT]` mismatch blocks every launch.
 
 - **PENDING (AD-Game/AD-Integration, BLOCKS the Selection banner): add `BannerChoices` to the save
   schema** (v2→v3, additive-optional = Reconcile + bump + no-op `Migrations[2]`), **BOTH Places in
@@ -71,8 +70,7 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   the Game's 24/25 `MetaMath=MISSING` is EXPECTED — do not "reconcile" it.
 
 - **PENDING (AD-Integration, not urgent):** invariant 1 ("every grant flows through `GrantService`")
-  holds in the **Lobby only** — the Game still grants via `PlayerInventoryService` /
-  `RewardCalculator`. Converging spans both Places.
+  holds in the **Lobby only** — the Game still grants via `PlayerInventoryService`/`RewardCalculator`.
 
 - **PENDING (AD-UI, small):** the hotbar **hover TRIGGER** is unverified in BOTH Places (`MouseEnter`
   cannot be fired from tooling). Also `Kit_ItemHoverCard`'s build-time-clone master/clone split.
