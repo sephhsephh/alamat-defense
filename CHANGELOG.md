@@ -1,5 +1,75 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-09 [lobby] B14 — PlayGUI **P1**: the StageRegistry mirror gets its stage/act structure back, camera part fixed. Both B13 blockers closed.
+
+Bootstrap drift **Lobby 25/25 GREEN**. Integration gate: **No Integration needed — proceeding**
+(P1 touches no shared module, no template and no contract). Blueprint `playgui.md` session-task
+**P1**, both parts. **The active Studio instance was the GAME at bootstrap** — the B9/B13 hazard,
+caught by `list_roblox_studios` before any read, and every `execute_luau` this session opened with a
+Lobby assertion (`Workspace.Lobby` + `SSS.Server.Lobby.LobbyServices` present, `RS.Configs.Towers`
+ABSENT) that aborts on mismatch.
+
+**PART A — `RS.Configs.StageRegistry` now carries `StageNumber`/`StageName`/`ActNumber`/`ActName`.**
+This was blueprint blocker **B-1**, and it gated the whole feature: without it PlayGUI cannot group
+acts under a stage or fill `StageNameLabel` / `ActNumberActNameLabel`.
+
+- **The names could not be derived, only copied.** The repo recorded exactly TWO of them — Stage 1
+  "The Farm" and Act 1 "Protecting the Fields", both captured in B13's audit prose. Acts 2 and 3 had
+  no name anywhere in the repo OR the Lobby (`script_grep` for "Protecting"/"The Farm" in the Lobby:
+  zero matches). The brief forbade inventing them and forbade reaching into the Game place, so the
+  session **stopped and asked** rather than guessing. The user authorised a **read-only** lookup.
+- **Read-only Game lookup, then straight back.** `set_active_studio` → Game → `script_grep ActName` +
+  three `script_read`s → `set_active_studio` → Lobby → re-assert. **Zero writes in the Game place.**
+  Canon: all three acts are Stage 1 **"The Farm"**; ActNames are 1 **"Protecting the Fields"**,
+  2 **"The Scarecrow Awakens"**, 3 **"Harvest of Ruin"**.
+- **`DisplayName` is NOT `ActName`, and conflating them was the tempting wrong answer.** The mirror
+  already had `DisplayName` = "The First Alamat"/"Rising Legend"/"Myth's End", which look like act
+  names. They are not: Act 1 is DisplayName "The First Alamat" *and* ActName "Protecting the Fields".
+  Reusing `DisplayName` would have shipped three wrong titles that no test would catch. The module
+  header now says so explicitly, and `StageInfo` groups the two sets of fields under separate comments.
+- Existing keys untouched (`StageSelectScreen` still reads them until P6): `Id`, `DisplayName`,
+  `ActLabel`, `NextActId`, `Recommended`, plus `Get`/`IsValid`/`SanitizeDifficulty`/`List`.
+- **Difficulty was NOT rescaled** (ADR-0011). `DifficultyMin/Max/Default` stay `1`/`1000`/`100`. The
+  header now names BOTH scales, per B13's rule that every doc quoting a difficulty number says which
+  scale it means: WIRE 1–1000 here, UI 1–100 in PlayGUI only, converted at the payload boundary.
+- **New standing hazard, written into the module:** nothing validates these NAMES cross-Place — the
+  Game re-checks only the `Id` — so if AD-Game renames an act, this mirror goes stale **silently and
+  shows players the wrong title**. Id drift fails safe; name drift does not.
+
+**PART B — `Workspace.PlayGUICamera`** (blocker **B-2**): `Transparency 0 → 1`,
+`CanCollide true → false`, `CastShadow true → false`, `Anchored` already true and left true. It stays
+a **Part** (a CFrame source is what PlayGUI wants). **CFrame and Size were captured before and after
+and are byte-identical** — the framing is the user's and was not touched.
+
+**Verified live (Play, Lobby) from a REAL Script + `get_console_output`** — not `execute_luau`, whose
+VM caches requires and served B7 a stale pre-edit module that looked exactly like a real failure. A
+temporary `SSS.P1AcceptanceHarness` printed the evidence and was **DELETED at landing** (confirmed
+absent):
+
+- `StageRegistry.List()` → **3 entries**, each printing all four new fields AND all existing keys:
+  `[1] Stage1_Act1 | Stage 1 "The Farm" | Act 1 "Protecting the Fields" | DisplayName "The First
+  Alamat" | ActLabel "Stage 1 - Act 1" | NextActId Stage1_Act2 | Recommended 100`; `[2] Stage1_Act2
+  … Act 2 "The Scarecrow Awakens" … NextActId Stage1_Act3 | 150`; `[3] Stage1_Act3 … Act 3 "Harvest
+  of Ruin" … NextActId **nil** | 200`.
+- Structure asserted, not just printed: 3 acts, every `StageNumber == 1`, `ActNumber` 1/2/3 in order,
+  chain `Act1→Act2→Act3→nil` intact, `Get("Stage1_Act2").ActName` survives, `IsValid("Nope")` false.
+- Wire difficulty scale re-asserted `Min=1 Max=1000 Default=100`.
+- Camera: `ClassName=Part Transparency=1 CanCollide=false CastShadow=false Anchored=true`.
+- `[Test] P1 RESULT: **PASS**`. Boot otherwise clean — no errors, no warnings.
+- Both edits re-verified from the saved file AFTER the Play round-trip (4/4 fields, 4/4 canon names).
+  Every `Dev*` harness attribute swept and confirmed OFF.
+
+- **Contract impact: NONE.** No shared module, template, schema or teleport change; drift still
+  **25/25** (Lobby) and the Game's 24/25 `MetaMath=MISSING` is untouched and still expected.
+- **PENDINGs:** P1's half of the PlayGUI PENDING is **CLEARED**. **Correction to the standing
+  USER-authoring PENDING: it blocks P3/P4/P6, NOT P2.** The three fixes are the triple
+  `StageNameLabel` (P3), the `ItemIconTemplate` rename (P3), and the slider Fill/Handle (P4) +
+  player-row template (P6). **P2 [AD-UI] needs none of them and is unblocked now.**
+- **Observation for AD-Game, not touched here:** `Stage1_Act2` has `StartingLives = 15` with the
+  comment "less margin than Act 1", but Act 1 has `StartingLives = 3`. Either the number or the
+  comment is wrong. Read-only observation from the name lookup; AD-Game's canon, AD-Game's call.
+- Commit is **local — push pending**. Four unpushed now (origin/main is still at B12's `ae65343`).
+
 ## 2026-08-09 [integration] B13 — PlayGUI BLUEPRINTED (not built). ADR-0011 kills a silent 10×-difficulty landmine.
 
 **Docs only — no Studio writes, so drift is untouched: Lobby 25/25, Game 24/25 (`MetaMath`, expected).**

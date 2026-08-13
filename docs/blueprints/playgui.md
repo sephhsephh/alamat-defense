@@ -19,16 +19,18 @@ datamodel** (persisted, editable) — never `Instance.new` at runtime.
 
 ## 2. Blockers found in the live audit — fix these FIRST or the screen cannot be filled
 
-**B-1. `StageRegistry` (Lobby) does not carry stage/act structure.** `List()` returns flat entries:
-`Id`, `DisplayName`, `ActLabel`, `NextActId`, `Recommended`. **`StageNumber`, `StageName`,
-`ActNumber` and `ActName` are all nil here.** The Game's `StageConfig` has them (Stage 1 "The Farm",
-Act 1 "Protecting the Fields"); the Lobby's mirror dropped them. The PlayGUI **cannot** group acts
-under stages or fill `StageNameLabel` / `ActNumberActNameLabel` until the mirror carries them.
-→ **P1. AD-Lobby canon.** Extend the mirror; do not invent names in the UI.
+**B-1. ✅ RESOLVED at P1 (2026-08-09).** `StageRegistry.List()` now carries `StageNumber`,
+`StageName`, `ActNumber` and `ActName` on all three acts, alongside the untouched `Id`,
+`DisplayName`, `ActLabel`, `NextActId`, `Recommended`. Values are **verbatim from the Game's
+`StageConfig`s** (read-only lookup): all three are Stage 1 **"The Farm"**; acts are
+1 **"Protecting the Fields"**, 2 **"The Scarecrow Awakens"**, 3 **"Harvest of Ruin"**.
+**`DisplayName` is NOT `ActName`** — Act 1 is DisplayName "The First Alamat" *and* ActName
+"Protecting the Fields". Do not collapse them. Nothing validates these NAMES cross-Place (only the
+`Id` is re-checked Game-side), so if AD-Game renames an act the mirror goes stale **silently**.
 
-**B-2. `Workspace.PlayGUICamera` is a visible, solid Part** — `Transparency = 0`, `CanCollide = true`.
-Players can walk into it and it renders in-world. → set `Transparency = 1`, `CanCollide = false`,
-`CastShadow = false`, `Anchored = true`. Keep it a Part (a CFrame source is exactly what is wanted).
+**B-2. ✅ RESOLVED at P1 (2026-08-09).** `Workspace.PlayGUICamera` is now `Transparency = 1`,
+`CanCollide = false`, `CastShadow = false`, `Anchored = true`. Still a Part; its CFrame/Size were
+**not** touched — the framing is the user's.
 
 **B-3. `StoryModeFrame.SelectedAct` has THREE children named `StageNameLabel`.** `FindFirstChild`
 returns an arbitrary one, so a controller will appear to work and then update the wrong label.
@@ -142,8 +144,10 @@ AD-Game's canon and must not be improvised by a UI session.
 
 ## 9. Session plan (ONE per session; owner in brackets)
 
-- **P1 [AD-Lobby]** — `StageRegistry` mirror carries `StageNumber`/`StageName`/`ActNumber`/`ActName`
-  (blocker B-1). Fix B-2 (`PlayGUICamera` part properties) in the same pass; it is one property set.
+- **P1 [AD-Lobby] ✅ DONE 2026-08-09** — `StageRegistry` mirror carries `StageNumber`/`StageName`/
+  `ActNumber`/`ActName` (B-1) and `PlayGUICamera`'s part properties are fixed (B-2). Verified from a
+  real Script: 3 entries, all four fields populated, existing keys intact, chain
+  Act1→Act2→Act3→nil, wire difficulty scale unmoved at 1/1000/100.
 - **P2 [AD-UI]** — `LoadingScreen` (§4) + the Play-button entry, camera swap + parallax (§5), GUI
   hide/show, and the MainMenu ↔ StoryModeFrame ↔ LobbyFrame **transitions** (§10). No stage data yet.
 - **P3 [AD-UI]** — StoryModeFrame lists: stages + acts from P1's data, `SelectedAct` fill (§7).

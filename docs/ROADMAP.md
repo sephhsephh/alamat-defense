@@ -31,12 +31,16 @@ everything untradeable at launch).
 
 ## Lobby place
 
-- 🔲 **PlayGUI (user priority, blueprinted 2026-08-09 — `docs/blueprints/playgui.md`)**: Play button
+- 🟡 **PlayGUI (user priority, blueprinted 2026-08-09 — `docs/blueprints/playgui.md`)**: Play button
   → loading screen → menu camera → MainMenu → StoryMode (stage/act lists, difficulty slider, reward
-  preview) → LobbyFrame → launch. The GUI is BUILT by the user; P1–P7 wire it. **P1 [AD-Lobby] is
-  the gate** — the `StageRegistry` mirror carries no `StageNumber/StageName/ActNumber/ActName`, so
-  nothing can populate the stage/act lists yet. Difficulty reads 1–100 for DISPLAY only (ADR-0011);
-  the wire format is unchanged. Replaces the script-built `StageSelectScreen`, deleted at P6.
+  preview) → LobbyFrame → launch. The GUI is BUILT by the user; P1–P7 wire it.
+  **✅ P1 [AD-Lobby] (B14, 2026-08-09)** — the `StageRegistry` mirror now carries
+  `StageNumber`/`StageName`/`ActNumber`/`ActName` (Stage 1 "The Farm"; acts "Protecting the Fields",
+  "The Scarecrow Awakens", "Harvest of Ruin", verbatim from AD-Game's configs) and
+  `Workspace.PlayGUICamera` is invisible/non-colliding. **🔲 P2–P7 remain**; P2 [AD-UI] is next and
+  is NOT blocked by the user's authoring fixes (those gate P3/P4/P6). Difficulty reads 1–100 for
+  DISPLAY only (ADR-0011); the wire format is unchanged. Replaces the script-built
+  `StageSelectScreen`, deleted at P6.
 - 🔲 **Global matchmaking queue** — designed in `playgui.md` §11, **build deferred to P7**.
   `FindMatchButton` ships disabled with a "coming soon" state until then.
 

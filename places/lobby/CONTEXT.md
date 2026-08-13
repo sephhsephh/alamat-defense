@@ -1,5 +1,5 @@
 # CONTEXT — Lobby place (LIVE, booted 2026-07-17)
-<!-- owner: lobby | scope: lobby | last-verified: 2026-08-09 (B3) -->
+<!-- owner: lobby | scope: lobby | last-verified: 2026-08-09 (B14/P1) -->
 
 The social/meta Place: players land here, view their collection, roll banners, pick a
 stage + difficulty, form parties, and teleport into the Game place.
@@ -38,7 +38,13 @@ stage + difficulty, form parties, and teleport into the Game place.
     (ADR-0004), handler + RemoteFunction both GONE — **do not add a second read path.**
     `RS.Remotes` holds **13** entries (+RequestSummon, B3).
   - Stage select + difficulty (`RS.Configs.StageRegistry` mirror, `GetStages`,
-    `StarterGui.StageSelectScreen`) — captures (StageId, DifficultyPercent).
+    `StarterGui.StageSelectScreen` — deleted at PlayGUI P6) — captures (StageId, DifficultyPercent).
+    **P1 (2026-08-09):** the mirror now also carries `StageNumber`/`StageName`/`ActNumber`/`ActName`,
+    copied VERBATIM from the Game's StageConfigs — Stage 1 "The Farm"; acts 1 "Protecting the Fields",
+    2 "The Scarecrow Awakens", 3 "Harvest of Ruin". **`DisplayName` ≠ `ActName`** (Act 1 is
+    "The First Alamat" AND "Protecting the Fields"). Only the `Id` is re-validated Game-side, so a
+    rename there makes these names stale **silently** — update both in one breath. Difficulty here is
+    the **WIRE** scale 1–1000 (100 = normal); PlayGUI's 1–100 is display-only (ADR-0011).
   - Parties + reserved-server launch (`Server.Lobby.PartyService`, `RS.Configs.LobbyConfig`,
     `StarterGui.PartyScreen`) — teleport contract **v2** (A2, 2026-08-01: `Loadout` carries unit
     **uuids**; version from `LobbyConfig.MatchLaunchVersion`, must equal the Game's
@@ -106,21 +112,16 @@ Server-complete, **no UI at all yet**. `SSS.Server.Meta.{GrantService, SummonEng
   `result.Rewards`). No push remote exists; `ObtainRewardsGUI` was consumed, never modified.
 - Pity uses the schema-v2 `Data.Pity[ref]` field — **no schema bump**. Pulls count on
   `Counters.Global.GachaPulls`, NOT `Summons` (ADR-0008 — A8 already owns that key).
-- Trait-on-summon is **inert here** (no trait table in this Place); Selection/Event refused till B4.
 
 ## v2 candidates (not built)
 
-- Gacha UI: summon NPC + banner carousel + x1/x10 buttons (blueprint B3), Selection/Event
-  flows (B4), Index/Codex (B5). The engine underneath them is done.
+- Gacha UI: summon carousel (B6), Event (B7) and Index (B8) all SHIPPED; only **Selection** is left,
+  blocked on the `BannerChoices` schema bump.
 - Party polish: cross-server invites / persisted parties (currently single-lobby-server, in-memory).
 - Currency shop, player-level display, trading hub, loadout picker UI (replaces the
   interim auto-loadout).
-- Convert legacy script-built screens to instance trees when next touched (rule 2026-07-18):
-  ~~CollectionScreen~~ (done A5), StageSelectScreen, PartyScreen, ReturnScreen.
-
-## Phase A: SIGNED OFF (A9, 2026-08-06)
-
-Nothing outstanding. Evidence in the A9 changelog entry + `docs/ROADMAP.md`.
+- Convert legacy script-built screens when next touched (rule 2026-07-18): StageSelect (dies at
+  PlayGUI P6), Party, Return. Collection was converted at A5.
 
 ## Open PENDINGs (see STATE.md — this is the Lobby-relevant subset)
 
@@ -128,18 +129,15 @@ Nothing outstanding. Evidence in the A9 changelog entry + `docs/ROADMAP.md`.
   action buttons (animation-only today). `Kit_UnitIcon` has no consumer — user decision.
 - **AD-UI (small):** the hotbar hover TRIGGER is unverified (tooling cannot fire `MouseEnter`);
   `Kit_ItemHoverCard`'s master/clone split means editing the master does not update the screen.
-- **USER (BLOCKING):** save + **republish BOTH Places** — A7 deleted `GetCollection` here, which
-  is Studio canon and not in git. Schema v2 + teleport v2 also do not interoperate with v1, so a
-  partial publish breaks live launches with `[CONTRACT] PayloadVersion mismatch`.
-- **USER:** run the teleport v2 loop LIVE once (only v1 was ever live-verified, 2026-07-18).
+- **USER (BLOCKING):** **republish BOTH Places** (everything since A7 is Studio canon, not git), then
+  run the **teleport v2 loop LIVE** once — only v1 was ever live-verified (2026-07-18). v1/v2 do not
+  interoperate, so a partial publish breaks launches with `[CONTRACT] PayloadVersion mismatch`.
 - **Unscheduled:** still no writer for `Data.Items` in NORMAL PLAY, so the Items screen shows all
-  zeroes. `GrantService` (B3) is the first code that CAN write it and is verified doing so, but no
-  shipping flow grants an item yet — a banner paying tickets would be the first.
-  (`Data.Loadout` now HAS a writer — `LoadoutService`, 2026-08-06 — so `Equipped` is real.)
+  zeroes. `GrantService` (B3) CAN write it and is verified doing so, but no shipping flow grants an
+  item yet — a banner paying tickets would be the first. (`Data.Loadout` HAS a writer since B10.)
 - **AD-Integration:** the Game place still grants through its own `PlayerInventoryService` /
   `RewardCalculator`, so cross-phase invariant 1 ("every grant flows through GrantService") holds
   in the Lobby only. Converging them is a real cross-Place task, not a Lobby one.
-- **AD-Traits:** promoting the trait rarity table to shared would switch on trait-on-summon here.
 
 ## Ownership notes
 

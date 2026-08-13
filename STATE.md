@@ -47,12 +47,12 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   **Quests/login/codes still need a NEW reveal answer** — the return-value trick only serves
   player-INITIATED grants; do not bolt a push remote onto `SummonService`.
 
-- **PENDING (USER, blocks PlayGUI P2/P3):** three authoring fixes only you should make —
-  `StoryModeFrame.SelectedAct` has **THREE** children named `StageNameLabel` (delete/rename two);
-  rename `RewardsScrollingFrame.ItemIcon` → `ItemIconTemplate` + `Visible=false`; author the slider
-  Fill/Handle under `DifficultyGradient` and a player-row template in `LobbyFrame.PlayersFrame`.
-  Detail: `docs/blueprints/playgui.md` §2. `HUD.Top.CurrencyBar` is **already compliant** — it
-  clones a designed `CurrencyTemplate`; do NOT "convert" it.
+- **PENDING (USER, blocks PlayGUI P3/P4/P6 — NOT P2):** three authoring fixes only you should make —
+  `StoryModeFrame.SelectedAct` has **THREE** children named `StageNameLabel` (delete/rename two, P3);
+  rename `RewardsScrollingFrame.ItemIcon` → `ItemIconTemplate` + `Visible=false` (P3); author the
+  slider Fill/Handle under `DifficultyGradient` (P4) and a player-row template in
+  `LobbyFrame.PlayersFrame` (P6). Detail: `docs/blueprints/playgui.md` §2. `HUD.Top.CurrencyBar` is
+  **already compliant** — it clones a designed `CurrencyTemplate`; do NOT "convert" it.
 
 - **PENDING (AD-Gacha review, ONE user-authorised item):** Integration fixed trait-on-summon in
   `SummonEngine` (its canon): call is now `TraitRegistry.Roll(rng)` (it assumed a non-existent
@@ -107,10 +107,10 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 names. Different sequences, same letters. PlayGUI uses `P1…P7` to avoid a third collision.
 
 1. **USER** — republish both Places, then run the teleport v2 loop live once.
-2. **PLAYGUI (new, user priority 2026-08-09)** — `docs/blueprints/playgui.md` is LAW for it.
-   7 session-tasks P1–P7 across AD-Lobby / AD-UI / AD-Game. **P1 [AD-Lobby] is the gate:** the Lobby's
-   `StageRegistry` mirror has no `StageNumber/StageName/ActNumber/ActName`, so the screen cannot be
-   filled. Difficulty is **display-only 1–100** (ADR-0011); the wire format does NOT change.
+2. **PLAYGUI (user priority 2026-08-09)** — `docs/blueprints/playgui.md` is LAW for it. 7 session-tasks
+   P1–P7 across AD-Lobby / AD-UI / AD-Game. **P1 ✅ DONE (B14):** the mirror carries stage/act structure
+   (Stage 1 "The Farm"; acts "Protecting the Fields"/"The Scarecrow Awakens"/"Harvest of Ruin") and the
+   camera part is fixed. **NEXT = P2 [AD-UI].** Difficulty display-only 1–100 (ADR-0011); wire unchanged.
 3. **Phase B** (`phases-b-f-meta.md`). Landed: B0 uuid placement · B1 reveal · B2 Integration ·
    B3 banner engine · B4 reveal anim · B5 AD-UI review · B6 summon UI · B7 EVENT · **B8 INDEX**.
    Blueprint B4 half done — Event ✅, Selection ⛔ (schema PENDING above). B5 ✅ (B8).
