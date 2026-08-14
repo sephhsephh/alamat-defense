@@ -47,13 +47,20 @@ by their text: `"Total Clears : 0"` → `TotalClearsLabel`, `"Clear Time : 00:00
   ZIndex-0 track) and placed at local Y `0.2316` — the clear gap between `SelectedDifficultyLable`
   (ends 0.229) and `DifficultyButtons` (starts 0.570). The controller reads their AUTHORED geometry,
   so **restyle or reposition them freely in Studio; no code change is needed.**
-- **STILL OPEN (P6):** a **player row template** under `LobbyFrame.SelectedAct.PlayersFrame.PlayersFrame`
+- ✅ **RESOLVED at P6 (2026-08-13, user-delegated):** the **player row template** under
+  `LobbyFrame.SelectedAct.PlayersFrame.PlayersFrame`. There was no `*Template` — just four
+  copy-pasted `ItemIcon` cards. One was repurposed as `PlayerRowTemplate` (`Visible = false`):
+  `QtyBadge` → `HostBadge` (a quantity badge is meaningless on a player), its label → `HostBadgeLabel`
+  = "HOST", `IconImage` = the avatar, and a `NameLabel` added — the only genuinely new instance.
+  **The other three were HIDDEN (`Visible = false`), not deleted** — B-3's precedent, and they are the
+  user's content. Authored plain and functional; the controller reads its geometry, so restyle freely.
 - ✅ **RESOLVED at P3:** `RewardsFrame.RewardsScrollingFrame.ItemIcon` (an **ImageButton**) renamed
   to **`ItemIconTemplate`** with `Visible = false`.
 
-**B-5. `StarterGui.StageSelectScreen` is 100% script-built** — one child, a `Controller` LocalScript,
-1 total descendant. It is the screen PlayGUI replaces. **Delete it only at P6**, after PlayGUI covers
-stage select, difficulty and launch.
+**B-5. ✅ RESOLVED at P6 (2026-08-13).** `StarterGui.StageSelectScreen` (100% script-built — one
+`Controller` LocalScript, 1 descendant) is **DELETED**. Callers were re-grepped first: `GetStages`
+survives (`ReturnScreen` still calls it, `LobbyServices` still serves it), but
+`ClientEvents.OpenStageSelect` lost its only listener — see the P6 row in §9.
 
 **NOT a blocker — `HUD.Top.CurrencyBar` already complies.** It is a designed Frame with a
 `CurrencyTemplate` child that the controller clones. That is the sanctioned pattern, not
@@ -191,9 +198,24 @@ AD-Game's canon and must not be improvised by a UI session.
   (`deployed.Lobby = null`) before the **preview** can read true numbers, and **Insane is coded but
   UNREACHABLE** — the `MatchLaunch` payload carries no mode field, so making it live is a teleport
   contract v2→v3 change (both Places, ONE session, synchronised republish).
-- **P6 [AD-LOBBY]** — LobbyFrame: `PlayersFrame` roster (B-4 row template), `InviteButton`,
-  `StartButton` → LoadingScreen → existing `PartyService` reserved-server launch. **Then delete
-  `StarterGui.StageSelectScreen`** (B-5) and re-verify every remaining screen still loads.
+- **P6 [AD-LOBBY] ✅ DONE 2026-08-13 (B19)** — LobbyFrame: the `PlayersFrame` roster, `InviteButton`,
+  `StartButton` → LoadingScreen → the EXISTING `PartyService` reserved-server launch, plus the
+  deletion of `StarterGui.StageSelectScreen` (B-5). Verified from a real LocalScript + a temporary
+  server probe on `RequestLaunch`: **30 asserts, 0 failures**.
+  **B-4's row template was authored at the top of the session (user-delegated):** the gate was
+  reported first, exactly as B17 did — `PlayersFrame.PlayersFrame` held four copy-pasted `ItemIcon`
+  cards and no `*Template`. The user chose "repurpose one", so one became `PlayerRowTemplate`
+  (`QtyBadge` → `HostBadge`, `NameLabel` added, `IconImage` = avatar); the other three were HIDDEN,
+  not deleted. The controller reads its AUTHORED geometry, so restyling needs no code change.
+  **P6 reads P4's published `DifficultyWire` and performs no arithmetic on it** — proven live, the
+  server probe saw `DifficultyPercent=545` for UI 50%, byte-for-byte what P4 published. A missing
+  attribute REFUSES the launch rather than re-deriving it.
+  **`InviteButton` opens the existing `PartyScreen`** (user decision) through a new `OpenRequest`
+  attribute seam, rather than authoring a second invite list; `PartyScreen.DisplayOrder` 0 → 30.
+  **⚠ ONE KNOWN CONSEQUENCE:** deleting `StageSelectScreen` orphaned `ClientEvents.OpenStageSelect`
+  (its only listener), so `ReturnScreen`'s CONTINUE is inert. Replacing it touches AD-UI's
+  controllers, so P6 filed `docs/proposals/2026-08-13-openstageselect-after-stageselectscreen.md`
+  and a PENDING instead of editing them.
 - **P7 [AD-Meta, deferred]** — the global queue (§11). Not before P6.
 
 ## 10. Transitions (required, not decoration)

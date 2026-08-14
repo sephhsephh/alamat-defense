@@ -46,11 +46,10 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   guard, `AscensionPanel` out of `SelectedUnitFrame` (ADR-0010). **Quests/login/codes still need a
   NEW reveal answer** — the return-value trick only serves player-INITIATED grants.
 
-- **PENDING (USER, BLOCKS PlayGUI P6):** author a **player-row template** in
-  `LobbyFrame.SelectedAct.PlayersFrame` (`docs/blueprints/playgui.md` §2 B-4). P3/P4's authoring
-  blockers all cleared (B16/B17); the slider parts are plain and meant to be restyled in Studio —
-  the controller reads their authored geometry, so no code change follows. `HUD.Top.CurrencyBar` is
-  already compliant (clones a designed `CurrencyTemplate`) — do NOT "convert" it.
+- **PENDING (AD-UI, B19): `ClientEvents.OpenStageSelect` has NO listener** since P6 deleted
+  `StageSelectScreen`, so **`ReturnScreen`'s CONTINUE is inert**. Needs an "open PlayGUI on act X"
+  seam in `PlayGUIController`/`StoryModeController` — NOT the Dev harness attributes. Plan:
+  `docs/proposals/2026-08-13-openstageselect-after-stageselectscreen.md`. `GetStages` is unaffected.
 
 - **PENDING (AD-Integration): copy `RewardScalingConfig` (`1d789978`) to the LOBBY** —
   `deployed.Lobby = null`. **Blocks P4's reward PREVIEW**: §8 needs preview and server on the SAME
@@ -117,12 +116,11 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 names. Different sequences, same letters. PlayGUI uses `P1…P7` to avoid a third collision.
 
 1. **USER** — republish both Places, then run the teleport v2 loop live once.
-2. **PLAYGUI (user priority 2026-08-09)** — `docs/blueprints/playgui.md` is LAW. P1–P7 across
-   AD-Lobby / AD-UI / AD-Game. **P1 ✅ (B14)** structure + camera part. **P2 ✅ (B15)** the shell.
-   **P3 ✅ (B16)** stage/act lists + SelectedAct fill. **P4 ✅ (B17)** difficulty slider +
-   Normal/Insane; the ADR-0011 remap is isolated in `PlayGUI.DifficultyScale` — **the ONE
-   conversion; never write a second.** Publishes `DifficultyUI`/`DifficultyWire`/`DifficultyMode`.
-   Doc `docs/systems/play-menu.md`. **NEXT = P5 [AD-GAME] — a DIFFERENT chat and the GAME Place.**
+2. **PLAYGUI (user priority 2026-08-09)** — `docs/blueprints/playgui.md` is LAW. **P1–P6 ✅ DONE**
+   (B14–B19); detail in the blueprint's §9 and `docs/systems/play-menu.md`. The ADR-0011 remap is
+   isolated in `PlayGUI.DifficultyScale` — **the ONE conversion; never write a second.**
+   **NEXT = AD-INTEGRATION** (copy `RewardScalingConfig` here; consider teleport v2→v3 for Insane),
+   **then P7** [AD-Meta] — the global queue, §11.
 3. **Phase B** (`phases-b-f-meta.md`). Landed: B0 uuid placement · B1 reveal · B2 Integration ·
    B3 banner engine · B4 reveal anim · B5 AD-UI review · B6 summon UI · B7 EVENT · **B8 INDEX**.
    Blueprint B4 half done — Event ✅, Selection ⛔ (schema PENDING above). B5 ✅ (B8).

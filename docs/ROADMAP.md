@@ -62,10 +62,18 @@ everything untradeable at launch).
   **wire→t** conversion (`t=(wire-100)/900`, clamped) — the wire is 100–1000, the UI 1–100, and
   confusing them pays max gold for a normal match. 24/24 live asserts + a real end-to-end match.
   **Insane is coded but UNREACHABLE: no mode field on the wire (needs teleport v3).**
-  **🔲 P6–P7 remain. P6 [AD-LOBBY] is next — a DIFFERENT chat + the OTHER Place**, and is BLOCKED
-  on the user authoring the `PlayersFrame` row template; the reward preview stays empty until
-  lands. Difficulty reads 1–100 for DISPLAY only (ADR-0011); the wire format is unchanged. Replaces
-  the script-built `StageSelectScreen`, deleted at P6.
+  **✅ P6 [AD-LOBBY] (B19, 2026-08-13)** — the `PlayersFrame` roster (one cloned row per party
+  member, avatars via non-yielding `rbxthumb://`), `InviteButton` → the existing `PartyScreen` (new
+  `OpenRequest` seam; DisplayOrder 0 → 30), and `StartButton` → LoadingScreen → the **EXISTING**
+  `RequestLaunch`/`PartyService` reserved-server path — **no second launch path**. It uses P4's
+  published `DifficultyWire` VERBATIM and REFUSES to launch if it is absent rather than re-deriving
+  it (proven live: the server probe saw `DifficultyPercent=545` for UI 50%). **30/30 live asserts.**
+  The B-4 row template was authored this session (user-delegated: one of four copy-pasted `ItemIcon`
+  cards repurposed; the other three HIDDEN, not deleted). **`StageSelectScreen` DELETED** — callers
+  re-grepped first, `GetStages` survives. **⚠ `ClientEvents.OpenStageSelect` lost its only listener,
+  so `ReturnScreen`'s CONTINUE is inert** — proposal + PENDING filed for AD-UI rather than editing
+  their canon.
+  **🔲 P7 remains** — the global queue (§11), AD-Meta, deferred.
 - 🔲 **Global matchmaking queue** — designed in `playgui.md` §11, **build deferred to P7**.
   `FindMatchButton` ships disabled with a visible "COMING SOON" overlay as of P2.
 

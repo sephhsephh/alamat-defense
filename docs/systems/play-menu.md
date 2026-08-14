@@ -1,5 +1,5 @@
 # SYSTEM — Play menu (PlayGUI + LoadingScreen)
-<!-- owner: AD-UI | scope: lobby | last-verified: 2026-08-13 (B17/P4) -->
+<!-- owner: AD-UI (screens/controllers) + AD-Lobby (flow/launch) | scope: lobby | last-verified: 2026-08-13 (B19/P6) -->
 
 Split out of `docs/systems/lobby-ui.md` at B15 when that file passed its 300-line cap (ADR-0006
 governs STATE.md only; every other doc splits). Implementation law is `docs/blueprints/playgui.md`
@@ -50,8 +50,8 @@ just copying the ScreenGui. Tunables are ScreenGui attributes: `FadeInTime`, `Fa
 - **Visibly disabled (§6/§11):** `ChallengeModeButton`, `RaidsModeButton`, `EventsModeButton` and
   `FindMatchButton` each got a real `InactiveOverlay` (the DifficultyButtons pattern) with a
   `ComingSoonLabel`, plus `Active`/`Interactable`/`AutoButtonColor = false`. Not a silent no-op.
-- **NOT wired, on purpose:** `StartButton` and `InviteButton` are P6 and must use the EXISTING
-  `PartyService` reserved-server flow — do not grow a second launch path.
+- **`StartButton`/`InviteButton` were wired at P6 (B19)** — see the LobbyFrame section below. They
+  use the EXISTING `PartyService` reserved-server flow; there is still only one launch path.
 
 ## `StoryModeFrame` — stage/act lists + SelectedAct (P3/B16). Blueprint `playgui.md` §7
 
@@ -152,4 +152,80 @@ content. Renamed by their text: `"Total Clears : 0"` → **`TotalClearsLabel`**,
   it. `StoryModeController` now bumps a monotonic **`SelectionSerial`** last in `fillSelectedAct`
   and P4 listens to that. `SelectedActId` remains the single source of truth for *which* act.
   **Anything else that needs to react to a selection should use `SelectionSerial` too.**
+
+## `LobbyFrame` — roster, Invite, LAUNCH (P6/B19). Blueprint §3 tail + §11. Owner: AD-Lobby
+
+`StarterGui.PlayGUI.LobbyController` (the FOURTH script under PlayGUI). It owns the roster, the two
+buttons and this frame's three headline labels — nothing else. `PlayGUIController` still owns the
+frame's visibility/position/transitions; P6 never writes them.
+
+- **It does NOT reinvent the launch.** `StartButton` fires the EXISTING `Remotes.RequestLaunch`;
+  `Server.Lobby.PartyService` does the reserved-server teleport exactly as before. §11's rule that a
+  second launch path must never exist is intact — matchmaking (P7) will decide *who*, PartyService
+  still decides *how*.
+- **It reads `DifficultyWire` and performs NO arithmetic on it.** P4 publishes that number from THE
+  one conversion; P6 puts it on the wire unchanged. If the attribute is ever absent the launch is
+  **REFUSED** rather than re-derived — a wrong difficulty is a silent 10× enemy-health match
+  (ADR-0011). `DifficultyScale` is required only for `.Format`, which renders text and converts
+  nothing.
+- **TWO name collisions make every lookup non-recursive, and that is load-bearing.**
+  (1) `SelectedAct` exists under BOTH `StoryModeFrame` and `LobbyFrame` — the ATTRIBUTES live on the
+  Story one, the roster and mirrored labels on the Lobby one. (2) `PlayersFrame` contains a
+  ScrollingFrame **also named `PlayersFrame`**, so `FindFirstChild(name, true)` returns the outer
+  panel. Same class of bug as the triple `StageNameLabel` (§2 B-3).
+- **The lobby panel MIRRORS the story panel** (`StageNameLabel`, `ActNameLabel`,
+  `SelectedDifficultyLable`), driven off the published attributes and `SelectionSerial`. This frame
+  is the last thing a player reads before committing, so it must not describe a different match from
+  the one it launches. **Note the label names differ between the two panels** — Story has
+  `ActNumberActNameLabel`, Lobby has `ActNameLabel`. Do not "unify" them in code.
+- **`RewardsFrame` on this frame is deliberately untouched** — the preview needs
+  `RewardScalingConfig`, which is not deployed to this Place yet (AD-Integration PENDING). Showing
+  invented gold is exactly what §8 bans.
+- **`InviteButton` opens the existing `PartyScreen`** (user decision, 2026-08-13) rather than growing
+  a second invite path in a frame that has no authored player list. `PartyScreen.DisplayOrder` was
+  raised **0 → 30** so it renders above PlayGUI (20) and below LoadingScreen (200). It opens through
+  a new **`OpenRequest` attribute seam** on `PartyScreen.Controller`, which runs the same
+  `refresh()` the PARTY toggle runs — without that the invite list would show whatever it held when
+  the panel was last opened. A fresh value is written every time, because an unchanged attribute
+  fires no signal (the trap `SelectionSerial` exists for). PartyScreen remains script-built legacy;
+  converting it is its own session.
+- **The veil is tied to the server's answer, not to a timer.** `LoadingScreen.Show` on press,
+  `Hide` on any `PartyState` `error`. PartyService reports party-full, non-host, unset `GamePlaceId`
+  and teleport failure all that way, so the player is never stranded behind a veil.
+- Harness (all left OFF/0): `DevRefreshRoster`, `DevFakeRoster` (a count), `DevStart`, `DevInvite`.
+
+### The player-row template (blueprint §2 B-4) — authored at B19, user-delegated
+
+`PlayersFrame.PlayersFrame` held **four copy-pasted `ItemIcon` cards** and no `*Template`. P6 stopped
+at the gate and the user chose "repurpose one" over authoring from scratch. So ONE was renamed
+**`PlayerRowTemplate`** (`Visible = false`), its `QtyBadge` → **`HostBadge`** (a quantity badge is
+meaningless on a player; the authored badge design is reused as-is) with its label → `HostBadgeLabel`
+= "HOST", and a **`NameLabel`** was added — the one genuinely new instance, because no player row can
+work without a name. `IconImage` carries the avatar.
+
+**The other three copies were HIDDEN, not deleted** (`Visible = false`, reversible). They are the
+user's instances and B-3's precedent says look-alike siblings are not automatically junk — but left
+visible they would paint as permanent ghost cards beside the real members.
+
+The template is reparented to the controller at runtime (the SummonController/P3 pattern) and the
+controller sets **only** Text, Image, Visible, LayoutOrder and two attributes — never `Size` or
+`Position`. **Restyle or reposition it freely in Studio; no code change follows.**
+
+Avatars use **`rbxthumb://type=AvatarHeadShot&id=<uid>&w=150&h=150`**, not
+`Players:GetUserThumbnailAsync`, which YIELDS — rows are built inside a remote handler and a yield
+there stalls the render for every member after the first.
+
+### `StageSelectScreen` RETIRED at B19 (blueprint §2 B-5)
+
+`StarterGui.StageSelectScreen` (100% script-built, 1 descendant) is **deleted**; PlayGUI now covers
+stage select, difficulty and launch. Callers were re-grepped first (the A7 `GetCollection`
+precedent): no script referenced it by path, and **`GetStages` survives** — `ReturnScreen` still
+calls it and `LobbyServices` still serves it, so `RS.Remotes` stays at 15 entries.
+
+**⚠ ONE KNOWN CONSEQUENCE, deliberately not patched here:** `StageSelectScreen.Controller` was the
+**only listener** on `RS.ClientEvents.OpenStageSelect`, which `ReturnScreen`'s CONTINUE button fires
+after a victory. That signal now has no listener, so **CONTINUE is inert**. Replacing it means giving
+PlayGUI a shipping-path "open on this act" entry, which touches `PlayGUIController` and
+`StoryModeController` — **AD-UI's canon**, so P6 wrote a proposal instead of editing them:
+`docs/proposals/2026-08-13-openstageselect-after-stageselectscreen.md`, plus a PENDING in `STATE.md`.
 

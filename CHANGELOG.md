@@ -1,5 +1,122 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-13 [lobby] B19 — PlayGUI **P6**: the party roster, Invite and the LAUNCH. `StageSelectScreen` retired. **PlayGUI P1–P6 complete.**
+
+**The active Studio instance WAS the Game** — B18 was a Game session and left it selected, exactly as
+the prompt predicted. Caught by `list_roblox_studios`, re-set explicitly, and every `execute_luau`
+opened with a two-way assertion (`Workspace.Lobby` PRESENT **and** `RS.Configs.Towers` ABSENT) that
+ABORTS rather than writing to the wrong Place.
+
+Bootstrap drift **Lobby 25/26 with `RewardScalingConfig=MISSING`** — the expected state (B18 deployed
+it Game-only), `MetaMath` PRESENT, zero mismatches. Integration gate: **No Integration needed —
+proceeding.** Re-run at landing: **still 25/26, byte-identical.** No shared module, kit template,
+`ProfileTemplate` or contract was touched, so that answer held.
+
+### The gate came first, and it was NOT satisfied
+
+§2 B-4 owed a **player-row template** in `LobbyFrame.SelectedAct.PlayersFrame.PlayersFrame`. There was
+none. What was there: **four ImageButtons all named `ItemIcon`**, identical copies of the Kit
+item-card design (`Main.BG`/`IconImage`/`QtyBadge`), same `Position`, `Visible = true`, no `*Template`
+anywhere. Not player rows — no name label, no host marker, and a *quantity badge*, which is
+meaningless on a party member. **Work stopped and the gate was reported before any write**, the B17
+precedent. A second gap was reported with it: `InviteButton` needs a target userId and PlayGUI has no
+authored invite list.
+
+**The user chose "repurpose one" and "InviteButton opens the existing PartyScreen".** Both authored
+under that delegation and both flagged as such below.
+
+### What P6 does
+
+- **Roster.** `LobbyController` (the fourth script under PlayGUI) clones `PlayerRowTemplate` once per
+  party member from `GetLobbyState` / `PartyState`. Avatars use the **`rbxthumb://` content scheme,
+  not `GetUserThumbnailAsync`, which YIELDS** — rows are built inside a remote handler and a yield
+  there stalls the render for every member after the first (the A9 lesson, applied before it bit).
+- **Launch.** `StartButton` → `LoadingScreen.Show` → the **EXISTING** `Remotes.RequestLaunch`;
+  `PartyService` does the reserved-server teleport exactly as it already did. **No second launch
+  path** (§11).
+- **The difficulty is P4's number, untouched.** `DifficultyWire` is read and put on the wire verbatim.
+  **If the attribute is ever absent the launch is REFUSED rather than re-derived** — ADR-0011 exists
+  because a wrong difficulty is a silent 10×-enemy-health match that nothing errors on. There is no
+  arithmetic on a difficulty value anywhere in the file; `DifficultyScale` is required only for
+  `.Format`, which renders text.
+- **The lobby panel now mirrors the story panel** (`StageNameLabel`, `ActNameLabel`,
+  `SelectedDifficultyLable`) off the published attributes. This frame is the last thing a player reads
+  before committing, and a confirmation screen that names a different act from the one it launches is
+  a lie. `RewardsFrame` here stays untouched — the preview needs `RewardScalingConfig`, which is not
+  in this Place yet, and §8 bans inventing numbers.
+- **Invite.** `InviteButton` opens `PartyScreen` through a new **`OpenRequest` attribute seam** that
+  runs the same `refresh()` the PARTY toggle runs — without it the invite list would show whatever it
+  held when the panel was last opened. `PartyScreen.DisplayOrder` **0 → 30** so it renders above
+  PlayGUI (20) and below LoadingScreen (200). PartyScreen stays script-built legacy; converting it is
+  its own session.
+
+**TWO NAME COLLISIONS made every lookup non-recursive, and that is load-bearing.** `SelectedAct`
+exists under **both** StoryModeFrame and LobbyFrame — the attributes are on the Story one, the roster
+on the Lobby one. And `PlayersFrame` contains a ScrollingFrame **also named `PlayersFrame`**, so
+`FindFirstChild(name, true)` returns the outer panel. Same class of bug as the triple `StageNameLabel`
+(B-3) and the triple `SelectedDifficultyLable` (B17).
+
+### The template (authored under delegation)
+
+One `ItemIcon` → **`PlayerRowTemplate`** (`Visible = false`); `Main.QtyBadge` → **`HostBadge`** with
+its label → `HostBadgeLabel` = "HOST" (the authored badge design reused rather than rebuilt);
+`IconImage` = the avatar; **`NameLabel` added** — the one genuinely new instance, because no player row
+works without a name. Authored **plain and functional**, and the controller sets only Text/Image/
+Visible/LayoutOrder — never `Size` or `Position` — so **restyling it in Studio needs no code change.**
+
+**The other three copies were HIDDEN (`Visible = false`), NOT deleted.** They are the user's
+instances and B-3's precedent is explicit that look-alike siblings are not automatically junk. Left
+visible they would paint as permanent ghost cards beside the real members; hiding is reversible,
+deleting is not.
+
+### `StageSelectScreen` retired (§2 B-5)
+
+Deleted — 100% script-built, 1 descendant. **Callers were re-grepped FIRST** (the A7 `GetCollection`
+precedent): no script referenced it by path, and **`GetStages` SURVIVES** because `ReturnScreen` still
+invokes it and `LobbyServices` still serves it, so `RS.Remotes` stays at **15** entries.
+
+**⚠ ONE CONSEQUENCE, found by that grep and deliberately NOT patched here:**
+`StageSelectScreen.Controller` was the **only listener** on `ClientEvents.OpenStageSelect`, which
+`ReturnScreen`'s CONTINUE fires after a victory. **That button is now inert.** Fixing it needs a
+shipping-path "open PlayGUI on act X" seam in `PlayGUIController` + `StoryModeController` — **AD-UI's
+canon**, both private locals, and routing it through the `DevGoto`/`DevSelectAct` harness attributes
+would make a test fixture load-bearing. So P6 wrote
+**`docs/proposals/2026-08-13-openstageselect-after-stageselectscreen.md`** + a PENDING instead of
+editing another chat's files. Surfaced here rather than buried because it is a real, user-visible
+regression.
+
+### Acceptance — 30/30 from a REAL LocalScript + a temporary server probe. Never `execute_luau` for behaviour.
+
+| § | Item | Verdict | Evidence |
+| --- | --- | --- | --- |
+| A | template is a real instance, parked, hidden | **PASS** | ImageButton under `LobbyController`, `Visible=false`, absent from the layout; NameLabel/HostBadge/IconImage all present |
+| B | **solo renders EXACTLY ONE row** | **PASS** | `rows=1`, named `SuperiorBeing_S`, `IsHost=true`, HostBadge visible, avatar `rbxthumb://...id=1746652074` |
+| C | **one row PER member** | **PASS** | 3 synthetic members → `rows=3`; host badge ON for row 1, OFF for 2 and 3; each row its own name |
+| D | re-render CLEARS stale rows | **PASS** | 3 → back to `rows=1`, no accumulation |
+| E | panel mirrors the act + difficulty | **PASS** | UI 50 → wire **545**; panel reads "Normal  50%" and "Act 1 : Protecting the Fields" |
+| F | **StartButton reaches PartyService with P4's number** | **PASS** | server probe: `StageId=Stage1_Act1 DifficultyPercent=545 (type number)` — identical to the published attribute, not re-derived |
+| F | veil shows, then LIFTS on a server error | **PASS** | observed `Enabled` → true → false; `IsShown()` false at the end |
+| G | `StageSelectScreen` gone, everything else loads | **PASS** | absent; **all 15 remaining screens present**, no `Infinite yield` warning anywhere in the run |
+| H | InviteButton opens PartyScreen | **PASS** | `Enabled=true`, panel open, `DisplayOrder 30 > 20` |
+
+**Run 1 read 29/30 and the one FAIL was the HARNESS, not the product.** `F1` polled
+`LoadingScreen.IsShown()` 0.6s after the click; Studio's `ReserveServer` fails almost instantly
+(**HTTP 403** — reserved servers are not available from Studio), so Show *and* Hide had both already
+happened inside the sample window. Polling a deliberately transient state is the test's bug. Rewritten
+to **observe the `Enabled` transitions** with a connection armed before the click; run 2 = **30/30**.
+Recorded because "assert it later" is a trap this harness will hit again. The 403 is also what proves
+the error path: a real failure came back through `PartyState` and the veil lifted on its own.
+
+Both harnesses (`SSS.P6LaunchProbe`, `StarterPlayerScripts.P6Verify`) are **DELETED**; every `Dev*`
+attribute in StarterGui verified OFF/0/"".
+
+- **Contract impact:** NONE. No schema bump, no teleport change, no shared module or template touched
+  — drift re-verified byte-identical at landing.
+- **Docs:** `places/lobby/CONTEXT.md` + `docs/systems/play-menu.md` updated (both compressed back
+  under cap), P6/B-4/B-5 ticked in `docs/blueprints/playgui.md`, ROADMAP flipped.
+- **Open threads:** `OpenStageSelect` has no listener (PENDING + proposal); the reward preview still
+  waits on `RewardScalingConfig`; Insane still unreachable without teleport v3.
+
 ## 2026-08-13 [game] B18 — PlayGUI **P5**: match rewards scale with difficulty. One new SHARED config, and the scale trap defused.
 
 First GAME-place session since B0; the last four were Lobby. **The active Studio instance WAS the
