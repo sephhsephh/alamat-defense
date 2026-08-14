@@ -1,6 +1,6 @@
 # Rewards — match-end payouts (AD-Game canon)
 
-<!-- owner: game | scope: game (+ one SHARED config the Lobby preview reads) | last-verified: 2026-08-13 (P5/B18) -->
+<!-- owner: game | scope: game (+ one SHARED config the Lobby preview reads) | last-verified: 2026-08-14 (B20) -->
 
 Everything a player earns for finishing a match. **The server is the only thing that grants** —
 the client is shown the outcome and never performs a roll. Rolling drops client-side would let
@@ -60,6 +60,18 @@ caller that forgot to pass it.
 §8: *"the preview must not invent numbers … the curve belongs in a config both sides can read."*
 The Lobby's reward preview must show what the server will actually pay.
 
+**The curve reached the Lobby at B20** (`deployed.Lobby = 1d789978`, copied byte-identical, drift
+**26/26 GREEN** in that Place). Both Places were proven to compute the SAME band from the SAME
+function at wire 100 → `100-300`, 550 → `200-400`, 1000 → `300-500`, and 500 server rolls all landed
+inside the previewed band.
+
+**The preview UI itself is still NOT wired**, and that is a reported gate rather than an oversight:
+`StoryModeController.renderRewards()` renders `x<qty>` per cell so it cannot express a min–max BAND,
+and it only re-runs on act selection while P4 republishes `DifficultyWire` on every slider move — so
+a one-call wiring would freeze at the act's opening difficulty and then contradict the slider, which
+is exactly the lie §8 bans. That file is AD-UI canon, so B20 filed
+`docs/proposals/2026-08-14-reward-preview-wiring.md` instead of editing it.
+
 It could **not** live in `StageConfig.Rewards`, for three reasons:
 
 1. The Lobby's `StageRegistry` is a hand-maintained **MIRROR carrying structure only** — no reward
@@ -74,23 +86,34 @@ It could **not** live in `StageConfig.Rewards`, for three reasons:
 Per-act tuning survives without duplicating numbers: `StageConfig.Rewards.GoldCurve` **names** a
 curve, so a future act points at a different one instead of copying endpoints.
 
-## Insane mode — implemented, but UNREACHABLE in production
+## Insane mode — REACHABLE since teleport v3 (B20, 2026-08-14)
 
 §8: Insane runs the **same** gold curve and adds item rewards on top. Mode is a separate axis from
 the slider and never enters the difficulty conversion.
 
-**The teleport `MatchLaunch` payload (v2) has NO mode field.** The Lobby publishes `DifficultyMode`
-on `SelectedAct` for its own UI, but nothing puts it on the wire, so this Place always sees Normal
-and the Insane branch never fires live. `RewardCalculator` reads `matchState.DifficultyMode` and
-defaults to Normal, so the day a mode arrives it is already wired.
+**The `MatchLaunch` payload carries `DifficultyMode` as of contract v3** (`docs/contracts/teleport.md`).
+The chain is: `DifficultyController` (P4) publishes `DifficultyMode` on `SelectedAct` →
+`LobbyController` (P6) passes it through `RequestLaunch` verbatim → `PartyService` validates it and
+puts it on the wire → `MatchEntryService` normalises it onto `rawConfig` → `MatchDirector` puts it on
+`matchState` → `RewardCalculator` reads `matchState.DifficultyMode`. It was bumped as a HARD version
+change, not an additive field: a Game that ignored an unknown mode while the Lobby believed it sent
+Insane would pay the wrong rewards silently, so v2 and v3 do not interoperate.
 
-Making Insane reachable is a **teleport contract v2 → v3 change**: both Places, ONE session, a
-synchronised republish, under the contract protocol in `CLAUDE.md`. It is not a field you can quietly
-add — the Places publish separately, and a Game that ignores an unknown field while the Lobby
-believes it is sending Insane pays the wrong rewards with nothing erroring.
+**It still fails SAFE at every hop.** `matchState` is optional and an absent or unrecognised mode
+resolves to Normal — the branch that pays NO bonus items. The opposite default would pay bonus items
+to every caller that forgot the argument.
 
-Note this also makes Insane the **first real writer for `Data.Items` in normal play** once it ships
-(see the standing PENDING) — today only the Victory drop-roll can write items.
+**Insane is now the first real writer for `Data.Items` in normal play** (see the standing PENDING) —
+before this, only the Victory drop-roll could write items, and nothing triggered it. Verified live at
+B20: an Insane Victory committed `BannerTicket` 0→1 and `TraitRerollToken` 0→1; the same Victory on
+Normal committed neither, and both landed inside the same gold band.
+
+**⚠ ONE STALE COMMENT, deliberately NOT edited.** `RewardScalingConfig`'s own header still says the
+payload "(v2) carries NO mode field" and that Insane cannot fire live. That module is SHARED CANON at
+hash `1d789978` and B20's whole job was to copy it byte-identical, so correcting the comment would
+have changed the hash and required a re-deploy to both Places inside a session that was already
+doing a contract bump. It is **AD-Game's** module; the fix is a comment-only re-hash + both-Place
+redeploy in a future AD-Game session. The CODE is correct — only the comment is out of date.
 
 ## Order of operations in `GrantForPlayer`
 

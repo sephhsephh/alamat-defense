@@ -1,6 +1,6 @@
 # ROADMAP — feature status for the whole Experience
 <!-- owner: all (any chat updates its own system's rows at landing) | scope: global -->
-<!-- last-verified: 2026-08-06 -->
+<!-- last-verified: 2026-08-14 (B20) -->
 
 Status legend: ✅ done · 🟡 partial/placeholder · 🔲 planned · 💭 idea (not committed)
 Meta-systems detail + rationale: `docs/proposals/2026-07-18-meta-systems-design.md`
@@ -61,7 +61,7 @@ everything untradeable at launch).
   read the same curve" needs real shared canon. Each act NAMES a curve. The Game does its own
   **wire→t** conversion (`t=(wire-100)/900`, clamped) — the wire is 100–1000, the UI 1–100, and
   confusing them pays max gold for a normal match. 24/24 live asserts + a real end-to-end match.
-  **Insane is coded but UNREACHABLE: no mode field on the wire (needs teleport v3).**
+  **Insane was coded but UNREACHABLE at P5 — teleport v3 (B20) made it live.**
   **✅ P6 [AD-LOBBY] (B19, 2026-08-13)** — the `PlayersFrame` roster (one cloned row per party
   member, avatars via non-yielding `rbxthumb://`), `InviteButton` → the existing `PartyScreen` (new
   `OpenRequest` seam; DisplayOrder 0 → 30), and `StartButton` → LoadingScreen → the **EXISTING**
@@ -73,6 +73,15 @@ everything untradeable at launch).
   re-grepped first, `GetStages` survives. **⚠ `ClientEvents.OpenStageSelect` lost its only listener,
   so `ReturnScreen`'s CONTINUE is inert** — proposal + PENDING filed for AD-UI rather than editing
   their canon.
+  **✅ INTEGRATION FOLLOW-UP [AD-Integration] (B20, 2026-08-14)** — P5's two dangling threads closed
+  in ONE cross-Place session. `RewardScalingConfig` copied BYTE-IDENTICAL to the Lobby (`1d789978`,
+  drift there now **26/26 GREEN, no gaps**), so the preview and the server payout can read the SAME
+  curve — proven in both Places at wire 100 → `100-300`, 550 → `200-400`, 1000 → `300-500`. And
+  **teleport contract v2 → v3**: `MatchLaunch` now carries `DifficultyMode`, so **Insane is
+  live-reachable** and is the first shipping writer of `Data.Items`. 37 live asserts, 0 failures.
+  **The preview UI is still NOT wired** — `renderRewards` cannot render a min–max BAND and re-runs
+  only on act select while the slider keeps moving, so B20 filed
+  `docs/proposals/2026-08-14-reward-preview-wiring.md` rather than half-wire AD-UI's canon.
   **🔲 P7 remains** — the global queue (§11), AD-Meta, deferred.
 - 🔲 **Global matchmaking queue** — designed in `playgui.md` §11, **build deferred to P7**.
   `FindMatchButton` ships disabled with a visible "COMING SOON" overlay as of P2.
@@ -105,8 +114,9 @@ everything untradeable at launch).
   `LoadoutService`; the response carries `ReplacedUuid` so the UI can say what was swapped. Also
   B11: the button is GREEN for EQUIP / RED for UNEQUIP.
   Still animation-only: the `Upgrade` / `Lock` / `ViewPassives` buttons beside it.
-- 🔲 Item economy: nothing writes `Data.Items` in normal play (a latent Victory-drop path exists
-  in the Game's `RewardCalculator`, but it has never fired), so every count is 0
+- 🟡 Item economy: `Data.Items` got its FIRST shipping writer at B20 — an **INSANE Victory** pays
+  `BannerTicket` + `TraitRerollToken` through the Game's `RewardCalculator` (verified live). Nothing
+  else grants an item yet, so counts stay 0 until someone clears an Insane run.
 
 ## Cross-Place
 
@@ -122,6 +132,13 @@ everything untradeable at launch).
   (hash `63a0c98a`, drift-green in Game + Lobby). Game A1 2026-08-01, Lobby A2 2026-08-01.
 - ✅ **Teleport v2** (A2, 2026-08-01): `Loadout` carries unit uuids, `PayloadVersion = 2` both
   sides, hard cutover (v1 rejected). Studio-verified; live re-run pending the user's republish.
+- ✅ **Teleport v3** (B20, 2026-08-14): `MatchLaunch` carries `DifficultyMode` ("Normal"/"Insane"),
+  `PayloadVersion = 3` both sides + both directions, deployed in ONE session. A HARD bump, not an
+  additive field — the Places publish separately, and a Game ignoring an unknown mode while the
+  Lobby believed it sent Insane would pay the wrong rewards SILENTLY. Verified live: v3 Insane
+  reaches `matchState.DifficultyMode` and commits the Insane items; v2 is rejected with
+  `[CONTRACT]`; unknown/missing modes fail SAFE to Normal. **USER must republish BOTH Places
+  together — v2 and v3 do not interoperate.**
 - ✅ **Counters pipeline (blueprint §6)** — done at **A8 [AD-Game], 2026-08-06**. Match end commits
   `Counters.PerUnit[uuid].Kills` + `Worthiness` (one commit, capped 100) and
   `Counters.Global.{Clears, ClearsByStage[stageId], Waves}`; `Counters.Global.Summons` increments

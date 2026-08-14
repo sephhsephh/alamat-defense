@@ -1,9 +1,5 @@
 # CONTEXT — Game place ("Alamat Defense")
-<!-- owner: game | scope: game | last-verified: 2026-08-06 -->
-<!-- 2026-08-06 (AD-UI): added the UI-kit line below (AD-UI's own system) and corrected three
-     STALE facts flagged the previous session — the USER publish is done, the Lobby's starter
-     grant no longer writes 0.5, and UnitStatsCatalog is deployed in BOTH Places. Everything
-     else in this file is AD-Game's canon and was left untouched. -->
+<!-- owner: game | scope: game | last-verified: 2026-08-14 (B20, teleport v3) -->
 
 The match Place: loads a map, runs waves, towers fight, rewards commit to the profile.
 Server-authoritative, registry/config-driven, signal-decoupled. `--!strict` throughout.
@@ -53,11 +49,10 @@ confirm profile load + schema version on every boot.
   `"Hotbar - old"` is kept as a disabled backup. Editing any kit half in one Place only is DRIFT
   — see `docs/systems/ui-kit.md` and `tools/checklists.md`. The Game's OTHER screens are still
   Place-local and script-era (`MatchEnd.RewardRowTemplate`, `Notifications.CardTemplate`, ...).
-  **B2 (2026-08-08): drift is 22/22 GREEN here** (was 24). `UIKitRewardPopup` + `Kit_RewardPopup`
-  were RETIRED in both Places — they had zero callers here (re-grepped live first) and the Lobby's
-  `ObtainRewardsGUI` superseded them. Match-end keeps its own `RewardRowTemplate` list and is
-  UNAFFECTED. `Kit_ItemIcon` also moved to `5623f4b4` and was mirrored here from the Lobby; if you
-  ever see 21/22 with `Kit_ItemIcon` odd, copy it from the Lobby rather than editing it.
+  **Drift here is 25/26 at B20** — only `MetaMath` MISSING (Phase D, expected). `UIKitRewardPopup` +
+  `Kit_RewardPopup` were RETIRED in both Places (B2; zero callers here, superseded by the Lobby's
+  `ObtainRewardsGUI`); match-end keeps its own `RewardRowTemplate` and is UNAFFECTED. If you ever
+  see `Kit_ItemIcon` odd, copy it from the Lobby rather than editing it.
 - Remotes: `RS.Remotes.{Placement, Towers, Match, Economy, Combat, Settings}`
 - Rich legacy docs: `ServerStorage.Documentation.*` (AIState, SystemIndex, HowTo, ...) —
   still valid; migrating to repo `docs/systems/` on touch.
@@ -65,30 +60,31 @@ confirm profile load + schema version on every boot.
 ## Entry paths (how a match starts)
 
 - **Production:** `MatchEntryService` (SSS.Server, booted by `ReplicationBridge`) reads
-  `TeleportData.MatchLaunch` (teleport contract **v2** — `Loadout` = unit uuids), validates
-  PayloadVersion/StageId/players
-  (resolves map/mode/difficulty from the stage; converts the JSON string userId keys → numeric;
-  sanitizes DifficultyPercent), and calls `MatchDirector.StartMatch` exactly once after the party
-  assembles. Loadout ownership + host authority are re-checked downstream — TeleportData is a
+  `TeleportData.MatchLaunch` (teleport contract **v3** — `Loadout` = unit uuids; **`DifficultyMode`
+  since B20**), validates PayloadVersion/StageId/players (resolves map/mode/difficulty from the
+  stage; converts the JSON string userId keys → numeric; sanitizes DifficultyPercent; normalises
+  DifficultyMode, anything unrecognised failing SAFE to Normal), and calls `MatchDirector.StartMatch`
+  exactly once after the party assembles. Loadout ownership + host authority are re-checked downstream — TeleportData is a
   request, never truth. Its pure `BuildRawConfig(payload)` is exported for unit testing.
 - **Studio fallback:** `MatchLifecycleSmokeTest` (Studio-only) seeds 8 towers via
   `DevSetOwnedTowers` and starts Stage1_Act1 ~3s after join — but stands down when a MatchLaunch
   payload is present, or when `ColdProfileMatchTest` is enabled, so the paths never double-start.
 - **Cold-profile harness:** `ColdProfileMatchTest` (Studio-only, attribute `Enabled` default OFF)
   starts a match from the REAL loaded profile's units — **no dev seed** — to exercise the production
-  cold path the synchronous smoke test hides (two live-only empty-hotbar failures came from that
-  blind spot). `MatchDirector.StartMatch` now waits for every player's profile BEFORE validating
-  loadouts (moved from `MatchEntryService` 2026-08-03), so the empty-hotbar guard covers every
-  caller. `AutoPlaceForEndScreenTest` / `MatchEndVerify` exist but are `ENABLED=false`.
+  cold path the synchronous smoke test hides. `MatchDirector.StartMatch` waits for every player's
+  profile BEFORE validating loadouts (moved from `MatchEntryService` 2026-08-03), so the
+  empty-hotbar guard covers every caller. `AutoPlaceForEndScreenTest`/`MatchEndVerify` are
+  `ENABLED=false`.
 
 ## Current state / known gaps
 
 - Content: Stage 1 (3 acts), 1 map (TestMap), 8 towers, 2 enemies, Classic mode only.
 - Attack anim/VFX/sound asset ids are placeholders (slots exist and tolerate nil).
-- `ReturnToLobby` (MatchActionHandler) builds `MatchReturn` (v2) and teleports to the Lobby;
+- `ReturnToLobby` (MatchActionHandler) builds `MatchReturn` (v3) and teleports to the Lobby;
   `GameConfig.LobbyPlaceId` SET (83342803778137, 2026-07-18 Integration). The payload version
-  comes from `GameConfig.TeleportPayloadVersion` (=2) and MUST equal the Lobby's
-  `LobbyConfig.MatchLaunchVersion`; a mismatch is rejected, never downgraded. NOTE: in Studio
+  comes from `GameConfig.TeleportPayloadVersion` (**=3 since B20**) and MUST equal the Lobby's
+  `LobbyConfig.MatchLaunchVersion`; a mismatch is rejected, never downgraded. **v2 and v3 do NOT
+  interoperate — the two Places must be republished TOGETHER.** NOTE: in Studio
   Play, pressing Lobby now attempts a real TeleportAsync, which fails (pcall'd +
   TeleportInitFailed handled) — expected; real teleports need the published client.
 - Enemies.Behaviors (Flying/Splitting/...) is an empty extension point.
@@ -101,12 +97,10 @@ confirm profile load + schema version on every boot.
 - **PLACEMENT IS uuid-ADDRESSED END TO END (B0, 2026-08-08).** `RequestPlace` carries a unit
   **uuid**; `PlacementValidator` resolves it with `LoadoutValidator.FindByUuid` against the player's
   own validated loadout and reads every stat off the SERVER's entry — the uuid is a request, never
-  truth. `TowerController.Uuid` (+ `UnitUuid` attribute) carries the instance into combat;
-  `AttackResolver.DamageDealt` and `StatusEffectManager.EffectTicked` emit it; `MatchStatsTracker`
-  KEYS by uuid; limits count per uuid (`CountPlayerTowersOfUnit`); each uuid earns XP + counters
-  from its OWN work. **A8's first-entry rule is GONE.** Do not reintroduce a TowerId lookup in
-  `FindByUuid` or re-key the tracker by type — both make duplicates silently wrong again. Uuid-less
-  towers (harnesses calling `PlaceTower` direct) fall back to TowerId keying.
+  truth. `TowerController.Uuid` (+ `UnitUuid` attribute) carries it into combat; `MatchStatsTracker`
+  KEYS by uuid; limits count per uuid; each uuid earns XP + counters from its OWN work. **A8's
+  first-entry rule is GONE** — do not reintroduce a TowerId lookup in `FindByUuid` or re-key the
+  tracker by type. Uuid-less towers (harnesses calling `PlaceTower` direct) fall back to TowerId.
 - `LoadoutAssigned` carries the whole validated `LoadoutEntry` (incl. `Uuid`) and
   `PlacementCountsChanged` is keyed by uuid. A9 re-verified the counters path independently across
   three 15-wave Victories, persisted through real ProfileStore round trips. Detail: CHANGELOG A9/B0.
@@ -125,19 +119,24 @@ confirm profile load + schema version on every boot.
   not live in `StageConfig`. Each act NAMES a curve (`Rewards.GoldCurve = "Standard"`) instead of
   copying endpoints. **`deployed.Lobby = null` → the Lobby reports MISSING until Integration copies
   it; that is expected, not drift.**
-- **INSANE is implemented but UNREACHABLE live**: the teleport payload (v2) has no mode field, so
-  this Place always sees Normal. Reaching it = contract v2→v3 (both Places, ONE session).
+- **INSANE IS LIVE-REACHABLE since B20 (teleport v3).** The payload carries `DifficultyMode`;
+  `MatchEntryService` normalises it → `rawConfig.DifficultyMode` → `matchState.DifficultyMode` →
+  `RewardCalculator`'s Insane branch. Mode is a SEPARATE axis: it does NOT scale enemy health and
+  never enters the wire→t conversion. Absent/unknown still fails SAFE to Normal (the no-bonus
+  branch). Verified live: an Insane Victory committed `BannerTicket` +1 and `TraitRerollToken` +1,
+  a Normal Victory committed neither, and both landed in the SAME gold band.
+  **⚠ `RewardScalingConfig`'s own header comment still says the payload has no mode field — STALE.**
+  It is shared canon at `1d789978`; correcting the comment changes the hash, so it needs an AD-Game
+  comment-only re-hash + both-Place redeploy. The CODE is right; only the comment is wrong.
 - **HARNESS GOTCHA — `Signal:Fire` runs handlers SEQUENTIALLY on ONE thread.** A `MatchEnded`
-  handler that YIELDS blocks every later handler, including `MatchEndPresenter`, which is what
-  drives the reward/counter commit. A9 burned three runs "observing" a late commit that its own
-  waiting handler was causing. If you need to inspect post-commit state, `task.spawn` the body and
-  return immediately — never `task.wait` inside a Signal handler here.
+  handler that YIELDS blocks every later handler, including `MatchEndPresenter`, which drives the
+  reward/counter commit (A9 burned three runs on this). To inspect post-commit state, `task.spawn`
+  the body and return immediately — never `task.wait` inside a Signal handler here.
 - A unit at `MAX_META_LEVEL` LOSES stored XP (`ApplyXP` discards overflow rather than preserving
   it): Archer Lv100 went `XP 400 → 0` at A7. Cosmetic but visible on the Units screen.
-- `DevSetOwnedTowers` (smoke test) REPLACES `data.Units` with new uuids, which orphans the Lobby's
-  saved `Data.Loadout`. It fails safe (readers filter unowned uuids) but the hotbar will report a
-  stale "N equipped" count until the next equip. Disable the smoke test when testing the real
-  cold path.
+- `DevSetOwnedTowers` (smoke test) REPLACES `data.Units` with new uuids, orphaning the Lobby's saved
+  `Data.Loadout`. Fails safe (readers filter unowned uuids) but the hotbar reports a stale "N
+  equipped" count until the next equip. Disable the smoke test when testing the real cold path.
 - Real-DataStore round-trip test for the PLAYER profile still PENDING (A7 did a real ProfileStore
   round trip on a scratch key, which exercised Reconcile + Migrate but not the player join path).
 - **Stat rolls live + actually rolling (A3 + 2026-08-03):** `TowerStatResolver` reads each unit's

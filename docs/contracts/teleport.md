@@ -1,19 +1,31 @@
 # Contract: Teleport Payloads (Lobby ⇄ Game)
-<!-- owner: lobby | scope: global | version: 2 | last-verified: 2026-08-01 -->
+<!-- owner: lobby | scope: global | version: 3 | last-verified: 2026-08-14 (B20) -->
 
-Version 2 (2026-08-01, blueprint A2) — implemented and deployed on BOTH sides. Delivery is
-**reserved (private) servers per party**: a launch reserves a fresh Game server and teleports
-only the party's members into it, so a match server contains exactly one party.
+Version 3 (2026-08-14, B20 Integration) — implemented and deployed on BOTH sides in ONE session.
+Delivery is **reserved (private) servers per party**: a launch reserves a fresh Game server and
+teleports only the party's members into it, so a match server contains exactly one party.
 
-**v2 changes exactly one thing:** `Players[uid].Loadout` carries save-schema-v2 unit **uuids**
-instead of towerIds, and `PayloadVersion = 2`. Everything else (delivery, security stance,
-`MatchReturn`, failure handling) is unchanged from v1.
+**v3 changes exactly one thing:** `MatchLaunch` carries `DifficultyMode` (`"Normal"` / `"Insane"`),
+and `PayloadVersion = 3`. Everything else (delivery, security stance, `MatchReturn` shape, failure
+handling) is unchanged from v2.
+
+**Why this is a HARD version bump and not a quiet additive field.** Insane pays extra ITEM rewards
+on top of the same gold curve (`docs/systems/rewards.md`). The two Places publish SEPARATELY, so an
+additive field creates a window where the Lobby sends `Insane` and an older Game silently ignores
+it — the player is charged the harder match and paid the easier rewards, with nothing erroring and
+no log line to find it by. The integer version is what makes that window impossible: a v2 sender is
+REJECTED outright.
 
 The version is a single integer covering BOTH directions and is read from config, never
 hardcoded: Lobby `RS.Configs.LobbyConfig.MatchLaunchVersion`, Game
 `RS.Configs.Global.GameConfig.TeleportPayloadVersion`. **They must always be equal** — both
 Places deploy in the same Integration session, so no dual-version window exists and a mismatch
 is a hard reject (`[CONTRACT]` warn), never a fallback.
+
+The Lobby's `MatchReturnService` reads its expected version from the SAME `MatchLaunchVersion`
+constant, so one integer really does cover both directions — bumping the launch version bumps the
+return version with it, automatically. Verified at B20: the Lobby logged `MatchReturn v3 receiver`
+with no separate edit.
 
 ## Security stance (already enforced Game-side)
 
@@ -50,6 +62,10 @@ everything up to the reserve/teleport call is still exercised.
 	StageId: string,            -- e.g. "Stage1_Act1" (validated vs the Game's StageRegistry)
 	HostUserId: number,         -- party host; game-speed authority (re-checked Game-side)
 	DifficultyPercent: number,  -- 1..1000 (sanitized both sides: StageRegistry.SanitizeDifficulty / DifficultyConfig)
+	DifficultyMode: string,     -- v3: "Normal" | "Insane". A SEPARATE AXIS from DifficultyPercent --
+	                            -- it does NOT scale enemy health and never enters the ADR-0011
+	                            -- UI<->wire conversion. It selects the Game's Insane reward branch.
+	                            -- Anything unrecognised FAILS SAFE to "Normal" on BOTH sides.
 	IsPrivate: boolean,         -- always true (reserved server)
 	Players: { [string]: {      -- key = tostring(userId) (JSON keys must be strings)
 		Loadout: { string },    -- v2: unit UUIDS (schema-v2 Data.Units keys), max LobbyConfig.MaxLoadoutSize;
@@ -60,6 +76,14 @@ everything up to the reserve/teleport call is still exercised.
 	CustomSettings: { [string]: any }?,
 }
 ```
+
+**Mode source (Lobby):** `DifficultyController` (P4) publishes `DifficultyMode` as an attribute on
+`StoryModeFrame.SelectedAct`; `LobbyController` (P6) reads that attribute and passes it through
+`Remotes.RequestLaunch` **verbatim, doing no arithmetic on it**; `PartyService` validates it and is
+what actually puts it on the wire. The Game normalises it AGAIN on arrival (`MatchEntryService`),
+mirroring how `DifficultyPercent` is sanitized at both ends — a client request is never truth.
+"Normal" is the safe default on both sides because it is the branch that pays NO bonus items, so an
+unknown value can never mint rewards.
 
 **Loadout source (Lobby, `PartyService.buildLoadout`):** the player's saved `Data.Loadout`,
 filtered to uuids they still own and capped; if that is empty (no picker UI yet, or a
@@ -101,6 +125,24 @@ told to retry, and no lobby/party state is consumed. Repeated failures back off 
 
 ## Version history
 
+- **v3** (2026-08-14, B20 Integration): `MatchLaunch` gains `DifficultyMode` (`"Normal"`/`"Insane"`);
+  `PayloadVersion = 3`. **Migration: none — a hard cutover**, the same stance as v2. Both Places were
+  deployed in the SAME session, so no v2 sender can exist; the Game rejects v2 with
+  `[CONTRACT] PayloadVersion mismatch: got 2, expected 3`.
+  **Old → new for a consumer:** a v2 reader saw no mode at all and `RewardCalculator` defaulted to
+  Normal, which is why P5's Insane item rewards could never fire live. A v3 reader gets the mode on
+  `rawConfig.DifficultyMode` → `matchState.DifficultyMode` → the Insane branch in
+  `RewardCalculator.GrantForPlayer`. Nothing else moved: `DifficultyPercent` keeps its meaning,
+  range (1–1000) and name (ADR-0011 untouched).
+  **Verified live, both Places, ONE session (37 asserts, 0 failures):** the Lobby built
+  `MatchLaunch v3 ... difficulty=545 mode=Insane` from P4's published attribute with no
+  re-derivation; the Game accepted a v3 Insane payload and it reached `matchState.DifficultyMode`,
+  rejected a v2 payload with `[CONTRACT]`, failed unrecognised and missing modes SAFE to Normal, and
+  Insane actually committed the two Insane items (`BannerTicket` 0→1, `TraitRerollToken` 0→1) while
+  Normal committed none — both runs inside the SAME gold band, proving mode does not scale gold.
+  Reserved-server teleports cannot complete from Studio (`ReserveServer` = **HTTP 403**), so the
+  assertions are on the payload the server RECEIVES and BUILDS, never on a completed teleport; that
+  403 doubles as the error-path proof (the veil lifted on its own).
 - **v2** (2026-08-01, A2 Integration): `Players[uid].Loadout` = unit **uuids** (save schema v2)
   instead of towerIds; `PayloadVersion = 2`. **Migration: none — a hard cutover.** Both Places
   were deployed in the same session, so no v1 sender can exist; the Game rejects v1 with

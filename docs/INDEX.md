@@ -82,6 +82,10 @@
   2026-08-09)
 
 ## proposals/
+- `2026-08-14-reward-preview-wiring.md` — AD-Integration→AD-UI: `RewardScalingConfig` is deployed in
+  the Lobby (B20) so the preview has real numbers, but `renderRewards` cannot express a min–max BAND
+  and re-runs only on act select while the slider keeps moving. Needs a rendering decision + a
+  difficulty listener in `StoryModeController`. OPEN.
 - `2026-08-06-kit-promotion-blocks-a6.md` — AD-UI→AD-Integration: A6's Game hotbar needs the kit,
   which is Lobby-only, and `hash_shared.luau` cannot hash GuiObject templates (only ModuleScripts).
   **DECIDED: extend the tooling first.** BLOCKS A6's Game half.

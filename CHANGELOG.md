@@ -1,5 +1,140 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-14 [both] B20 — AD-Integration: `RewardScalingConfig` copied to the LOBBY, and teleport **v2 → v3** puts the difficulty MODE on the wire. **Insane is reachable.**
+
+A genuine cross-Place session: both of P5's dangling threads closed together, which is exactly why
+they were Integration's and not AD-Game's or AD-Lobby's. **Studio ids had rotated again** — the
+prompt's warning held — so `list_roblox_studios` → `set_active_studio` → confirm-by-name ran before
+every write, and every `execute_luau` opened with a two-way Place assertion that ABORTS on mismatch
+(`Workspace.Lobby` PRESENT + `RS.Configs.Towers` ABSENT for the Lobby, and the inverse for the Game).
+
+Bootstrap drift was **exactly the predicted state, zero surprises**: Lobby 25/26 with
+`RewardScalingConfig=MISSING`, Game 25/26 with `MetaMath=MISSING`, every other entry matching the
+manifest byte for byte. Integration gate, answered out loud: **this IS the Integration session, and
+both items are contract/shared-canon work — strictly one chat at a time.** `STATE.md` and the
+changelog tail were re-read immediately before landing; no sibling had landed.
+
+### ITEM 1 — the reward curve reached the Lobby
+
+`RewardScalingConfig` was **COPIED, never re-authored**: 6870 bytes, re-hashed in the Lobby to
+**`1d789978`**, identical to the Game's deployed copy and to `shared/src`. Its deployPath needed a
+`RS.Configs.Global` **folder that did not exist in that Place** — created, then the module written.
+`deployed.Lobby` flipped in the manifest. **Lobby drift is now 26/26 GREEN with no gaps at all**;
+the GAME is the one still at 25/26, `MetaMath` being Lobby-only until Phase D.
+
+**Both Places proven to compute the SAME band from the SAME function** — wire 100 → `100-300`,
+550 → `200-400`, 1000 → `300-500`, on the `Standard` curve `Stage1_Act1.Rewards.GoldCurve` actually
+names. 500 server rolls at wire 550 all landed inside the previewed band. The `(wire-100)/99` UI
+mistake was re-asserted against in the LOBBY too: it resolves 550 to a clamped `1.0` and would pay
+top-band gold for a mid match.
+
+### ITEM 1's second half — the preview is NOT wired, and that is a reported gate
+
+The brief allowed ONE call to `StoryModeController`'s existing `renderRewards(list)` and said to
+propose if it needed more. **It needs more, for two independent reasons**, so a proposal was written
+instead of a half-edit to AD-UI's canon:
+
+1. **`renderRewards` cannot express a BAND.** It sets the quantity badge from `tonumber(r.Qty)` as
+   `"x" .. qty`. §8's preview is a RANGE. `Qty = goldMin` understates the payout, `goldMax`
+   overstates it, and two Gold cells read as two separate rewards. Rendering a range means editing
+   `renderRewards` itself.
+2. **The call site is on the wrong edge.** `renderRewards` is called once, from `fillSelectedAct` —
+   **on act selection only** — while `DifficultyController.publish()` rewrites `DifficultyWire` and
+   `DifficultyMode` on **every slider move**. Wired only at act-select, the panel would show the
+   act's opening difficulty and then sit there contradicting the slider the player is dragging.
+   **That is worse than the current blank panel**, and is precisely the lie §8 exists to prevent.
+
+`renderRewards` is a `local function`, so nothing outside the file can drive it, and routing the
+shipping path through the `DevFakeRewards` harness attribute would make a test fixture load-bearing
+— the same mistake B19's `OpenStageSelect` proposal declined to make. Plan:
+**`docs/proposals/2026-08-14-reward-preview-wiring.md`**.
+
+### ITEM 2 — teleport contract v3: the difficulty MODE is on the wire
+
+Insane was fully coded at P5 and **completely unreachable**: `RewardCalculator` read
+`matchState.DifficultyMode` and defaulted to Normal, but no mode field existed on the payload.
+
+**Treated as a HARD contract bump, not a quiet additive change**, which was the whole point. The two
+Places publish separately; an additive field creates a window where the Lobby sends `Insane` and an
+older Game silently ignores it — the player is charged the harder match and paid the easier rewards,
+with nothing erroring and no log line to find it by. The integer version makes that window
+impossible: **v2 is now REJECTED with `[CONTRACT]`**.
+
+The chain, and the one thing worth not re-deriving: **the mode joins the payload in `PartyService`,
+not in the UI.** P4 publishes `DifficultyMode` on `SelectedAct` → P6's `LobbyController` passes it
+through `RequestLaunch` **verbatim, doing no arithmetic on it** (one field added to an existing
+call) → `PartyService` validates and BUILDS the payload → `MatchEntryService` normalises it onto
+`rawConfig` → `MatchDirector` puts it on `matchState` → `RewardCalculator` branches on it.
+
+- `LobbyConfig.MatchLaunchVersion` 2 → **3**, `GameConfig.TeleportPayloadVersion` 2 → **3**.
+- **Mode is normalised at BOTH ends**, deliberately mirroring how `DifficultyPercent` is already
+  sanitized twice. Anything that is not exactly `"Insane"` becomes `"Normal"` — the branch that pays
+  NO bonus items, so an unknown value can never mint rewards. The Game warns `[CONTRACT]` when it
+  falls back, rather than rejecting the match: dropping a party's whole match over a mode typo would
+  be the worse failure, and the version integer is what guarantees the field is there at all.
+- **`DifficultyPercent`'s meaning, range and name were NOT touched** (ADR-0011). Mode is a SEPARATE
+  axis: it does not scale enemy health and never enters the wire→t conversion — asserted live, with
+  `EnemyHealthScale` shown to still equal `BaseHealthScale × wire/100`.
+- **`MatchReturnService` moved to v3 with no edit**, because it reads its expected version from
+  `LobbyConfig.MatchLaunchVersion`. One integer really does cover both directions.
+
+### Acceptance — 37 asserts, 0 failures, from REAL Scripts in BOTH Places. Never `execute_luau` for behaviour.
+
+| § | Item | Verdict | Evidence |
+| --- | --- | --- | --- |
+| 1 | Lobby hashes `RewardScalingConfig` at `1d789978` | **PASS** | 6870 bytes, `MATCH=true`; drift **26/26 GREEN** |
+| 1 | Lobby + Game agree on the band at 3 wires | **PASS** | both: 100→`100-300`, 550→`200-400`, 1000→`300-500`, curve `Standard` |
+| 1 | the band is what the server ROLLS | **PASS** | 500 rolls at wire 550, **0** outside `200-400` |
+| 1 | the `/99` UI mistake cannot creep in | **PASS** | `t(550)=0.5000`; `/99` gives a clamped `1.0` = max gold |
+| 1 | wire clamps, never extrapolates | **PASS** | wire 1 → t 0, wire 5000 → t 1 |
+| 2 | **a v2 payload is REJECTED** | **PASS** | `[CONTRACT] PayloadVersion mismatch: got 2, expected 3`; a v2 payload *carrying* a mode is rejected too — the version gate comes first |
+| 2 | v3 + `Insane` accepted, mode survives | **PASS** | `rawConfig.DifficultyMode=Insane`, `DifficultyPercent=545` untouched |
+| 2 | unknown / missing mode FAILS SAFE | **PASS** | `"SuperInsane"` → Normal, `nil` → Normal, both with a `[CONTRACT]` warn |
+| 2 | **mode reaches `matchState`** | **PASS** | real path `BuildRawConfig` → `StartMatch`: `matchState.DifficultyMode=Insane`, wire 545 |
+| 2 | mode is not in the health scale | **PASS** | `EnemyHealthScale=5.4500` = `BaseHealthScale 1.00 × 545/100` |
+| 2 | **Insane changes the reward branch** | **PASS** | Insane Victory committed `BannerTicket` 0→1 + `TraitRerollToken` 0→1; Normal Victory committed **neither** |
+| 2 | Insane does NOT change gold | **PASS** | gold delta Normal **+308**, Insane **+324**, both inside the wire-545 band |
+| 2 | **the LOBBY builds a v3 Insane payload** | **PASS** | `[CONTRACT] MatchLaunch v3 built: stage=Stage1_Act1 difficulty=545 mode=Insane players=1` |
+| 2 | the wire value is P4's, not re-derived | **PASS** | server probe on `RequestLaunch`: `DifficultyPercent=545 (number) DifficultyMode=Insane (string)` for UI 50% |
+
+**Reserved-server teleports cannot be tested from Studio** (`ReserveServer` = **HTTP 403**), so every
+launch-side assertion is on the payload the server RECEIVES and BUILDS, never on a completed
+teleport — and that 403 doubles as the error-path proof: the failure came back through `PartyState`
+and `LoadingScreen` lifted on its own. The probe was **armed before the click** and asserts on the
+observed request, not on a poll afterwards (B19's lost run).
+
+Reward-branch asserts are on item and gold **DELTAS**, not absolutes, so a dirty dev profile cannot
+make a red test look green — the P5/B18 precedent. `MatchLifecycleSmokeTest` was temporarily
+`Disabled` so the match start was deterministic, and **restored at cleanup**; both harnesses
+(`SSS.B20ContractVerify`, `SSS.B20LaunchVerify` + `StarterPlayerScripts.B20LaunchDriver`) are
+DELETED, and every `Dev*` attribute on the authored `PlayGUI` verified OFF/0/"".
+
+**One harness lesson, recorded because it will recur:** a runtime Script **cannot read `.Source`** —
+it errors with `lacking capability PluginOrOpenCloud` and kills the script at that line. Hash/source
+proofs belong in tooling (`execute_luau` in the Edit datamodel, which CLAUDE.md already sanctions as
+safe for `.Source`); the real Script proves BEHAVIOUR. The first Lobby run died on exactly this.
+
+- **Contract impact:** **TELEPORT v2 → v3, deployed BOTH Places in this ONE session.**
+  `docs/contracts/teleport.md` bumped, old→new + "migration: none, hard cutover" documented, version
+  history entry added. No schema bump. **`shared/src/RewardScalingConfig.luau` was NOT modified** —
+  byte-identity at `1d789978` was the acceptance criterion.
+- **⚠ ONE STALE COMMENT, deliberately not edited:** `RewardScalingConfig`'s own header still says the
+  payload "(v2) carries NO mode field" and that Insane cannot fire live. It is shared canon; fixing
+  the comment changes the hash and needs a re-deploy to both Places. Filed as a small **AD-Game**
+  PENDING — the CODE is correct, only the comment is out of date.
+- **Docs:** both `places/*/CONTEXT.md` (each compressed back UNDER its 150 cap — the Game's was
+  already 151 on arrival), `docs/systems/rewards.md`, `docs/contracts/teleport.md`,
+  `shared/manifest.json` (`deployed.Lobby` → `1d789978`), ROADMAP rows flipped, the new proposal
+  registered in `docs/INDEX.md`.
+- **`STATE.md` is UNDER CAP for the first time in three sessions: 130 → 114 of 120.** Both PENDINGs
+  this session resolved were DELETED outright (ADR-0006 — the changelog is their record, and
+  strikethrough entries are banned). No other chat's PENDING was removed; the blank separators
+  inside the PENDING list were collapsed, which is formatting, not content.
+- **Open threads:** the reward PREVIEW needs a rendering decision (proposal, AD-UI); `OpenStageSelect`
+  still has no listener (B19, AD-UI); `StartingLives` balance is still the user's call.
+- **USER, now URGENT: republish BOTH Places TOGETHER.** v2 and v3 do not interoperate, so a partial
+  publish breaks EVERY launch with `[CONTRACT] PayloadVersion mismatch`. **FIVE commits unpushed.**
+
 ## 2026-08-13 [lobby] B19 — PlayGUI **P6**: the party roster, Invite and the LAUNCH. `StageSelectScreen` retired. **PlayGUI P1–P6 complete.**
 
 **The active Studio instance WAS the Game** — B18 was a Game session and left it selected, exactly as
