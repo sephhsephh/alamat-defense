@@ -1,5 +1,5 @@
 # STATE — Alamat Defense
-<!-- owner: all | scope: global | last-verified: 2026-08-14 (B20) -->
+<!-- owner: all | scope: global | last-verified: 2026-08-14 (B21) -->
 <!-- SIZE RULE (ADR-0006): ONE file, cap 120 lines. A RESOLVED pending is DELETED (the changelog
      is its record) -- never struck through. Sections that duplicate a canon doc keep a pointer. -->
 
@@ -42,10 +42,6 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   `LoadoutChanged` listener in `HotbarController` · **B11** equip colours + one-per-family client
   guard, `AscensionPanel` out of `SelectedUnitFrame` (ADR-0010). **Quests/login/codes still need a
   NEW reveal answer** — the return-value trick only serves player-INITIATED grants.
-- **PENDING (AD-UI, B19): `ClientEvents.OpenStageSelect` has NO listener** since P6 deleted
-  `StageSelectScreen`, so **`ReturnScreen`'s CONTINUE is inert**. Needs an "open PlayGUI on act X"
-  seam in `PlayGUIController`/`StoryModeController` — NOT the Dev harness attributes. Plan:
-  `docs/proposals/2026-08-13-openstageselect-after-stageselectscreen.md`. `GetStages` is unaffected.
 - **PENDING (USER, balance):** `StartingLives` is **3 / 15 / 10** across Acts 1–3 while
   `BaseHealthScale` climbs 1.0/1.6/2.4. Act 1's `3` looks like a leftover test value. P5 fixed only
   Act 2's false comment; changing numbers is a design call.
@@ -55,10 +51,6 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 - **PENDING (AD-Game → AD-Integration → AD-UI): ONE settings system for BOTH Places** (user) — same
   structure + GUI in both, entries scoped `Both`/`GameOnly`/`LobbyOnly`, preferences AND actions.
   Plan: `docs/proposals/2026-08-09-unified-settings-both-places.md`. Nothing is blocked.
-- **PENDING (AD-UI, B20): the reward PREVIEW needs a RENDERING decision, not data** — the curve is
-  in the Lobby now. `renderRewards` shows `x<qty>` so it cannot express a min–max BAND, and it
-  re-runs only on act select while P4 republishes `DifficultyWire` on every slider move.
-  Plan: `docs/proposals/2026-08-14-reward-preview-wiring.md`.
 - **PENDING (AD-Game, small): `RewardScalingConfig`'s HEADER COMMENT is stale** (says Insane cannot
   fire). Fixing it changes the hash `1d789978` → comment-only re-hash + redeploy to BOTH Places.
 - **PENDING (AD-UI, small):** HUD `CurrencyBar` does not refresh after a summon (join only), so Gold
@@ -104,9 +96,10 @@ names. Different sequences, same letters. PlayGUI uses `P1…P7` to avoid a thir
 2. **PLAYGUI (user priority 2026-08-09)** — `docs/blueprints/playgui.md` is LAW. **P1–P6 ✅ DONE**
    (B14–B19); detail in the blueprint's §9 and `docs/systems/play-menu.md`. The ADR-0011 remap is
    isolated in `PlayGUI.DifficultyScale` — **the ONE conversion; never write a second.**
-   **B20 did the Integration half** (curve copied here; teleport v3 = Insane is live-reachable).
-   **NEXT = AD-UI** (the `OpenStageSelect` seam + the reward-preview rendering decision + the
-   five-item review backlog), **then P7** [AD-Meta] — the global queue, §11.
+   **B20 did the Integration half** (curve copied here; teleport v3 = Insane is live-reachable) and
+   **B21 closed both AD-UI items**: `OpenStageSelect` has a shipping-path listener again (CONTINUE
+   works) and the reward preview reads `RewardScalingConfig.GoldBand` and TRACKS the slider.
+   **NEXT = P7** [AD-Meta] — the global queue, §11 — or the five-item AD-UI review backlog.
 3. **Phase B** (`phases-b-f-meta.md`). Landed B0–B8; Selection ⛔ on the `BannerChoices` schema
    PENDING above. **Phase C (B9): C3 ascension ✅**; **B11 moved it to an NPC screen (ADR-0010) —
    C1/C2/C4 copy that shape.** C1+C2 (AD-Traits) and C3's sell-dupes half are UNBLOCKED by B12;

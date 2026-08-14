@@ -70,19 +70,26 @@ everything untradeable at launch).
   it (proven live: the server probe saw `DifficultyPercent=545` for UI 50%). **30/30 live asserts.**
   The B-4 row template was authored this session (user-delegated: one of four copy-pasted `ItemIcon`
   cards repurposed; the other three HIDDEN, not deleted). **`StageSelectScreen` DELETED** — callers
-  re-grepped first, `GetStages` survives. **⚠ `ClientEvents.OpenStageSelect` lost its only listener,
-  so `ReturnScreen`'s CONTINUE is inert** — proposal + PENDING filed for AD-UI rather than editing
-  their canon.
+  re-grepped first, `GetStages` survives. (`ClientEvents.OpenStageSelect` lost its only listener here
+  and `ReturnScreen`'s CONTINUE went inert — **fixed at B21**.)
   **✅ INTEGRATION FOLLOW-UP [AD-Integration] (B20, 2026-08-14)** — P5's two dangling threads closed
   in ONE cross-Place session. `RewardScalingConfig` copied BYTE-IDENTICAL to the Lobby (`1d789978`,
   drift there now **26/26 GREEN, no gaps**), so the preview and the server payout can read the SAME
   curve — proven in both Places at wire 100 → `100-300`, 550 → `200-400`, 1000 → `300-500`. And
   **teleport contract v2 → v3**: `MatchLaunch` now carries `DifficultyMode`, so **Insane is
   live-reachable** and is the first shipping writer of `Data.Items`. 37 live asserts, 0 failures.
-  **The preview UI is still NOT wired** — `renderRewards` cannot render a min–max BAND and re-runs
-  only on act select while the slider keeps moving, so B20 filed
-  `docs/proposals/2026-08-14-reward-preview-wiring.md` rather than half-wire AD-UI's canon.
-  **🔲 P7 remains** — the global queue (§11), AD-Meta, deferred.
+  The preview UI was left unwired for AD-UI (`renderRewards` could not render a min–max BAND and
+  re-ran only on act select while the slider kept moving) — proposal filed, **closed at B21**.
+  **✅ AD-UI FOLLOW-UPS [AD-UI] (B21, 2026-08-14)** — both open proposals closed in one session.
+  **`OpenStageSelect` has a shipping-path listener again**, so `ReturnScreen`'s CONTINUE opens
+  PlayGUI on the suggested act; the hop is a real authored `PlayGUI.Commands.SelectAct`
+  BindableEvent, deliberately NOT the `DevGoto`/`DevSelectAct` harness. **The reward preview is
+  LIVE**: it reads the shared `RewardScalingConfig.GoldBand` off the published `DifficultyWire` and
+  re-renders on every slider move, so it can never contradict the payout — a new optional `QtyText`
+  lets a cell show a BAND (`100-300`) instead of `x<qty>`, and Insane adds exactly 2 item cells
+  without changing the band. **19/19 live asserts**, on observed transitions.
+  **🔲 P7 remains** — the global queue (§11), AD-Meta, deferred. Small follow-up:
+  `LobbyFrame.RewardsFrame` still shows nothing (scope, not data).
 - 🔲 **Global matchmaking queue** — designed in `playgui.md` §11, **build deferred to P7**.
   `FindMatchButton` ships disabled with a visible "COMING SOON" overlay as of P2.
 

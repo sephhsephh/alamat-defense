@@ -1,5 +1,104 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-14 [lobby] B21 — AD-UI: CONTINUE works again, and the reward preview shows the REAL band and tracks the slider. Both B19/B20 proposals closed.
+
+Bootstrap drift **Lobby 26/26 GREEN, 0 MISSING** — the "25/26 is expected" note died at B20 and this
+run confirms it: every entry present, `RewardScalingConfig=1d789978` included. Integration gate:
+**No Integration needed — proceeding** (both items are Place-local AD-UI controllers; no shared
+module, kit template or contract touched). **BOTH Studio ids had rotated again** — the B19/B20
+hazard — so the Lobby was resolved by NAME and every `execute_luau` opened with the aborting
+assertion (`Workspace.Lobby` present, `RS.Configs.Towers` absent).
+
+**ITEM 1 — `ClientEvents.OpenStageSelect` has a listener again, so `ReturnScreen`'s CONTINUE works.**
+P6 deleted `StageSelectScreen` at B19 and that screen's Controller was the event's ONLY listener, so
+CONTINUE had been firing into nothing ever since: no error, no warning, the button simply did
+nothing. Closes `docs/proposals/2026-08-13-openstageselect-after-stageselectscreen.md`.
+- **`PlayGUIController` is the listener, and `OpenStageSelect` IS PlayGUI's public open event.**
+  `lobby-ui.md` recorded that PlayGUI had no Open event and to add one "the day a second thing needs
+  to open it" — that day is ReturnScreen. **No new event was invented:** `OpenStageSelect` already
+  exists and already carries exactly the right argument, so an `OpenPlayMenu` would have been a
+  near-duplicate.
+- **`PlayGUI.Commands.SelectAct`** — a REAL authored `BindableEvent` (not `Instance.new`'d) — is the
+  hop from the shell to the story lists. `selectAct` is a local in `StoryModeController` and
+  `openMenu`/`goTo` are locals in `PlayGUIController`, so neither file reaches into the other.
+  **It is a COMMAND path in, not a second source of truth:** `SelectedActId`/`SelectionSerial`
+  remain the only answer to "what is selected".
+- **Deliberately NOT routed through `DevGoto`/`DevSelectAct`.** Those are test fixtures; wiring
+  product behaviour through them would make the harness load-bearing and impossible to remove —
+  the same mistake both proposals explicitly declined to make.
+- **Closed menu lands DIRECTLY on the target frame under the veil** (`openMenu` was refactored into
+  `openMenuTo(frameName)`), so the player never sees MainMenu flash past on the way to Story Mode.
+  **Already open → it animates across** via the normal `goTo`. The handler switches STAGE first if
+  the act belongs to a different one, or its button would not exist in the Acts list yet — a no-op
+  today (all three acts are Stage 1) but a Stage 2 suggestion from MatchReturn would have selected
+  nothing.
+- **A Luau ambiguity trap was caught in review, not by the runtime.** The `SelectAct` connection was
+  first written as a statement starting with `(gui:WaitForChild(...) :: BindableEvent).Event:...`
+  directly after a `refreshRewards()` call — Luau parses that as `refreshRewards()(gui:...)`. The
+  only symptom would have been the script silently never running. Rewritten with a local.
+
+**ITEM 2 — the reward preview is LIVE, reads the shared curve, and TRACKS the slider.** Closes
+`docs/proposals/2026-08-14-reward-preview-wiring.md`. Both of that proposal's objections were real
+and both needed fixing before a single number could be shown:
+- **A band is not a quantity.** `renderRewards` painted `"x" .. qty`, which cannot express
+  "Gold 100–300": `Qty = min` understates the payout, `Qty = max` overstates it, and two Gold cells
+  reading `x100`/`x300` render as *two rewards*. An entry may now carry an optional **`QtyText`**
+  that overrides the badge outright; item cells keep the existing `x<qty>` path untouched.
+- **The call site was on the wrong edge.** `renderRewards` ran only from `fillSelectedAct` (act
+  selection) while `DifficultyController.publish()` rewrites `DifficultyWire`/`DifficultyMode` on
+  EVERY slider move. Wired there alone the panel would have frozen at the act's opening difficulty
+  and then sat there contradicting the slider — worse than the blank panel it replaced. New
+  `refreshRewards()` is called from `fillSelectedAct` **and** from `GetAttributeChangedSignal` on
+  both attributes.
+- **It reads `DifficultyWire`, never re-derives it from `DifficultyUI`** (ADR-0011 — `t` is
+  `(wire-100)/900`, and the `/99` mistake pays MAX gold for a normal match).
+- **`curveId` is `nil` on purpose** → `DefaultCurve = "Standard"`, which all three acts name today.
+  The Lobby's mirror carries structure only, so there is no per-act `GoldCurve` here to read. No
+  field was invented.
+- **A missing `DifficultyWire` renders BLANK, not a normal band** — script order between the two
+  controllers is not guaranteed, and a band not tied to a real difficulty is a claim.
+  `refreshRewards()` also runs once at connect time to catch anything published earlier.
+- **Insane ADDS cells; the band is identical.** `ItemsForMode` returns `BannerTicket` +
+  `TraitRerollToken` on Insane, empty on Normal. All four ids were confirmed present in the shared
+  `ItemCatalog` before wiring, so no cell renders a broken icon.
+
+**Verified live (Play, Lobby) from a REAL LocalScript + `get_console_output`** — never
+`execute_luau` for behaviour. **Assertions are on OBSERVED TRANSITIONS**, recorded from signals as
+they happen (`DiagCurrentFrame`, `SelectionSerial`, `PlayGUI.Enabled`, `rewardsScroll.ChildAdded`),
+not polled after the fact — the B19 lesson. `StarterPlayerScripts.B21AcceptanceHarness` was
+**DELETED at landing** (all five historical harnesses confirmed absent).
+**`[Test] B21 RESULT: PASS (19 pass, 0 fail)`**:
+- (1) firing `OpenStageSelect("Stage1_Act3")` on a CLOSED menu: `Enabled` observed going `true`,
+  frame observed landing on `StoryModeFrame`, act observed selecting `Stage1_Act3` — one frame
+  event, no MainMenu flash. Firing again while OPEN switched to `Stage1_Act1` with zero new frame
+  events. An unknown id (`Stage9_ActNope`) warned and changed nothing.
+- (1) **the real CONTINUE button**, proven in a second run with `MatchReturnService
+  .DevSimulateReturn` set in the EDIT datamodel (it only fires on JOIN — setting it mid-session
+  does nothing, which cost one run): banner built, `ContinueButton` present, `Active=true`, text
+  `"CONTINUE: Rising Legend (Stage 1 - Act 2)"`. Tooling cannot synthesise a click, so the last
+  link — Roblox firing `Activated` — is the only unproven one, and it is not our code.
+- (2) driving the SLIDER: UI 1% → wire 100 → badge `100-300`; UI 50% → wire 545 → `199-399`;
+  UI 100% → wire 1000 → `300-500`, each matching `GoldBand` exactly. Endpoints re-asserted against
+  the config: 100→`100-300`, 550→`200-400`, 1000→`300-500`.
+- (2) tracking proven by OBSERVATION: cells were added *during* a slider move, and the band
+  changed `100-300` → `300-500`. Insane added exactly 2 cells (`Reward_BannerTicket`,
+  `Reward_TraitRerollToken`) with the band unchanged at `199-399`.
+- (R) leave still closes and restores 14 GUIs; 16 ScreenGuis present after the round trip; no
+  `Infinite yield`, no errors.
+
+- **Contract impact: NONE.** No shared module, template, schema or teleport change. Drift **26/26**
+  before and after. `RewardScalingConfig` was READ, never edited — its stale header comment is
+  AD-Game's PENDING and was left alone.
+- **PENDINGs: two DELETED outright** (ADR-0006 — the changelog is their record): the `OpenStageSelect`
+  listener and the reward-preview rendering decision. **One small follow-up recorded instead of
+  silently skipped:** `LobbyFrame.RewardsFrame` still shows nothing. B19's stated reason (the curve
+  is not deployed here) EXPIRED at B20 — the real reason now is scope, since B21 wired only the
+  Story panel the proposal named. Mirror `refreshRewards` off the SAME published attributes; do not
+  add a second `GoldBand` call site that could drift.
+- **Push status: everything is already on origin.** The brief said five commits were unpushed; the
+  user had pushed in the meantime (`origin/main` = `3cd697a` = B20 at bootstrap), so this session
+  started at 0 unpushed and adds exactly one.
+
 ## 2026-08-14 [both] B20 — AD-Integration: `RewardScalingConfig` copied to the LOBBY, and teleport **v2 → v3** puts the difficulty MODE on the wire. **Insane is reachable.**
 
 A genuine cross-Place session: both of P5's dangling threads closed together, which is exactly why

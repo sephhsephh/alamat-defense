@@ -1,5 +1,5 @@
 # CONTEXT — Lobby place (LIVE, booted 2026-07-17)
-<!-- owner: lobby | scope: lobby | last-verified: 2026-08-14 (B20) -->
+<!-- owner: lobby | scope: lobby | last-verified: 2026-08-14 (B21) -->
 
 The social/meta Place: players land here, view their collection, roll banners, pick a stage +
 difficulty, form parties, and teleport into the Game place.
@@ -35,8 +35,9 @@ difficulty, form parties, and teleport into the Game place.
     DMG/RNG/SPA, no XpPct** (deferred). Clients never read profiles. `RS.Remotes` holds **15**.
   - Stage select + difficulty = the `RS.Configs.StageRegistry` mirror + `GetStages`; captures
     (StageId, DifficultyPercent). **`StarterGui.StageSelectScreen` was DELETED at P6/B19** — PlayGUI
-    covers stage select, difficulty and launch. `GetStages` SURVIVES (ReturnScreen calls it), but
-    `ClientEvents.OpenStageSelect` lost its only listener — see the PENDING below.
+    covers stage select, difficulty and launch. `GetStages` SURVIVES (ReturnScreen calls it), and
+    **`ClientEvents.OpenStageSelect` got its listener back at B21 — it is now PlayGUI's public open
+    event** (fire it with an act id; ReturnScreen's CONTINUE does exactly that).
     The mirror carries `StageNumber`/`StageName`/`ActNumber`/`ActName` copied VERBATIM from the
     Game's StageConfigs (P1). **`DisplayName` ≠ `ActName`** (Act 1 is both "The First Alamat" AND
     "Protecting the Fields"). Only the `Id` is re-validated Game-side, so a rename there goes stale
@@ -56,8 +57,8 @@ difficulty, form parties, and teleport into the Game place.
     `TeleportData.MatchReturn` on join (expected version from `LobbyConfig`, NOT hardcoded, so the
     v3 bump carried automatically; validates version/Outcome/stage; drops unknown `SuggestNextActId`
     — stale mirror fails safe), serves it via `Remotes.GetMatchReturn` (read-only).
-    `StarterGui.ReturnScreen` = welcome-back banner; CONTINUE fires `ClientEvents.OpenStageSelect` —
-    **inert since B19, see the PENDING**. Harness: `DevSimulateReturn`.
+    `StarterGui.ReturnScreen` = welcome-back banner; CONTINUE fires `ClientEvents.OpenStageSelect`,
+    **live again since B21** (PlayGUI opens on the suggested act). Harness: `DevSimulateReturn`.
   - **Starter tower choice (2026-07-18):** `RS.Configs.StarterTowerConfig` (Archer/Knight/Mage),
     `Server.Lobby.StarterChoiceService` + `Remotes.{GetStarterOffer,ChooseStarterTower}`, modal
     `StarterGui.StarterChoiceScreen` (no dismiss; REAL tree — `Root.Panel.CardsRow.CardTemplate` is
@@ -94,10 +95,11 @@ as ATTRIBUTES on `StoryModeFrame.SelectedAct`; edge-trigger on **`SelectionSeria
 `SelectedActId`, and add no second channel. **(4)** every PlayGUI lookup is NON-RECURSIVE on purpose
 — `SelectedAct` exists under BOTH frames and `PlayersFrame` holds a ScrollingFrame of the same name;
 `StartButton` uses the EXISTING `RequestLaunch`/`PartyService` path, **never a second one**.
-**(5)** labels with no data source are HIDDEN, not zeroed. `RewardScalingConfig` ARRIVED at B20 so
-the numbers exist, but the reward panel still renders zero cells — wiring needs more than one
-`renderRewards` call: `docs/proposals/2026-08-14-reward-preview-wiring.md`. `LoadingScreen` is
-Lobby-local, NOT drift-controlled (§4).
+**(5)** labels with no data source are HIDDEN, not zeroed — but the **reward preview is LIVE since
+B21**: it reads the shared `RewardScalingConfig.GoldBand` off the published `DifficultyWire` (never
+re-derived from `DifficultyUI`) and re-renders on every slider move, so it can never contradict the
+payout. Insane ADDS 2 item cells without changing the band. `LoadingScreen` is Lobby-local, NOT
+drift-controlled (§4).
 
 ## Gacha — banner ENGINE built (B3, 2026-08-09). **Full doc: `docs/systems/gacha.md` — read it**
 
@@ -121,15 +123,11 @@ remain (StageSelect DELETED at B19, Collection converted at A5).
 
 ## Open PENDINGs (see STATE.md — this is the Lobby-relevant subset)
 
-- **AD-UI (NEW, B19):** `ClientEvents.OpenStageSelect` has **no listener** since `StageSelectScreen`
-  was deleted, so `ReturnScreen`'s CONTINUE is inert. Needs an "open PlayGUI on this act" seam in
-  `PlayGUIController`/`StoryModeController` (AD-UI canon, so B19 filed a proposal instead):
-  `docs/proposals/2026-08-13-openstageselect-after-stageselectscreen.md`.
 - **AD-UI:** real per-unit models (all use `UnitModels.Placeholder`); Units action buttons are
   animation-only (equip works since B10). Hotbar hover TRIGGER unverified (tooling cannot fire
   `MouseEnter`); `Kit_ItemHoverCard`'s master/clone split means editing the master does not update
-  it. **NEW (B20):** the reward preview needs a rendering decision, not data —
-  `docs/proposals/2026-08-14-reward-preview-wiring.md`.
+  it. **Small follow-up:** `LobbyFrame.RewardsFrame` still shows nothing — mirror the Story panel's
+  `refreshRewards` off the SAME published attributes; do not add a second `GoldBand` call site.
 - **USER (BLOCKING, now URGENT):** **republish BOTH Places TOGETHER**, then run the **teleport v3
   loop LIVE** once. B20 bumped the contract to **v3** and **v2/v3 do not interoperate** — publishing
   one Place without the other breaks EVERY launch with `[CONTRACT] PayloadVersion mismatch`. Not just

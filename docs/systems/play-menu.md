@@ -73,12 +73,8 @@ this controller never writes `Position`/`GroupTransparency`/`Visible` on `StoryM
   `LevelsClearedLabel`, `ProgressPercentLabel`, `TotalClearsLabel` and `ClearTimeLabel` are hidden.
   **A zero is a claim; a hidden label is not.** Unhide them when a clear-tracking system lands —
   do not invent one in the UI.
-- **The reward preview is PLUMBING ONLY.** `renderRewards(list)` clones `ItemIconTemplate` per
-  entry (icon via `UIKit.ItemIcon.ImageFor`, tier paint via `TierConfig`), but the shipping call
-  passes an EMPTY list, so the panel renders no cells. Reward numbers are **P5 (AD-GAME)** —
-  §8 is explicit that the preview shows what the server will actually pay, so a plausible-looking
-  gold figure here would be a lie to the player. The `DevFakeRewards` harness exercises the clone
-  path with a synthetic list and is never used by the shipping path.
+- **The reward preview is LIVE since B21** — see its own section below. (It was plumbing-only from
+  P3 until then, because the curve did not exist in this Place.)
 - **`SelectedDifficultyLable` is deliberately NOT filled.** Filling it needs the ADR-0011 1–100
   display remap, which is P4's named deliverable; writing a second remap here is exactly the
   duplicate-conversion bug ADR-0011 exists to prevent. It keeps its authored "Normal" until P4.
@@ -94,6 +90,64 @@ this controller never writes `Position`/`GroupTransparency`/`Visible` on `StoryM
   the attribute rather than editing the controller.
 - Harness (all left OFF/""): `DevSelectStage` (a number), `DevSelectAct` (an act id),
   `DevFakeRewards` — each runs the SAME function a real click runs.
+
+## The reward preview (B21). Blueprint §8 · curve owned by AD-Game
+
+`StoryModeController.refreshRewards()` reads the SHARED `RS.Configs.Global.RewardScalingConfig`
+(deployed here at B20) and renders the band the Game's `RewardCalculator` actually rolls inside.
+**One curve, both sides** — the preview cannot show a number the server would not pay.
+
+- **It reads `DifficultyWire`, never `DifficultyUI`.** ADR-0011: `DifficultyScale` is the one
+  UI↔wire conversion in this Place. The curve takes the WIRE value (100–1000); feeding it a UI
+  1–100 value pays MAX gold for a normal match. **Grep before adding any arithmetic on a
+  difficulty number.**
+- **`curveId` is `nil` on purpose.** The Lobby's `StageRegistry` mirror carries structure only, so
+  there is no per-act `GoldCurve` here; `nil` resolves to `DefaultCurve = "Standard"`, which all
+  three acts name today. If a future act names a different curve, add that ONE field to the mirror
+  then — do not invent it now.
+- **A band is not a quantity.** `renderRewards` paints `"x" .. qty`, which cannot express
+  "Gold 100–300": `Qty = min` understates the payout, `Qty = max` overstates it, and two Gold cells
+  reading `x100`/`x300` render as *two* rewards. So an entry may carry an optional **`QtyText`**
+  that overrides the badge outright; item cells keep the existing `x<qty>` behaviour untouched.
+- **It TRACKS the slider.** `refreshRewards` is called from `fillSelectedAct` **and** from
+  `GetAttributeChangedSignal` on `SelectedAct`'s `DifficultyWire` and `DifficultyMode`. Wired at the
+  act-selection site alone the panel would freeze at the act's opening difficulty and then
+  contradict the slider the player is dragging — exactly what §8 exists to prevent, and worse than
+  the blank panel it replaced.
+- **Insane ADDS cells; it does not change the band.** `RewardScalingConfig.ItemsForMode(mode)`
+  returns `BannerTicket` + `TraitRerollToken` on Insane and an empty list on Normal. Mode is a
+  separate axis from the slider, so the gold curve is identical under both.
+- **A missing `DifficultyWire` renders BLANK, not a normal band.** `DifficultyController` publishes
+  on its own boot, but script order between the two controllers is not guaranteed; a band not tied
+  to a real difficulty would be a claim. `refreshRewards()` is also called once at connect time to
+  pick up anything published before the listeners existed.
+- Verified live at B21: wire 100 → `100-300`, 545 → `199-399`, 1000 → `300-500`, matching
+  `GoldBand` exactly; the panel re-rendered as the slider moved; Insane added exactly 2 cells with
+  the band unchanged.
+
+## `OpenStageSelect` — the shipping-path way in (B21)
+
+`ClientEvents.OpenStageSelect:Fire(actId)` **opens PlayGUI on StoryModeFrame with that act
+selected.** `PlayGUIController` is its listener and **this is PlayGUI's public open event.**
+
+- **Why it exists:** P6 deleted `StageSelectScreen` at B19 and that screen's Controller was the
+  event's ONLY listener, so `ReturnScreen`'s CONTINUE button had been firing into nothing since —
+  no error, no warning, the button simply did nothing.
+- **Why no new event was invented:** `lobby-ui.md` recorded that PlayGUI had no Open event and to
+  add one "the day a second thing needs to open it". That day is ReturnScreen — and
+  `OpenStageSelect` already exists and already carries exactly the right argument, so a near-
+  duplicate `OpenPlayMenu` would have been pure surface area.
+- **`PlayGUI.Commands.SelectAct`** (a real authored `BindableEvent`) is the hop from the shell to
+  the story lists: `selectAct` is a local in `StoryModeController` and `openMenu`/`goTo` are locals
+  in `PlayGUIController`, so neither file reaches into the other. **It is a COMMAND, not a second
+  source of truth** — `SelectedActId`/`SelectionSerial` remain the only answer to "what is
+  selected". The handler switches STAGE first if the act belongs to a different one, or its button
+  would not exist in the Acts list yet.
+- **Deliberately NOT routed through `DevGoto`/`DevSelectAct`.** Those are test fixtures; wiring
+  product behaviour through them would make the harness load-bearing and impossible to remove.
+- **Closed menu → it lands directly on the target frame under the veil** (`openMenuTo`), so the
+  player never sees MainMenu flash past. **Already open → it animates across** via the normal
+  `goTo`. An unknown act id is refused with a warn and changes nothing.
 
 ### Authoring fixes the user cleared at B16 (blueprint §2 B-3/B-4)
 
@@ -178,9 +232,12 @@ frame's visibility/position/transitions; P6 never writes them.
   is the last thing a player reads before committing, so it must not describe a different match from
   the one it launches. **Note the label names differ between the two panels** — Story has
   `ActNumberActNameLabel`, Lobby has `ActNameLabel`. Do not "unify" them in code.
-- **`RewardsFrame` on this frame is deliberately untouched** — the preview needs
-  `RewardScalingConfig`, which is not deployed to this Place yet (AD-Integration PENDING). Showing
-  invented gold is exactly what §8 bans.
+- **`RewardsFrame` on THIS frame is still untouched, and the reason CHANGED at B21.** B19's reason
+  ("`RewardScalingConfig` is not deployed here") expired at B20 — the curve is deployed and the
+  STORY panel's preview is live. What is left is a scope call: this is `LobbyFrame`, and B21 wired
+  only the Story panel the proposal named. Mirroring it here is a small follow-up — reuse
+  `refreshRewards`'s shape, read the SAME published `DifficultyWire`/`DifficultyMode`, and do not
+  write a second `GoldBand` call site that could drift from the story panel's.
 - **`InviteButton` opens the existing `PartyScreen`** (user decision, 2026-08-13) rather than growing
   a second invite path in a frame that has no authored player list. `PartyScreen.DisplayOrder` was
   raised **0 → 30** so it renders above PlayGUI (20) and below LoadingScreen (200). It opens through
