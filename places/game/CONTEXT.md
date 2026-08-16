@@ -1,29 +1,26 @@
 # CONTEXT — Game place ("Alamat Defense")
-<!-- owner: game | scope: game | last-verified: 2026-08-14 (B20, teleport v3) -->
+<!-- owner: game | scope: game | last-verified: 2026-08-16 (B23, teleport v4) -->
 
 The match Place: loads a map, runs waves, towers fight, rewards commit to the profile.
 Server-authoritative, registry/config-driven, signal-decoupled. `--!strict` throughout.
 
 ## Architecture in one paragraph
 
-`MatchDirector` (SSS.Server) is the lifecycle state machine (WaitingForData → Preparing →
-Countdown → InProgress → Victory/Defeat → Cleanup). It delegates: maps to `MapLoader`
-(folder-convention discovery, per-map lighting/music), waves to `WaveDirector` (virtual
-clock via `GameSpeed.Scheduler`, overlapping waves), enemies to `EnemySpawner`/
-`EnemyController`, towers to `TowerManager`/`TowerController` (per-tier attacks via
-`AttackSequencer`, passives/abilities/summons), economy to `EconomyManager`, replication
-through the single `MatchReplicator` surface wired in `ReplicationBridge` (the only
-script that knows clients exist). Configs are data modules under `RS.Configs.*` with
-auto-scanning registries. UI is scale-based under StarterGui, one controller per screen.
+`MatchDirector` (SSS.Server) is the lifecycle state machine (WaitingForData → Preparing → Countdown
+→ InProgress → Victory/Defeat → Cleanup). It delegates: maps to `MapLoader`, waves to `WaveDirector`
+(virtual clock via `GameSpeed.Scheduler`), enemies to `EnemySpawner`/`EnemyController`, towers to
+`TowerManager`/`TowerController` (per-tier attacks, passives/abilities/summons), economy to
+`EconomyManager`, replication through the single `MatchReplicator` surface wired in
+`ReplicationBridge` (the only script that knows clients exist). Configs are data modules under
+`RS.Configs.*` with auto-scanning registries.
 
 ## Persistence (schema v2 — see docs/contracts/save-schema.md)
 
-`Server.Data.PlayerDataService` owns ProfileStore sessions; `PlayerInventoryService`
-(uuid-keyed `Units`/account/items, + `GrantUnit`) and `SettingsService` are profile-backed
-facades. Schema v2 (A1, 2026-08-01) = uuid unit instances + `Currencies` map; `Migrations[1]`
-converts v1 profiles on load. Each unit carries `StatRolls` + `Ascension`; `TowerStatResolver`
-folds them into DMG/RNG/SPA (A3, 2026-08-01) as a per-unit quality multiplier over the
-tier×meta×trait pipeline.
+`Server.Data.PlayerDataService` owns ProfileStore sessions; `PlayerInventoryService` (uuid-keyed
+`Units`/account/items + `GrantUnit`) and `SettingsService` are profile-backed facades. Schema v2 =
+uuid unit instances + `Currencies` map; `Migrations[1]` converts v1 on load. Each unit carries
+`StatRolls` + `Ascension`; `TowerStatResolver` folds them into DMG/RNG/SPA as a per-unit quality
+multiplier over the tier×meta×trait pipeline.
 Boot order in `ReplicationBridge`: data services first. `[DATA]`/`[CONTRACT]` log lines
 confirm profile load + schema version on every boot.
 
@@ -40,19 +37,14 @@ confirm profile load + schema version on every boot.
   `Meta.{TierConfig, StatGradeConfig, AscensionConfig, ItemCatalog, UnitStatsCatalog}` = rarity /
   roll-grade / ascension / grantable catalog / generated resolved-stat cache — **shared canon**
   (drift-checked). `UnitStatsCatalog` is deployed in BOTH Places since A6b, 2026-08-06.)
-- **UI kit (AD-UI, shared canon since 2026-08-06)** — **5** controllers in `RS.Shared.UIKit` +
-  **7** REAL instance templates in `RS.UITemplates.Kit` (hashed as instance trees per ADR-0005) +
-  `StarterPlayerScripts.UIKitBootstrap`. **The Game HOTBAR is on it**: `StarterGui.Hotbar` is the
-  Lobby's own ScreenGui (user-copied), driven by the shared `UIKit.Hotbar` with `Kit.HotbarSlot`
-  clones; the only Place difference is `OnActivated` → **start placement**. The old
-  `StarterPlayerScripts.Client.UI.Hotbar` is disabled/renamed `Hotbar_RETIRED_2026-08-06`, and
-  `"Hotbar - old"` is kept as a disabled backup. Editing any kit half in one Place only is DRIFT
-  — see `docs/systems/ui-kit.md` and `tools/checklists.md`. The Game's OTHER screens are still
-  Place-local and script-era (`MatchEnd.RewardRowTemplate`, `Notifications.CardTemplate`, ...).
-  **Drift here is 25/26 at B20** — only `MetaMath` MISSING (Phase D, expected). `UIKitRewardPopup` +
-  `Kit_RewardPopup` were RETIRED in both Places (B2; zero callers here, superseded by the Lobby's
-  `ObtainRewardsGUI`); match-end keeps its own `RewardRowTemplate` and is UNAFFECTED. If you ever
-  see `Kit_ItemIcon` odd, copy it from the Lobby rather than editing it.
+- **UI kit (AD-UI, shared canon)** — 5 controllers in `RS.Shared.UIKit` + 7 REAL templates in
+  `RS.UITemplates.Kit` (hashed as instance trees, ADR-0005) + `StarterPlayerScripts.UIKitBootstrap`.
+  **The Game HOTBAR is on it**: `StarterGui.Hotbar` is the Lobby's own ScreenGui, driven by the
+  shared `UIKit.Hotbar`; the only Place difference is `OnActivated` → **start placement**. Editing
+  any kit half in one Place only is DRIFT — `docs/systems/ui-kit.md`, `tools/checklists.md`. Other
+  Game screens are still Place-local and script-era. **Drift here is 25/26 at B23** — only `MetaMath`
+  MISSING (Phase D, expected); `ItemCatalog` caught up to the Lobby at B23 (`fc4b8023`). If
+  `Kit_ItemIcon` ever reads odd, copy it from the Lobby rather than editing it.
 - Remotes: `RS.Remotes.{Placement, Towers, Match, Economy, Combat, Settings}`
 - Rich legacy docs: `ServerStorage.Documentation.*` (AIState, SystemIndex, HowTo, ...) —
   still valid; migrating to repo `docs/systems/` on touch.
@@ -60,34 +52,32 @@ confirm profile load + schema version on every boot.
 ## Entry paths (how a match starts)
 
 - **Production:** `MatchEntryService` (SSS.Server, booted by `ReplicationBridge`) reads
-  `TeleportData.MatchLaunch` (teleport contract **v3** — `Loadout` = unit uuids; **`DifficultyMode`
-  since B20**), validates PayloadVersion/StageId/players (resolves map/mode/difficulty from the
-  stage; converts the JSON string userId keys → numeric; sanitizes DifficultyPercent; normalises
-  DifficultyMode, anything unrecognised failing SAFE to Normal), and calls `MatchDirector.StartMatch`
-  exactly once after the party assembles. Loadout ownership + host authority are re-checked downstream — TeleportData is a
+  `TeleportData.MatchLaunch` (teleport contract **v4** — `Loadout` = unit uuids; `DifficultyMode`
+  since B20; **`IsMatchmade` since B23**), validates PayloadVersion/StageId/players (resolves
+  map/mode/difficulty from the stage; converts the JSON string userId keys → numeric; sanitizes
+  DifficultyPercent; normalises DifficultyMode and IsMatchmade, anything unrecognised failing SAFE),
+  and calls `MatchDirector.StartMatch` exactly once after the roster assembles. Loadout ownership + host authority are re-checked downstream — TeleportData is a
   request, never truth. Its pure `BuildRawConfig(payload)` is exported for unit testing.
-- **Studio fallback:** `MatchLifecycleSmokeTest` (Studio-only) seeds 8 towers via
-  `DevSetOwnedTowers` and starts Stage1_Act1 ~3s after join — but stands down when a MatchLaunch
-  payload is present, or when `ColdProfileMatchTest` is enabled, so the paths never double-start.
-- **Cold-profile harness:** `ColdProfileMatchTest` (Studio-only, attribute `Enabled` default OFF)
-  starts a match from the REAL loaded profile's units — **no dev seed** — to exercise the production
-  cold path the synchronous smoke test hides. `MatchDirector.StartMatch` waits for every player's
-  profile BEFORE validating loadouts (moved from `MatchEntryService` 2026-08-03), so the
-  empty-hotbar guard covers every caller. `AutoPlaceForEndScreenTest`/`MatchEndVerify` are
-  `ENABLED=false`.
+- **Studio fallback:** `MatchLifecycleSmokeTest` (Studio-only) seeds 8 towers and starts Stage1_Act1
+  ~3s after join — standing down when a MatchLaunch payload is present or `ColdProfileMatchTest` is
+  enabled, so the paths never double-start.
+- **Cold-profile harness:** `ColdProfileMatchTest` (Studio-only, `Enabled` default OFF) starts a
+  match from the REAL profile's units — no dev seed — exercising the cold path the smoke test hides.
+  `MatchDirector.StartMatch` waits for every profile BEFORE validating loadouts, so the empty-hotbar
+  guard covers every caller. `AutoPlaceForEndScreenTest`/`MatchEndVerify` are `ENABLED=false`.
 
 ## Current state / known gaps
 
-- Content: Stage 1 (3 acts), 1 map (TestMap), 8 towers, 2 enemies, Classic mode only.
-- Attack anim/VFX/sound asset ids are placeholders (slots exist and tolerate nil).
+- Content: Stage 1 (3 acts), 1 map (TestMap), 8 towers, 2 enemies, Classic only. Attack
+  anim/VFX/sound asset ids are placeholders (slots exist and tolerate nil).
 - `ReturnToLobby` (MatchActionHandler) builds `MatchReturn` (v3) and teleports to the Lobby;
   `GameConfig.LobbyPlaceId` SET (83342803778137, 2026-07-18 Integration). The payload version
-  comes from `GameConfig.TeleportPayloadVersion` (**=3 since B20**) and MUST equal the Lobby's
-  `LobbyConfig.MatchLaunchVersion`; a mismatch is rejected, never downgraded. **v2 and v3 do NOT
+  comes from `GameConfig.TeleportPayloadVersion` (**=4 since B23**) and MUST equal the Lobby's
+  `LobbyConfig.MatchLaunchVersion`; a mismatch is rejected, never downgraded. **v3 and v4 do NOT
   interoperate — the two Places must be republished TOGETHER.** NOTE: in Studio
   Play, pressing Lobby now attempts a real TeleportAsync, which fails (pcall'd +
   TeleportInitFailed handled) — expected; real teleports need the published client.
-- Enemies.Behaviors (Flying/Splitting/...) is an empty extension point.
+- Enemies.Behaviors (Flying/Splitting/…) is an empty extension point.
 - **Counters + Worthiness are WRITTEN (blueprint §6, A8).** One commit per match inside
   `RewardCalculator.GrantForPlayer`: `CommitUnitKills` adds `Counters.PerUnit[uuid].Kills` and
   advances `Worthiness` (`WorthinessConfig`, 0.02/kill, cap 100 enforced INSIDE `Apply` so no future
@@ -119,12 +109,26 @@ confirm profile load + schema version on every boot.
   not live in `StageConfig`. Each act NAMES a curve (`Rewards.GoldCurve = "Standard"`) instead of
   copying endpoints. **`deployed.Lobby = null` → the Lobby reports MISSING until Integration copies
   it; that is expected, not drift.**
-- **INSANE IS LIVE-REACHABLE since B20 (teleport v3).** The payload carries `DifficultyMode`;
-  `MatchEntryService` normalises it → `rawConfig.DifficultyMode` → `matchState.DifficultyMode` →
-  `RewardCalculator`'s Insane branch. Mode is a SEPARATE axis: it does NOT scale enemy health and
-  never enters the wire→t conversion. Absent/unknown still fails SAFE to Normal (the no-bonus
-  branch). Verified live: an Insane Victory committed `BannerTicket` +1 and `TraitRerollToken` +1,
-  a Normal Victory committed neither, and both landed in the SAME gold band.
+- **INSANE IS LIVE-REACHABLE since B20 (teleport v3).** The payload carries `DifficultyMode` →
+  `rawConfig` → `matchState.DifficultyMode` → `RewardCalculator`'s Insane branch. Mode is a SEPARATE
+  axis: it does NOT scale enemy health and never enters the wire→t conversion. Absent/unknown fails
+  SAFE to Normal. Verified: Insane Victory paid both items, Normal paid neither, same gold band.
+- **TELEPORT v4 (B23) — `IsMatchmade`, and the ONE-PARTY INVARIANT IS REPEALED.** A reserved server
+  can now hold SEVERAL parties, or strangers with none, assembled by the Lobby's global queue across
+  lobby servers. `matchState.IsMatchmade` is the flag to branch on — **never `PartyId`**, which is
+  per-player, optional and read by NOTHING here. `HostUserId` is now an ELECTED host (lowest userId);
+  this Place already fell back to lowest-userId, so both sides agree by construction.
+  **A B23 survey found exactly ONE one-party assumption with teeth: GAME SPEED.** It is match-wide,
+  and both the authority and the 3× gamepass gate come from the host alone — matchmade, an elected
+  stranger. **B23 deliberately changed nothing** (a user design call, not a contract-bump edit) and
+  logs `[CONTRACT] MATCHMADE match: speed authority ...`. `PartyId` and end-of-match (per-player)
+  needed no change.
+- **SHORT ROSTERS ARE ROUTINE AT v4 — and the economy now counts who ARRIVED (B23 fix).**
+  `ValidatedPlayers` is the payload ROSTER; `matchState.PresentUserIds` is who actually turned up.
+  `EconomyConfig.PlayerCountRewardScaling` ({1=1.0,…,4=0.8}) divides kill AND wave cash by the
+  headcount, and it used to read the roster — so a lone survivor of a 4-player launch played the
+  whole match at 0.8× cash. **Never revert `playerCount` to `#userIds`.** The Ready-phase vote and
+  `GrantWaveReward` also take `presentUserIds`. Logged as `[CONTRACT] SHORT ROSTER: n of m`.
   **⚠ `RewardScalingConfig`'s own header comment still says the payload has no mode field — STALE.**
   It is shared canon at `1d789978`; correcting the comment changes the hash, so it needs an AD-Game
   comment-only re-hash + both-Place redeploy. The CODE is right; only the comment is wrong.
@@ -132,19 +136,15 @@ confirm profile load + schema version on every boot.
   handler that YIELDS blocks every later handler, including `MatchEndPresenter`, which drives the
   reward/counter commit (A9 burned three runs on this). To inspect post-commit state, `task.spawn`
   the body and return immediately — never `task.wait` inside a Signal handler here.
-- A unit at `MAX_META_LEVEL` LOSES stored XP (`ApplyXP` discards overflow rather than preserving
-  it): Archer Lv100 went `XP 400 → 0` at A7. Cosmetic but visible on the Units screen.
-- `DevSetOwnedTowers` (smoke test) REPLACES `data.Units` with new uuids, orphaning the Lobby's saved
-  `Data.Loadout`. Fails safe (readers filter unowned uuids) but the hotbar reports a stale "N
-  equipped" count until the next equip. Disable the smoke test when testing the real cold path.
-- Real-DataStore round-trip test for the PLAYER profile still PENDING (A7 did a real ProfileStore
-  round trip on a scratch key, which exercised Reconcile + Migrate but not the player join path).
-- **Stat rolls live + actually rolling (A3 + 2026-08-03):** `TowerStatResolver` reads each unit's
-  `StatRolls` + `Ascension`; Archer + Mage are the `BaseStats` quality-range pilots. Grants now
-  ROLL — `PlayerInventoryService.GrantUnit` (explicit `opts.StatRolls` wins) and `DevSetOwnedTowers`
-  call `StatGradeConfig.RollAll(rng)` off one persistent `Random` (was hardcoded 0.5). The Lobby's
-  `StarterChoiceService` ALSO rolls since 2026-08-03 — **all grant paths now roll.** Existing
-  units + the v1→v2 migration stay grandfathered at 0.5 (append-only).
-- ~~USER (BLOCKING) publish~~ **DONE 2026-08-06** — both Places were republished together, so the
-  whole A-phase is the live build. Still open: a live end-to-end run of the **teleport v2 loop**
-  (publishing v2 is not the same as exercising it).
+- A unit at `MAX_META_LEVEL` LOSES stored XP (`ApplyXP` discards overflow): Archer Lv100 went
+  `XP 400 → 0` at A7. Cosmetic but visible on the Units screen.
+- `DevSetOwnedTowers` REPLACES `data.Units` with new uuids, orphaning the Lobby's saved
+  `Data.Loadout`. Fails safe, but the hotbar reports a stale "N equipped" count until the next equip.
+- Real-DataStore round-trip for the PLAYER profile still PENDING (A7 used a scratch key: it
+  exercised Reconcile + Migrate, not the player join path).
+- **Stat rolls live + actually rolling (A3+):** `TowerStatResolver` reads each unit's `StatRolls` +
+  `Ascension`; Archer + Mage are the `BaseStats` pilots. **All grant paths ROLL** — `GrantUnit`,
+  `DevSetOwnedTowers` and the Lobby's `StarterChoiceService` all call `StatGradeConfig.RollAll(rng)`
+  off one persistent `Random`. Existing units + the v1→v2 migration stay grandfathered at 0.5.
+- **USER (BLOCKING): both Places must be republished TOGETHER for v4** — see STATE.md. v3's
+  republish was confirmed done at B23; a live end-to-end run of the loop is still unconfirmed.

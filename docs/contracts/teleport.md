@@ -1,15 +1,30 @@
 # Contract: Teleport Payloads (Lobby ⇄ Game)
-<!-- owner: lobby | scope: global | version: 3 | last-verified: 2026-08-14 (B20) -->
+<!-- owner: lobby | scope: global | version: 4 | last-verified: 2026-08-16 (B23) -->
 
-Version 3 (2026-08-14, B20 Integration) — implemented and deployed on BOTH sides in ONE session.
-Delivery is **reserved (private) servers per party**: a launch reserves a fresh Game server and
-teleports only the party's members into it, so a match server contains exactly one party.
+Version 4 (2026-08-16, B23 Integration) — implemented and deployed on BOTH sides in ONE session.
+Delivery is **reserved (private) servers**: a launch reserves a fresh Game server and teleports only
+the matched players into it.
 
-**v3 changes exactly one thing:** `MatchLaunch` carries `DifficultyMode` (`"Normal"` / `"Insane"`),
-and `PayloadVersion = 3`. Everything else (delivery, security stance, `MatchReturn` shape, failure
-handling) is unchanged from v2.
+**⚠ THE "ONE MATCH SERVER = ONE PARTY" INVARIANT IS REPEALED AT v4.** It held for v1–v3 and a great
+deal of reasoning was built on it. Since P7 (the global matchmaking queue) a reserved server can
+hold **several parties, or strangers with no party at all**, assembled ACROSS lobby servers. Code
+that still needs the old guarantee must branch on `IsMatchmade`, never on `PartyId` (which is
+per-player, optional, and read by nothing Game-side).
 
-**Why this is a HARD version bump and not a quiet additive field.** Insane pays extra ITEM rewards
+**v4 changes exactly one field and one sentence:** `MatchLaunch` carries `IsMatchmade`, and
+`HostUserId` widens from "the party host" to "the **elected match host**". `PayloadVersion = 4`.
+Everything else (delivery, security stance, `MatchReturn` shape, failure handling, every v3 field)
+is unchanged.
+
+**v3 changed exactly one thing:** `MatchLaunch` carries `DifficultyMode` (`"Normal"` / `"Insane"`).
+
+**Why v4 is a HARD version bump and not a quiet additive field.** A Game that ignored an unknown
+flag would apply its one-party assumptions to a server full of strangers — speed authority and the
+3× entitlement handed to an elected stranger, and any trust the roster implies. Nothing errors,
+nothing logs, the behaviour is simply wrong. The integer version is what makes that window
+impossible.
+
+**Why v3 was a HARD version bump and not a quiet additive field.** Insane pays extra ITEM rewards
 on top of the same gold curve (`docs/systems/rewards.md`). The two Places publish SEPARATELY, so an
 additive field creates a window where the Lobby sends `Insane` and an older Game silently ignores
 it — the player is charged the harder match and paid the easier rewards, with nothing erroring and
@@ -60,8 +75,20 @@ everything up to the reserve/teleport call is still exercised.
 {
 	PayloadVersion: number,     -- = 2; Game logs [CONTRACT] + REJECTS on mismatch
 	StageId: string,            -- e.g. "Stage1_Act1" (validated vs the Game's StageRegistry)
-	HostUserId: number,         -- party host; game-speed authority (re-checked Game-side)
+	HostUserId: number,         -- v4: the ELECTED MATCH HOST (for a party launch that is still the
+	                            -- party host). Game-speed authority + the 3x gamepass gate, both
+	                            -- re-checked Game-side. Election is the LOWEST userId in the matched
+	                            -- group -- deterministic and derivable from the queue entries alone,
+	                            -- so every participating lobby server elects the same player with no
+	                            -- extra round trip. The Game independently falls back to lowest-userId
+	                            -- when HostUserId is not in ValidatedPlayers, so both sides agree by
+	                            -- construction rather than by coincidence.
 	DifficultyPercent: number,  -- 1..1000 (sanitized both sides: StageRegistry.SanitizeDifficulty / DifficultyConfig)
+	IsMatchmade: boolean,       -- v4: TRUE only when the global QUEUE assembled this roster.
+	                            -- FALSE for every launch that existed before v4 (party + solo).
+	                            -- This is the flag every one-party assumption branches on.
+	                            -- Absent or non-boolean is read as FALSE on arrival -- the
+	                            -- conservative default, keeping existing one-party behaviour.
 	DifficultyMode: string,     -- v3: "Normal" | "Insane". A SEPARATE AXIS from DifficultyPercent --
 	                            -- it does NOT scale enemy health and never enters the ADR-0011
 	                            -- UI<->wire conversion. It selects the Game's Insane reward branch.
@@ -109,6 +136,38 @@ Shape unchanged from v1 — only the version integer moved (one version covers b
 Rewards are NOT in this payload — they were already committed to the profile by
 `RewardCalculator` before teleport (profile session-lock handles the save handoff).
 
+## Cross-server delivery (v4, matchmade launches only)
+
+A queued match spans lobby servers, so one server must reserve and the others must teleport into the
+SAME reserved server. v1–v3 had "no MemoryStore handoff"; v4 adds exactly one:
+
+1. Every queued party is one MemoryStore sorted-map item under the key
+   `actId | stageNumber | mode | difficultyBucket`. **The entry is a PARTY, never a player.**
+2. The server holding the **elected host's** entry (lowest userId) calls `ReserveServer` and builds
+   the ONE authoritative payload.
+3. It publishes `{ Code, Payload }` to a second sorted map. Every participating server teleports its
+   OWN players with **identical payload bytes** — rebuilding per server is how rosters diverge.
+4. Entries carry a per-item expiration above the queue timeout, so a crashed lobby server's entry
+   evaporates rather than matching ghosts.
+
+**The match runs at the elected host's EXACT `DifficultyPercent`.** Members queue in the same
+difficulty *bucket*, not at the same value; averaging their values would invent a difficulty nobody
+chose and silently move everyone's `RewardScalingConfig.GoldBand` payout. Bucketing is arithmetic on
+a difficulty number and lives in exactly one place, `MatchmakingRules.BucketOf` — it is **not** the
+ADR-0011 UI↔wire conversion (`PlayGUI.DifficultyScale`), which converts and does not partition.
+
+**Loadout snapshots are taken at ENQUEUE and may be ≤ the queue timeout stale.** Accepted: the Game
+re-validates ownership on arrival (`LoadoutValidator`), and the alternative — each server rebuilding
+its own players' loadouts at teleport time — makes different servers send *different* `Players` maps
+into one reserved server, which is strictly worse.
+
+**SHORT ROSTERS ARE ROUTINE AT v4, NOT AN EDGE CASE.** A player whose lobby server dies between
+claim and teleport never arrives, and the reserved server starts with fewer players than the payload
+lists. The Game does **not** hang: `MatchEntryService` waits out its assemble timeout and starts with
+whoever is present. Since B23 it also scales the in-match economy on **players who actually
+arrived**, not on the payload roster — counting the roster taxed a lone survivor of a 4-player launch
+at the 4-player multiplier (0.8×) for the whole match.
+
 ## Retry / failure behavior (v1)
 
 `ReserveServer` and `TeleportToPrivateServerAsync` are wrapped in `pcall`; the Lobby also
@@ -125,6 +184,27 @@ told to retry, and no lobby/party state is consumed. Repeated failures back off 
 
 ## Version history
 
+- **v4** (2026-08-16, B23 Integration): `MatchLaunch` gains `IsMatchmade`; `HostUserId` widens to the
+  ELECTED match host; the "one match server = one party" invariant is **REPEALED**; cross-server
+  MemoryStore delivery is documented above. `PayloadVersion = 4`. **Migration: none — a hard
+  cutover**, the same stance as v2 and v3. Both Places deployed in the SAME session, so no v3 sender
+  can exist; the Game rejects v3 with `[CONTRACT] PayloadVersion mismatch: got 3, expected 4`.
+  **Old → new for a consumer:** a v3 reader assumed every roster was one party. A v4 reader gets
+  `rawConfig.IsMatchmade` → `matchState.IsMatchmade` and branches on it. Nothing else moved:
+  `DifficultyPercent` and `DifficultyMode` keep their meaning, range and names (ADR-0011 untouched).
+  **A survey of this Place found exactly ONE one-party assumption with teeth** — game speed. Speed is
+  match-wide, and both the authority to change it and the 3× gamepass entitlement come from the host
+  alone; matchmade, that host is an elected stranger. **B23 deliberately did not change it** (a
+  design call for the user, not something to alter inside a contract bump); it is logged with
+  `[CONTRACT] MATCHMADE match: speed authority ...` so it is visible and greppable. `PartyId` is read
+  by nothing Game-side, and end-of-match handling is per-player, so neither needed a change.
+  **Verified live, both Places, ONE session (37 asserts, 0 failures):** v3 and v2 rejected; v4 with
+  `IsMatchmade=true` reaching `matchState`; absent/non-boolean defaulting FALSE; one payload carrying
+  two different `PartyId`s plus a player with none; the queue's bucket/pack/elect rules including
+  "never split a party" and lowest-userId election; and a 4-name roster arriving with 1 player
+  scaling the economy on 1 (multiplier 1.0) instead of 4 (0.8×).
+  `ReserveServer` is **HTTP 403 in Studio**, so the cross-server handoff's final step is a permanent
+  verification gap — assertions are on the payload BUILT, never on a completed teleport.
 - **v3** (2026-08-14, B20 Integration): `MatchLaunch` gains `DifficultyMode` (`"Normal"`/`"Insane"`);
   `PayloadVersion = 3`. **Migration: none — a hard cutover**, the same stance as v2. Both Places were
   deployed in the SAME session, so no v2 sender can exist; the Game rejects v2 with

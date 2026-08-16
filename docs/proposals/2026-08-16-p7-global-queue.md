@@ -1,6 +1,13 @@
 # Proposal: P7 — the global matchmaking queue (blueprint `playgui.md` §11)
 
-<!-- author: AD-Meta (B22, 2026-08-16) | place: Lobby (design only) | status: OPEN -->
+<!-- author: AD-Meta (B22, 2026-08-16) | place: Lobby (design only) | status: EXECUTED at B23 -->
+<!-- B23 (AD-Integration, both Places) BUILT this design on teleport v4. Deviations, all recorded
+     in the B23 changelog entry: (1) PackGroup allows an UNDER-FULL match (>=2 whole entries)
+     rather than requiring an exact fill, which would starve every 3-party; a lone entry is
+     explicitly not a match. (2) section 8's Q2 turned up a real bug -- the in-match economy
+     multiplier counted the payload roster, not arrivals -- fixed Game-side. (3) the one
+     one-party assumption with teeth (game speed + the 3x gate) was left UNCHANGED and raised
+     as a user design call rather than altered inside a contract bump. -->
 <!-- Outcome of the §11 session: DESIGN LANDED, BUILD DEFERRED. Nothing was wired. -->
 
 ## Verdict, up front

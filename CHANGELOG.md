@@ -1,5 +1,156 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-16 [both] B23 — AD-Integration: teleport **v3 → v4** and **P7, the global matchmaking queue, SHIPPED**. `ItemCatalog` drift cleared. **PlayGUI P1–P7 COMPLETE.**
+
+Both Studio ids had rotated **again** — five sessions running now (B19–B23) — so each Place was
+resolved by NAME and re-confirmed on every switch, and every `execute_luau` opened with the aborting
+two-way assertion. `PlaceId` confirmed on both sides: Lobby `83342803778137`, Game `125430066355564`.
+
+Bootstrap drift was **exactly what the brief predicted, which is itself the point**: Lobby 26/26
+hash-green; Game 25/26 with `MetaMath` MISSING (expected until Phase D) **plus the real `ItemCatalog`
+mismatch B22 left on purpose**. Nothing had to be investigated. `STATE.md` + the changelog tail were
+re-read immediately before landing; **no sibling had landed** (clean tree, `3aad4fc` still HEAD).
+
+### The STOP condition fired first, and the answer changed the session
+
+The brief said: do not stack a v4 on an un-republished v3. `STATE.md` still listed the v3 republish
+as an open USER blocker, and B22's proposal had refused to build on exactly that basis. **So the
+session stopped and asked before touching the contract.** The user confirmed **the v3 republish is
+done**, which cleared the block — and that stale PENDING is now corrected rather than left to scare
+off a third session. The user also chose the full §10 build over a contract-only bump.
+
+### TASK 1 — `ItemCatalog` copied to the GAME (drift cleared)
+
+The five icon lines only: Gold `128910310881167`, Silver `119213648374305`, BannerTicket
+`6731922404`, TraitRerollToken `12590248124`, GoldenSeed `124757602236693`. **Copied, never
+re-authored** — the module is AD-UI's canon and the ids are the user's own uploads. Re-hashed in the
+Game to **`fc4b8023`**, 6520 bytes, byte-identical to the Lobby and to `shared/src`, with **zero
+`rbxassetid://0` remaining**. `deployed.Game` flipped. Those five icons no longer render blank in the
+Game. PENDING **deleted** per ADR-0006.
+
+### §8 — the three Game-side questions, answered against live code. One of them found a bug.
+
+The proposal said these could change the v4 delta. Two were clean; the third was not.
+
+**Q1 — does the Game assume one party anywhere?** Almost nowhere. `PartyId` is carried onto
+`matchState.ValidatedPlayers[uid].PartyId` and **read by nothing** (grep: three hits, all writes or
+type declarations), so there is no uniform-`PartyId` assumption to break. End-of-match handling
+(`MatchEndPresenter`, `MatchActionHandler`) iterates players individually. **Exactly one assumption
+has teeth: GAME SPEED.** It is match-wide, and both the authority to change it *and* the 3× gamepass
+entitlement come from `matchState.HostUserId` alone — so matchmade, a stranger elected by lowest
+userId decides whether everyone gets 3×. **B23 deliberately did not change this.** Altering a
+monetisation-adjacent rule inside a contract bump is exactly the kind of silent design decision this
+project keeps refusing to make; it is now **logged** (`[CONTRACT] MATCHMADE match: speed authority
++ x3 entitlement come from the ELECTED host …`) and raised as a USER decision.
+A happy accident worth recording: `MatchDirector` already falls back to **lowest userId** when
+`HostUserId` is absent from `ValidatedPlayers` — the same rule the proposal picked for election, so
+the two sides agree **by construction**, not by coincidence.
+
+**Q2 — does it wait for the full roster, and what if someone never arrives?** It does **not hang**:
+`MatchEntryService.waitForParty` waits ≤10s then starts with whoever is present, and `MatchDirector`
+separately warns that missing profiles get an EMPTY loadout. Both fail forward. **But the survey
+found a real bug, and it is not cosmetic.** `ValidatedPlayers` is built from the PAYLOAD, and
+`playerCount = #userIds` over it feeds `EconomyManager`'s reward multiplier for **every kill and
+every wave**. The curve is `{1=1.0, 2=0.9, 3=0.85, 4=0.8}`, fallback `0.75`. So **a lone survivor of
+a 4-player launch played the entire match at 0.8× cash** — a silent 20% economy nerf paid for players
+who were not there. Tolerable while one party launched together; the proposal itself says short
+arrival becomes a **daily** event once matchmade. **Fixed:** `matchState.PresentUserIds` is now a
+distinct list, the economy scales on it (floor 1), and the Ready-phase vote and `GrantWaveReward`
+take it too — a listed-but-absent player can never cast a unanimous ready vote, which would have held
+every matchmade Ready phase open to its timeout. Logged as `[CONTRACT] SHORT ROSTER: n of m`.
+
+**Q3 — does anything need to know it was matchmade beyond rewards?** Only Q1's speed gate. Small
+blast radius, which is why `IsMatchmade` earns its place as one boolean rather than a bag of fields.
+
+### Contract v3 → v4
+
+`IsMatchmade` added; `HostUserId` widened to the **elected match host**; **the "a match server
+contains exactly one party" invariant is REPEALED**; the cross-server MemoryStore handoff documented.
+Both integers moved together (`LobbyConfig.MatchLaunchVersion` / `GameConfig.TeleportPayloadVersion`
+→ `4`). **Hard cutover** for the same reason v3 was: a Game that ignored an unknown flag would apply
+one-party assumptions to a server full of strangers, and nothing would error. `IsMatchmade` is read
+as **FALSE** when absent or non-boolean — the conservative default that preserves every existing
+behaviour, and the correct stance for a client-forgeable payload. `DifficultyPercent` and
+`DifficultyMode` keep their meaning, range and names; ADR-0011 is untouched.
+
+### P7 — the queue
+
+**`LaunchService` (new ModuleScript) is the launch body**, required by BOTH `PartyService` and
+`MatchmakingService`. `PartyService` is a `Script` and cannot be `require`d, so the only alternative
+was to COPY the reserve/teleport body — which is precisely the second launch path §12 forbids. **This
+is one path with one more caller.** `Remotes.RequestLaunch` is still the only *client* entry;
+`MatchmakingService` is a *server* caller. `PartyService` keeps all the policy (the remote, the host
+check, the `PartyState` replies) and now reaches the Game through the same code the queue does.
+
+**`MatchmakingRules` (new ModuleScript) holds the pure half** — `BucketOf` / `KeyFor` / `PackGroup` /
+`ElectHost` — split out for the same reason B9 split `AscensionRules` out of `AscensionService`: this
+service's only entry points are a remote handler and a MemoryStore poll, neither of which returns
+anything a harness can assert on. "Which parties get grouped" and "who hosts" must be testable
+directly. (A first pass exposed them via `_G` for the harness; that was wrong and was replaced.)
+
+The three design calls were taken from the proposal unchanged. **Bucketing lives in
+`MatchmakingRules.BucketOf` and nowhere else**, explicitly NOT in `PlayGUI.DifficultyScale` — that
+module *converts* between the UI and wire scales (ADR-0011) and this one *partitions* an already-wire
+value; two jobs, one greppable home each. **The match runs at the elected host's EXACT wire value**,
+never an average. **A queue entry is a PARTY, never a player**, and `PackGroup` can only ever add a
+complete entry, so "never split" holds by construction rather than by a check someone could delete.
+
+**One design point the proposal left ambiguous, resolved and recorded:** "you take the 3 or the 2"
+could mean *require an exact fill* or *allow an under-full match*. Requiring an exact fill starves
+every 3-party until a solo happens to appear. So `PackGroup` returns a group when it either fills
+`MaxPartySize` **or** joins at least two separate entries — and a single entry alone is explicitly
+**not** a match, because that is just the party playing by itself, which `StartButton` already does.
+
+`FindMatchButton` (under **StoryModeFrame**, not MainMenu) is live: the `disable()` call in
+`PlayGUIController` is gone and the new `MatchmakingController` — the fifth PlayGUI script — owns it.
+Its `InactiveOverlay` stays authored but hidden, so re-disabling is one call, not a re-author.
+`RS.Remotes` **15 → 17**.
+
+### Acceptance — 37 asserts, 0 failures, from REAL Scripts in BOTH Places
+
+| § | Item | Verdict | Evidence |
+| --- | --- | --- | --- |
+| 1 | Game hashes `ItemCatalog` at `fc4b8023` | **PASS** | 6520 bytes, `MATCH=true`, 0 × `rbxassetid://0` |
+| v4 | both integers = 4 | **PASS** | `LobbyConfig.MatchLaunchVersion=4`, `GameConfig.TeleportPayloadVersion=4` |
+| v4 | **v3 REJECTED** | **PASS** | `[CONTRACT] PayloadVersion mismatch: got 3, expected 4`; v2 rejected too |
+| v4 | `IsMatchmade` survives to `matchState` | **PASS** | payload → `rawConfig` → `matchState.IsMatchmade=true` |
+| v4 | absent / non-boolean → FALSE | **PASS** | `nil` → false, `"yes please"` → false (never truthy-coerced) |
+| v4 | one payload, SEVERAL parties | **PASS** | 3 players across two `PartyId`s **plus one with none**, accepted |
+| v4 | v3 fields intact | **PASS** | `wire=545 mode=Insane` unchanged; junk mode still fails safe to Normal |
+| §6 | **short roster ⇒ economy counts ARRIVALS** | **PASS** | 4-name roster, 1 arrival → `SHORT ROSTER: 1 of 4`, multiplier **1.0 not 0.8** |
+| §11 | bucket partitions, is not a conversion | **PASS** | 100→0, 545→4, 1000→9; 100 and 199 share bucket 0 |
+| §11 | key separates act and mode | **PASS** | Normal ≠ Insane, Act1 ≠ Act2; wire 512 and 545 share one key |
+| §11 | **a party is never split** | **PASS** | 3+2 for 4 slots → took the 3 whole or nothing, never 3+1 |
+| §11 | packs whole entries; solo ≠ a match | **PASS** | 2+2 → full; 3+1 → full; a lone entry returns nil |
+| §11 | host election deterministic | **PASS** | lowest userId **across both parties**, order-independent |
+| §11 | host's EXACT wire carried | **PASS** | host entry's `HostWire=545` used, not an average |
+
+**Reward asserts are on DELTAS and the short-roster proof used a real `StartMatch`** through the
+production `BuildRawConfig` path. `MatchLifecycleSmokeTest` was temporarily `Disabled` for a
+deterministic start and **restored**; both harnesses are DELETED and every `Dev*` attribute on the
+authored `PlayGUI` verified OFF/0/"".
+
+### What a single Studio instance CANNOT prove — stated per clause, not implied
+
+- **The cross-server handoff. Permanently unprovable in Studio**: `ReserveServer` returns **HTTP
+  403** there, in any mode. Every assertion above is on the payload **BUILT**, never on a completed
+  teleport. (MemoryStore itself *does* work from Studio — B22 probed it; not re-checked.)
+- **Two parties on two different lobby servers actually meeting.** One Studio client is one server,
+  so the matcher's claim-then-commit, the `ServerId` ownership check and the handoff publish were
+  exercised only as code paths, never as a race.
+- **Timeout → offer solo, end to end.** The 45s branch and its client prompt were not driven live.
+- **Abandonment cleanup under real failure** — expiry, and a server dying mid-claim.
+- **`PlayerRemoving` / party-change removal** with a real second player.
+
+- **Contract impact: TELEPORT v3 → v4, deployed BOTH Places in this ONE session.** No schema bump.
+- **Shared canon:** `ItemCatalog` `deployed.Game` `789dca4b` → `fc4b8023`. Manifest still 26 entries.
+  **Drift at landing: Lobby 26/26, Game 25/26 (`MetaMath` only).**
+- **PENDINGs: TWO DELETED** (ItemCatalog copy, P7-is-v4 — both resolved outright, ADR-0006),
+  **ONE CORRECTED** (the v3 republish, which the user had already done), **TWO ADDED** (the v4
+  republish, and the matchmade game-speed design call).
+- **Doc sizes:** `STATE.md` 116/120, both `CONTEXT.md` at 150/150, `teleport.md` 234/300.
+- **USER, URGENT: republish BOTH Places TOGETHER again, for v4.** v3/v4 do not interoperate.
+
 ## 2026-08-16 [lobby] B22 — AD-Meta: P7 stopped at the scope gate (the global queue is contract **v4**, not a Lobby session) + the user's real icon assetids recorded as canon. **Nothing was wired.**
 
 Two things happened and neither was the task as briefed. Both are recorded here rather than being

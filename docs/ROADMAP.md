@@ -1,6 +1,6 @@
 # ROADMAP — feature status for the whole Experience
 <!-- owner: all (any chat updates its own system's rows at landing) | scope: global -->
-<!-- last-verified: 2026-08-14 (B20) -->
+<!-- last-verified: 2026-08-16 (B23) -->
 
 Status legend: ✅ done · 🟡 partial/placeholder · 🔲 planned · 💭 idea (not committed)
 Meta-systems detail + rationale: `docs/proposals/2026-07-18-meta-systems-design.md`
@@ -88,19 +88,23 @@ everything untradeable at launch).
   re-renders on every slider move, so it can never contradict the payout — a new optional `QtyText`
   lets a cell show a BAND (`100-300`) instead of `x<qty>`, and Insane adds exactly 2 item cells
   without changing the band. **19/19 live asserts**, on observed transitions.
-  **🟡 P7 DESIGNED, NOT BUILT [AD-Meta] (B22, 2026-08-16)** — the global queue (§11). Taken as a
-  session-task and stopped at the scope gate: matching strangers ACROSS lobby servers breaks the
-  teleport contract's "a match server contains exactly one party", so it is **v3 → v4** work for
-  AD-Integration, not a Lobby session. Design + the exact v4 delta + the three Game-side questions:
-  `docs/proposals/2026-08-16-p7-global-queue.md`. `FindMatchButton` stays "COMING SOON" on purpose.
-  **P1–P7 are now all resolved** (P1–P6 built, P7 designed) — the PlayGUI blueprint is closed out.
+  **✅ P7 BUILT [AD-Integration] (B23, 2026-08-16)** — the global queue (§11) ships on teleport
+  **v4**. B22 designed it and stopped at the scope gate (correctly: matching strangers across lobby
+  servers repeals the contract's "one match server = one party"); B23 executed that design in a
+  both-Places session. New `LaunchService` is the launch body shared by `PartyService` AND
+  `MatchmakingService` — **one path with one more caller, not a second path** (§12); new
+  `MatchmakingRules` holds the pure bucket/pack/elect logic so it is harness-testable.
+  `FindMatchButton` is LIVE. **37 live asserts, 0 failures.** **PlayGUI P1–P7 COMPLETE.**
   Small follow-up: `LobbyFrame.RewardsFrame` still shows nothing (scope, not data).
-- 🟡 **Global matchmaking queue** — §11 shape + the full build design are landed
-  (`docs/proposals/2026-08-16-p7-global-queue.md`, B22); **the BUILD is blocked on teleport contract
-  v4** (both Places, one session) and must not be stacked on the un-republished v3.
-  `FindMatchButton` ships disabled with a visible "COMING SOON" overlay as of P2.
-  Verified at B22: **MemoryStore works from Studio** (no setting to flip); **`ReserveServer` is HTTP
-  403 in Studio**, so the reserved-server handoff can only ever be proven in a live two-client test.
+- ✅ **Global matchmaking queue — BUILT at B23** on teleport v4. MemoryStore sorted map keyed
+  `actId|stageNumber|mode|difficultyBucket`; **a queue entry is a PARTY, never a player** and packing
+  only adds whole entries, so "never split a party" holds by construction; host = lowest userId, so
+  every server elects identically with no round trip; **the match runs at the host's EXACT wire
+  value, never an average**; 45s timeout **OFFERS** solo. `FindMatchButton` is live.
+  🔲 **Still unproven and it needs a LIVE two-client run:** `ReserveServer` is **HTTP 403 in
+  Studio**, so the cross-server handoff can never be shown here, and one Studio client is one server
+  — the claim-then-commit race, the timeout prompt and abandonment cleanup were exercised as code
+  paths only. (MemoryStore itself works from Studio, verified B22.)
 
 - ✅ v1: shared-module deploy + boot (drift-free; profile from PlayerData_Dev)
 - ✅ v1: blockout hub (`Workspace.Lobby`) · ✅ collection screen (read-only, end-to-end)
@@ -148,6 +152,14 @@ everything untradeable at launch).
   (hash `63a0c98a`, drift-green in Game + Lobby). Game A1 2026-08-01, Lobby A2 2026-08-01.
 - ✅ **Teleport v2** (A2, 2026-08-01): `Loadout` carries unit uuids, `PayloadVersion = 2` both
   sides, hard cutover (v1 rejected). Studio-verified; live re-run pending the user's republish.
+- ✅ **Teleport v4** (B23, 2026-08-16): `MatchLaunch` carries `IsMatchmade`, `HostUserId` widens to
+  the ELECTED match host, and **"a match server contains exactly one party" is REPEALED** — P7's
+  queue groups strangers across lobby servers. Hard cutover; v3 is rejected. A survey of the Game
+  found exactly ONE one-party assumption with teeth (game speed + the 3× gate come from the host
+  alone) — **left unchanged on purpose and raised as a user design call**. It also caught a real bug:
+  the in-match economy multiplier counted the payload ROSTER, so a lone survivor of a 4-player launch
+  played at 0.8× cash; it now counts who actually ARRIVED. **USER must republish BOTH Places
+  together — again.**
 - ✅ **Teleport v3** (B20, 2026-08-14): `MatchLaunch` carries `DifficultyMode` ("Normal"/"Insane"),
   `PayloadVersion = 3` both sides + both directions, deployed in ONE session. A HARD bump, not an
   additive field — the Places publish separately, and a Game ignoring an unknown mode while the

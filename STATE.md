@@ -1,5 +1,5 @@
 # STATE — Alamat Defense
-<!-- owner: all | scope: global | last-verified: 2026-08-16 (B22) -->
+<!-- owner: all | scope: global | last-verified: 2026-08-16 (B23) -->
 <!-- SIZE RULE (ADR-0006): ONE file, cap 120 lines. A RESOLVED pending is DELETED (the changelog
      is its record) -- never struck through. Sections that duplicate a canon doc keep a pointer. -->
 
@@ -16,12 +16,10 @@ a shared UI kit, and the gacha banner engine + summon UI.
   **`GetUnitViews` is its SINGLE profile read path** (ADR-0004); **`GrantService` is its SINGLE
   grant/spend path**. Detail: `places/lobby/CONTEXT.md`.
 - **Shared canon** (`shared/manifest.json`, drift-checked by `tools/hash_shared.luau`): **26 entries
-  = 19 modules + 7 templates.** All 26 are PRESENT in the Lobby; the GAME reads 25/26 and that ONE
-  gap is EXPECTED, not drift — `MetaMath` stays Lobby-only until Phase D. **⚠ REAL DRIFT since B22:
-  `ItemCatalog` is `fc4b8023` in the LOBBY (real icon assetids, authored by the USER) and the stale
-  `789dca4b` in the GAME.** The Lobby is the newer side; Integration must copy it across.
-  Templates hash as INSTANCE trees, no `shared/src` file (ADR-0005). `UnitStatsCatalogValidate` is
-  Game-only by design — do not "fix" its absence.
+  = 19 modules + 7 templates.** All 26 PRESENT in the Lobby; the GAME reads 25/26 and that ONE gap is
+  EXPECTED, not drift — `MetaMath` stays Lobby-only until Phase D. **B23 cleared the `ItemCatalog`
+  drift: `fc4b8023` in BOTH Places** (the user's real icon assetids). Templates hash as INSTANCE
+  trees, no `shared/src` file (ADR-0005). `UnitStatsCatalogValidate` is Game-only by design.
 
 **DRIFT RULE (applies to everyone):** editing a shared controller **or a template** in one Place
 only is DRIFT. Change → re-hash → copy to the other Place → update the manifest. Copy templates,
@@ -31,21 +29,10 @@ never rebuild them by hand. Both procedures: `tools/checklists.md`.
 
 Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 
-- **PENDING (USER, BLOCKING + NOW URGENT):** **republish BOTH Places TOGETHER**, then run the
-  **teleport v3 loop live** once. B20 bumped the contract to **v3** and **v2/v3 do not interoperate**
-  — a PARTIAL publish breaks EVERY launch with `[CONTRACT] PayloadVersion mismatch`.
-- **PENDING (AD-Integration, SHARED-CANON DRIFT): copy `ItemCatalog` `fc4b8023` to the GAME.** The
-  user authored real icon assetids in the LOBBY for the five entries that shipped as
-  `rbxassetid://0` (Gold/Silver/BannerTicket/TraitRerollToken/GoldenSeed). B22 recorded the live
-  Lobby bytes into `shared/src` + the manifest (6520 bytes, verified byte-identical) but is
-  Lobby-only, so `deployed.Game` is LEFT stale at `789dca4b` on purpose. Game-side those five icons
-  render blank until this lands. Copy the bytes, re-hash, flip `deployed.Game`.
-- **PENDING (AD-Integration, P7 = the global matchmaking queue): it is a teleport contract v3 → v4
-  change.** Design, the exact v4 delta and the three Game-side questions that gate it:
-  `docs/proposals/2026-08-16-p7-global-queue.md`. The contract states "a match server contains
-  exactly one party" and a queue matches strangers ACROSS lobby servers, so `Players` would be
-  incomplete and the `ReservedServerAccessCode` has nowhere to travel. **Do this AFTER the v3
-  republish, not stacked on it.** `FindMatchButton` stays "COMING SOON" until then — not a bug.
+- **PENDING (USER, BLOCKING + URGENT): republish BOTH Places TOGETHER — AGAIN, for v4.** The user
+  confirmed at B23 that the **v3** republish was done. B23 then bumped the contract to **v4** (P7),
+  so Studio is ahead of live again and **v3/v4 do not interoperate** — a PARTIAL publish breaks EVERY
+  launch with `[CONTRACT] PayloadVersion mismatch`. A live run of the loop is still unconfirmed.
 - **PENDING (AD-Game/AD-Integration, BLOCKS the Selection banner): add `BannerChoices` to the save
   schema** (v2→v3, additive-optional = Reconcile + bump + no-op `Migrations[2]`), **BOTH Places in
   ONE session** (invariant 5). Plan + the rejected `Counters.Global` shortcut:
@@ -56,6 +43,12 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   `LoadoutChanged` listener in `HotbarController` · **B11** equip colours + one-per-family client
   guard, `AscensionPanel` out of `SelectedUnitFrame` (ADR-0010). **Quests/login/codes still need a
   NEW reveal answer** — the return-value trick only serves player-INITIATED grants.
+- **PENDING (USER, design call — surfaced by B23's v4 survey): GAME SPEED IN A MATCHMADE MATCH.**
+  Speed is match-wide and BOTH the authority to change it and the 3× gamepass entitlement come from
+  the host alone. Matchmade, that host is an **elected stranger** (lowest userId), so a stranger's
+  purchase decides whether everyone gets 3× and a stranger holds the control. B23 changed NOTHING
+  here deliberately and logs `[CONTRACT] MATCHMADE match: speed authority ...` so it is visible.
+  Options: leave as-is · disable 3× when matchmade · per-player speed. Your call.
 - **PENDING (USER, balance):** `StartingLives` is **3 / 15 / 10** across Acts 1–3 while
   `BaseHealthScale` climbs 1.0/1.6/2.4. Act 1's `3` looks like a leftover test value. P5 fixed only
   Act 2's false comment; changing numbers is a design call.
@@ -91,10 +84,11 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 - **Save schema v2** — `shared/src/ProfileTemplate.luau`, hash `63a0c98a`, deployed + drift-green
   in BOTH Places. Store `Beta1_PlayerData` (Studio: `Beta1_PlayerDataDev1`, API access ON).
   `Migrations[1]` v1→v2 re-verified live at A7 on a real ProfileStore round trip.
-- **Teleport payload v3** (B20, 2026-08-14) — `docs/contracts/teleport.md`. Both sides + both
-  directions, deployed in ONE session. v3 adds `DifficultyMode` ("Normal"/"Insane"), which is what
-  makes P5's Insane rewards reachable. Hard cutover, no migration; **v2 is REJECTED**.
-  `LobbyConfig.MatchLaunchVersion` must ALWAYS equal `GameConfig.TeleportPayloadVersion`.
+- **Teleport payload v4** (B23, 2026-08-16) — `docs/contracts/teleport.md`. Both sides + both
+  directions, deployed in ONE session. v4 adds `IsMatchmade`, widens `HostUserId` to the ELECTED
+  match host, and **REPEALS "a match server contains exactly one party"** (P7's queue groups
+  strangers across lobby servers). v3 added `DifficultyMode`. Hard cutover, no migration; **v3 is
+  REJECTED**. `LobbyConfig.MatchLaunchVersion` must ALWAYS equal `GameConfig.TeleportPayloadVersion`.
   Live e2e re-verification is still open (USER).
 
 ## Next up
@@ -104,15 +98,17 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 **LABEL COLLISION:** changelog `B0…B13` are SESSION COUNTERS; blueprint `B1…B5` are SESSION-TASK
 names. Different sequences, same letters. PlayGUI uses `P1…P7` to avoid a third collision.
 
-1. **USER** — republish both Places TOGETHER (v3 is a hard cutover), then run the loop live once.
+1. **USER** — republish both Places TOGETHER (v4 is a hard cutover), then run the loop live once.
 2. **PLAYGUI (user priority 2026-08-09)** — `docs/blueprints/playgui.md` is LAW. **P1–P6 ✅ DONE**
    (B14–B19); detail in the blueprint's §9 and `docs/systems/play-menu.md`. The ADR-0011 remap is
    isolated in `PlayGUI.DifficultyScale` — **the ONE conversion; never write a second.**
    **B20 did the Integration half** (curve copied here; teleport v3 = Insane is live-reachable) and
    **B21 closed both AD-UI items**: `OpenStageSelect` has a shipping-path listener again (CONTINUE
    works) and the reward preview reads `RewardScalingConfig.GoldBand` and TRACKS the slider.
-   **P7 [AD-Meta] is DESIGNED, NOT BUILT (B22)** — the global queue is contract v4 work for
-   AD-Integration (PENDING above). **NEXT = the five-item AD-UI review backlog**, or Integration.
+   **P7 ✅ BUILT at B23** — the global queue ships on teleport v4: `MatchmakingService` +
+   `MatchmakingRules` + a `LaunchService` both launch callers share, `FindMatchButton` live.
+   **PlayGUI P1–P7 are COMPLETE.** **NEXT = the five-item AD-UI review backlog**, or a live
+   two-client queue test once the user republishes.
 3. **Phase B** (`phases-b-f-meta.md`). Landed B0–B8; Selection ⛔ on the `BannerChoices` schema
    PENDING above. **Phase C (B9): C3 ascension ✅**; **B11 moved it to an NPC screen (ADR-0010) —
    C1/C2/C4 copy that shape.** C1+C2 (AD-Traits) and C3's sell-dupes half are UNBLOCKED by B12;
