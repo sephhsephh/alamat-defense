@@ -229,7 +229,12 @@ local MODULES = {
 -- reports MISSING.
 local TEMPLATES = {
 	Kit_Button = "ReplicatedStorage.UITemplates.Kit.Button",
-	Kit_ItemIcon = "ReplicatedStorage.UITemplates.Kit.ItemIcon",
+	-- V2 ADOPTION (B26, 2026-08-16): the user's V2 templates REPLACED the v1 trio outright.
+	-- Kit_UnitIcon / Kit_ItemIcon / Kit_HotbarSlot are RETIRED -- deleted in BOTH Places and dropped
+	-- from the manifest, the same way the RewardPopup pair went at B2. Do NOT re-add them.
+	-- Rarity is painted on each V2 root's UIGradient and there is NO tier border (user decision,
+	-- B25); UIHoverStroke is hover-only. See docs/systems/ui-kit.md.
+	Kit_ItemIconV2 = "ReplicatedStorage.UITemplates.Kit.ItemIconV2",
 	Kit_ItemHoverCard = "ReplicatedStorage.UITemplates.Kit.ItemHoverCard",
 	Kit_FilterPanel = "ReplicatedStorage.UITemplates.Kit.FilterPanel",
 	Kit_UnitPreviewTemplate = "ReplicatedStorage.UITemplates.Kit.UnitPreviewTemplate",
@@ -237,11 +242,11 @@ local TEMPLATES = {
 	-- RENAMED and formalised as the blueprint section 5 UnitIcon and now actually used --
 	-- it is the Game hotbar's slot. Built by an IDENTICAL deterministic script in both Places
 	-- and hash-matched, rather than copied.
-	Kit_UnitIcon = "ReplicatedStorage.UITemplates.Kit.UnitIcon",
+	Kit_UnitIconV2 = "ReplicatedStorage.UITemplates.Kit.UnitIconV2",
 	-- Kit_RewardPopup RETIRED 2026-08-08 (B2) alongside its controller -- see the MODULES note above.
 	-- The USER'S OWN hotbar slot design, lifted from the Lobby (their design is the source of
 	-- truth) so BOTH Places draw the identical slot. Game deploy PENDING until it is copied.
-	Kit_HotbarSlot = "ReplicatedStorage.UITemplates.Kit.HotbarSlot",
+	Kit_HotbarSlotV2 = "ReplicatedStorage.UITemplates.Kit.HotbarSlotV2",
 }
 
 local out = {}

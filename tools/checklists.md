@@ -63,9 +63,15 @@ text file the way a module can — `shared/src/` holds no copy of them. The Inst
 canon, and the hash is what makes copying it verifiable.
 
 1. In the SOURCE Place, run `tools/hash_shared.luau` and note the template's hash (trailing `*`).
-2. Copy the Instance into the TARGET Place (Studio copy/paste, or `:Clone()` + reparent via
-   execute_luau in the Edit datamodel). Never rebuild it by hand — that is the divergence this
-   mechanism exists to catch.
+2. **ASK THE USER TO COPY IT. THIS STEP IS A *USER* ACTION, NOT A TOOL ACTION.** An assistant
+   cannot copy an Instance from one Place into another: `execute_luau` is scoped to ONE datamodel,
+   so `:Clone()` + reparent works *within* a Place and cannot cross Places at all. **PAUSE, tell the
+   user the exact source path, the exact destination path and the hash to expect, and wait.** (User
+   rule, B26 2026-08-16, stated verbatim: *"if you want to copy the v2 ui kits on game place, tell
+   it to me, dont try to copy it ... pause, ask me to copy paste it to other place then ill tell you
+   to continue."*) Never rebuild it by hand — that is the divergence this mechanism exists to catch.
+   The one assistant-side alternative is an IDENTICAL DETERMINISTIC BUILD SCRIPT run in both Places
+   and hash-matched (used once, for `Kit_UnitIcon`); it is strictly harder to get right than asking.
 3. Run the tool in the TARGET Place. The hash MUST equal the source's, exactly.
 4. Update `shared/manifest.json` → that template's `deployed.<Place>`.
 5. If the hashes differ, do NOT "fix it up" by eye: re-copy. A mismatch means the trees really

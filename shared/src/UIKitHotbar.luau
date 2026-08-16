@@ -39,8 +39,8 @@ local Button = require(RS:WaitForChild("Shared"):WaitForChild("UIKit"):WaitForCh
 local Hotbar = {}
 
 local TEMPLATE_PATHS = {
-	{ "ReplicatedStorage", "UITemplates", "Kit", "HotbarSlot" },
-	{ "ReplicatedStorage", "Shared", "UIKit", "Templates", "HotbarSlot" },
+	{ "ReplicatedStorage", "UITemplates", "Kit", "HotbarSlotV2" },
+	{ "ReplicatedStorage", "Shared", "UIKit", "Templates", "HotbarSlotV2" },
 }
 
 -- Hover preview. Uses the SHARED `Kit.UnitPreviewTemplate`, so both Places pop the same card and
@@ -229,8 +229,16 @@ function Hotbar.attach(container: GuiObject, opts: { [string]: any })
 
 		local vf = btn:FindFirstChildWhichIsA("ViewportFrame", true)
 		local trait = btn:FindFirstChild("TraitIcon", true)
-		local stroke = btn:FindFirstChild("UIStrokeWithGradient", true)
-		local bg = btn:FindFirstChild("BG", true)
+		-- ===== V2 KIT (B26): ONE PAINT SURFACE, NOT TWO. =====
+		-- v1 painted a BORDER (`UIStrokeWithGradient`'s gradient) AND a BACKGROUND (`BG`'s own
+		-- gradient) and the comment below used to warn at length about keeping them apart. **In V2
+		-- neither instance exists** -- there is one gradient, on the slot's ROOT. User decision, B25:
+		-- the tier border is dropped. That deletes the whole two-gradient hazard rather than
+		-- re-creating it, so do NOT reintroduce a second surface.
+		--
+		-- DIRECT-CHILDREN-ONLY is still load-bearing: V2 nests UIGradients under `UnitLevel`,
+		-- `PlacementPrice` and `TraitIcon`, and a recursive find would tint one of those instead.
+		local rootGrad = btn:FindFirstChildOfClass("UIGradient")
 
 		local towerId = entry and entry.TowerId or nil
 		if vf then showModel(vf, opts.ModelSource, unlocked and towerId or nil) end
@@ -245,24 +253,41 @@ function Hotbar.attach(container: GuiObject, opts: { [string]: any })
 			and TierConfig.seamlessSequence(entry.Tier or ItemCatalog.GetTier(entry.TowerId))
 			or nil
 
-		-- BORDER (the stroke's gradient).
-		if stroke and stroke:IsA("UIStroke") then
-			local g = stroke:FindFirstChildOfClass("UIGradient")
-			if not g then g = Instance.new("UIGradient"); g.Parent = stroke end
-			g.Color = tierSeq or ColorSequence.new(Color3.fromRGB(90, 84, 104))
+		-- THE slot colour. Empty/locked slots fall back to the neutral grey v1 used for its
+		-- background, so an empty slot still reads as empty rather than inheriting a stale tier.
+		if rootGrad then
+			rootGrad.Color = tierSeq or ColorSequence.new(Color3.fromRGB(70, 66, 82))
 		end
 
-		-- BACKGROUND (BG's OWN gradient). This is a DIFFERENT UIGradient from the stroke's, and
-		-- forgetting it is why the slot background sat at the template's authored colour (a red)
-		-- no matter which unit was in it. FindFirstChildOfClass on BG returns BG's own gradient,
-		-- NOT the one nested under BG.UIStrokeWithGradient -- do not "simplify" this to a
-		-- recursive find or the border and background will fight over the same instance.
-		if bg then
-			local bgGrad = bg:FindFirstChildOfClass("UIGradient")
-			if bgGrad then
-				bgGrad.Color = tierSeq or ColorSequence.new(Color3.fromRGB(70, 66, 82))
-			end
+		-- V2-only fields.
+		-- `UnitLevel` renders ONLY when the entry actually carries a level. The Game and the Lobby
+		-- build entries from different sources (validated LoadoutEntry vs `GetUnitViews`), so this
+		-- reads whichever field is present and HIDES rather than printing a 0 for a unit whose level
+		-- this Place does not know. A zero is a claim; a hidden label is not.
+		local levelFrame = btn:FindFirstChild("UnitLevel", true)
+		if levelFrame and levelFrame:IsA("GuiObject") then
+			local lvl = entry and (entry.MetaLevel or entry.Level) or nil
+			levelFrame.Visible = (lvl ~= nil) and unlocked
+			-- SEARCH FROM THE SLOT ROOT, NOT FROM `levelFrame`. `setText` does
+			-- `root:FindFirstChild(name, true)`, which walks DESCENDANTS ONLY and never matches `root`
+			-- itself -- so `setText(levelFrame, levelFrame.Name, ...)` found nothing and silently left the
+			-- template's authored placeholder ("LVL 100") on screen for every unit. Caught by the B26
+			-- acceptance run, which printed "LVL 100" for an entry whose MetaLevel was 7.
+			if lvl ~= nil then setText(btn, "UnitLevel", "LVL " .. tostring(lvl)) end
 		end
+
+		-- HIDDEN FOR LACK OF A DATA SOURCE (B24 audit): placement cost lives in the GAME's tower
+		-- configs, which the Lobby does not have, and this is a SHARED controller -- so it stays
+		-- hidden in both Places until the AD-Game proposal lands. Never invent a price.
+		local price = btn:FindFirstChild("PlacementPrice", true)
+		if price and price:IsA("GuiObject") then price.Visible = false end
+
+		-- `Placed/MaxPlacement` is a MATCH-RUNTIME count (how many of this unit are on the board).
+		-- The Game HAS that data (`PlacementCountsChanged`), the Lobby never will -- but nothing
+		-- feeds it here yet, so it stays hidden in both rather than showing a fake "0/4".
+		-- NOTE the "/" in the instance name: it needs FindFirstChild, never dot notation.
+		local placed = btn:FindFirstChild("Placed/MaxPlacement", true)
+		if placed and placed:IsA("GuiObject") then placed.Visible = false end
 	end
 
 	local function activate(i: number)

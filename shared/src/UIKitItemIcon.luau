@@ -30,8 +30,8 @@ local TierConfig = require(meta:WaitForChild("TierConfig"))
 local ItemIcon = {}
 
 local TEMPLATE_PATHS = {
-	{ "ReplicatedStorage", "UITemplates", "Kit", "ItemIcon" },
-	{ "ReplicatedStorage", "Shared", "UIKit", "Templates", "ItemIcon" },
+	{ "ReplicatedStorage", "UITemplates", "Kit", "ItemIconV2" },
+	{ "ReplicatedStorage", "Shared", "UIKit", "Templates", "ItemIconV2" },
 }
 
 -- Icon assetids in the catalog are still placeholders ("rbxassetid://0"). Fall back to the
@@ -95,28 +95,41 @@ function ItemIcon.attach(card: GuiButton, itemId: string, qty: number?)
 	local tier = ItemCatalog.GetTier(itemId)
 
 	local main = card:FindFirstChild("Main")
-	local bg = main and main:FindFirstChild("BG")
-	local bgGrad = bg and bg:FindFirstChildOfClass("UIGradient")
-	local stroke = card:FindFirstChild("UIStrokeWithGradient", true)
-	local image = card:FindFirstChild("IconImage", true)
-	local badge = card:FindFirstChild("QtyBadge", true)
+	-- ===== V2 KIT (B26) =====
+	-- RARITY LIVES ON THE ROOT `UIGradient`, AND THERE IS NO TIER BORDER.
+	-- v1 painted two surfaces -- `Main.BG`'s gradient (fill) and `UIStrokeWithGradient` (border).
+	-- NEITHER exists in `ItemIconV2`. User decision, B25: one paint surface, one call site.
+	-- **Do not re-add a tier stroke** (its absence is a deliberate, accepted restyle) and **do not
+	-- write a second gradient animator** -- `animateGradient` below is the seamless one every screen
+	-- already shares.
+	--
+	-- `FindFirstChildOfClass` on the CARD is DIRECT-CHILDREN-ONLY and that is LOAD-BEARING: V2 nests
+	-- UIGradients inside `Main.Amount`, and a recursive search would animate the quantity badge
+	-- instead of the card.
+	local rootGrad = card:FindFirstChildOfClass("UIGradient")
+	-- `UIHoverStroke` ships authored `Enabled = false` and is HOVER ONLY -- it is not a tier border.
+	local stroke = card:FindFirstChild("UIHoverStroke")
+	local image = card:FindFirstChild("ItemIcon", true)
+	local badge = card:FindFirstChild("Amount", true)
 	local badgeText = badge and badge:FindFirstChildWhichIsA("TextLabel")
+	local nameLabel = card:FindFirstChild("ItemName", true)
 
 	if image and image:IsA("ImageLabel") then
 		image.Image = ItemIcon.ImageFor(itemId)
 	end
+	-- V2 shows the item's NAME on the card; v1 had nowhere to put it.
+	if nameLabel and nameLabel:IsA("TextLabel") then
+		nameLabel.Text = ItemCatalog.GetName(itemId)
+	end
 
-	-- Tier paint: BG gradient + border stroke, seamless multi-colour (rainbow Mythic etc).
+	-- Tier paint: the ROOT gradient, seamless multi-colour (rainbow Mythic etc).
 	local gradTweens: { Tween } = {}
-	if bgGrad then
-		bgGrad.Color = TierConfig.seamlessSequence(tier)
-		table.insert(gradTweens, animateGradient(bgGrad, 3))
+	if rootGrad then
+		rootGrad.Color = TierConfig.seamlessSequence(tier)
+		table.insert(gradTweens, animateGradient(rootGrad, 3))
 	end
 	if stroke and stroke:IsA("UIStroke") then
-		stroke.Enabled = true
-		stroke.Transparency = 0
-		strokeGradient(stroke).Color = TierConfig.seamlessSequence(tier)
-		table.insert(gradTweens, animateGradient(strokeGradient(stroke), 3))
+		stroke.Enabled = false -- authored state; hover is what turns it on
 	end
 
 	local scaleObj: UIScale? = nil
@@ -140,10 +153,11 @@ function ItemIcon.attach(card: GuiButton, itemId: string, qty: number?)
 		TweenService:Create(scaleObj, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 			{ Scale = target }):Play()
 	end
+	-- V2: hover TOGGLES the authored `UIHoverStroke` instead of recolouring a tier border (there is
+	-- no tier border any more). Same trigger points, same feel, one instance.
 	local function paintStroke()
 		if not (stroke and stroke:IsA("UIStroke")) then return end
-		strokeGradient(stroke).Color = (hovering or selected) and WHITE_SEQ
-			or TierConfig.seamlessSequence(tier)
+		stroke.Enabled = hovering or selected
 	end
 
 	local function bind(sig: RBXScriptSignal, fn: (...any) -> ())

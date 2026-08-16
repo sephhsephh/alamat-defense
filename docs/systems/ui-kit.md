@@ -30,7 +30,7 @@ run in both Places — **never rebuilt by hand or by eye**.
 | --- | --- | --- |
 | `UIKitButton` | `Shared.UIKit.Button` | ONE behaviour controller for every GuiButton: hover scale-from-centre + stroke thicken or `HoverStrokeColor`, icon rotate, press animation, seamless animated gradient. Entirely attribute-driven. |
 | `UIKitBootstrap` | `StarterPlayerScripts.UIKitBootstrap` | LocalScript (hashed as source). Attaches `UIKit.Button` to every instance tagged **`UIKitButton`**, including clones added later. Without it in a Place, tagged buttons are inert. |
-| `UIKitItemIcon` | `Shared.UIKit.ItemIcon` | Item card. Flat `IconImage` ImageLabel — **no ViewportFrame, items have no model** — `QtyBadge` that hides at qty 0, tier border/BG from the shared `TierConfig`. |
+| `UIKitItemIcon` | `Shared.UIKit.ItemIcon` | Item card on `Kit.ItemIconV2` (B26). Flat `ItemIcon` ImageLabel — **no ViewportFrame, items have no model** — `Amount` badge that hides at qty 0, `ItemName`, rarity on the ROOT `UIGradient` from the shared `TierConfig`. |
 | `UIKitFilterPanel` | `Shared.UIKit.FilterPanel` | Reusable filter panel. Clones `GroupTemplate`/`ToggleTemplate`; Apply commits pending→applied, Cancel reverts, Reset clears. `handle.selected(groupId)` returns nil when a group is unconstrained, so "no filters" means "show everything". |
 | `UIKitHotbar` | `Shared.UIKit.Hotbar` | ONE hotbar for BOTH Places. See below. |
 
@@ -40,8 +40,8 @@ Attribute vocabulary for `UIKitButton`: `HoverScale`, `HoverStrokeMult`, `HoverS
 
 ## Templates (`RS.UITemplates.Kit`) — 7 manifest entries
 
-`Button`, `ItemIcon`, `ItemHoverCard`, `FilterPanel`, `UnitPreviewTemplate`, `UnitIcon`,
-`HotbarSlot`.
+`Button`, `ItemIconV2`, `ItemHoverCard`, `FilterPanel`, `UnitPreviewTemplate`, `UnitIconV2`,
+`HotbarSlotV2` (the v1 trio was RETIRED at B26 — see the V2 section below).
 
 ## RETIRED (2026-08-08, B2) — `UIKitRewardPopup` + `Kit_RewardPopup`
 
@@ -119,7 +119,7 @@ ViewportFrame **3D contents are deliberately not hashed** (ADR-0005) — they ar
 by AD-TowerModels and swapped at runtime, so including them would trip UI drift on every unrelated
 rig change. The ViewportFrame's own properties ARE hashed.
 
-## The shared hotbar (`UIKitHotbar` + `Kit_HotbarSlot`)
+## The shared hotbar (`UIKitHotbar` + `Kit_HotbarSlotV2`)
 
 One component, both Places, so they look and feel identical: same slot design, hover, press
 animation and locked/empty states. **A Place supplies only `OnActivated`.**
@@ -130,15 +130,20 @@ animation and locked/empty states. **A Place supplies only `OnActivated`.**
 - **Game** click → starts **placement**.
 
 Always draws `LoadoutConfig.MaxSlots` (6) slots; a slot is never hidden, only **filled** (model in
-viewport, tier border, trait dot) / **empty** (viewport cleared, per-unit details hidden — never
+viewport, tier colour, trait dot) / **empty** (viewport cleared, per-unit details hidden — never
 left showing stale data) / **locked** (dark overlay + lock + "Lv N", `Active=false`, genuinely
-unclickable).
+unclickable). `SlotNumber` carries the 1–6 key number in both Places.
 
-- **Tier painting:** a slot has **TWO different `UIGradient` instances** — `BG.UIGradient` (the
-  background) and `BG.UIStrokeWithGradient.UIGradient` (the border). Both are driven from one
-  `tierSeq`. The lookup uses `BG:FindFirstChildOfClass("UIGradient")`, **not** a recursive find,
-  which would return the stroke's gradient and make the two fight over one instance. Do not
-  "simplify" this. Empty/locked slots get neutral grey `(70,66,82)`.
+- **Tier painting (B26): ONE gradient, on the slot ROOT.** v1 had **two** — `BG.UIGradient` (fill)
+  and `BG.UIStrokeWithGradient.UIGradient` (border) — and a long warning about keeping them apart.
+  `HotbarSlotV2` has neither instance, so the whole hazard is **deleted, not re-created**: do not
+  reintroduce a second paint surface. The lookup is `btn:FindFirstChildOfClass("UIGradient")` and
+  **direct-children-only is still load-bearing** — V2 nests gradients under `UnitLevel`,
+  `PlacementPrice` and `TraitIcon`. Empty/locked slots get neutral grey `(70,66,82)`.
+- **`UnitLevel` shows only when the entry carries `MetaLevel` or `Level`, and HIDES otherwise** — the
+  Game and Lobby build entries from different sources and a zero would be a claim. Write it as
+  `setText(btn, "UnitLevel", …)` from the **slot root**: see the `setText` trap below.
+  `PlacementPrice` and `Placed/MaxPlacement` are present-but-HIDDEN — nothing feeds either yet.
 - **Locks are a LOBBY concern; the Game shows none.** You equip in the Lobby, and the Game has no
   `PlayerLevel` to hand (`LoadoutAssigned` carries TowerId/MetaLevel/Trait only). In-match, slots
   the player did not bring render **EMPTY, not LOCKED**. Real in-match locks would need AD-Game to
@@ -150,7 +155,8 @@ unclickable).
   blanking them.
 - **UNVERIFIED (carried forward):** the hover *trigger* itself. `MouseEnter` cannot be fired from
   tooling and `VirtualInputManager` is blocked, so "the card appears on a real hover" remains
-  code-inspection-only in BOTH Places. One manual hover in each Place closes this.
+  code-inspection-only in BOTH Places. One manual hover in each Place closes this. B26 did prove the
+  *effect*: `paintStroke()` toggles `UIHoverStroke`, and the stroke is authored off at rest.
 
 ## Configs the kit depends on (all shared canon)
 
@@ -160,45 +166,75 @@ a grantable's Name/Tier/Icon), `StatGradeConfig` (roll 0..1 → D..Apex), `Ascen
 `LoadoutConfig` (`MaxSlots = 6`, `SlotUnlockLevel = {1,1,1,5,20,50}` — shared because if only one
 Place knew, the two hotbars would disagree).
 
-## The V2 templates — authored, audited, NOT yet adopted (B24 + B25)
+## The V2 templates — **ADOPTED IN BOTH PLACES, v1 RETIRED (B26, 2026-08-16)**
 
-`Kit.{UnitIconV2, ItemIconV2, HotbarSlotV2}` are the USER's own redesigns. **They sit BESIDE the v1
-templates as pure ADDITIONS**, which is exactly why drift reads green with them present: nothing
-consumes them and no v1 hash moved. They are **not** in `shared/manifest.json` and are **Lobby-only**
-— the Game has the 7 v1 templates and nothing else.
+`Kit.{UnitIconV2, ItemIconV2, HotbarSlotV2}` are the USER's own redesigns and are now the **only**
+unit/item/slot templates. `Kit_UnitIcon` / `Kit_ItemIcon` / `Kit_HotbarSlot` were **deleted in both
+Places and dropped from `shared/manifest.json` + `tools/hash_shared.luau`** — the same retirement the
+RewardPopup pair got at B2. **Do not re-add them.** Both Kits hold 7 children; the manifest is still
+26 entries. Hashes: `UnitIconV2 8e6ab2ad`, `ItemIconV2 0b8cb83d`, `HotbarSlotV2 41c3c9e3`.
 
 **Shared V2 structure:** root `ImageButton` + `UIGradient` + `UICorner` + `UIHoverStroke` (a UIStroke
-authored `Enabled = false`, meant to be driven from MouseEnter/MouseLeave) + `Main`.
+authored `Enabled = false`, driven from MouseEnter/MouseLeave) + `Main`.
 
-**✅ DECIDED BY THE USER AT B25 — rarity colour goes on the ROOT `UIGradient`, and the tier BORDER is
-dropped.** v1 paints tier onto TWO instances (`BG`'s gradient = fill, `UIStrokeWithGradient` =
-border); **neither exists in V2**, and `UIHoverStroke` is reserved for hover. One paint surface, one
-call site, `TierConfig.seamlessSequence` as always — **do not write a second gradient animator**, and
-do not "restore" a tier border: its absence is an accepted, deliberate restyle.
+**RARITY IS PAINTED ON THE ROOT `UIGradient` AND THERE IS NO TIER BORDER** (user decision, B25). v1
+painted TWO instances — `BG`'s gradient (fill) and `UIStrokeWithGradient` (border) — and carried a
+long comment warning not to confuse them. **Neither instance exists in V2**, so that hazard is
+deleted rather than re-created: one paint surface, one call site, `TierConfig.seamlessSequence` as
+always. Do not write a second gradient animator, and do not "restore" a tier border.
 
-**⛔ ADOPTION IS BLOCKED ON THREE INSTANCES THE USER MUST AUTHOR** (B25 audited every consumer and
-stopped rather than half-migrate):
+**`FindFirstChildOfClass` on the ROOT is load-bearing, and it is DIRECT-CHILDREN-ONLY.** V2 nests
+`UIGradient`s under `UnitLevel`, `PlacementPrice`, `TraitIcon` and `Amount`. A recursive find
+repaints the badge instead of the card. Every consumer looks the root gradient up this way.
 
-| Template | Missing | Who needs it |
+### Three instances the USER authored at B26, and what each unbroke
+
+| Template | Authored | Why |
 | --- | --- | --- |
-| `HotbarSlotV2` | `SlotNumber` | the SHARED `UIKit.Hotbar` — `setText(btn,"SlotNumber",i)`, **BOTH Places** |
-| `UnitIconV2` | `CountLabel` | `IndexController`'s owned-count |
-| `ItemIconV2` | `UIAspectRatioConstraint` | `ObtainRewardsController` — documented as why art is not stretched |
+| `HotbarSlotV2` | `SlotNumber` (TextLabel) | the SHARED `UIKit.Hotbar` does `setText(btn,"SlotNumber",i)` — without it every slot loses its 1–6 key number in **BOTH** Places |
+| `UnitIconV2` | `CountLabel` **as a TextLabel** | v1's was a **Frame** while `IndexController` guards `IsA("TextLabel")` — the index owned-count had **never rendered once**. The branch is live for the first time |
+| `ItemIconV2` | `UIAspectRatioConstraint` (1 / FitWithinMaxSize / Width) | `ObtainRewardsController` documents it twice as why reward art is not stretched in the 150×150 grid |
 
-Full gap table, the rename map (`CostLabel`→`PlacementPrice`, `LevelBadge`→`UnitLevel`,
-`IconImage`→`ItemIcon`, `QtyBadge`→`Amount`; `ShinyBadge` has no consumer and is droppable) and the
-build order: **`docs/proposals/2026-08-16-v2-kit-adoption-gaps.md`**.
+**Copying a template into the other Place is a USER action**, not a tool action — `execute_luau` is
+scoped to one datamodel. Pause, give the exact paths and the expected hash, wait, then verify by
+hash. (User rule, B26.) Procedure: `tools/checklists.md` step 2.
 
-**Three fields have NO DATA SOURCE and must render HIDDEN, never invented:** `PlacementPrice` and
+### The rename map (applied everywhere)
+
+`NameLabel`→`UnitName`, `LevelBadge`→`UnitLevel`, `CostLabel`→`PlacementPrice`,
+`IconImage`→`ItemIcon`, `QtyBadge`→`Amount`. `ItemIconV2` adds an `ItemName` label v1 had nowhere
+to put. **`ShinyBadge` is GONE** — `AscensionController` drove it from `view.Shiny`, so **shiny is no
+longer marked on an ascension card**: an accepted, recorded regression, not an oversight.
+
+### ⚠ `setText(root, name, …)` NEVER MATCHES `root` ITSELF
+
+It does `root:FindFirstChild(name, true)`, which walks **descendants only**. `UIKit.Hotbar` wrote the
+level as `setText(levelFrame, levelFrame.Name, …)`, found nothing, returned silently, and left
+`HotbarSlotV2`'s authored placeholder **`"LVL 100"` on screen for every unit in both Places**. Always
+pass the SLOT ROOT: `setText(btn, "UnitLevel", …)`. Two lessons worth keeping: an assertion that
+checked only `.Visible` passed the bug — **print the TEXT** — and it was invisible in the Game, whose
+dev seed genuinely runs three units at MetaLevel 100, identical to the placeholder.
+
+**Three fields have NO DATA SOURCE and render HIDDEN, never invented:** `PlacementPrice` and
 `ElementIcons` (proposal `2026-08-16-tower-display-fields-for-uniticon-v2.md`) and `TraitIcon`
-(`2026-08-16-trait-icons.md`). `HotbarSlotV2.Placed/MaxPlacement` is a MATCH-runtime number — Game
-only, hidden in the Lobby (its name contains a `/`, so it needs `FindFirstChild`, not dot notation).
+(`2026-08-16-trait-icons.md`). `HotbarSlotV2.Placed/MaxPlacement` is a MATCH-runtime number that
+nothing feeds yet, hidden in both (its name contains a `/`, so it needs `FindFirstChild`, never dot
+notation). `UnitLevel` shows **only** when the entry carries `MetaLevel` or `Level`; a zero is a claim.
 
-**`Kit.UnitIcon` has THREE consumers, not two** — `SummonController` (featured chips),
-`IndexController` (codex entries) and **`AscensionController`** (the dupe-picker grid). `Kit.ItemIcon`
-has two: the `UIKit.ItemIcon` controller and `ObtainRewardsController`, which clones the master
-directly. `Kit.HotbarSlot` has one, the shared `UIKit.Hotbar` — **and that is what makes adoption
-cross-Place.**
+### Consumers (six, and one is cross-Place)
+
+`UnitIconV2` has **THREE**: `SummonController` (featured chips), `IndexController` (codex entries)
+and `AscensionController` (dupe picker). `ItemIconV2` has **two**: the shared `UIKit.ItemIcon`
+controller and `ObtainRewardsController`, which clones the master directly — **its `paintTier`
+deliberately handles BOTH shapes**, because it also paints the user's Lobby-local `UnitTemplate`,
+which is still v1-shaped and was not migrated. `HotbarSlotV2` has **one**, the shared `UIKit.Hotbar`
+— **and that one is what made this adoption cross-Place.**
+
+**Hover: what is actually proven.** `MouseEnter` cannot be fired from tooling. B26 proved that
+`paintStroke()` — the function both `MouseEnter` and `MouseLeave` call — toggles `UIHoverStroke` on
+and off, and that the stroke is authored `Enabled = false` at rest. In the live Items grid exactly
+one card had it on, and that was the **selected** card (`paintStroke` is `hovering or selected`).
+The engine-side trigger remains on an open PENDING.
 
 ## Rules that keep the kit healthy
 

@@ -1,5 +1,92 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-16 [both] B26 — AD-Integration: **the V2 kit is ADOPTED in BOTH Places and v1 is RETIRED.** Six consumers migrated, three instances authored, one placeholder-as-truth bug caught by the acceptance run.
+
+B25 stopped at the gate with three missing instances and one design question. The user answered
+both — **rarity on the root `UIGradient`, no tier border** (B25) and **"yes, I author them"** (B26) —
+so this session did the whole adoption end to end.
+
+### The user copied the templates; the assistant could not
+
+**USER RULE, stated verbatim this session:** *"if you want to copy the v2 ui kits on game place,
+tell it to me, dont try to copy it because afaik you cant copy paste an instance to another place,
+pause, ask me to copy paste it to other place then ill tell you to continue."* The rule is correct
+and is now written into `tools/checklists.md` step 2, which previously said "Studio copy/paste"
+without saying **who**. `execute_luau` is scoped to one datamodel; nothing an assistant can call
+crosses Places. The session paused, published the exact paths + expected hashes, waited, and then
+verified the paste **byte-for-byte by hash** rather than by eye.
+
+### Three instances authored (user-delegated), each fixing something that was silently broken
+
+- **`SlotNumber`** on `HotbarSlotV2` — `UIKit.Hotbar` does `setText(btn, "SlotNumber", i)`. Without
+  it every slot loses its 1–6 key number **in both Places**.
+- **`CountLabel`** on `UnitIconV2`, as a real **TextLabel**. v1's was a **Frame**, while
+  `IndexController` guards on `IsA("TextLabel")` — so the index owned-count had **never rendered
+  once**. The acceptance run proved the branch is now live: 7 index cells had their text
+  overwritten (authored placeholder `x1` → written `x0`), which a Frame could never have done.
+- **`UIAspectRatioConstraint`** on `ItemIconV2` (1 / FitWithinMaxSize / Width) — `ObtainRewards`
+  documents it twice as the reason reward art is not stretched in the 150×150 grid.
+
+### Migrated
+
+`UIKit.ItemIcon` and `UIKit.Hotbar` (shared, written into BOTH Places, verified byte-identical),
+`SummonController`, `IndexController`, `AscensionController`, `ObtainRewardsController`.
+The three screen controllers shared an identical `paintTier`; it is now `paintTier` +
+`wireHover` in each. Renames applied: `NameLabel`→`UnitName`, `LevelBadge`→`UnitLevel`,
+`CostLabel`→`PlacementPrice`, `IconImage`→`ItemIcon`, `QtyBadge`→`Amount`.
+`ObtainRewardsController`'s `paintTier` deliberately handles **both** shapes, because it also paints
+the user's Lobby-local `UnitTemplate`, which is still v1-shaped and was not part of this migration.
+
+**Two paint surfaces collapsed to one.** v1 painted a border (`UIStrokeWithGradient`) *and* a
+background (`BG`'s own gradient) and carried a long comment warning not to confuse them. Neither
+instance exists in V2, so the hazard is **deleted, not re-created**. `UIHoverStroke` is hover-only.
+`FindFirstChildOfClass` on the ROOT is load-bearing everywhere: V2 nests `UIGradient`s under
+`UnitLevel` / `PlacementPrice` / `TraitIcon`, and a recursive find repaints the wrong one.
+
+**Nothing was invented.** `PlacementPrice`, `ElementIcons` and `TraitIcon` render **HIDDEN** — they
+have no data source (the two B24 proposals are still open). `UnitLevel` shows only when the entry
+actually carries a level. **Known regression, recorded not papered over:** V2 has no `ShinyBadge`,
+which `AscensionController` drove from `view.Shiny` — shiny is no longer marked on an ascension card.
+
+### The acceptance run caught a real bug — a placeholder rendered as truth
+
+`UIKit.Hotbar` wrote the level with `setText(levelFrame, levelFrame.Name, ...)`. `setText` does
+`root:FindFirstChild(name, true)`, which walks **descendants only and never matches `root` itself** —
+so it found nothing, returned silently, and left `HotbarSlotV2`'s **authored placeholder `"LVL 100"`
+on screen for every unit, in both Places**. Fixed to `setText(btn, "UnitLevel", ...)` from the slot
+root. `UIKitHotbar` `78328bb4` → **`baec9162`** in both Places and in `shared/src`.
+
+Two things about this are worth keeping. First, **an assertion that only checked `.Visible` passed
+it** — printing the TEXT is what exposed it. Second, it was **invisible in the Game**: that Place's
+dev seed happens to run Archer/Babaylan/Farm at MetaLevel **100**, identical to the placeholder. It
+only surfaced in the Lobby, against a synthetic entry with `MetaLevel = 7`.
+
+### Acceptance — from a REAL LocalScript in EACH Place
+
+**LOBBY 39 PASS / 0 FAIL** then **8 PASS / 0 FAIL** on the fix re-run; **GAME 18 PASS / 0 FAIL.**
+Proven with real data, not mocks: item cards fill `ItemIcon`/`ItemName`/`Amount` (`Amount` hides at
+qty 0); rarity on the root gradient is **value-equal** to `TierConfig.seamlessSequence(tier)`,
+including Mythic's 13-keypoint rainbow; empty slots fall back to neutral grey rather than a stale
+tier; `SlotNumber` reads 1–6; `UnitLevel` renders `LVL 7` / `LVL 42` and **hides** with no level;
+`PlacementPrice` and `Placed/MaxPlacement` are present-but-hidden. Live screens: Items grid 5 cards,
+reward grid 3 cards, index 32 cards, summon 20 chips, both hotbars 6 slots.
+
+**Hover honesty.** `MouseEnter` still cannot be fired from tooling, so what is proven is that
+`paintStroke()` — *the same function both `MouseEnter` and `MouseLeave` call* — toggles
+`UIHoverStroke` on and off, and that the stroke is authored `Enabled = false` at rest. The live
+Items grid showed **exactly one** card with the stroke on, and it was the **selected** one
+(`paintStroke` is `hovering or selected`). The end-to-end trigger stays on the existing PENDING.
+
+### Not our bug, found on the way
+
+The Lobby dev profile's `Data.Loadout` holds **3 uuids that no longer exist in `Data.Units`**
+(`Units` has 1 entry), so the Lobby hotbar correctly renders three EMPTY slots for "3 equipped".
+Nothing prunes a loadout entry when its unit instance goes. New PENDING.
+
+Manifest: still **26 entries**, `Kit_UnitIcon`/`Kit_ItemIcon`/`Kit_HotbarSlot` **retired** the way
+the RewardPopup pair went at B2 — deleted in both Places, dropped from `hash_shared.luau`, **do not
+re-add**. Both Kits now hold 7 children. **LOBBY 26/26, GAME 25/26** (`MetaMath`, expected).
+
 ## 2026-08-16 [both] B25 — AD-Integration: the V2 kit adoption **STOPPED AT ITS GATE**. Every consumer audited, one blocking design question **answered by the user**, three still open. **Nothing migrated, nothing touched.**
 
 Both Studio ids had rotated **again** — six sessions running (B19–B25) — and neither instance came

@@ -48,17 +48,6 @@
       "comment": "Kit TEMPLATE (filter panel incl. GroupTemplate + ToggleTemplate + Apply/Reset/Cancel). No shared/src file exists -- the INSTANCE is the canon (ADR-0005); copy it between Places and verify by hash, never rebuild by hand. Promoted 2026-08-06.",
       "kind": "template"
     },
-    "Kit_HotbarSlot": {
-      "hash": "8c562d59",
-      "owner": "ui",
-      "deployPath": "ReplicatedStorage.UITemplates.Kit.HotbarSlot",
-      "deployed": {
-        "Game": "8c562d59",
-        "Lobby": "8c562d59"
-      },
-      "comment": "Kit TEMPLATE: the USER'S OWN hotbar slot design, lifted from the Lobby's Slot1 so BOTH Places draw an identical slot (user rule 2026-08-06: same look, different action). Adds LockOverlay (dark + lock icon + 'Lv N') and SlotNumber; the broken legacy per-slot script was stripped. GAME DEPLOY PENDING -- the user copy/pastes it, then hashes must match.",
-      "kind": "template"
-    },
     "Kit_ItemHoverCard": {
       "hash": "0c9d7818",
       "owner": "ui",
@@ -68,28 +57,6 @@
         "Lobby": "0c9d7818"
       },
       "comment": "Kit TEMPLATE (item hover panel: ItemName/TierName/IconImage/Description/OwnedLabel). No shared/src file exists -- the INSTANCE is the canon (ADR-0005); copy it between Places and verify by hash, never rebuild by hand. Promoted 2026-08-06. STATUS 2026-08-06: no RUNTIME lookup. ItemsGUI.HoverPreview is a CLONE taken once at build time, so editing this master does NOT update the deployed screen -- re-clone or edit both. This master/clone split is a known sharp edge of template canon (it already caused a stale-size bug at A5).",
-      "kind": "template"
-    },
-    "Kit_ItemIcon": {
-      "hash": "5623f4b4",
-      "owner": "ui",
-      "deployPath": "ReplicatedStorage.UITemplates.Kit.ItemIcon",
-      "deployed": {
-        "Game": "5623f4b4",
-        "Lobby": "5623f4b4"
-      },
-      "comment": "Kit TEMPLATE (item card: Main/BG + IconImage + QtyBadge, tier stroke). No shared/src file exists -- the INSTANCE is the canon (ADR-0005); copy it between Places and verify by hash, never rebuild by hand. Promoted 2026-08-06. HISTORY: ee1ccd33 = original. c5e81264 = B1 2026-08-08, the Lobby's copy had diverged in 7 properties on 3 nodes and the USER confirmed all of it intentional, so canon moved with the Lobby as source. **5623f4b4 = B2 2026-08-08 (AD-Integration), the CURRENT canon**: mirrored to the Game, then QtyBadge.Position was REVERTED from (0.8565,-150),(0.96,-210) back to (0.96,0),(0.96,0) in BOTH Places. Reason, measured live: those negative PIXEL offsets put every quantity badge OUTSIDE its own card -- offset (-72,-99) from the cell, INSIDE_ITS_CELL=false on all four -- so in the ObtainRewardsGUI reward grid the x7 badge painted on the NEIGHBOURING card and x500/x2 were clipped away entirely. QtyBadge.Size stays at the user's 0.3365 (smaller badge kept); only the position offsets were reverted. Deployed byte-identical in BOTH Places.",
-      "kind": "template"
-    },
-    "Kit_UnitIcon": {
-      "hash": "24281a2b",
-      "owner": "ui",
-      "deployPath": "ReplicatedStorage.UITemplates.Kit.UnitIcon",
-      "deployed": {
-        "Game": "24281a2b",
-        "Lobby": "24281a2b"
-      },
-      "comment": "Kit TEMPLATE (the blueprint section 5 UnitIcon: ViewportFrame + BG/tier border + TraitIcon + LevelBadge + CostLabel + NameLabel + ShinyBadge, plus KeyLabel/CountLabel that default HIDDEN for the hotbar). A6 2026-08-06: renamed from the A5 leftover 'Unit/ItemIconTemplate' (which had zero readers) and put to work as the Game hotbar slot. Built by running one IDENTICAL deterministic script in BOTH Places and hash-matching the result -- the base tree was verified identical (be620746) first. ViewportFrame 3D contents are not hashed (ADR-0005). STATUS 2026-08-09 (B8, ADR-0009): **ADOPTED as the shared unit ICON** -- un-parks ADR-0007. Two real consumers, both Lobby: SummonScreen featured chips (B6) and every IndexScreen codex entry (B8). There is still NO UIKit.UnitIcon controller, deliberately: both consumers clone and fill locally and hide DIFFERENT fields, so a controller would be configured into doing nothing two ways -- revisit on a third consumer wanting the same BEHAVIOUR. ADOPTION CHANGED NO BYTES: it means being USED, not edited; still 24281a2b in both Places, verified at B8's landing, zero drift. It is an ICON, not the unit CARD -- ADR-0007 clause 3 stands: if a shared unit CARD is ever built the USER'S shipping design wins and this is NOT the reference. DO NOT DELETE without a fresh user decision (it carries a rig); ADR-0009 is that instruction's home. Tip: ViewportFrame.ImageColor3 makes a clone a silhouette with one property.",
       "kind": "template"
     },
     "Kit_UnitPreviewTemplate": {
@@ -259,26 +226,26 @@
     },
     "UIKitHotbar": {
       "file": "shared/src/UIKitHotbar.luau",
-      "hash": "616b06bf",
+      "hash": "baec9162",
       "owner": "ui",
       "deployPath": "ReplicatedStorage.Shared.UIKit.Hotbar",
       "deployed": {
-        "Game": "616b06bf",
-        "Lobby": "616b06bf"
+        "Game": "baec9162",
+        "Lobby": "baec9162"
       },
-      "comment": "Kit CONTROLLER. ONE hotbar for BOTH Places so they look and feel identical (user rule 2026-08-06): same slot design, hover, press animation and locked/empty states. Each Place supplies only OnActivated -- Lobby opens the Units screen on that unit, Game starts placement. Always draws LoadoutConfig.MaxSlots slots; a slot is never hidden, only filled/empty/locked. GAME DEPLOY PENDING alongside Kit_HotbarSlot. 2026-08-06 fix: paint BG's OWN UIGradient from the tier too -- only the stroke's gradient was being set, so the slot background stayed at the template's authored red for every unit. BG's gradient and the stroke's gradient are DIFFERENT instances; do not merge the lookups. 2026-08-06: hover preview RESTORED (the first version of this controller dropped the popup the Lobby hotbar used to have). It clones the shared Kit.UnitPreviewTemplate, so both Places pop the same card. Only shown for a FILLED, UNLOCKED slot.",
+      "comment": "Kit CONTROLLER. ONE hotbar for BOTH Places so they look and feel identical (user rule 2026-08-06): same slot design, hover, press animation and locked/empty states. Each Place supplies only OnActivated -- Lobby opens the Units screen on that unit, Game starts placement. Always draws LoadoutConfig.MaxSlots slots; a slot is never hidden, only filled/empty/locked. GAME DEPLOY PENDING alongside Kit_HotbarSlot. 2026-08-06 fix: paint BG's OWN UIGradient from the tier too -- only the stroke's gradient was being set, so the slot background stayed at the template's authored red for every unit. BG's gradient and the stroke's gradient are DIFFERENT instances; do not merge the lookups. 2026-08-06: hover preview RESTORED (the first version of this controller dropped the popup the Lobby hotbar used to have). It clones the shared Kit.UnitPreviewTemplate, so both Places pop the same card. Only shown for a FILLED, UNLOCKED slot. B26 2026-08-16: MIGRATED TO Kit.HotbarSlotV2 (prior hash 616b06bf). The old two-surface paint (border stroke + BG's own gradient, and the long comment warning not to confuse them) collapses to ONE root gradient, because V2 has neither instance -- the hazard is deleted, not re-created. Adds UnitLevel (shown only when the entry carries a level, hidden otherwise) and hides PlacementPrice and Placed/MaxPlacement, neither of which has a live data source. 78328bb4 -> baec9162 SAME SESSION, caught by the B26 acceptance run: the UnitLevel write was setText(levelFrame, levelFrame.Name, ...), and setText does root:FindFirstChild(name, true) which walks DESCENDANTS ONLY and never matches root itself -- so it found nothing and left HotbarSlotV2's authored placeholder 'LVL 100' on screen for every unit, in BOTH Places. Now setText(btn, 'UnitLevel', ...) from the slot ROOT. A placeholder rendered as truth is exactly the class of lie section 8 exists to prevent; the assertion that only checked .Visible would never have caught it -- the acceptance harness printing the TEXT is what did.",
       "kind": "module"
     },
     "UIKitItemIcon": {
       "file": "shared/src/UIKitItemIcon.luau",
-      "hash": "b717ebe9",
+      "hash": "cf5e57cd",
       "owner": "ui",
       "deployPath": "ReplicatedStorage.Shared.UIKit.ItemIcon",
       "deployed": {
-        "Game": "b717ebe9",
-        "Lobby": "b717ebe9"
+        "Game": "cf5e57cd",
+        "Lobby": "cf5e57cd"
       },
-      "comment": "Kit CONTROLLER. Item card: flat ImageLabel icon (items have no model, so NO ViewportFrame), QtyBadge that hides at qty 0, tier border/BG from the shared TierConfig. Requires Configs.Meta.{ItemCatalog,TierConfig} -- both already shared. Promoted 2026-08-06.",
+      "comment": "Kit CONTROLLER. Item card: flat ImageLabel icon (items have no model, so NO ViewportFrame), QtyBadge that hides at qty 0, tier border/BG from the shared TierConfig. Requires Configs.Meta.{ItemCatalog,TierConfig} -- both already shared. Promoted 2026-08-06. B26 2026-08-16: MIGRATED TO Kit.ItemIconV2 (prior hash b717ebe9). TEMPLATE_PATHS now resolves ItemIconV2; tier paint moved from BG+UIStrokeWithGradient to the ROOT UIGradient (still animated by the SAME shared seamless animator -- do not write a second); IconImage->ItemIcon, QtyBadge->Amount, and the card now fills ItemName. paintStroke() no longer recolours a tier border -- it TOGGLES the authored UIHoverStroke, so hover keeps the same trigger points and feel.",
       "kind": "module"
     },
     "UnitStatsCatalog": {
@@ -304,6 +271,39 @@
       },
       "comment": "Difficulty->gold curve + the Insane item table (PlayGUI blueprint section 8). Added P5 2026-08-13 (owner AD-Game). SHARED because section 8 requires the Lobby's reward PREVIEW and the server's actual payout to read the SAME curve -- the preview must not invent numbers. It could NOT live in StageConfig.Rewards: the Lobby's StageRegistry is a hand-maintained MIRROR carrying structure only, with no reward table and no drift check, so gold numbers there would be two uncheckable copies. WorthinessConfig is the counter-example and does not apply (the Lobby reads worthiness as a STORED result; a pre-match preview has nothing stored to read). Owns the Game's ONE wire->t conversion, TFromWire: the wire scale is 100-1000 while the UI scale is 1-100 (ADR-0011), and confusing them pays maximum gold for a normal match. Clamps, never extrapolates. DEPLOYED TO BOTH PLACES since B20 2026-08-14 (AD-Integration): copied BYTE-IDENTICAL from the Game (6870 bytes, re-hashed in the Lobby to 1d789978), never re-authored. The Lobby's deployPath needed a new RS.Configs.Global FOLDER, which did not exist in that Place. The reward PREVIEW is still not wired -- StoryModeController's renderRewards() cannot express a min-max band and only re-runs on act selection, while P4 republishes DifficultyWire on every slider move, so wiring it honestly needs more than the one call AD-UI's canon allows: see docs/proposals/2026-08-14-reward-preview-wiring.md.",
       "kind": "module"
+    },
+    "Kit_UnitIconV2": {
+      "hash": "8e6ab2ad",
+      "owner": "ui",
+      "deployPath": "ReplicatedStorage.UITemplates.Kit.UnitIconV2",
+      "deployed": {
+        "Game": "8e6ab2ad",
+        "Lobby": "8e6ab2ad"
+      },
+      "comment": "Kit TEMPLATE, the USER's V2 unit card. ADOPTED at B26 2026-08-16, REPLACING Kit_UnitIcon outright (that row is retired, the B2 RewardPopup precedent). No shared/src file -- the INSTANCE is canon (ADR-0005); copy it between Places and verify by hash, never rebuild by hand. *** RARITY IS PAINTED ON THE ROOT UIGradient AND THERE IS NO TIER BORDER *** (user decision, B25): v1's BG fill + UIStrokeWithGradient border do not exist here, and UIHoverStroke is HOVER-ONLY (authored Enabled=false, driven from MouseEnter/MouseLeave). Every consumer looks up the root gradient with FindFirstChildOfClass -- DIRECT CHILDREN ONLY, because V2 nests UIGradients under UnitLevel/PlacementPrice/TraitIcon and a recursive find repaints the wrong one. THREE consumers: SummonController featured chips, IndexController codex entries, and AscensionController's dupe picker (the third was missed by earlier notes -- it reads UnitLevel). Renames from v1: NameLabel->UnitName, LevelBadge->UnitLevel, CostLabel->PlacementPrice, CountLabel stays but is now a TextLabel not a Frame. B26 AUTHORED CountLabel (user-delegated): v1's was a Frame while IndexController guards on IsA('TextLabel'), so the owned-count had NEVER rendered; V2's is a real TextLabel and the branch is finally live. NO ShinyBadge (v1 had one, AscensionController drove it) -- shiny is not marked on a V2 card. PlacementPrice/ElementIcons/TraitIcon render HIDDEN: they have NO data source (AD-Game + AD-Traits proposals).",
+      "kind": "template"
+    },
+    "Kit_ItemIconV2": {
+      "hash": "0b8cb83d",
+      "owner": "ui",
+      "deployPath": "ReplicatedStorage.UITemplates.Kit.ItemIconV2",
+      "deployed": {
+        "Game": "0b8cb83d",
+        "Lobby": "0b8cb83d"
+      },
+      "comment": "Kit TEMPLATE, the USER's V2 item card. ADOPTED at B26 2026-08-16, REPLACING Kit_ItemIcon outright. No shared/src file -- the INSTANCE is canon (ADR-0005). Rarity on the ROOT UIGradient, no tier border, UIHoverStroke is hover-only (see Kit_UnitIconV2). Renames from v1: IconImage->ItemIcon, QtyBadge->Amount; V2 adds an ItemName label v1 had nowhere to put. B26 AUTHORED its UIAspectRatioConstraint (1 / FitWithinMaxSize / Width, copied from v1) because ObtainRewardsController documents it TWICE as the reason reward art is not stretched in the 150x150 grid. TWO consumers: the shared UIKit.ItemIcon controller (-> Items screen) and ObtainRewardsController, which clones the master DIRECTLY rather than going through the controller. NOTE ObtainRewardsController's paintTier deliberately handles BOTH shapes -- it also paints the user's Lobby-local UnitTemplate, which is still v1-shaped and was NOT part of this migration.",
+      "kind": "template"
+    },
+    "Kit_HotbarSlotV2": {
+      "hash": "41c3c9e3",
+      "owner": "ui",
+      "deployPath": "ReplicatedStorage.UITemplates.Kit.HotbarSlotV2",
+      "deployed": {
+        "Game": "41c3c9e3",
+        "Lobby": "41c3c9e3"
+      },
+      "comment": "Kit TEMPLATE, the USER's V2 hotbar slot. ADOPTED at B26 2026-08-16, REPLACING Kit_HotbarSlot outright. No shared/src file -- the INSTANCE is canon (ADR-0005). *** THIS IS THE CROSS-PLACE ONE: BOTH Places' hotbars render through the SHARED UIKit.Hotbar controller, so this template can never be adopted in one Place alone. *** Rarity on the ROOT UIGradient, no tier border -- which DELETED v1's two-gradient hazard (border stroke vs BG's own gradient) rather than re-creating it; do not reintroduce a second paint surface. B26 AUTHORED SlotNumber (user-delegated), a TextLabel mirroring v1's geometry: UIKit.Hotbar does setText(btn,'SlotNumber',i) and without it every slot loses its 1-6 key number in BOTH Places. UnitLevel renders only when the entry carries a level (the Game and Lobby build entries differently) and HIDES otherwise -- a zero is a claim. PlacementPrice is HIDDEN (no data source in either Place). 'Placed/MaxPlacement' is a MATCH-runtime count: nothing feeds it yet so it is hidden in both; NOTE the '/' in its instance name means FindFirstChild, never dot notation.",
+      "kind": "template"
     }
   },
   "templatesNote": "Templates are under drift control since 2026-08-06 (ADR-0005). They have NO shared/src file: the Instance is the canon. Two safe ways to get one into another Place: COPY it (Studio copy/paste) and prove equality by hash, OR build it with an identical DETERMINISTIC script run in both Places and hash-match (used for Kit_UnitIcon). Never rebuild by hand/by eye. See tools/checklists.md."

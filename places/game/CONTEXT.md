@@ -39,16 +39,16 @@ confirm profile load + schema version on every boot.
   (drift-checked). `UnitStatsCatalog` is deployed in BOTH Places since A6b, 2026-08-06.)
 - **UI kit (AD-UI, shared canon)** — 5 controllers in `RS.Shared.UIKit` + 7 REAL templates in
   `RS.UITemplates.Kit` (ADR-0005) + `StarterPlayerScripts.UIKitBootstrap`. **The Game HOTBAR is on
-  it**: `StarterGui.Hotbar` is the Lobby's ScreenGui driven by the shared `UIKit.Hotbar`; the only
-  Place difference is `OnActivated` → **start placement**. Editing any kit half in one Place only is
-  DRIFT — `docs/systems/ui-kit.md`, `tools/checklists.md`. Other
-  Game screens are still Place-local and script-era. **Drift here is 25/26 at B25** — only `MetaMath`
-  MISSING (Phase D, expected). If `Kit_ItemIcon` reads odd, copy it from the Lobby, never edit it.
-  **⚠ THE V2 KIT IS NOT HERE.** `Kit.{UnitIconV2, ItemIconV2, HotbarSlotV2}` are LOBBY-only and were
-  deliberately NOT copied at B25. **This Place's hotbar renders through the SHARED `UIKit.Hotbar`, so
-  adopting V2 changes the Game too** — both-Places-one-session, currently blocked on the user
-  authoring `SlotNumber` on `HotbarSlotV2` (this hotbar's 1–6 key number has no V2 equivalent).
-  Canon: `docs/systems/ui-kit.md` + `docs/proposals/2026-08-16-v2-kit-adoption-gaps.md`.
+  it**: `StarterGui.Hotbar` is the Lobby's ScreenGui driven by the shared `UIKit.Hotbar`, the only
+  Place difference being `OnActivated` → **start placement**. Editing a kit half in one Place only is
+  DRIFT (`docs/systems/ui-kit.md`, `tools/checklists.md`). Other
+  Game screens are still Place-local and script-era. **Drift 25/26 at B26** (`MetaMath` MISSING,
+  Phase D, expected). If a Kit template reads odd, ASK THE USER to re-copy it from the Lobby — never
+  edit or rebuild it; cross-Place copy is a USER action (`tools/checklists.md` step 2).
+  **✅ V2 IS ADOPTED HERE (B26).** The USER pasted `Kit.{UnitIconV2, ItemIconV2, HotbarSlotV2}` in;
+  verified byte-for-byte by hash, v1 trio **deleted**. This Place's hotbar renders through the SHARED
+  `UIKit.Hotbar` — what made adoption cross-Place, and the only V2 consumer here. `UIKit.ItemIcon` is
+  canon but has **no Game consumer yet**. Acceptance **18 PASS / 0 FAIL**. Canon: `ui-kit.md`.
 - Remotes: `RS.Remotes.{Placement, Towers, Match, Economy, Combat, Settings}`
 - Rich legacy docs: `ServerStorage.Documentation.*` (AIState, SystemIndex, HowTo, ...) —
   still valid; migrating to repo `docs/systems/` on touch.
