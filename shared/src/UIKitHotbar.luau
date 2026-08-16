@@ -35,6 +35,9 @@ local ItemCatalog = require(meta:WaitForChild("ItemCatalog"))
 local TierConfig = require(meta:WaitForChild("TierConfig"))
 local LoadoutConfig = require(meta:WaitForChild("LoadoutConfig"))
 local Button = require(RS:WaitForChild("Shared"):WaitForChild("UIKit"):WaitForChild("Button"))
+-- Motion: one hover/press curve for the kit, the 45-degree idle sheen, and the wrapper that keeps a
+-- scaling slot from shoving its neighbours along the hotbar row.
+local Motion = require(RS.Shared.UIKit:WaitForChild("Motion"))
 
 local Hotbar = {}
 
@@ -215,6 +218,10 @@ function Hotbar.attach(container: GuiObject, opts: { [string]: any })
 		btn:SetAttribute("SlotIndex", i)
 		btn.Parent = container
 		setText(btn, "SlotNumber", tostring(i))
+		-- Fixed-size wrapper between the row's layout and the slot, so hovering slot 3 does not slide
+		-- slots 4-6 sideways. `Button.attach` below finds/creates its UIScale on the slot itself,
+		-- which now sits inside that wrapper.
+		Motion.isolate(btn)
 		local handle = Button.attach(btn)
 		slots[i] = { Button = btn, Handle = handle }
 	end
@@ -296,11 +303,18 @@ function Hotbar.attach(container: GuiObject, opts: { [string]: any })
 			if lvl ~= nil then setText(btn, "UnitLevel", "LVL " .. tostring(lvl)) end
 		end
 
-		-- HIDDEN FOR LACK OF A DATA SOURCE (B24 audit): placement cost lives in the GAME's tower
-		-- configs, which the Lobby does not have, and this is a SHARED controller -- so it stays
-		-- hidden in both Places until the AD-Game proposal lands. Never invent a price.
+		-- ===== PLACEMENT PRICE: TEMPORARILY VISIBLE (B27c, user override) =====
+		-- Placement cost lives in the GAME's tower configs, which the Lobby does not have, and this
+		-- is a SHARED controller -- so there is still NO real data source and the label shows
+		-- whatever the TEMPLATE AUTHORED. That is a design placeholder, **not a real cost**.
+		-- The standing rule is hide-never-invent; the user explicitly suspended it to see the layout
+		-- while testing. `Motion.SHOW_PLACEHOLDER_PRICES` is the single switch that puts every card
+		-- in both Places back to honest. Only shown on a slot that actually HOLDS a unit -- a price
+		-- floating on an empty slot would be noise on top of fiction.
 		local price = btn:FindFirstChild("PlacementPrice", true)
-		if price and price:IsA("GuiObject") then price.Visible = false end
+		if price and price:IsA("GuiObject") then
+			price.Visible = Motion.SHOW_PLACEHOLDER_PRICES and showTier or false
+		end
 
 		-- `Placed/MaxPlacement` is a MATCH-RUNTIME count (how many of this unit are on the board).
 		-- The Game HAS that data (`PlacementCountsChanged`), the Lobby never will -- but nothing

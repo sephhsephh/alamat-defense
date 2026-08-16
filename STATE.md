@@ -14,8 +14,8 @@ and the gacha banner engine + summon UI.
   combat, the stat resolver, match runtime. Detail: `places/game/CONTEXT.md`.
 - **Lobby** — the social/meta Place, scene `Workspace.Lobby`. **`GetUnitViews` is its SINGLE profile
   read path** (ADR-0004); **`GrantService` is its SINGLE grant/spend path**. `places/lobby/CONTEXT.md`.
-- **Shared canon** (`shared/manifest.json`, drift-checked by `tools/hash_shared.luau`): **26 entries
-  = 19 modules + 7 templates.** All 26 PRESENT in the Lobby; the GAME reads 25/26 and that ONE gap is
+- **Shared canon** (`shared/manifest.json`, drift-checked by `tools/hash_shared.luau`): **27 entries
+  = 20 modules + 7 templates** (`UIKitMotion` added B27c). All 26 PRESENT in the Lobby; the GAME reads 25/26 and that ONE gap is
   EXPECTED, not drift — `MetaMath` stays Lobby-only until Phase D. **B26 adopted the V2 UI kit in BOTH
   Places and RETIRED `Kit_UnitIcon`/`Kit_ItemIcon`/`Kit_HotbarSlot`** (dropped from
   `hash_shared.luau` — do not re-add). Templates hash as INSTANCE trees, no `shared/src` file
@@ -62,22 +62,22 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   the Game's 25/26 `MetaMath=MISSING` is EXPECTED — do not "reconcile" it.
 - **PENDING (AD-Integration, not urgent):** invariant 1 ("every grant via `GrantService`") holds in
   the **Lobby only**; the Game still grants via `PlayerInventoryService`/`RewardCalculator`.
-- **PENDING (AD-UI, B27 — user deferred, not forgotten): `UnitIconV2` has FOUR inline consumers**
-  (Summon, Index, Ascension, Units), each repeating paint/hover/viewport code. Extracting a
-  `UIKit.UnitIcon` controller was offered and the user chose to keep Units inline for now. **Units is
-  the screen that should SHAPE that controller** — it is the only one needing equip/favourite/lock.
+- **PENDING (AD-UI, B27 — user deferred): `UnitIconV2` has FOUR inline consumers** (Summon, Index,
+  Ascension, Units) repeating paint/viewport code — motion is now shared, the rest is not. **Units
+  should SHAPE the controller**: it alone needs equip/favourite/lock.
 - **PENDING (AD-UI, small):** the **hover TRIGGER** is unverified in BOTH Places — `MouseEnter` cannot
   be fired from tooling. B26 proved `paintStroke()` (the fn both handlers call) toggles
   `UIHoverStroke`; only the engine-side trigger is unproven. Also `Kit_ItemHoverCard`'s clone split.
-- **PENDING (USER-REQUESTED, B27 QUEUE): 5 of 7 DONE, THREE REMAIN — all Lobby HUD/animation work.**
+- **PENDING (USER-REQUESTED, B27 QUEUE): 6 of 7 DONE, ONE REMAINS.**
   ✅ done (5/7): two-colour minimum per tier (`TierConfig` 7d5850c1, derived dark secondary, hue kept);
   hover strokes tinted from `TierConfig.BrightestColor` (relative luminance, NOT HSV value); the
   **whole button** scales, UIScale moved to the ROOT (centre-anchoring verified layout-safe by
   measurement); Units screen migrated onto `UnitIconV2` + the shared `Kit.UnitPreviewTemplate`.
-  ⬜ REMAINING: **(e)** `HUD.Left` buttons **mutually exclusive** — opening one closes whatever is
-  open; **(f)** open/close wants a **slide**, not a visible-toggle pop; **(g)** smooth tweened
-  `UIGradient` colour transitions. (f)+(g) want ONE shared animation helper, not three copies —
-  decide where it lives before writing it.
+  B27c added **`UIKit.Motion`** (27th manifest entry) — the kit's one motion home: `isolate()`'s
+  fixed-size wrapper (a UIScale on a layout child re-flows the row; measured 30px of shove), the
+  Quint curve, the 45° 9s idle sheen, and `lift()`. ⬜ REMAINING: **(e)** `HUD.Left` buttons
+  **mutually exclusive** + **slide** open/close — build it on `Motion`, do not start a fourth
+  animation dialect.
 - **KNOWN REGRESSION (B26, accepted):** V2 has no `ShinyBadge` (`AscensionController` drove it from
   `view.Shiny`) — **shiny is not marked on an ascension card.** Re-add to the template, or drop it.
 - **PENDING (AD-Game, small):** a unit at `MAX_META_LEVEL` **loses stored XP** (`ApplyXP` discards

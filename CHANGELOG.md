@@ -1,5 +1,69 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-16 [both] B27c — AD-Integration: **`UIKit.Motion`**, the kit's one motion home. Hovering a card no longer shoves its neighbours, the hotbar has a hover for the first time, and prices are temporarily visible by user override.
+
+Seven things from a play session. The first two turned out to be the same root cause seen from two
+angles, and fixing them properly meant the shared animation helper flagged two sessions ago.
+
+### The sibling shove — and why a wrapper, not a smaller scale
+
+**A `UIScale` on a child of a `UIListLayout`/`UIGridLayout` changes that child's MEASURED size**, so
+the layout re-flows and every sibling slides while you hover one card. Measured before designing
+anything: a 150px card at scale 1.2 pushed its neighbour **30px**.
+
+`Motion.isolate()` puts a fixed-size wrapper between the layout and the card and moves the UIScale
+onto the card inside it. Re-measured with the wrapper: the neighbour moved **0px** while the card
+still grew 150 → 195. B27's rule survives intact — the WHOLE card scales, carrying its `UICorner`
+and `UIHoverStroke` with it — it just costs the neighbours nothing now. Two traps the wrapper had to
+learn: it must never set `ClipsDescendants` (it would crop the growth it exists to allow), and it
+must **clone the card's `UIAspectRatioConstraint`** — the first cut produced a 175×**405** slot for a
+175×175 card and left every card floating in vertical dead space. Because the wrapper is now what
+the layout sees, visibility/order/disposal go through `Motion.setVisible` / `setLayoutOrder` /
+`destroy`, or a filtered-out card leaves an empty slot padding the row.
+
+### The hotbar had no hover at all — and the reason is worth remembering
+
+`UIKitButton` animated the stroke's **Thickness and Transparency** and never touched **`.Enabled`**.
+V2's `UIHoverStroke` ships authored `Enabled = false`. So on every V2 slot the hover faithfully
+tweened a stroke that was switched off, and nothing appeared. A stroke that starts disabled is now
+detected as hover-only from its authored state — no new Attribute demanded of every template.
+
+### The rest
+
+- **Idle gradient**: 3s → **9s** and tilted **45°**. Three seconds reads as a nervous flicker on a
+  card you are staring at; nine is a slow sheen. Diagonal reads as light falling across the card,
+  where horizontal reads as a loading bar.
+- **Curves**: one Quint ease-out for the whole kit — hover 0.26s, press 0.09s, **rest 0.30s**. Rest
+  is deliberately the slowest leg so nothing snaps back; a press is the fastest so it feels immediate.
+  `lift()` raises a hovered card's ZIndex so its growth is never drawn *under* the next sibling.
+- **`SecondaryValueScale` 0.32 → 0.62.** The user's verdict was "too dark". At 0.32 Rare's secondary
+  was `(18,42,82)` — close enough to black that the card read as a fade-to-nothing. At 0.62 it is
+  `(34,81,158)`: the same blue, in shadow.
+- **Prices are visible, and they are not real.** The standing rule is hide-never-invent; the user
+  explicitly suspended it *"just to see it visually when testing"*. `PlacementPrice` renders the
+  **template's authored placeholder** on unit cards and on filled hotbar slots (never on an empty
+  slot — a price floating on nothing is noise on top of fiction). `Motion.SHOW_PLACEHOLDER_PRICES`
+  is the single switch that puts every card in both Places back to honest.
+
+`UIKitMotion` is the **27th manifest entry** (20 modules + 7 templates) and is registered in
+`tools/hash_shared.luau` — an unregistered module is silently skipped by the drift check, which
+would be a worse bug than anything above.
+
+### Acceptance — live Lobby
+
+A first run reported **"Units cards wrapped by Motion = 0"**: `loadUnits` called `setupCard` (which
+isolates) *before* parenting the card, so the wrapper was built under a nil parent and the following
+`card.Parent = container` pulled the card straight back out of it. Ordering fixed and re-run:
+**8/8 cards wrapped, 0 strays; hover grew the card 175→188 with the neighbour moving 0px; wrapper
+175×175 matching the card exactly; gradient Rotation 45; price visible; hotbar 6/6 wrapped, slot
+161×161, stroke off at rest in the tier's brightest colour.** All five shared modules verified
+byte-identical in both Places and on disk.
+
+### Still open (1 of 7)
+
+`HUD.Left` mutual exclusion and slide open/close. Build them on `Motion` — the point of this session
+was to stop a fourth animation dialect being born.
+
 ## 2026-08-16 [both] B27b — AD-Integration: `Data.Loadout` prunes on load, the Units screen moves onto `UnitIconV2` + the shared preview, and a level bar that has **never once filled** starts working.
 
 The user fixed the templates themselves (Units cards are `UnitIconV2` now, and they dropped a copy

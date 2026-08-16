@@ -21,7 +21,7 @@
 --   PressScale        number  0.94   frame scale while pressed
 --   TweenTime         number  0.15   hover/press tween seconds
 --   GradientAnimate   bool    true   scroll the UIGradient offset in a seamless loop
---   GradientSpeed     number  3      seconds per gradient loop
+--   GradientSpeed     number  Motion.Tuning.IdleGradientPeriod   seconds per gradient loop
 --   UseAutoButtonColor bool   false  Roblox built-in image darken (off by default)
 --
 -- Usage:
@@ -42,14 +42,19 @@ local TEMPLATE_PATHS = {
 	{ "StarterGui", "UITemplates", "Button" },
 }
 
+-- Motion owns the kit's feel: scales, durations, easing, idle period, and the wrapper trick that
+-- stops a scaling card from shoving its neighbours. These DEFAULTS now DEFER to it, so retuning the
+-- kit means editing `Motion.Tuning` and nothing else. Per-button Attributes still override.
+local Motion = require(script.Parent:WaitForChild("Motion"))
+
 local DEFAULTS = {
-	HoverScale = 1.06,
+	HoverScale = Motion.Tuning.HoverScale,
 	HoverStrokeMult = 1.6,
 	HoverIconRotation = 45,
-	PressScale = 0.94,
-	TweenTime = 0.15,
+	PressScale = Motion.Tuning.PressScale,
+	TweenTime = Motion.Tuning.HoverTime,
 	GradientAnimate = true,
-	GradientSpeed = 3,
+	GradientSpeed = Motion.Tuning.IdleGradientPeriod,
 	UseAutoButtonColor = false,
 	GlowStrokeName = "UIStrokeWithGradient", -- preferred glow stroke name (falls back to any UIStroke)
 	StrokeHiddenUntilHover = false,          -- true = stroke invisible until hover (unit-slot glow style)
@@ -178,13 +183,21 @@ function Button.attach(btn: GuiButton, opts: { [string]: any }?)
 		baseTransparency = 1
 		stroke.Transparency = 1
 	end
+	-- ===== A STROKE AUTHORED `Enabled = false` IS A HOVER-ONLY STROKE (B27c fix) =====
+	-- THIS IS WHY THE HOTBAR HAD NO VISIBLE HOVER AT ALL. V2's `UIHoverStroke` ships
+	-- `Enabled = false` by design, and this controller only ever animated Thickness/Transparency --
+	-- it never touched `.Enabled`, so on a V2 slot the hover tweened a stroke that was switched off
+	-- and nothing appeared. Detect it from the authored state rather than demanding a new Attribute
+	-- on every template: a stroke that starts disabled can only be meant to appear on hover.
+	local hoverOnlyStroke = (stroke ~= nil) and (stroke.Enabled == false)
 	local baseStrokeColor = (stroke and stroke.Color) or Color3.new(1, 1, 1)
 	local baseStrokeSeq: ColorSequence? = strokeGradient and strokeGradient.Color or nil
 
 	local tweens: { [string]: Tween } = {}
 	local function play(name: string, target: Instance, props: { [string]: any }, time: number?)
 		if tweens[name] then tweens[name]:Cancel() end
-		local info = TweenInfo.new(time or opt("TweenTime"), Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+		-- Quint ease-out, from Motion: a long soft settle rather than Quad's abrupt stop.
+		local info = TweenInfo.new(time or opt("TweenTime"), Motion.Tuning.Easing, Motion.Tuning.Direction)
 		local t = TweenService:Create(target, info, props)
 		tweens[name] = t
 		t:Play()
@@ -192,9 +205,10 @@ function Button.attach(btn: GuiButton, opts: { [string]: any }?)
 	end
 
 	local function setHover(on: boolean)
-		local scale = on and (baseScale * opt("HoverScale")) or baseScale
-		play("scale", uiScale, { Scale = scale })
+		-- Scale through Motion so every hovering thing in both Places shares one curve and duration.
+		Motion.scaleTo(uiScale, on and "hover" or "rest", baseScale)
 		if stroke then
+			if hoverOnlyStroke then stroke.Enabled = on end
 			local thick = on and (baseThickness * opt("HoverStrokeMult")) or baseThickness
 			local tr = on and (hideStroke and 0 or baseTransparency) or baseTransparency
 			play("stroke", stroke, { Thickness = thick, Transparency = tr })
@@ -222,7 +236,8 @@ function Button.attach(btn: GuiButton, opts: { [string]: any }?)
 	end
 	local function refresh()
 		if pressed then
-			play("scale", uiScale, { Scale = baseScale * opt("PressScale") }, opt("TweenTime") * 0.6)
+			Motion.scaleTo(uiScale, "press", baseScale)
+			if stroke and hoverOnlyStroke then stroke.Enabled = true end
 		else
 			setHover(hovering)
 		end
@@ -258,14 +273,12 @@ function Button.attach(btn: GuiButton, opts: { [string]: any }?)
 		for _, t in ipairs(gradTweens) do t:Cancel() end
 		table.clear(gradTweens)
 		if not opt("GradientAnimate") then return end
-		local info = TweenInfo.new(opt("GradientSpeed"), Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1, false, 0)
+		-- Idle drift runs through Motion, which owns the 45-degree tilt and the (slower, B27c) period.
 		for _, g in ipairs({ strokeGradient, bodyGradient }) do
 			if g then
 				makeSeamless(g)
-				g.Offset = Vector2.new(-1, 0)
-				local t = TweenService:Create(g, info, { Offset = Vector2.new(1, 0) })
-				t:Play()
-				table.insert(gradTweens, t)
+				local t = Motion.idleGradient(g, opt("GradientSpeed"))
+				if t then table.insert(gradTweens, t) end
 			end
 		end
 		if strokeGradient then baseStrokeSeq = strokeGradient.Color end

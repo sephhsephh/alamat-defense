@@ -217,6 +217,10 @@ local MODULES = {
 	-- 2026-08-06: ONE hotbar for both Places. Same look/hover/animation everywhere; each Place
 	-- only supplies what a click does. Game deploy PENDING with Kit_HotbarSlot.
 	UIKitHotbar = "ReplicatedStorage.Shared.UIKit.Hotbar",
+	-- Added B27c 2026-08-16 (owner AD-UI): the kit's MOTION -- hover/press scaling, idle gradient
+	-- drift, the tuning table behind both, and `isolate()`, the fixed-size wrapper that stops a
+	-- scaling card from re-flowing its layout and shoving every sibling.
+	UIKitMotion = "ReplicatedStorage.Shared.UIKit.Motion",
 	-- Promoted 2026-08-09 (Integration, owner AD-Traits): the trait rarity table. It was GAME-only,
 	-- which is exactly why the Lobby could not build trait reroll (C1) or stat reroll (C2) and why
 	-- trait-on-summon sat inert. The two promote TOGETHER -- TraitRegistry requires its sibling

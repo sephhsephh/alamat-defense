@@ -48,7 +48,12 @@ TierConfig.Tiers = {
 -- The derivation preserves HUE AND SATURATION and scales only VALUE, because a "much darker
 -- version" of Rare must still read as blue; dropping saturation too would slide every tier
 -- toward the same charcoal and the gradients would stop being distinguishable at a glance.
-TierConfig.SecondaryValueScale = 0.32
+--
+-- RETUNED 0.32 -> 0.62 at B27c: the user's verdict on 0.32 was "the dark is too dark, it should be a
+-- SLIGHTLY darker version of its main color". At 0.32 Rare's secondary was (18,42,82) -- close enough
+-- to black that the card read as a fade-to-nothing rather than a two-tone sheen. At 0.62 it is
+-- (34,81,158): unmistakably the same blue, just in shadow, which is what a gradient wants.
+TierConfig.SecondaryValueScale = 0.62
 
 -- A much darker version of `color`, same hue and saturation.
 function TierConfig.Darken(color: Color3, valueScale: number?): Color3

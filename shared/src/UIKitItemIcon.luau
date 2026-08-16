@@ -26,6 +26,9 @@ local TweenService = game:GetService("TweenService")
 local meta = RS:WaitForChild("Configs"):WaitForChild("Meta")
 local ItemCatalog = require(meta:WaitForChild("ItemCatalog"))
 local TierConfig = require(meta:WaitForChild("TierConfig"))
+-- Motion owns hover/press curves, the 45-degree idle sheen, and the wrapper that stops a scaling
+-- card from shoving its neighbours along the grid.
+local Motion = require(script.Parent:WaitForChild("Motion"))
 
 local ItemIcon = {}
 
@@ -126,7 +129,8 @@ function ItemIcon.attach(card: GuiButton, itemId: string, qty: number?)
 	local gradTweens: { Tween } = {}
 	if rootGrad then
 		rootGrad.Color = TierConfig.seamlessSequence(tier)
-		table.insert(gradTweens, animateGradient(rootGrad, 3))
+		local t = Motion.idleGradient(rootGrad)
+		if t then table.insert(gradTweens, t) end
 	end
 	if stroke and stroke:IsA("UIStroke") then
 		stroke.Enabled = false -- authored state; hover is what turns it on
@@ -146,15 +150,12 @@ function ItemIcon.attach(card: GuiButton, itemId: string, qty: number?)
 	-- child and a `UIListLayout` child were sampled before and after `AnchorPoint = (0.5, 0.5)` and
 	-- neither moved -- the layout overrides the anchor offset when it assigns `Position`.
 	-- `centerAnchor` compensates `Position` for the free-positioned case, so both are covered.
-	local scaleObj: UIScale? = nil
+	-- `Motion.isolate` puts a FIXED-SIZE wrapper between the layout and this card and moves the
+	-- UIScale onto the card inside it. Without that the grid re-measures the hovered card and every
+	-- neighbour slides -- measured at 30px of shove for a 150px card. The card still scales whole,
+	-- carrying its own UICorner and UIHoverStroke, which is the B27 rule.
+	local _, scaleObj = Motion.isolate(card)
 	do
-		centerAnchor(card)
-		local existing = card:FindFirstChildOfClass("UIScale")
-		if not existing then
-			existing = Instance.new("UIScale")
-			existing.Parent = card
-		end
-		scaleObj = existing
 		-- Neutralise any UIScale the template shipped on `Main`; two would multiply.
 		local innerScale = main and main:IsA("GuiObject") and main:FindFirstChildOfClass("UIScale")
 		if innerScale then innerScale.Scale = 1 end
@@ -165,10 +166,10 @@ function ItemIcon.attach(card: GuiButton, itemId: string, qty: number?)
 	local conns: { RBXScriptConnection } = {}
 
 	local function refreshScale()
-		if not scaleObj then return end
-		local target = pressed and PRESS_SCALE or ((hovering or selected) and HOVER_SCALE or 1)
-		TweenService:Create(scaleObj, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-			{ Scale = target }):Play()
+		-- One curve for the whole kit (Motion.Tuning): Quint ease-out, unhurried in, slower back.
+		Motion.scaleTo(scaleObj, pressed and "press" or ((hovering or selected) and "hover" or "rest"))
+		-- Lift the hovered card above its neighbours so the growth is never drawn underneath one.
+		Motion.lift(card, hovering or selected)
 	end
 	-- V2: hover TOGGLES the authored `UIHoverStroke` instead of recolouring a tier border (there is
 	-- no tier border any more). Same trigger points, same feel, one instance.
@@ -241,7 +242,9 @@ function ItemIcon.attach(card: GuiButton, itemId: string, qty: number?)
 	function handle.destroy()
 		for _, c in ipairs(conns) do c:Disconnect() end
 		for _, t in ipairs(gradTweens) do t:Cancel() end
-		card:Destroy()
+		-- Destroys the Motion wrapper too; destroying only the card would leave an empty
+		-- fixed-size slot silently padding the grid.
+		Motion.destroy(card)
 	end
 
 	handle.setQty(qty)
