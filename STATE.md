@@ -1,5 +1,5 @@
 # STATE — Alamat Defense
-<!-- owner: all | scope: global | last-verified: 2026-08-14 (B21) -->
+<!-- owner: all | scope: global | last-verified: 2026-08-16 (B22) -->
 <!-- SIZE RULE (ADR-0006): ONE file, cap 120 lines. A RESOLVED pending is DELETED (the changelog
      is its record) -- never struck through. Sections that duplicate a canon doc keep a pointer. -->
 
@@ -16,10 +16,12 @@ a shared UI kit, and the gacha banner engine + summon UI.
   **`GetUnitViews` is its SINGLE profile read path** (ADR-0004); **`GrantService` is its SINGLE
   grant/spend path**. Detail: `places/lobby/CONTEXT.md`.
 - **Shared canon** (`shared/manifest.json`, drift-checked by `tools/hash_shared.luau`): **26 entries
-  = 19 modules + 7 templates. The LOBBY is 26/26 GREEN since B20; the GAME reads 25/26 and that ONE
-  gap is EXPECTED, not drift** — `MetaMath` stays Lobby-only until Phase D. Templates hash as
-  INSTANCE trees, no `shared/src` file (ADR-0005). `UnitStatsCatalogValidate` is Game-only by
-  design — do not "fix" its absence.
+  = 19 modules + 7 templates.** All 26 are PRESENT in the Lobby; the GAME reads 25/26 and that ONE
+  gap is EXPECTED, not drift — `MetaMath` stays Lobby-only until Phase D. **⚠ REAL DRIFT since B22:
+  `ItemCatalog` is `fc4b8023` in the LOBBY (real icon assetids, authored by the USER) and the stale
+  `789dca4b` in the GAME.** The Lobby is the newer side; Integration must copy it across.
+  Templates hash as INSTANCE trees, no `shared/src` file (ADR-0005). `UnitStatsCatalogValidate` is
+  Game-only by design — do not "fix" its absence.
 
 **DRIFT RULE (applies to everyone):** editing a shared controller **or a template** in one Place
 only is DRIFT. Change → re-hash → copy to the other Place → update the manifest. Copy templates,
@@ -32,6 +34,18 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 - **PENDING (USER, BLOCKING + NOW URGENT):** **republish BOTH Places TOGETHER**, then run the
   **teleport v3 loop live** once. B20 bumped the contract to **v3** and **v2/v3 do not interoperate**
   — a PARTIAL publish breaks EVERY launch with `[CONTRACT] PayloadVersion mismatch`.
+- **PENDING (AD-Integration, SHARED-CANON DRIFT): copy `ItemCatalog` `fc4b8023` to the GAME.** The
+  user authored real icon assetids in the LOBBY for the five entries that shipped as
+  `rbxassetid://0` (Gold/Silver/BannerTicket/TraitRerollToken/GoldenSeed). B22 recorded the live
+  Lobby bytes into `shared/src` + the manifest (6520 bytes, verified byte-identical) but is
+  Lobby-only, so `deployed.Game` is LEFT stale at `789dca4b` on purpose. Game-side those five icons
+  render blank until this lands. Copy the bytes, re-hash, flip `deployed.Game`.
+- **PENDING (AD-Integration, P7 = the global matchmaking queue): it is a teleport contract v3 → v4
+  change.** Design, the exact v4 delta and the three Game-side questions that gate it:
+  `docs/proposals/2026-08-16-p7-global-queue.md`. The contract states "a match server contains
+  exactly one party" and a queue matches strangers ACROSS lobby servers, so `Players` would be
+  incomplete and the `ReservedServerAccessCode` has nowhere to travel. **Do this AFTER the v3
+  republish, not stacked on it.** `FindMatchButton` stays "COMING SOON" until then — not a bug.
 - **PENDING (AD-Game/AD-Integration, BLOCKS the Selection banner): add `BannerChoices` to the save
   schema** (v2→v3, additive-optional = Reconcile + bump + no-op `Migrations[2]`), **BOTH Places in
   ONE session** (invariant 5). Plan + the rejected `Counters.Global` shortcut:
@@ -46,8 +60,8 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   `BaseHealthScale` climbs 1.0/1.6/2.4. Act 1's `3` looks like a leftover test value. P5 fixed only
   Act 2's false comment; changing numbers is a design call.
 - **PENDING (AD-Gacha review, ONE user-authorised item):** Integration fixed trait-on-summon in
-  `SummonEngine`: the call is now `TraitRegistry.Roll(rng)` (it assumed a non-existent `RollTrait`
-  since B3 and, inside a pcall, failed SILENTLY); `"None"` → **nil**; failures WARN. Verified live.
+  `SummonEngine` — the call is `TraitRegistry.Roll(rng)` (there is no `RollTrait`), `"None"` → nil,
+  failures WARN. Verified live.
 - **PENDING (AD-Game → AD-Integration → AD-UI): ONE settings system for BOTH Places** (user) — same
   structure + GUI in both, entries scoped `Both`/`GameOnly`/`LobbyOnly`, preferences AND actions.
   Plan: `docs/proposals/2026-08-09-unified-settings-both-places.md`. Nothing is blocked.
@@ -66,13 +80,11 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 - **PENDING (AD-PlayerLevel, small):** promote `TowerProgressionConfig` to shared for a real XP bar.
 - **PENDING (Game):** real-DataStore round-trip for the PLAYER profile (A7 used a scratch key); plus
   the `ServerStorage.Documentation` → `docs/systems/` migration.
-- **PENDING (NEEDS SCHEDULING):** `Data.Items` finally HAS a shipping writer — an **INSANE Victory**
-  (v3, B20) pays `BannerTicket` + `TraitRerollToken`. Nothing else does (B7 pays Gold, B9 costs no
-  items), so counts stay 0 until someone clears an Insane run.
+- **PENDING (NEEDS SCHEDULING):** `Data.Items`' only shipping writer is an **INSANE Victory** (v3,
+  B20), paying `BannerTicket` + `TraitRerollToken` — so counts stay 0 until someone clears one.
 - **NOT a bug:** Units-screen stat NUMBERS are per-TOWER (catalog mid-roll ref), so two instances of
-  one tower show equal numbers while GRADE letters differ (ADR-0003). `Data.Loadout` fills **LEFT TO
-  RIGHT, dense** (schema-v2 `{ string }`; fixed slots need a bump). Difficulty: UI 1–100, wire
-  100–1000 (ADR-0011).
+  one tower show equal numbers while GRADE letters differ (ADR-0003). `Data.Loadout` fills LEFT TO
+  RIGHT, dense. Difficulty: UI 1–100, wire 100–1000 (ADR-0011).
 
 ## Contracts (versions only — detail in `docs/contracts/`)
 
@@ -99,7 +111,8 @@ names. Different sequences, same letters. PlayGUI uses `P1…P7` to avoid a thir
    **B20 did the Integration half** (curve copied here; teleport v3 = Insane is live-reachable) and
    **B21 closed both AD-UI items**: `OpenStageSelect` has a shipping-path listener again (CONTINUE
    works) and the reward preview reads `RewardScalingConfig.GoldBand` and TRACKS the slider.
-   **NEXT = P7** [AD-Meta] — the global queue, §11 — or the five-item AD-UI review backlog.
+   **P7 [AD-Meta] is DESIGNED, NOT BUILT (B22)** — the global queue is contract v4 work for
+   AD-Integration (PENDING above). **NEXT = the five-item AD-UI review backlog**, or Integration.
 3. **Phase B** (`phases-b-f-meta.md`). Landed B0–B8; Selection ⛔ on the `BannerChoices` schema
    PENDING above. **Phase C (B9): C3 ascension ✅**; **B11 moved it to an NPC screen (ADR-0010) —
    C1/C2/C4 copy that shape.** C1+C2 (AD-Traits) and C3's sell-dupes half are UNBLOCKED by B12;

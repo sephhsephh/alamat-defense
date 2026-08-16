@@ -88,10 +88,19 @@ everything untradeable at launch).
   re-renders on every slider move, so it can never contradict the payout — a new optional `QtyText`
   lets a cell show a BAND (`100-300`) instead of `x<qty>`, and Insane adds exactly 2 item cells
   without changing the band. **19/19 live asserts**, on observed transitions.
-  **🔲 P7 remains** — the global queue (§11), AD-Meta, deferred. Small follow-up:
-  `LobbyFrame.RewardsFrame` still shows nothing (scope, not data).
-- 🔲 **Global matchmaking queue** — designed in `playgui.md` §11, **build deferred to P7**.
+  **🟡 P7 DESIGNED, NOT BUILT [AD-Meta] (B22, 2026-08-16)** — the global queue (§11). Taken as a
+  session-task and stopped at the scope gate: matching strangers ACROSS lobby servers breaks the
+  teleport contract's "a match server contains exactly one party", so it is **v3 → v4** work for
+  AD-Integration, not a Lobby session. Design + the exact v4 delta + the three Game-side questions:
+  `docs/proposals/2026-08-16-p7-global-queue.md`. `FindMatchButton` stays "COMING SOON" on purpose.
+  **P1–P7 are now all resolved** (P1–P6 built, P7 designed) — the PlayGUI blueprint is closed out.
+  Small follow-up: `LobbyFrame.RewardsFrame` still shows nothing (scope, not data).
+- 🟡 **Global matchmaking queue** — §11 shape + the full build design are landed
+  (`docs/proposals/2026-08-16-p7-global-queue.md`, B22); **the BUILD is blocked on teleport contract
+  v4** (both Places, one session) and must not be stacked on the un-republished v3.
   `FindMatchButton` ships disabled with a visible "COMING SOON" overlay as of P2.
+  Verified at B22: **MemoryStore works from Studio** (no setting to flip); **`ReserveServer` is HTTP
+  403 in Studio**, so the reserved-server handoff can only ever be proven in a live two-client test.
 
 - ✅ v1: shared-module deploy + boot (drift-free; profile from PlayerData_Dev)
 - ✅ v1: blockout hub (`Workspace.Lobby`) · ✅ collection screen (read-only, end-to-end)

@@ -253,16 +253,11 @@ frame's visibility/position/transitions; P6 never writes them.
 
 ### The player-row template (blueprint §2 B-4) — authored at B19, user-delegated
 
-`PlayersFrame.PlayersFrame` held **four copy-pasted `ItemIcon` cards** and no `*Template`. P6 stopped
-at the gate and the user chose "repurpose one" over authoring from scratch. So ONE was renamed
-**`PlayerRowTemplate`** (`Visible = false`), its `QtyBadge` → **`HostBadge`** (a quantity badge is
-meaningless on a player; the authored badge design is reused as-is) with its label → `HostBadgeLabel`
-= "HOST", and a **`NameLabel`** was added — the one genuinely new instance, because no player row can
-work without a name. `IconImage` carries the avatar.
-
-**The other three copies were HIDDEN, not deleted** (`Visible = false`, reversible). They are the
-user's instances and B-3's precedent says look-alike siblings are not automatically junk — but left
-visible they would paint as permanent ghost cards beside the real members.
+`PlayersFrame.PlayersFrame` holds **`PlayerRowTemplate`** (`Visible = false`) — one of four
+copy-pasted `ItemIcon` cards, repurposed at B19 on the user's call: `QtyBadge` → **`HostBadge`**
+(label `HostBadgeLabel` = "HOST"), a new **`NameLabel`**, `IconImage` = the avatar. **The other three
+are HIDDEN, not deleted** (reversible; they are the user's instances) — left visible they paint as
+ghost cards beside the real members.
 
 The template is reparented to the controller at runtime (the SummonController/P3 pattern) and the
 controller sets **only** Text, Image, Visible, LayoutOrder and two attributes — never `Size` or
@@ -279,10 +274,22 @@ stage select, difficulty and launch. Callers were re-grepped first (the A7 `GetC
 precedent): no script referenced it by path, and **`GetStages` survives** — `ReturnScreen` still
 calls it and `LobbyServices` still serves it, so `RS.Remotes` stays at 15 entries.
 
-**⚠ ONE KNOWN CONSEQUENCE, deliberately not patched here:** `StageSelectScreen.Controller` was the
-**only listener** on `RS.ClientEvents.OpenStageSelect`, which `ReturnScreen`'s CONTINUE button fires
-after a victory. That signal now has no listener, so **CONTINUE is inert**. Replacing it means giving
-PlayGUI a shipping-path "open on this act" entry, which touches `PlayGUIController` and
-`StoryModeController` — **AD-UI's canon**, so P6 wrote a proposal instead of editing them:
-`docs/proposals/2026-08-13-openstageselect-after-stageselectscreen.md`, plus a PENDING in `STATE.md`.
+Deleting it orphaned `ClientEvents.OpenStageSelect` (its only listener) so CONTINUE went inert —
+**fixed at B21**: `PlayGUIController` is the listener now and `OpenStageSelect` IS PlayGUI's public
+open event. Fire it with an act id; the shell→lists hop is `PlayGUI.Commands.SelectAct`.
+
+## `FindMatchButton` / the global queue — STILL DISABLED. Designed at B22, NOT built. Owner: AD-Meta
+
+`StarterGui.PlayGUI.Main.StoryModeFrame.FindMatchButton` (under **StoryModeFrame**, not MainMenu)
+keeps its authored `InactiveOverlay` + `ComingSoonLabel`, and `PlayGUIController`'s `disable()` call
+on it is **deliberately intact**. A future session must not read that overlay as a bug.
+
+B22 took P7 as a session-task and stopped at design, because the queue is not a Lobby-local feature:
+`docs/contracts/teleport.md` states "a match server contains exactly one party" and lists matchmaking
+servers as deferred, so matching strangers ACROSS lobby servers is a **teleport contract v3 → v4**
+change (both Places, one session, synchronised republish). Full design, the exact v4 delta, and the
+three questions only the Game place can answer: **`docs/proposals/2026-08-16-p7-global-queue.md`**.
+Two facts that survive re-derivation: **MemoryStore works from Studio** (probed at B22, no setting to
+flip), and **`ReserveServer` is HTTP 403 in Studio**, so the handoff's last step can never be proven
+here — plan for a live two-client test.
 

@@ -16,14 +16,14 @@
     },
     "ItemCatalog": {
       "file": "shared/src/ItemCatalog.luau",
-      "hash": "789dca4b",
+      "hash": "fc4b8023",
       "owner": "ui",
       "deployPath": "ReplicatedStorage.Configs.Meta.ItemCatalog",
       "deployed": {
         "Game": "789dca4b",
-        "Lobby": "789dca4b"
+        "Lobby": "fc4b8023"
       },
-      "comment": "Promoted to shared canon 2026-08-01 (A-phase Integration). THE authority on a grantable's Name/Tier/Icon; replaces the Lobby's interim UnitCatalog for name+tier. CHANGED at promotion: the TowerConfigRegistry require is now LAZY + OPTIONAL so the module loads in the Lobby (which has no tower configs); Validate() returns (ok, errors, notes) and reports the skipped Tower->TowerConfig cross-check. Added GetName/GetTier convenience readers.",
+      "comment": "789dca4b -> fc4b8023 at B22 2026-08-16: the USER authored real icon assetids in the LOBBY Studio for the five entries that shipped as rbxassetid://0 placeholders (Gold 128910310881167, Silver 119213648374305, BannerTicket 6731922404, TraitRerollToken 12590248124, GoldenSeed 124757602236693). AD-Meta did not author this -- the bootstrap drift check caught it, the user confirmed it was theirs, and B22 RECORDED it: shared/src was updated to the live Lobby bytes and re-hashed to fc4b8023 (6520 bytes, byte-identical to the deployed Lobby copy). deployed.Game is LEFT at the stale 789dca4b on purpose -- the GAME still has the placeholder ids and is now DRIFTED until an Integration session copies these bytes across. Promoted to shared canon 2026-08-01 (A-phase Integration). THE authority on a grantable's Name/Tier/Icon; replaces the Lobby's interim UnitCatalog for name+tier. CHANGED at promotion: the TowerConfigRegistry require is now LAZY + OPTIONAL so the module loads in the Lobby (which has no tower configs); Validate() returns (ok, errors, notes) and reports the skipped Tower->TowerConfig cross-check. Added GetName/GetTier convenience readers.",
       "kind": "module"
     },
     "Kit_Button": {

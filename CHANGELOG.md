@@ -1,5 +1,100 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-16 [lobby] B22 — AD-Meta: P7 stopped at the scope gate (the global queue is contract **v4**, not a Lobby session) + the user's real icon assetids recorded as canon. **Nothing was wired.**
+
+Two things happened and neither was the task as briefed. Both are recorded here rather than being
+quietly absorbed, because a future session reading only the ROADMAP would otherwise mis-read the
+still-disabled `FindMatchButton` as a bug and the `ItemCatalog` hash change as corruption.
+
+Place binding: **both Studio ids had rotated again** (the B19/B20/B21 hazard, now four sessions
+running), so the Lobby was resolved by NAME (`99d9dfa2…`) and every `execute_luau` opened with the
+aborting two-way assertion — `Workspace.Lobby` PRESENT, `RS.Configs.Towers` ABSENT. Confirmed
+`PlaceId=83342803778137`. `STATE.md` + the changelog tail were re-read immediately before landing;
+**no sibling had landed** (working tree held only this session's files).
+
+### ITEM 1 — bootstrap drift check caught a REAL mismatch, and it was the USER's
+
+**26/26 PRESENT, but `ItemCatalog` read `fc4b8023` against the manifest's `789dca4b`.** B21 had
+confirmed every entry matching on 2026-08-14, so this landed inside two days. **The session STOPPED
+and asked before any write** (CLAUDE.md: "Mismatch = STOP, reconcile before any work", plus the
+user's standing rule of 2026-08-16 — *when something looks changed, ask whether the dev did it*).
+**The user confirmed it was theirs.**
+
+- **The diff is exactly five lines**: the icon `rbxassetid://0` placeholders now carry real uploaded
+  assetids — Gold `128910310881167`, Silver `119213648374305`, BannerTicket `6731922404`,
+  TraitRerollToken `12590248124`, GoldenSeed `124757602236693`. Every other byte identical.
+- **AD-Meta did NOT author this and does not own `ItemCatalog` (owner: AD-UI).** What B22 did was
+  RECORD it: `shared/src/ItemCatalog.luau` was updated to the live Lobby bytes and re-hashed.
+  **Byte-identity was PROVEN, not assumed** — 6459 → 6520 bytes (+61, exactly the five id-length
+  deltas) and fnv1a `fc4b8023`, matching the deployed Lobby copy exactly. Substitutions were
+  asserted unique before applying and no `rbxassetid://0` survived.
+- **`deployed.Game` was LEFT at the stale `789dca4b` on purpose** (landing checklist step 2). The
+  GAME still has the placeholders, so it is now genuinely DRIFTED and those five icons render blank
+  there. **New PENDING for AD-Integration** to copy the bytes across — a Lobby-only session must not.
+- Manifest hash `789dca4b` → `fc4b8023`, `deployed.Lobby` likewise, with the provenance in its
+  comment so nobody later reads it as an unexplained edit.
+
+### ITEM 2 — P7: designed in full, built not at all, and that is the correct outcome
+
+The brief's own STOP-AND-ASK list fired on its first clause. §11's queue matches strangers **across
+lobby servers**; `docs/contracts/teleport.md` says, in its own words, that delivery is reserved
+servers per party so **"a match server contains exactly one party"**, and lists *"public /
+matchmaking servers (join strangers)"* under **Still deferred**. Concretely, two things break:
+
+- **`Players` would be incomplete.** `PartyService` assembles it from `party.members` resolvable
+  **on this server**; a match spanning servers A and B has A sending `Players = {A's players}` and B
+  sending `{B's players}`. That is a semantic change to a shipped v3 field.
+- **The `ReservedServerAccessCode` has nowhere to travel.** One server reserves, the others must
+  teleport into the SAME code, and the contract is explicit that there is "no MemoryStore handoff".
+
+→ **teleport contract v3 → v4: BOTH Places, ONE session, synchronised republish** — and **v3 itself
+is still un-republished**, so stacking a v4 on it would widen a live hazard. The user chose
+**design-only**. Full design in **`docs/proposals/2026-08-16-p7-global-queue.md`**: the key mapped
+onto the attributes this Place actually publishes (`SelectedActId` / `SelectedStageNumber` /
+`DifficultyMode` / bucketed `DifficultyWire`), atomic bin-packing so a party is never split,
+lowest-userId host election (deterministic, no extra round trip), 45s timeout → *offer* solo,
+three-layer abandonment cleanup, the exact v4 delta, and the three questions only the Game can answer.
+
+Three design calls worth not re-deriving: **bucketing is arithmetic on a difficulty number**, so it
+gets ONE greppable home in `MatchmakingService.BucketOf` — and explicitly NOT in
+`PlayGUI.DifficultyScale`, which is the ADR-0011 UI↔wire *conversion* and converts nothing here.
+**The match runs at the elected HOST's exact wire value; members' values are never averaged** — an
+average invents a difficulty nobody chose and silently moves everyone's `GoldBand` payout.
+And **`PartyService` is a `Script`, not a `ModuleScript`**, so the build needs a `LaunchService`
+module required by both it and `MatchmakingService` — **the same path with one more caller, not a
+second launch path** (§12); said out loud because the next reader will reasonably suspect otherwise.
+
+**Deliberately untouched:** `FindMatchButton`'s `InactiveOverlay` and `PlayGUIController`'s
+`disable()` call on it. A half-enabled button is worse than an honest "COMING SOON", and both
+`play-menu.md` and `CONTEXT.md` now say so in as many words.
+
+### Verification — small, honest, and one STOP condition cleared
+
+No behaviour was built, so there was nothing to prove from a real Script. What WAS established:
+
+- **`MemoryStoreService` works from Studio in the Lobby.** Read-only probe in the Edit datamodel:
+  `GetSortedMap("AD_Probe_B22"):GetRangeAsync(Ascending, 1)` → ok, 0 items. **No Studio setting
+  needs flipping** — that STOP condition does not fire, and the build session should not re-check it.
+- **`ReserveServer` = HTTP 403 in Studio** (unchanged since B20). The handoff's final step can
+  **never** be proven in Studio in any mode — a permanent gap, not a session limitation.
+- **Drift re-verified after the manifest edit: Lobby 26/26 GREEN, 0 MISSING, 0 mismatches.**
+- **Not proven, and not implied:** every §11 acceptance clause — party-as-one-unit, host election,
+  timeout→solo, the v3 payload surviving a matchmade handoff. None of it exists yet.
+
+- **Contract impact: NONE CHANGED, ONE IDENTIFIED.** Teleport stays v3; B22 wrote no code. The v4
+  delta is specified in the proposal for AD-Integration to execute.
+- **Shared canon: `ItemCatalog` `789dca4b` → `fc4b8023`** (recorded, not authored). Manifest 26
+  entries, unchanged in count.
+- **PENDINGs: TWO ADDED, ZERO DELETED.** Nothing was resolved outright this session, so ADR-0006's
+  delete rule had nothing to act on. Added: the `ItemCatalog` → Game copy, and P7 = contract v4.
+- **Doc sizes after landing:** `STATE.md` 120/120 and `places/lobby/CONTEXT.md` 150/150 — **both AT
+  cap**; `play-menu.md` 295/300. Room was made by compressing resolved history into the changelog
+  (the B19 "CONTINUE is inert" warning, B21 fixed it; the B19 row-template authoring story; the
+  CONTEXT PENDING list, which duplicated `STATE.md` and is now a pointer). **The next session to add
+  a line to STATE.md or CONTEXT.md must compress first.**
+- **Push status: 1 unpushed at bootstrap** (B21's `35e2cdd`; `origin/main` at B20's `3cd697a`),
+  **2 after this landing.**
+
 ## 2026-08-14 [lobby] B21 — AD-UI: CONTINUE works again, and the reward preview shows the REAL band and tracks the slider. Both B19/B20 proposals closed.
 
 Bootstrap drift **Lobby 26/26 GREEN, 0 MISSING** — the "25/26 is expected" note died at B20 and this

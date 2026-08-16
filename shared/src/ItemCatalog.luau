@@ -32,13 +32,13 @@ ItemCatalog.Entries = {
 	Necromancer = { Kind = "Tower", Tier = "Mythic",    Name = "Necromancer", Description = "Summon-on-kill chargers.",            Icon = { Model = { "TowerModels", "Necromancer" } }, Tradeable = false },
 
 	-- ===== Currencies =====
-	Gold   = { Kind = "Currency", Tier = "Common", Name = "Gold",   Description = "Gacha / banner roll currency.",       Icon = { Image = "rbxassetid://0" }, Tradeable = false },
-	Silver = { Kind = "Currency", Tier = "Common", Name = "Silver", Description = "Soft currency from dupes / sells.",    Icon = { Image = "rbxassetid://0" }, Tradeable = false },
+	Gold   = { Kind = "Currency", Tier = "Common", Name = "Gold",   Description = "Gacha / banner roll currency.",       Icon = { Image = "rbxassetid://128910310881167" }, Tradeable = false },
+	Silver = { Kind = "Currency", Tier = "Common", Name = "Silver", Description = "Soft currency from dupes / sells.",    Icon = { Image = "rbxassetid://119213648374305" }, Tradeable = false },
 
 	-- ===== Items (existing stage drops) =====
-	BannerTicket     = { Kind = "Item", Tier = "Rare",      Name = "Banner Ticket",      Description = "A free banner pull.",       Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
-	TraitRerollToken = { Kind = "Item", Tier = "Epic",      Name = "Trait Reroll Token", Description = "Reroll a unit's trait.",     Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
-	GoldenSeed       = { Kind = "Item", Tier = "Legendary", Name = "Golden Seed",        Description = "Rare crafting material.",    Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	BannerTicket     = { Kind = "Item", Tier = "Rare",      Name = "Banner Ticket",      Description = "A free banner pull.",       Icon = { Image = "rbxassetid://6731922404" }, MaxOwned = 9999, Tradeable = false },
+	TraitRerollToken = { Kind = "Item", Tier = "Epic",      Name = "Trait Reroll Token", Description = "Reroll a unit's trait.",     Icon = { Image = "rbxassetid://12590248124" }, MaxOwned = 9999, Tradeable = false },
+	GoldenSeed       = { Kind = "Item", Tier = "Legendary", Name = "Golden Seed",        Description = "Rare crafting material.",    Icon = { Image = "rbxassetid://124757602236693" }, MaxOwned = 9999, Tradeable = false },
 }
 
 function ItemCatalog.Get(id: string): any?
