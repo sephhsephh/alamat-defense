@@ -151,11 +151,19 @@ function Hotbar.attach(container: GuiObject, opts: { [string]: any })
 		setText(preview, "UnitName", name)
 		setText(preview, "TierName", tier)
 
+		-- ===== THE LEVEL BAR (B27 fix) =====
+		-- This looked for `UnitLevelBar`, WHICH HAS NEVER EXISTED ON THIS TEMPLATE. The Kit master
+		-- shipped the bar as a node literally named `CanvasGroup`, so the lookup found nothing and
+		-- the hotbar's hover preview has silently shown the authored placeholder level since the
+		-- preview was restored at B6. Same class of dead branch as `IndexController`'s `CountLabel`.
+		-- B27 renamed the master's node to `EXPLevelBar` in BOTH Places (the user's own name for it),
+		-- and this now reads that. The old name is NOT kept as a fallback: nothing in either Place
+		-- has ever had it, so a fallback would only preserve the illusion that it once worked.
 		local level = entry.Level or entry.MetaLevel
-		local bar = preview:FindFirstChild("UnitLevelBar", true)
+		local bar = preview:FindFirstChild("EXPLevelBar", true)
 		if bar and level then
-			local l = bar:FindFirstChildWhichIsA("TextLabel")
-			if l then l.Text = "LVL: " .. tostring(level) end
+			local l = bar:FindFirstChild("Text") or bar:FindFirstChildWhichIsA("TextLabel")
+			if l and l:IsA("TextLabel") then l.Text = "LVL: " .. tostring(level) end
 		end
 
 		-- Grades only exist on the Lobby's unitView; the Game has none, so leave those rows alone

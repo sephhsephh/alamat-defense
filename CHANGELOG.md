@@ -1,5 +1,81 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-16 [both] B27b — AD-Integration: `Data.Loadout` prunes on load, the Units screen moves onto `UnitIconV2` + the shared preview, and a level bar that has **never once filled** starts working.
+
+The user fixed the templates themselves (Units cards are `UnitIconV2` now, and they dropped a copy
+of `Kit.UnitPreviewTemplate` in as the hover preview) and asked for the wiring, with a standing rule
+for the fields: **render what the data actually has, hide the rest — but write the hidden ones so
+they light up on their own the day their source lands.** Three decisions were put to them first.
+
+### `Data.Loadout` no longer keeps dangling uuids
+
+`LoadoutService.clean()` has always dropped uuids the player no longer owns — but it **only ever ran
+inside `SetLoadoutSlot`**. A profile whose units vanished any other way kept dead uuids forever,
+because nothing re-examined the list until the player happened to equip something. Live, that read
+as: three loadout entries against **one** surviving `Data.Units` record, so the hotbar drew three
+EMPTY slots while its own diagnostic said *"3 equipped"*. Every screen was correct; the data was not.
+
+The prune now runs on `ProfileLoaded` (plus a one-shot sweep for players already in the server, so a
+Studio reload is covered). It lives in `LoadoutService` **deliberately, not in
+`LobbyServices.GetUnitViews`** — that service is documented as the first and only writer of
+`Data.Loadout`, and making a READ path write would trade the invariant away for a tidy-up. It only
+removes entries with no surviving unit; it never reorders survivors, never adds, and **deliberately
+does not** drop entries past the level-gated `UnlockedSlots` — silently unequipping a real unit
+because a level read oddly would be worse than the bug being fixed. Verified live:
+`Loadout pruned for <user>: 3 -> 0 entries`, and the hotbar now honestly reports `0 equipped`.
+
+### A level bar that never filled, in two different screens
+
+The bar is named three different things: the Kit master shipped it as **`CanvasGroup`**, the user's
+copy called it **`EXPLevelBar`**, and **both** `UIKit.Hotbar`'s preview and `UnitsController.fillStats`
+looked for **`UnitLevelBar`** — which existed in neither. So the hotbar's hover preview has shown the
+authored placeholder level since the preview was restored at B6, and the Units preview never filled
+either. Same class of latent dead branch as `IndexController`'s `CountLabel` at B26.
+
+**User's call: rename the master.** `CanvasGroup` → `EXPLevelBar` in BOTH Places, both readers
+repointed. `Kit_UnitPreviewTemplate` `55e17da8` → `2b423401`, `UIKitHotbar` `5b8b1609` → `69ba6ed1`.
+The old name is **not** kept as a fallback — nothing ever had it, so a fallback would only preserve
+the illusion that it once worked. **No cross-Place paste was needed:** renaming an instance is a
+within-Place operation, so the identical edit was applied in each Place and hash-matched — the
+`checklists.md` "identical deterministic build" path rather than the copy path.
+
+### The Units screen
+
+**Cards** now clone the shared `Kit.UnitIconV2` master (not a screen-local template), matching
+Summon/Index/Ascension. **The hover preview** clones `Kit.UnitPreviewTemplate` at runtime exactly as
+`UIKit.Hotbar` does — the user's local copy was verified **identical to the master across every
+hashed property except that one rename**, so it was deleted rather than kept as a second source of
+truth. Field wiring, per the user's rule:
+
+| Field | Behaviour | Why |
+| --- | --- | --- |
+| `UnitName`, `ViewportFrame`, `UnitLevel` | filled | the view carries them |
+| `EquippedIcon` / `FavoriteIcon` / `LockedIcon` | shown per flag, **read-only** | B24: no remote writes Favorited/Locked, and `AscensionRules` treats both as protection from being eaten as a dupe — making them clickable is a gameplay change |
+| `TraitIcon` | reads `TraitRegistry.Get(view.Trait).Icon`, hides when absent | the trait EXISTS; only the icon does not. Lights up with no code change the day `TraitDefinitions` gains `Icon` |
+| `PlacementPrice`, `ElementIcons` | hidden | Game-only tower-config data. Never invent a price |
+| `CountLabel` | hidden | **not missing data — meaningless here.** Every card is ONE unit instance keyed by uuid, so a count is always 1. Index counts because its cards are per-TOWER |
+
+The card also picks up B27's kit rules: rarity on the root gradient, hover stroke in the tier's
+brightest colour, and the **whole card** scaling. Selection reuses the hover stroke (`hovering or
+selected`), with the outgoing card explicitly repainted — without that the highlight accumulates and
+every card ever clicked stays outlined.
+
+### Acceptance — live Lobby
+
+8 cards rendered, no leftover sample in the container. Sample (Necromancer, Mythic): `UnitName`
+'Necromancer', `UnitLevel` 'LVL 20', root gradient 13 stops, hover stroke `250,240,60` (Mythic's
+yellow), UIScale on the root, centre-anchored. Equip/favourite/lock, `TraitIcon`, `PlacementPrice`,
+`ElementIcons` and `CountLabel` all hidden. **Exactly one** card carried the stroke and it was the
+selected one. Levels across all eight matched the dev seed exactly (100/100/100/20/20/20/6/5) —
+proving the writes are real and not the `LVL 100` placeholder that bit B26. `HoverPreview` present
+with `EXPLevelBar`. Both Places hash-identical on both changed entries.
+
+### Decision logged, not taken
+
+`UnitIconV2` now has FOUR inline consumers each repeating paint/hover/viewport code. The user chose
+to keep Units inline for now rather than extract a `UIKit.UnitIcon` controller mid-session; Units is
+the screen that would shape it, since it is the only one needing equip/favourite/lock. PENDING.
+
 ## 2026-08-16 [both] B27 (partial) — AD-Integration: **no tier is a single colour any more**, hover strokes take the tier's brightest colour, and the WHOLE button scales instead of just its artwork. 3 of the user's 7 play-test fixes; 4 remain.
 
 The user played the build and came back with seven fixes. Three of them are shared canon and had to

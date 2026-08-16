@@ -62,22 +62,22 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   the Game's 25/26 `MetaMath=MISSING` is EXPECTED — do not "reconcile" it.
 - **PENDING (AD-Integration, not urgent):** invariant 1 ("every grant via `GrantService`") holds in
   the **Lobby only**; the Game still grants via `PlayerInventoryService`/`RewardCalculator`.
-- **PENDING (AD-UI, small):** the **hover TRIGGER** is unverified in BOTH Places — `MouseEnter`
-  cannot be fired from tooling. B26 proved `paintStroke()` (the fn both `MouseEnter`/`MouseLeave`
-  call) toggles `UIHoverStroke`; only the engine-side trigger is unproven. Also
-  `Kit_ItemHoverCard`'s master/clone split.
-- **PENDING (USER-REQUESTED, B27 QUEUE): 3 of 7 DONE at B27, FOUR REMAIN — all Lobby screen work.**
-  ✅ done: two-colour minimum per tier (`TierConfig` 7d5850c1, derived dark secondary, hue kept);
+- **PENDING (AD-UI, B27 — user deferred, not forgotten): `UnitIconV2` has FOUR inline consumers**
+  (Summon, Index, Ascension, Units), each repeating paint/hover/viewport code. Extracting a
+  `UIKit.UnitIcon` controller was offered and the user chose to keep Units inline for now. **Units is
+  the screen that should SHAPE that controller** — it is the only one needing equip/favourite/lock.
+- **PENDING (AD-UI, small):** the **hover TRIGGER** is unverified in BOTH Places — `MouseEnter` cannot
+  be fired from tooling. B26 proved `paintStroke()` (the fn both handlers call) toggles
+  `UIHoverStroke`; only the engine-side trigger is unproven. Also `Kit_ItemHoverCard`'s clone split.
+- **PENDING (USER-REQUESTED, B27 QUEUE): 5 of 7 DONE, THREE REMAIN — all Lobby HUD/animation work.**
+  ✅ done (5/7): two-colour minimum per tier (`TierConfig` 7d5850c1, derived dark secondary, hue kept);
   hover strokes tinted from `TierConfig.BrightestColor` (relative luminance, NOT HSV value); the
   **whole button** scales, UIScale moved to the ROOT (centre-anchoring verified layout-safe by
-  measurement). ⬜ REMAINING: **(d)** `UnitsGUI.Main.Bottom.UnitsContainer` still uses its own unit
-  template → migrate to `UnitIconV2`; **(e)** `HUD.Left` buttons **mutually exclusive** — opening one
-  closes whatever is open; **(f)** open/close wants a **slide**, not a visible-toggle pop; **(g)**
-  smooth tweened `UIGradient` colour transitions. (f)+(g) want ONE shared animation helper, not four
-  copies — decide where it lives before writing it.
-- **PENDING (AD-Lobby, data): `Data.Loadout` is not pruned when a unit instance disappears.** The dev
-  profile holds 3 loadout uuids against 1 surviving `Data.Units` entry, so the hotbar draws 3 EMPTY
-  slots while DIAG says "3 equipped" — UI correct, data stale. `LoadoutService` is the only writer.
+  measurement); Units screen migrated onto `UnitIconV2` + the shared `Kit.UnitPreviewTemplate`.
+  ⬜ REMAINING: **(e)** `HUD.Left` buttons **mutually exclusive** — opening one closes whatever is
+  open; **(f)** open/close wants a **slide**, not a visible-toggle pop; **(g)** smooth tweened
+  `UIGradient` colour transitions. (f)+(g) want ONE shared animation helper, not three copies —
+  decide where it lives before writing it.
 - **KNOWN REGRESSION (B26, accepted):** V2 has no `ShinyBadge` (`AscensionController` drove it from
   `view.Shiny`) — **shiny is not marked on an ascension card.** Re-add to the template, or drop it.
 - **PENDING (AD-Game, small):** a unit at `MAX_META_LEVEL` **loses stored XP** (`ApplyXP` discards
