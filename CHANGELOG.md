@@ -1,5 +1,73 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-16 [both] B27 (partial) — AD-Integration: **no tier is a single colour any more**, hover strokes take the tier's brightest colour, and the WHOLE button scales instead of just its artwork. 3 of the user's 7 play-test fixes; 4 remain.
+
+The user played the build and came back with seven fixes. Three of them are shared canon and had to
+land first because everything else reads them; the other four are Lobby screen work and are queued.
+
+### (1) Every tier has at least two colours — `TierConfig` `490f1f9d` → `7d5850c1`
+
+*"there should not be a single colored tier, There will be minimum of two colors each rarity. A Main
+color and a secondary color, the secondary color is a much darker version of the main color when it
+only has 1 color."*
+
+A tier that authors ONE colour now gets its second entry **derived at load** rather than hand-typed,
+so the authored table stays the single source of truth and nobody has to keep a light/dark pair in
+sync by eye. `TierConfig.Darken` works in HSV and **scales only VALUE, preserving hue and
+saturation** — a "much darker" Rare has to still read as blue, and dropping saturation too would
+slide every tier toward the same charcoal. One knob: `SecondaryValueScale = 0.32`.
+
+The derived colour is **appended into `Colors`**, not added as a separate field, and that is the
+whole point: `colorSequence`, `seamlessSequence` and `isMultiColor` are untouched, every tier now
+animates instead of sitting flat, and there were **zero call-site changes in either Place**.
+Mythic's rainbow and Secret's authored red→dark-red are **left exactly as authored** — they already
+satisfied the rule. `GetColor` still returns `Colors[1]`, the MAIN colour, so nothing that read
+`.Color` moved. `isMultiColor` is now true for every tier; it had no callers outside the module.
+
+### (2) Hover strokes take the tier's BRIGHTEST colour
+
+New `TierConfig.BrightestColor`, wired into `UIKit.ItemIcon`, `UIKit.Hotbar` and the three screen
+controllers' `paintTier` (tinting there, not in `wireHover`, keeps the tier in one place —
+`wireHover` only ever knew how to toggle `Enabled`).
+
+**Brightness is RELATIVE LUMINANCE, not HSV value, and the difference is not academic:** by HSV
+value Mythic's red, orange and blue all tie at 1.0 and whichever is first wins arbitrarily; by
+luminance the yellow correctly wins, which is what the eye calls the brightest one. Never
+`Colors[1]` and never the new dark secondary — a stroke in the dark shade reads as a shadow rather
+than a highlight. An **empty or locked hotbar slot keeps a neutral outline**, for the same reason
+its gradient falls back to grey: no unit, no tier.
+
+### (3) The whole button scales, not just the image inside
+
+`UIKitButton` `4968d8c3` → `6cc33829`, `UIKitItemIcon` `cf5e57cd` → `5cc07ce2`. The UIScale moved
+from `Frame`/`Main` to the **ROOT**. The old arrangement grew the artwork while the button's own
+`UICorner` and `UIHoverStroke` — which live on the root and size themselves from it — stayed exactly
+where they were, so the card came apart at its edges on every hover.
+
+**Centre-anchoring the root is layout-safe, and that was MEASURED rather than assumed.** A
+`UIGridLayout` child and a `UIListLayout` child were both sampled before and after setting
+`AnchorPoint` to `(0.5, 0.5)`: **neither moved** — a layout overrides the anchor offset when it
+assigns `Position`. For a free-positioned button `centerAnchor` compensates `Position` itself. Any
+UIScale a template shipped on the inner content is reset to 1 so the two cannot multiply.
+
+### Acceptance — real LocalScript, live Lobby
+
+**13 PASS / 1 FAIL, and the FAIL was the harness, not the product:** it measured `AbsoluteSize` on a
+card parented to a **disabled** ScreenGui, where nothing lays out and everything reads `0x0`. Re-run
+with the ScreenGui enabled and the holder parked off-screen, a card in a `UIGridLayout` went
+**150×150 → 158×158 with its centre unmoved**, `UIHoverStroke` parented to the root and coloured
+`255,205,55`. Also proven: 8/8 tiers ≥ 2 colours; Rare's derived secondary keeps hue `0.604` and
+drops value `1.00 → 0.32`; Mythic brightest = `250,240,60` (its yellow, not its red); Secret
+brightest = the red, not the dark red; an empty slot outlines `150,150,165`.
+
+All four modules verified **byte-identical in both Places and on disk** before landing.
+
+### Still queued (4 of 7)
+
+`UnitsGUI.Main.Bottom.UnitsContainer` still uses its own unit template and wants `UnitIconV2`;
+`HUD.Left` buttons must become mutually exclusive (opening one closes the open one); open/close
+wants a **slide**, not a visible-toggle pop; and `UIGradient` colour changes want smooth tweening.
+
 ## 2026-08-16 [both] B26 — AD-Integration: **the V2 kit is ADOPTED in BOTH Places and v1 is RETIRED.** Six consumers migrated, three instances authored, one placeholder-as-truth bug caught by the acceptance run.
 
 B25 stopped at the gate with three missing instances and one design question. The user answered

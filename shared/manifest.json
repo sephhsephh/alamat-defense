@@ -154,14 +154,14 @@
     },
     "TierConfig": {
       "file": "shared/src/TierConfig.luau",
-      "hash": "490f1f9d",
+      "hash": "7d5850c1",
       "owner": "ui",
       "deployPath": "ReplicatedStorage.Configs.Meta.TierConfig",
       "deployed": {
-        "Game": "490f1f9d",
-        "Lobby": "490f1f9d"
+        "Game": "7d5850c1",
+        "Lobby": "7d5850c1"
       },
-      "comment": "Promoted to shared canon 2026-08-01 (A-phase Integration). RECONCILED from two predecessors: the Game's A3 TierConfig (Order/SortOrder + PascalCase API) and the Lobby's interim TierConfig (multi-colour palettes + ColorSequence helpers, incl. Mythic rainbow / Secret red+dark-red). Every tier authors a Colors LIST; .Color is derived from Colors[1]. Both predecessors are REPLACED. 2026-08-09 (Integration): +SellValueByTier (Silver per tier, blueprint C3 sell-dupes) and GetSellValue(tier), which falls back to 0 -- NOT to Common like GetColor/get -- because this one pays CURRENCY and an unknown tier must never mint Silver. Retune the table, not callers. Prior hash: a0d6e3a3 = the A-phase reconciliation.",
+      "comment": "Promoted to shared canon 2026-08-01 (A-phase Integration). RECONCILED from two predecessors: the Game's A3 TierConfig (Order/SortOrder + PascalCase API) and the Lobby's interim TierConfig (multi-colour palettes + ColorSequence helpers, incl. Mythic rainbow / Secret red+dark-red). Every tier authors a Colors LIST; .Color is derived from Colors[1]. Both predecessors are REPLACED. 2026-08-09 (Integration): +SellValueByTier (Silver per tier, blueprint C3 sell-dupes) and GetSellValue(tier), which falls back to 0 -- NOT to Common like GetColor/get -- because this one pays CURRENCY and an unknown tier must never mint Silver. Retune the table, not callers. Prior hash: a0d6e3a3 = the A-phase reconciliation. **490f1f9d -> 7d5850c1 at B27 2026-08-16 (user rule): EVERY TIER NOW HAS AT LEAST TWO COLOURS.** \"there should not be a single colored tier ... A Main color and a secondary color, the secondary color is a much darker version of the main color when it only has 1 color.\" A tier that authors ONE colour gets its second entry DERIVED at load by TierConfig.Darken (HSV: hue and saturation PRESERVED, only VALUE scaled by the single knob SecondaryValueScale = 0.32) and APPENDED into Colors -- so colorSequence/seamlessSequence/isMultiColor are unchanged, every tier animates instead of sitting flat, and there were ZERO call-site changes in either Place. Multi-colour tiers (Mythic's rainbow, Secret's authored red -> dark red) are LEFT EXACTLY AS AUTHORED. GetColor still returns Colors[1], the MAIN colour, so nothing that read .Color moved. Also adds GetSecondaryColor, Luminance and **BrightestColor, which is what a hover stroke is tinted with** -- brightness is RELATIVE LUMINANCE, not HSV value, because by value Mythic's red/orange/blue all tie at 1.0 and the first would win arbitrarily, while by luminance the yellow correctly wins. isMultiColor is now true for every tier; it had no callers outside this module.",
       "kind": "module"
     },
     "TraitDefinitions": {
@@ -202,14 +202,14 @@
     },
     "UIKitButton": {
       "file": "shared/src/UIKitButton.luau",
-      "hash": "4968d8c3",
+      "hash": "6cc33829",
       "owner": "ui",
       "deployPath": "ReplicatedStorage.Shared.UIKit.Button",
       "deployed": {
-        "Game": "4968d8c3",
-        "Lobby": "4968d8c3"
+        "Game": "6cc33829",
+        "Lobby": "6cc33829"
       },
-      "comment": "Kit CONTROLLER. ONE reusable behaviour controller for every GuiButton (hover scale/stroke/icon-rotate, press, seamless animated gradient); all tuning via Attributes. Tag any GuiButton 'UIKitButton' and UIKitBootstrap attaches it. Promoted to shared canon 2026-08-06 with the rest of the kit so the Game place can build on it (blueprint section 9 A6).",
+      "comment": "Kit CONTROLLER. ONE reusable behaviour controller for every GuiButton (hover scale/stroke/icon-rotate, press, seamless animated gradient); all tuning via Attributes. Tag any GuiButton 'UIKitButton' and UIKitBootstrap attaches it. Promoted to shared canon 2026-08-06 with the rest of the kit so the Game place can build on it (blueprint section 9 A6). **4968d8c3 -> 6cc33829 at B27 2026-08-16 (user rule): THE WHOLE BUTTON SCALES ON HOVER/PRESS, NOT JUST ITS CONTENT.** The UIScale moved from `Frame`/`Main` to the ROOT, so the button's own UICorner and UIStroke -- which size themselves from the root -- now travel with the growth instead of staying put while the artwork swelled inside them. Centre-anchoring the root is LAYOUT-SAFE and that was MEASURED, not assumed: a UIGridLayout child and a UIListLayout child were both sampled before and after AnchorPoint = (0.5, 0.5) and NEITHER moved -- a layout overrides the anchor offset when it assigns Position; for a free-positioned button centerAnchor compensates Position itself. Verified live: a card in a UIGridLayout went 150x150 -> 158x158 with its CENTRE unmoved. Any UIScale a template shipped on the inner content is reset to 1 so the two cannot multiply.",
       "kind": "module"
     },
     "UIKitFilterPanel": {
@@ -226,26 +226,26 @@
     },
     "UIKitHotbar": {
       "file": "shared/src/UIKitHotbar.luau",
-      "hash": "baec9162",
+      "hash": "5b8b1609",
       "owner": "ui",
       "deployPath": "ReplicatedStorage.Shared.UIKit.Hotbar",
       "deployed": {
-        "Game": "baec9162",
-        "Lobby": "baec9162"
+        "Game": "5b8b1609",
+        "Lobby": "5b8b1609"
       },
-      "comment": "Kit CONTROLLER. ONE hotbar for BOTH Places so they look and feel identical (user rule 2026-08-06): same slot design, hover, press animation and locked/empty states. Each Place supplies only OnActivated -- Lobby opens the Units screen on that unit, Game starts placement. Always draws LoadoutConfig.MaxSlots slots; a slot is never hidden, only filled/empty/locked. GAME DEPLOY PENDING alongside Kit_HotbarSlot. 2026-08-06 fix: paint BG's OWN UIGradient from the tier too -- only the stroke's gradient was being set, so the slot background stayed at the template's authored red for every unit. BG's gradient and the stroke's gradient are DIFFERENT instances; do not merge the lookups. 2026-08-06: hover preview RESTORED (the first version of this controller dropped the popup the Lobby hotbar used to have). It clones the shared Kit.UnitPreviewTemplate, so both Places pop the same card. Only shown for a FILLED, UNLOCKED slot. B26 2026-08-16: MIGRATED TO Kit.HotbarSlotV2 (prior hash 616b06bf). The old two-surface paint (border stroke + BG's own gradient, and the long comment warning not to confuse them) collapses to ONE root gradient, because V2 has neither instance -- the hazard is deleted, not re-created. Adds UnitLevel (shown only when the entry carries a level, hidden otherwise) and hides PlacementPrice and Placed/MaxPlacement, neither of which has a live data source. 78328bb4 -> baec9162 SAME SESSION, caught by the B26 acceptance run: the UnitLevel write was setText(levelFrame, levelFrame.Name, ...), and setText does root:FindFirstChild(name, true) which walks DESCENDANTS ONLY and never matches root itself -- so it found nothing and left HotbarSlotV2's authored placeholder 'LVL 100' on screen for every unit, in BOTH Places. Now setText(btn, 'UnitLevel', ...) from the slot ROOT. A placeholder rendered as truth is exactly the class of lie section 8 exists to prevent; the assertion that only checked .Visible would never have caught it -- the acceptance harness printing the TEXT is what did.",
+      "comment": "Kit CONTROLLER. ONE hotbar for BOTH Places so they look and feel identical (user rule 2026-08-06): same slot design, hover, press animation and locked/empty states. Each Place supplies only OnActivated -- Lobby opens the Units screen on that unit, Game starts placement. Always draws LoadoutConfig.MaxSlots slots; a slot is never hidden, only filled/empty/locked. GAME DEPLOY PENDING alongside Kit_HotbarSlot. 2026-08-06 fix: paint BG's OWN UIGradient from the tier too -- only the stroke's gradient was being set, so the slot background stayed at the template's authored red for every unit. BG's gradient and the stroke's gradient are DIFFERENT instances; do not merge the lookups. 2026-08-06: hover preview RESTORED (the first version of this controller dropped the popup the Lobby hotbar used to have). It clones the shared Kit.UnitPreviewTemplate, so both Places pop the same card. Only shown for a FILLED, UNLOCKED slot. B26 2026-08-16: MIGRATED TO Kit.HotbarSlotV2 (prior hash 616b06bf). The old two-surface paint (border stroke + BG's own gradient, and the long comment warning not to confuse them) collapses to ONE root gradient, because V2 has neither instance -- the hazard is deleted, not re-created. Adds UnitLevel (shown only when the entry carries a level, hidden otherwise) and hides PlacementPrice and Placed/MaxPlacement, neither of which has a live data source. 78328bb4 -> baec9162 SAME SESSION, caught by the B26 acceptance run: the UnitLevel write was setText(levelFrame, levelFrame.Name, ...), and setText does root:FindFirstChild(name, true) which walks DESCENDANTS ONLY and never matches root itself -- so it found nothing and left HotbarSlotV2's authored placeholder 'LVL 100' on screen for every unit, in BOTH Places. Now setText(btn, 'UnitLevel', ...) from the slot ROOT. A placeholder rendered as truth is exactly the class of lie section 8 exists to prevent; the assertion that only checked .Visible would never have caught it -- the acceptance harness printing the TEXT is what did. **baec9162 -> 5b8b1609 at B27 2026-08-16 (user rule): the slot's UIHoverStroke is tinted from the tier's BRIGHTEST colour** (TierConfig.BrightestColor, by relative luminance -- Mythic outlines yellow, not its first rainbow entry, and never the derived dark secondary). An EMPTY or LOCKED slot keeps a neutral outline (150,150,165) for exactly the reason its gradient falls back to grey: no unit, no tier.",
       "kind": "module"
     },
     "UIKitItemIcon": {
       "file": "shared/src/UIKitItemIcon.luau",
-      "hash": "cf5e57cd",
+      "hash": "5cc07ce2",
       "owner": "ui",
       "deployPath": "ReplicatedStorage.Shared.UIKit.ItemIcon",
       "deployed": {
-        "Game": "cf5e57cd",
-        "Lobby": "cf5e57cd"
+        "Game": "5cc07ce2",
+        "Lobby": "5cc07ce2"
       },
-      "comment": "Kit CONTROLLER. Item card: flat ImageLabel icon (items have no model, so NO ViewportFrame), QtyBadge that hides at qty 0, tier border/BG from the shared TierConfig. Requires Configs.Meta.{ItemCatalog,TierConfig} -- both already shared. Promoted 2026-08-06. B26 2026-08-16: MIGRATED TO Kit.ItemIconV2 (prior hash b717ebe9). TEMPLATE_PATHS now resolves ItemIconV2; tier paint moved from BG+UIStrokeWithGradient to the ROOT UIGradient (still animated by the SAME shared seamless animator -- do not write a second); IconImage->ItemIcon, QtyBadge->Amount, and the card now fills ItemName. paintStroke() no longer recolours a tier border -- it TOGGLES the authored UIHoverStroke, so hover keeps the same trigger points and feel.",
+      "comment": "Kit CONTROLLER. Item card: flat ImageLabel icon (items have no model, so NO ViewportFrame), QtyBadge that hides at qty 0, tier border/BG from the shared TierConfig. Requires Configs.Meta.{ItemCatalog,TierConfig} -- both already shared. Promoted 2026-08-06. B26 2026-08-16: MIGRATED TO Kit.ItemIconV2 (prior hash b717ebe9). TEMPLATE_PATHS now resolves ItemIconV2; tier paint moved from BG+UIStrokeWithGradient to the ROOT UIGradient (still animated by the SAME shared seamless animator -- do not write a second); IconImage->ItemIcon, QtyBadge->Amount, and the card now fills ItemName. paintStroke() no longer recolours a tier border -- it TOGGLES the authored UIHoverStroke, so hover keeps the same trigger points and feel. **cf5e57cd -> 5cc07ce2 at B27 2026-08-16 (two user rules).** (1) THE WHOLE CARD SCALES: the UIScale moved from `Main` to the ROOT for the same reason as UIKitButton -- UIHoverStroke and UICorner live on the root and were being left behind. (2) THE HOVER STROKE IS TINTED FROM THE TIER'S **BRIGHTEST** COLOUR via TierConfig.BrightestColor, which ranks by RELATIVE LUMINANCE: never Colors[1] (Mythic would outline red for no reason) and never the derived dark secondary (a dark stroke reads as a shadow, not a highlight).",
       "kind": "module"
     },
     "UnitStatsCatalog": {

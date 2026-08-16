@@ -259,6 +259,18 @@ function Hotbar.attach(container: GuiObject, opts: { [string]: any })
 			rootGrad.Color = tierSeq or ColorSequence.new(Color3.fromRGB(70, 66, 82))
 		end
 
+		-- HOVER STROKE TAKES THE TIER'S **BRIGHTEST** COLOUR (user rule, B27). Not `Colors[1]`, and
+		-- never the derived dark secondary -- a stroke in the dark shade reads as a shadow instead of
+		-- a highlight. `BrightestColor` ranks by relative luminance, so Mythic's slot outlines in its
+		-- yellow rather than whichever rainbow entry sits first. An empty or locked slot keeps a
+		-- neutral outline, for the same reason its gradient falls back to grey: no unit, no tier.
+		local hoverStroke = btn:FindFirstChild("UIHoverStroke", true)
+		if hoverStroke and hoverStroke:IsA("UIStroke") then
+			hoverStroke.Color = showTier
+				and TierConfig.BrightestColor(entry.Tier or ItemCatalog.GetTier(entry.TowerId))
+				or Color3.fromRGB(150, 150, 165)
+		end
+
 		-- V2-only fields.
 		-- `UnitLevel` renders ONLY when the entry actually carries a level. The Game and the Lobby
 		-- build entries from different sources (validated LoadoutEntry vs `GetUnitViews`), so this

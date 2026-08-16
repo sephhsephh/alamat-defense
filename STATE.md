@@ -1,5 +1,5 @@
 # STATE — Alamat Defense
-<!-- owner: all | scope: global | last-verified: 2026-08-16 (B26) -->
+<!-- owner: all | scope: global | last-verified: 2026-08-16 (B27) -->
 <!-- SIZE RULE (ADR-0006): ONE file, cap 120 lines. A RESOLVED pending is DELETED (the changelog
      is its record) -- never struck through. Sections that duplicate a canon doc keep a pointer. -->
 
@@ -66,15 +66,15 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   cannot be fired from tooling. B26 proved `paintStroke()` (the fn both `MouseEnter`/`MouseLeave`
   call) toggles `UIHoverStroke`; only the engine-side trigger is unproven. Also
   `Kit_ItemHoverCard`'s master/clone split.
-- **PENDING (USER-REQUESTED, B27 QUEUE — spans BOTH Places):** seven UI fixes found in play, in
-  dependency order. (a) `TierConfig`: **NO single-colour tier** — every rarity ≥2 colours, main + a
-  much darker secondary derived when only one is authored (shared canon → both Places + re-hash);
-  (b) `UIHoverStroke` colour from the tier's **brightest** colour; (c) hover/press scale must grow
-  **the whole ImageButton**, not just inner `Main`; (d) `UnitsGUI…UnitsContainer` still uses its own
-  unit template → migrate to `UnitIconV2`; (e) `HUD.Left` buttons **mutually exclusive** (opening one
-  closes the open one); (f) open/close **slide** animations, not visible-toggle popping; (g) smooth
-  tweened `UIGradient` colour transitions. **(a) lands FIRST** — it re-hashes shared canon and
-  touches every card; (b) depends on it.
+- **PENDING (USER-REQUESTED, B27 QUEUE): 3 of 7 DONE at B27, FOUR REMAIN — all Lobby screen work.**
+  ✅ done: two-colour minimum per tier (`TierConfig` 7d5850c1, derived dark secondary, hue kept);
+  hover strokes tinted from `TierConfig.BrightestColor` (relative luminance, NOT HSV value); the
+  **whole button** scales, UIScale moved to the ROOT (centre-anchoring verified layout-safe by
+  measurement). ⬜ REMAINING: **(d)** `UnitsGUI.Main.Bottom.UnitsContainer` still uses its own unit
+  template → migrate to `UnitIconV2`; **(e)** `HUD.Left` buttons **mutually exclusive** — opening one
+  closes whatever is open; **(f)** open/close wants a **slide**, not a visible-toggle pop; **(g)**
+  smooth tweened `UIGradient` colour transitions. (f)+(g) want ONE shared animation helper, not four
+  copies — decide where it lives before writing it.
 - **PENDING (AD-Lobby, data): `Data.Loadout` is not pruned when a unit instance disappears.** The dev
   profile holds 3 loadout uuids against 1 surviving `Data.Units` entry, so the hotbar draws 3 EMPTY
   slots while DIAG says "3 equipped" — UI correct, data stale. `LoadoutService` is the only writer.

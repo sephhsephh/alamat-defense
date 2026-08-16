@@ -123,11 +123,23 @@ function Button.attach(btn: GuiButton, opts: { [string]: any }?)
 
 	-- Parts (all optional). Content holder is "Frame" (standard button) or "Main" (icon slot).
 	local content = btn:FindFirstChild("Frame") or btn:FindFirstChild("Main")
-	local scaleTarget: GuiObject = (content and content:IsA("GuiObject") and content) or btn
+	local contentRoot: GuiObject = (content and content:IsA("GuiObject") and content) or btn
+	-- ===== THE WHOLE BUTTON SCALES ON HOVER/PRESS, NOT JUST ITS CONTENT (user rule, B27) =====
+	-- This used to scale `Frame`/`Main`, so the ARTWORK grew while the button's own `UICorner` and
+	-- `UIStroke` -- which live on the ROOT and size themselves from it -- stayed exactly where they
+	-- were. The card visibly came apart at its edges on every hover.
+	--
+	-- Centre-anchoring the ROOT is SAFE EVEN UNDER A LAYOUT, and that was MEASURED rather than
+	-- assumed: a `UIGridLayout` child and a `UIListLayout` child were both sampled before and after
+	-- setting `AnchorPoint` to (0.5, 0.5) and NEITHER moved -- a layout overrides the anchor offset
+	-- when it assigns `Position`. For a free-positioned button `centerAnchor` compensates `Position`
+	-- itself, so that case is safe too. Without the centre anchor the button would swell toward its
+	-- bottom-right corner instead of growing in place.
+	local scaleTarget: GuiObject = btn
 	-- Text/Icon by convention: "Text"/"Icon" (Frame-style) or "ButtonText"/"ButtonImgIcon".
-	local textLabel = scaleTarget:FindFirstChild("Text") or scaleTarget:FindFirstChild("ButtonText")
+	local textLabel = contentRoot:FindFirstChild("Text") or contentRoot:FindFirstChild("ButtonText")
 		or btn:FindFirstChild("ButtonText", true)
-	local icon = scaleTarget:FindFirstChild("Icon") or scaleTarget:FindFirstChild("ButtonImgIcon")
+	local icon = contentRoot:FindFirstChild("Icon") or contentRoot:FindFirstChild("ButtonImgIcon")
 		or btn:FindFirstChild("ButtonImgIcon", true)
 	-- Glow stroke: prefer the named one anywhere under the button, else any UIStroke.
 	local glowName = opt("GlowStrokeName")
@@ -142,8 +154,14 @@ function Button.attach(btn: GuiButton, opts: { [string]: any }?)
 		(btn :: any).AutoButtonColor = opt("UseAutoButtonColor") and true or false
 	end
 
-	-- UIScale on the scale target (create one if absent); centre it so it scales from the middle.
-	if scaleTarget ~= btn then centerAnchor(scaleTarget) end
+	-- UIScale on the ROOT (create one if absent); centre it so it scales from the middle.
+	-- Any UIScale still sitting on the old inner target is reset to 1, so a template that shipped
+	-- with one cannot multiply against this one into a double-size card.
+	centerAnchor(scaleTarget)
+	if contentRoot ~= btn then
+		local innerScale = contentRoot:FindFirstChildOfClass("UIScale")
+		if innerScale then innerScale.Scale = 1 end
+	end
 	local uiScale = scaleTarget:FindFirstChildOfClass("UIScale")
 	if not uiScale then
 		uiScale = Instance.new("UIScale")

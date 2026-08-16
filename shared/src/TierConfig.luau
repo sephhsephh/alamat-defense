@@ -8,10 +8,16 @@
 --   * the Lobby's interim TierConfig (AD-UI 2026-07-31) -- contributed the multi-colour
 --     palettes and the ColorSequence helpers, lifted verbatim
 --
--- COLOURS (edit freely): every tier declares a `Colors` LIST. One colour = solid glow;
--- several = animated gradient (Mythic rainbow, Secret red -> dark red). `Color` is DERIVED
--- from Colors[1] at load, so there is exactly ONE authored source of truth per tier and the
--- older `GetColor` contract still works.
+-- COLOURS (edit freely): every tier declares a `Colors` LIST. `Color` is DERIVED from Colors[1]
+-- at load, so there is exactly ONE authored source of truth per tier and the older `GetColor`
+-- contract still works.
+--
+-- *** EVERY TIER HAS AT LEAST TWO COLOURS (user rule, B27 2026-08-16). ***
+-- "there should not be a single colored tier, there will be minimum of two colors each rarity.
+-- A Main color and a secondary color, the secondary color is a much darker version of the main
+-- color when it only has 1 color." A tier that authors ONE colour gets its second entry DERIVED
+-- at load (see `SecondaryValueScale` below) rather than hand-typed, so the authored table stays
+-- the single source of truth and nobody has to keep a light/dark pair in sync by eye.
 --
 -- Palette note: Common..Secret use the Lobby's tuned UI values (the ones actually seen on
 -- screen); Exclusive + Bathala keep A3's values since they had no Lobby counterpart.
@@ -35,9 +41,32 @@ TierConfig.Tiers = {
 	Bathala   = { Colors = { Color3.fromRGB(255, 240, 150) }, SortOrder = 8 },
 }
 
--- Derive the single representative Color from each tier's authored Colors list, so callers
--- of GetColor (and any older `.Color` reader) keep working without a second authored field.
+-- ===== THE TWO-COLOUR MINIMUM =====
+-- How dark the DERIVED secondary is, as a fraction of the main colour's HSV value. This is the
+-- one knob -- retune it here, never per tier.
+--
+-- The derivation preserves HUE AND SATURATION and scales only VALUE, because a "much darker
+-- version" of Rare must still read as blue; dropping saturation too would slide every tier
+-- toward the same charcoal and the gradients would stop being distinguishable at a glance.
+TierConfig.SecondaryValueScale = 0.32
+
+-- A much darker version of `color`, same hue and saturation.
+function TierConfig.Darken(color: Color3, valueScale: number?): Color3
+	local h, sat, v = color:ToHSV()
+	return Color3.fromHSV(h, sat, math.clamp(v * (valueScale or TierConfig.SecondaryValueScale), 0, 1))
+end
+
+-- Tiers that ALREADY author several colours (Mythic's rainbow, Secret's red -> dark red) are left
+-- EXACTLY as authored -- they already satisfy the rule and their palettes are deliberate. Only a
+-- single-colour tier gains a derived entry.
+--
+-- Appending into `Colors` rather than adding a separate `Secondary` field is the whole point:
+-- `colorSequence`, `seamlessSequence` and `isMultiColor` are unchanged and every tier now animates
+-- instead of sitting flat, with ZERO call-site changes anywhere in either Place.
 for _, tier in pairs(TierConfig.Tiers) do
+	if #tier.Colors == 1 then
+		table.insert(tier.Colors, TierConfig.Darken(tier.Colors[1]))
+	end
 	tier.Color = tier.Colors[1]
 end
 
@@ -84,6 +113,39 @@ function TierConfig.GetSortOrder(tier: string): number
 	return (t and t.SortOrder) or 0
 end
 
+-- The tier's SECONDARY colour -- the last entry in `Colors`. For a single-authored tier that is
+-- the derived dark shade; for Secret it is the authored dark red; for Mythic it is violet.
+function TierConfig.GetSecondaryColor(tier: string): Color3
+	local colors = TierConfig.get(tier).Colors
+	return colors[#colors]
+end
+
+-- Relative luminance (Rec. 709). Used to pick the BRIGHTEST colour below; exposed because
+-- "which of these reads brighter" comes up anywhere UI has to sit legibly on a tier colour.
+function TierConfig.Luminance(color: Color3): number
+	return 0.2126 * color.R + 0.7152 * color.G + 0.0722 * color.B
+end
+
+-- THE BRIGHTEST colour in the tier's palette. **This is what a hover stroke is tinted with**
+-- (user rule, B27): a stroke drawn in the tier's dark secondary reads as a shadow rather than a
+-- highlight, and blindly taking `Colors[1]` would make Mythic's stroke red for no reason.
+--
+-- Brightness here is RELATIVE LUMINANCE, not HSV value, and the difference is not academic: by
+-- HSV value Mythic's red, orange and blue all tie at 1.0 and the first one wins arbitrarily, while
+-- by luminance the yellow correctly wins -- which is what the eye calls "the brightest one".
+-- Ties resolve to the EARLIEST entry, so a tier's authored main colour wins a genuine tie.
+function TierConfig.BrightestColor(tier: string): Color3
+	local colors = TierConfig.get(tier).Colors
+	local best, bestLum = colors[1], -1
+	for _, c in ipairs(colors) do
+		local lum = TierConfig.Luminance(c)
+		if lum > bestLum then
+			best, bestLum = c, lum
+		end
+	end
+	return best
+end
+
 -- Silver paid for one duplicate of this tier.
 -- DELIBERATELY falls back to 0, NOT to Common, unlike GetColor/`get`. Those fall back so the UI
 -- never nil-errors on a bad tier; this one pays CURRENCY, and a typo'd or unknown tier quietly
@@ -114,6 +176,9 @@ function TierConfig.colorSequence(tierName: string): ColorSequence
 end
 
 -- Whether a tier animates its gradient (more than one colour).
+-- NOTE since B27 this is TRUE FOR EVERY TIER -- the two-colour minimum guarantees it. It is kept
+-- because it is the honest expression of the question, and because a future tier could in
+-- principle opt out. It had no callers outside this module when the minimum landed.
 function TierConfig.isMultiColor(tierName: string): boolean
 	return #TierConfig.get(tierName).Colors > 1
 end

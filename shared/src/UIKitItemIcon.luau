@@ -130,17 +130,34 @@ function ItemIcon.attach(card: GuiButton, itemId: string, qty: number?)
 	end
 	if stroke and stroke:IsA("UIStroke") then
 		stroke.Enabled = false -- authored state; hover is what turns it on
+		-- HOVER STROKE TAKES THE TIER'S **BRIGHTEST** COLOUR (user rule, B27), not `Colors[1]` and
+		-- certainly not the derived dark secondary: a stroke in the dark shade reads as a shadow
+		-- rather than a highlight. `BrightestColor` ranks by relative luminance, so Mythic's stroke
+		-- is its yellow rather than whichever rainbow entry happens to be first.
+		stroke.Color = TierConfig.BrightestColor(tier)
 	end
 
+	-- ===== THE WHOLE CARD SCALES ON HOVER/PRESS, NOT JUST `Main` (user rule, B27) =====
+	-- This used to put the UIScale on `Main`, so the artwork grew while the card's own `UICorner`
+	-- and `UIHoverStroke` -- both on the ROOT, both sized from it -- stayed put, and the card came
+	-- apart at its edges on every hover. The UIScale now lives on the ROOT.
+	--
+	-- Centre-anchoring the root is layout-safe and that was MEASURED, not assumed: a `UIGridLayout`
+	-- child and a `UIListLayout` child were sampled before and after `AnchorPoint = (0.5, 0.5)` and
+	-- neither moved -- the layout overrides the anchor offset when it assigns `Position`.
+	-- `centerAnchor` compensates `Position` for the free-positioned case, so both are covered.
 	local scaleObj: UIScale? = nil
-	if main and main:IsA("GuiObject") then
-		centerAnchor(main)
-		local existing = main:FindFirstChildOfClass("UIScale")
+	do
+		centerAnchor(card)
+		local existing = card:FindFirstChildOfClass("UIScale")
 		if not existing then
 			existing = Instance.new("UIScale")
-			existing.Parent = main
+			existing.Parent = card
 		end
 		scaleObj = existing
+		-- Neutralise any UIScale the template shipped on `Main`; two would multiply.
+		local innerScale = main and main:IsA("GuiObject") and main:FindFirstChildOfClass("UIScale")
+		if innerScale then innerScale.Scale = 1 end
 	end
 
 	local hovering, pressed, selected = false, false, false
