@@ -1,5 +1,5 @@
 # CONTEXT — Lobby place (LIVE, booted 2026-07-17)
-<!-- owner: lobby | scope: lobby | last-verified: 2026-08-16 (B24) -->
+<!-- owner: lobby | scope: lobby | last-verified: 2026-08-16 (B25) -->
 
 The social/meta Place: players land here, view their collection, roll banners, pick a stage +
 difficulty, form parties, and teleport into the Game place.
@@ -82,9 +82,9 @@ Units-screen cards are screen-local, NOT `Kit.UnitIcon` clones — but `Kit_Unit
 OTHER screens (ADR-0009), so do not delete or edit it.
 
 **`ObtainRewardsGUI` — the reward-reveal surface. Detail in `lobby-ui.md`.** Fire it, never rebuild:
-`ClientEvents.ShowRewards:Fire({{Id="Archer",Level=12},{Id="Gold",Qty=250}})`. Mixed units + items,
-grants QUEUE, **click 1 = SKIP, click 2 = CLOSE**. Its pop `UIScale` is on runtime CLONES only —
-**never add one to `Kit_ItemIcon`, it is hashed canon.**
+`ClientEvents.ShowRewards:Fire({{Id="Archer",Level=12},{Id="Gold",Qty=250}})`. Grants QUEUE, click 1
+= SKIP, click 2 = CLOSE. Its pop `UIScale` is on runtime CLONES only — **never add one to
+`Kit_ItemIcon`, it is hashed canon.**
 
 **`PlayGUI` + `LoadingScreen` — the Play menu, **P1–P7 COMPLETE** (B14–B23). FULL DOC:
 `docs/systems/play-menu.md` — read it first; law: `blueprints/playgui.md`.** `HUD.Left.Buttons.Play`
@@ -134,12 +134,12 @@ on the `BannerChoices` bump); **Party** and **Return** are still script-built (c
 - **AD-UI:** per-unit models all `UnitModels.Placeholder`; Units action buttons animation-only —
   `LockUnitButon` (sic) is authored but UNWIRED and `QuickSellButton` does **not** exist despite
   Phase C's note. Hotbar hover TRIGGER unverified; `Kit_ItemHoverCard` master/clone split stands.
-- **AD-UI (B24): the V2 kit templates are authored but NOT adopted.** `Kit.{UnitIconV2, ItemIconV2,
-  HotbarSlotV2}` sit BESIDE the v1s, so drift stays green — ADDITIONS, not edits. The user chose
-  **replace v1 outright**, which migrates the GAME's hotbar too → **cross-Place, one session**.
-  `PlacementPrice`/`ElementIcons`/`TraitIcon` have **NO Lobby data source** (proposals filed for
-  AD-Game + AD-Traits) — HIDE them until those land. Favourite/Lock are **read-only**.
-- **AD-Meta:** P7 = contract v4 (`docs/proposals/2026-08-16-p7-global-queue.md`).
+- **V2 kit (B24 authored, B25 audited): NOT adopted, BLOCKED on the USER.** `Kit.{UnitIconV2,
+  ItemIconV2, HotbarSlotV2}` sit beside the v1s as ADDITIONS (drift green), Lobby-only, not in the
+  manifest. **Canon for all of it: `docs/systems/ui-kit.md` + the gap table in
+  `docs/proposals/2026-08-16-v2-kit-adoption-gaps.md`.** Two things not to re-derive: **rarity goes
+  on the ROOT `UIGradient` and the tier BORDER is dropped** (user decision, B25), and **`Kit.UnitIcon`
+  has THREE consumers** — Summon, Index and `AscensionController`.
 
 ## Ownership notes
 

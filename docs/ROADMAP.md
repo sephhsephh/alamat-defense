@@ -1,6 +1,6 @@
 # ROADMAP — feature status for the whole Experience
 <!-- owner: all (any chat updates its own system's rows at landing) | scope: global -->
-<!-- last-verified: 2026-08-16 (B23) -->
+<!-- last-verified: 2026-08-16 (B25) -->
 
 Status legend: ✅ done · 🟡 partial/placeholder · 🔲 planned · 💭 idea (not committed)
 Meta-systems detail + rationale: `docs/proposals/2026-07-18-meta-systems-design.md`
@@ -103,11 +103,18 @@ everything untradeable at launch).
   its `ItemIcon` got B16's authoring fix. **9/9 live asserts.** Two doc-vs-reality findings recorded:
   `QuickSellButton` does **not** exist despite Phase C's note, and `LockUnitButon` (sic) is authored
   but unwired.
-  🔲 **V2 kit NOT adopted.** The user's `Kit.{UnitIconV2, ItemIconV2, HotbarSlotV2}` are ADDITIONS
-  beside the v1s (drift stays green). **Three requested fields have NO data source** — placement cost
-  and element are AD-Game's, the trait icon is AD-Traits'; proposals filed. Favourite/Lock are
-  read-only (no remote writes them). Adoption is **cross-Place** (the Game's hotbar consumes
-  `Kit_HotbarSlot`), so it needs a both-Places session.
+  🟡 **V2 kit — AUDITED at B25, adoption BLOCKED ON THE USER.** `Kit.{UnitIconV2, ItemIconV2,
+  HotbarSlotV2}` are ADDITIONS beside the v1s (drift stays green), Lobby-only, not in the manifest.
+  **✅ Rarity is DECIDED: it goes on the ROOT `UIGradient` and the tier BORDER is dropped** — v1's
+  `BG` + `UIStrokeWithGradient` exist in no V2 template and `UIHoverStroke` is hover-only. The
+  restyle is accepted; do not "restore" the border.
+  ⛔ **Three instances the USER must author before the migration can run:** `SlotNumber` on
+  `HotbarSlotV2` (the 1–6 key, used by the SHARED `UIKit.Hotbar` in **both** Places), `CountLabel` on
+  `UnitIconV2`, `UIAspectRatioConstraint` on `ItemIconV2`. Gap table + rename map + build order:
+  `docs/proposals/2026-08-16-v2-kit-adoption-gaps.md`.
+  **`Kit.UnitIcon` has THREE consumers, not two** — B25 found `AscensionController`'s dupe picker.
+  Three requested FIELDS still have no data source (cost/element = AD-Game, trait icon = AD-Traits;
+  proposals filed) and render HIDDEN. Favourite/Lock stay read-only. Adoption is **cross-Place**.
 - ✅ **Global matchmaking queue — BUILT at B23** on teleport v4. MemoryStore sorted map keyed
   `actId|stageNumber|mode|difficultyBucket`; **a queue entry is a PARTY, never a player** and packing
   only adds whole entries, so "never split a party" holds by construction; host = lowest userId, so

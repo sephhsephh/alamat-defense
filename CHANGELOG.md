@@ -1,5 +1,110 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-16 [both] B25 — AD-Integration: the V2 kit adoption **STOPPED AT ITS GATE**. Every consumer audited, one blocking design question **answered by the user**, three still open. **Nothing migrated, nothing touched.**
+
+Both Studio ids had rotated **again** — six sessions running (B19–B25) — and neither instance came
+back active. Each Place was resolved by NAME and every `execute_luau` opened with the aborting
+two-way assertion. `PlaceId` confirmed on both: Lobby `83342803778137`, Game `125430066355564`.
+
+Bootstrap drift, checked **value-by-value against the manifest** rather than for presence:
+**LOBBY 26/26 matching, 0 mismatched, 0 missing. GAME 25/26, the only gap `MetaMath`** (expected
+until Phase D). The V2 templates hash `UnitIconV2 e9fc62ed` / `ItemIconV2 b04997f6` /
+`HotbarSlotV2 2d9e528e` and are **Lobby-only additions**, which is exactly why drift is green with
+them present. Integration gate: **this IS the Integration session** and the work is shared canon
+spanning both Places — proceeding. `STATE.md` + the changelog tail re-read immediately before
+landing; **no sibling had landed** (clean tree, `f7026e6` still HEAD).
+
+**THIS SESSION WROTE NOTHING TO EITHER PLACE.** No template, no consumer, no manifest entry, no
+instance. Both Places end exactly as they began. That is the outcome, not a shortfall — see below.
+
+### The brief's stop condition fired, on all three templates
+
+*"STOP AND ASK IF the migration turns out to need a v1 field the V2 template lacks, or if any
+consumer would visibly regress — a proposal + PENDING is the correct outcome over a half-migration."*
+
+**The blocker is structural, not cosmetic: v1 paints rarity onto TWO instances and V2 has neither.**
+`BG` (an ImageLabel whose `UIGradient` is the tier fill) and `UIStrokeWithGradient` (the tier border)
+are referenced by **every single consumer** — `SummonController`, `IndexController`,
+`AscensionController`, `UIKit.ItemIcon`, `ObtainRewardsController` and `UIKit.Hotbar`. The V2
+templates have one root `UIGradient` and a `UIHoverStroke` that is authored `Enabled = false` and
+reserved for hover. `UIKit.Hotbar` even carries a comment warning not to confuse the root
+`UIStrokeWithGradient` with the one nested under `BG` — v1 deliberately uses two.
+
+There is no honest mechanical mapping from two paint surfaces onto one, and painting rarity onto the
+hover stroke would collide with the hover behaviour the brief asked for. **So it was put to the user
+rather than invented.**
+
+### ✅ THE USER ANSWERED IT — recorded so no future session re-derives it
+
+**Rarity colour goes on the ROOT `UIGradient`. The tier BORDER is dropped.** One paint surface, one
+`TierConfig.seamlessSequence` call site, no second gradient animator. The absence of a tier border in
+V2 is an **accepted, deliberate visible restyle** across summon chips, index entries, the items grid,
+the reward grid and both hotbars — it is not a bug and must not be "fixed" by re-adding a stroke.
+
+That decision removes the largest unknown from the adoption. **Three smaller blockers remain**, and
+each needs an instance the USER authors, because inventing UI in script is banned (rule 2026-07-18):
+
+| Template | Missing | The exact call that needs it |
+| --- | --- | --- |
+| `HotbarSlotV2` | **`SlotNumber`** | `UIKit.Hotbar`: `setText(btn, "SlotNumber", tostring(i))` — the **1–6 key number on every hotbar slot in BOTH Places**, including the Game's placement hotbar |
+| `UnitIconV2` | **`CountLabel`** | `IndexController`: `cell:FindFirstChild("CountLabel", true)` — the owned-count on every codex entry |
+| `ItemIconV2` | **`UIAspectRatioConstraint`** | `ObtainRewardsController` documents it **twice** as the reason reward art is never stretched in the 150×150 grid |
+
+### What the audit turned up that the brief did not have
+
+- **`Kit.UnitIcon` has THREE consumers, not two.** The brief listed the summon chips and the index
+  entries. **`StarterPlayerScripts.AscensionController` clones it too** for the dupe-picker grid
+  (its line 199) and reads `LevelBadge`. A migration that missed it would have broken the ascension
+  flow silently, since that screen only opens from an NPC prompt.
+- **`ObtainRewardsController` clones `Kit.ItemIcon` directly** rather than going through the
+  `UIKit.ItemIcon` controller — so the item card has two independent consumers, not one.
+- **`StoryModeController` is NOT a consumer** and needs no migration: its `ItemIconTemplate` is a
+  screen-local instance and it only calls `UIKit.ItemIcon.ImageFor`, a function.
+- **The rename map is otherwise mechanical:** `CostLabel`→`PlacementPrice`, `LevelBadge`→`UnitLevel`,
+  `NameLabel`→`UnitName`, `IconImage`→`ItemIcon`, `QtyBadge`→`Amount`. **`ShinyBadge` has no
+  consumer at all** and is safe to drop.
+- `HotbarSlotV2.Placed/MaxPlacement` **has a `/` in its instance name**, so it needs `FindFirstChild`
+  and can never be reached by dot notation. Recorded before it bites someone.
+
+### Deliberately NOT done, and why
+
+- **The V2 templates were NOT copied to the Game.** The user chose "proposal + PENDING, stop". Copying
+  them early would put unused instances in a second Place and invite a manifest that describes a kit
+  neither Place actually uses. The copy belongs in the same session as the migration.
+- **No half-migration.** Every consumer is blocked on the same rarity surface, so there was no
+  meaningful subset that was "clean" — a partial adoption would have left the kit split across two
+  designs mid-flight.
+- **`SlotNumber` / `CountLabel` / the aspect constraint were NOT authored by this session.** The user
+  was offered that delegation (the B17/B19 precedent) and chose to stop instead. Authoring into
+  someone's design without that authorisation is what the user rule exists to prevent.
+
+### Verification
+
+**Nothing was built, so there is nothing to prove from a real Script — and none was written.** What
+WAS established, all from safe reads (`.Source` and instance properties via `execute_luau`, which
+CLAUDE.md sanctions):
+
+- Drift **value-by-value** in both Places (above), plus a full `Kit` child listing: **Lobby 10
+  children** (7 v1 + 3 V2), **Game 7** (v1 only).
+- The complete child inventory of all three V2 templates and all three v1 templates they replace.
+- Every `FindFirstChild`/`WaitForChild` string literal in all six consumers, then the **exact source
+  lines** for the contested names — which is how `SlotNumber`, `CountLabel` and the aspect constraint
+  were confirmed as real uses rather than name-grep false positives.
+- **Not proven and not implied:** that any V2 template renders correctly under any consumer. None has
+  ever been cloned by anything.
+
+- **Contract impact: NONE.** No shared module, template or contract touched. Drift identical before
+  and after in both Places: Lobby 26/26, Game 25/26.
+- **PENDINGs: ONE REPLACED** (B24's "adopt the V2 kit" → B25's precise, blocked-on-the-user version
+  carrying the rarity decision), **ONE RETIRED AS A CONCEPT** (see below). Nothing else moved.
+- **STANDING PRACTICE RECORDED (user, this session): they republish BOTH Places EVERY session.** The
+  "republish" PENDING is **deleted and must never be re-opened** — `STATE.md` now says so in as many
+  words. A session that bumps a contract should still *state* it in its advisory, because both Places
+  must go out together, but it is not something the user owes.
+- **Docs:** `docs/systems/ui-kit.md` gained the full V2 section (the canon home), both
+  `CONTEXT.md` files updated and compressed back to **150/150**, `STATE.md` **120/120**,
+  new proposal `docs/proposals/2026-08-16-v2-kit-adoption-gaps.md`.
+
 ## 2026-08-16 [lobby] B24 — AD-UI: the five-item review backlog **CLEARED** (all five correct), the reward preview mirrored into `LobbyFrame`, and the V2 kit audited — **three of its fields have no data source at all.**
 
 Bootstrap: **Lobby 26/26 matching, 0 drifted, 0 missing** (checked against the manifest value-by-value,

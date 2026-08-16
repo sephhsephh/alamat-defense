@@ -1,5 +1,5 @@
 # CONTEXT — Game place ("Alamat Defense")
-<!-- owner: game | scope: game | last-verified: 2026-08-16 (B23, teleport v4) -->
+<!-- owner: game | scope: game | last-verified: 2026-08-16 (B25) -->
 
 The match Place: loads a map, runs waves, towers fight, rewards commit to the profile.
 Server-authoritative, registry/config-driven, signal-decoupled. `--!strict` throughout.
@@ -38,13 +38,17 @@ confirm profile load + schema version on every boot.
   roll-grade / ascension / grantable catalog / generated resolved-stat cache — **shared canon**
   (drift-checked). `UnitStatsCatalog` is deployed in BOTH Places since A6b, 2026-08-06.)
 - **UI kit (AD-UI, shared canon)** — 5 controllers in `RS.Shared.UIKit` + 7 REAL templates in
-  `RS.UITemplates.Kit` (hashed as instance trees, ADR-0005) + `StarterPlayerScripts.UIKitBootstrap`.
-  **The Game HOTBAR is on it**: `StarterGui.Hotbar` is the Lobby's own ScreenGui, driven by the
-  shared `UIKit.Hotbar`; the only Place difference is `OnActivated` → **start placement**. Editing
-  any kit half in one Place only is DRIFT — `docs/systems/ui-kit.md`, `tools/checklists.md`. Other
-  Game screens are still Place-local and script-era. **Drift here is 25/26 at B23** — only `MetaMath`
-  MISSING (Phase D, expected); `ItemCatalog` caught up to the Lobby at B23 (`fc4b8023`). If
-  `Kit_ItemIcon` ever reads odd, copy it from the Lobby rather than editing it.
+  `RS.UITemplates.Kit` (ADR-0005) + `StarterPlayerScripts.UIKitBootstrap`. **The Game HOTBAR is on
+  it**: `StarterGui.Hotbar` is the Lobby's ScreenGui driven by the shared `UIKit.Hotbar`; the only
+  Place difference is `OnActivated` → **start placement**. Editing any kit half in one Place only is
+  DRIFT — `docs/systems/ui-kit.md`, `tools/checklists.md`. Other
+  Game screens are still Place-local and script-era. **Drift here is 25/26 at B25** — only `MetaMath`
+  MISSING (Phase D, expected). If `Kit_ItemIcon` reads odd, copy it from the Lobby, never edit it.
+  **⚠ THE V2 KIT IS NOT HERE.** `Kit.{UnitIconV2, ItemIconV2, HotbarSlotV2}` are LOBBY-only and were
+  deliberately NOT copied at B25. **This Place's hotbar renders through the SHARED `UIKit.Hotbar`, so
+  adopting V2 changes the Game too** — both-Places-one-session, currently blocked on the user
+  authoring `SlotNumber` on `HotbarSlotV2` (this hotbar's 1–6 key number has no V2 equivalent).
+  Canon: `docs/systems/ui-kit.md` + `docs/proposals/2026-08-16-v2-kit-adoption-gaps.md`.
 - Remotes: `RS.Remotes.{Placement, Towers, Match, Economy, Combat, Settings}`
 - Rich legacy docs: `ServerStorage.Documentation.*` (AIState, SystemIndex, HowTo, ...) —
   still valid; migrating to repo `docs/systems/` on touch.
@@ -68,8 +72,7 @@ confirm profile load + schema version on every boot.
 
 ## Current state / known gaps
 
-- Content: Stage 1 (3 acts), 1 map (TestMap), 8 towers, 2 enemies, Classic only. Attack
-  anim/VFX/sound asset ids are placeholders (slots exist and tolerate nil).
+- Content: Stage 1 (3 acts), 1 map, 8 towers, 2 enemies, Classic only. Attack anim/VFX/sound asset ids are placeholders (slots exist and tolerate nil).
 - `ReturnToLobby` (MatchActionHandler) builds `MatchReturn` (v3) and teleports to the Lobby;
   `GameConfig.LobbyPlaceId` SET (83342803778137, 2026-07-18 Integration). The payload version
   comes from `GameConfig.TeleportPayloadVersion` (**=4 since B23**) and MUST equal the Lobby's
@@ -114,21 +117,18 @@ confirm profile load + schema version on every boot.
   axis: it does NOT scale enemy health and never enters the wire→t conversion. Absent/unknown fails
   SAFE to Normal. Verified: Insane Victory paid both items, Normal paid neither, same gold band.
 - **TELEPORT v4 (B23) — `IsMatchmade`, and the ONE-PARTY INVARIANT IS REPEALED.** A reserved server
-  can now hold SEVERAL parties, or strangers with none, assembled by the Lobby's global queue across
-  lobby servers. `matchState.IsMatchmade` is the flag to branch on — **never `PartyId`**, which is
-  per-player, optional and read by NOTHING here. `HostUserId` is now an ELECTED host (lowest userId);
-  this Place already fell back to lowest-userId, so both sides agree by construction.
-  **A B23 survey found exactly ONE one-party assumption with teeth: GAME SPEED.** It is match-wide,
-  and both the authority and the 3× gamepass gate come from the host alone — matchmade, an elected
-  stranger. **B23 deliberately changed nothing** (a user design call, not a contract-bump edit) and
-  logs `[CONTRACT] MATCHMADE match: speed authority ...`. `PartyId` and end-of-match (per-player)
-  needed no change.
-- **SHORT ROSTERS ARE ROUTINE AT v4 — and the economy now counts who ARRIVED (B23 fix).**
-  `ValidatedPlayers` is the payload ROSTER; `matchState.PresentUserIds` is who actually turned up.
-  `EconomyConfig.PlayerCountRewardScaling` ({1=1.0,…,4=0.8}) divides kill AND wave cash by the
-  headcount, and it used to read the roster — so a lone survivor of a 4-player launch played the
-  whole match at 0.8× cash. **Never revert `playerCount` to `#userIds`.** The Ready-phase vote and
-  `GrantWaveReward` also take `presentUserIds`. Logged as `[CONTRACT] SHORT ROSTER: n of m`.
+  can hold SEVERAL parties, or strangers with none, assembled by the Lobby's queue across servers.
+  `matchState.IsMatchmade` is the flag to branch on — **never `PartyId`**, which is per-player,
+  optional and read by NOTHING here. `HostUserId` is an ELECTED host (lowest userId); this Place
+  already fell back to lowest-userId, so both sides agree by construction.
+  **B23's survey found ONE one-party assumption with teeth: GAME SPEED** — match-wide, and both the
+  authority and the 3× gate come from the host alone, matchmade an elected stranger. **B23 changed
+  nothing** (a user design call) and logs `[CONTRACT] MATCHMADE match: speed authority ...`.
+- **SHORT ROSTERS ARE ROUTINE AT v4 — the economy counts who ARRIVED (B23 fix).** `ValidatedPlayers`
+  is the payload ROSTER; `matchState.PresentUserIds` is who turned up. `PlayerCountRewardScaling`
+  ({1=1.0,…,4=0.8}) divides kill AND wave cash by the headcount and used to read the roster — a lone
+  survivor of a 4-player launch played at 0.8× cash. **Never revert `playerCount` to `#userIds`.**
+  The Ready vote and `GrantWaveReward` also take `presentUserIds`. Logs `[CONTRACT] SHORT ROSTER`.
   **⚠ `RewardScalingConfig`'s own header comment still says the payload has no mode field — STALE.**
   It is shared canon at `1d789978`; correcting the comment changes the hash, so it needs an AD-Game
   comment-only re-hash + both-Place redeploy. The CODE is right; only the comment is wrong.

@@ -1,6 +1,6 @@
 # SYSTEM — UI kit (shared canon, BOTH Places)
 
-<!-- owner: AD-UI | scope: global | last-verified: 2026-08-06 (A7) -->
+<!-- owner: AD-UI | scope: global | last-verified: 2026-08-16 (B25) -->
 
 Split out of `docs/systems/lobby-ui.md` at A7 (2026-08-06). That file described the kit from a
 Lobby-only viewpoint, which stopped being true on 2026-08-06 when the Game place's hotbar was
@@ -160,6 +160,46 @@ a grantable's Name/Tier/Icon), `StatGradeConfig` (roll 0..1 → D..Apex), `Ascen
 `LoadoutConfig` (`MaxSlots = 6`, `SlotUnlockLevel = {1,1,1,5,20,50}` — shared because if only one
 Place knew, the two hotbars would disagree).
 
+## The V2 templates — authored, audited, NOT yet adopted (B24 + B25)
+
+`Kit.{UnitIconV2, ItemIconV2, HotbarSlotV2}` are the USER's own redesigns. **They sit BESIDE the v1
+templates as pure ADDITIONS**, which is exactly why drift reads green with them present: nothing
+consumes them and no v1 hash moved. They are **not** in `shared/manifest.json` and are **Lobby-only**
+— the Game has the 7 v1 templates and nothing else.
+
+**Shared V2 structure:** root `ImageButton` + `UIGradient` + `UICorner` + `UIHoverStroke` (a UIStroke
+authored `Enabled = false`, meant to be driven from MouseEnter/MouseLeave) + `Main`.
+
+**✅ DECIDED BY THE USER AT B25 — rarity colour goes on the ROOT `UIGradient`, and the tier BORDER is
+dropped.** v1 paints tier onto TWO instances (`BG`'s gradient = fill, `UIStrokeWithGradient` =
+border); **neither exists in V2**, and `UIHoverStroke` is reserved for hover. One paint surface, one
+call site, `TierConfig.seamlessSequence` as always — **do not write a second gradient animator**, and
+do not "restore" a tier border: its absence is an accepted, deliberate restyle.
+
+**⛔ ADOPTION IS BLOCKED ON THREE INSTANCES THE USER MUST AUTHOR** (B25 audited every consumer and
+stopped rather than half-migrate):
+
+| Template | Missing | Who needs it |
+| --- | --- | --- |
+| `HotbarSlotV2` | `SlotNumber` | the SHARED `UIKit.Hotbar` — `setText(btn,"SlotNumber",i)`, **BOTH Places** |
+| `UnitIconV2` | `CountLabel` | `IndexController`'s owned-count |
+| `ItemIconV2` | `UIAspectRatioConstraint` | `ObtainRewardsController` — documented as why art is not stretched |
+
+Full gap table, the rename map (`CostLabel`→`PlacementPrice`, `LevelBadge`→`UnitLevel`,
+`IconImage`→`ItemIcon`, `QtyBadge`→`Amount`; `ShinyBadge` has no consumer and is droppable) and the
+build order: **`docs/proposals/2026-08-16-v2-kit-adoption-gaps.md`**.
+
+**Three fields have NO DATA SOURCE and must render HIDDEN, never invented:** `PlacementPrice` and
+`ElementIcons` (proposal `2026-08-16-tower-display-fields-for-uniticon-v2.md`) and `TraitIcon`
+(`2026-08-16-trait-icons.md`). `HotbarSlotV2.Placed/MaxPlacement` is a MATCH-runtime number — Game
+only, hidden in the Lobby (its name contains a `/`, so it needs `FindFirstChild`, not dot notation).
+
+**`Kit.UnitIcon` has THREE consumers, not two** — `SummonController` (featured chips),
+`IndexController` (codex entries) and **`AscensionController`** (the dupe-picker grid). `Kit.ItemIcon`
+has two: the `UIKit.ItemIcon` controller and `ObtainRewardsController`, which clones the master
+directly. `Kit.HotbarSlot` has one, the shared `UIKit.Hotbar` — **and that is what makes adoption
+cross-Place.**
+
 ## Rules that keep the kit healthy
 
 - **NEVER generate UI in scripts** (user rule, 2026-07-18). Templates are real Instances the user
@@ -171,3 +211,6 @@ Place knew, the two hotbars would disagree).
 - **When you resize a Kit template, re-sync any already-deployed clone.** See `ItemHoverCard`.
 - Adding a property to `tools/hash_shared.luau`'s whitelist **changes every template hash** — say
   so in the changelog (ADR-0005).
+- **A new template beside an old one is an ADDITION and does not move any hash.** That is why the V2
+  set can sit in the Lobby with drift green. Adoption is what costs: it moves consumers, adds
+  manifest entries, retires the v1 rows and must land in BOTH Places in ONE session.
