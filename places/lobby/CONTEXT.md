@@ -131,10 +131,9 @@ on the `BannerChoices` bump); **Party** and **Return** are still script-built (c
   breaks EVERY launch with `[CONTRACT] PayloadVersion mismatch`. A live break, not an unverified path.
 - **USER (design call, B23): matchmade game speed** comes from an ELECTED STRANGER (lowest userId),
   including the 3× gate. B23 changed nothing and logs it. Your call.
-- **AD-UI:** per-unit models all `UnitModels.Placeholder`; Units action buttons animation-only (equip
-  works since B10) — `LockUnitButon` (sic) is authored but UNWIRED, and `QuickSellButton` does **not**
-  exist despite Phase C's note. Hotbar hover TRIGGER unverified; `Kit_ItemHoverCard`'s master/clone
-  split means editing the master does not update it.
+- **AD-UI:** per-unit models all `UnitModels.Placeholder`; Units action buttons animation-only —
+  `LockUnitButon` (sic) is authored but UNWIRED and `QuickSellButton` does **not** exist despite
+  Phase C's note. Hotbar hover TRIGGER unverified; `Kit_ItemHoverCard` master/clone split stands.
 - **AD-UI (B24): the V2 kit templates are authored but NOT adopted.** `Kit.{UnitIconV2, ItemIconV2,
   HotbarSlotV2}` sit BESIDE the v1s, so drift stays green — ADDITIONS, not edits. The user chose
   **replace v1 outright**, which migrates the GAME's hotbar too → **cross-Place, one session**.
