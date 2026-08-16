@@ -95,7 +95,19 @@ everything untradeable at launch).
   `MatchmakingService` — **one path with one more caller, not a second path** (§12); new
   `MatchmakingRules` holds the pure bucket/pack/elect logic so it is harness-testable.
   `FindMatchButton` is LIVE. **37 live asserts, 0 failures.** **PlayGUI P1–P7 COMPLETE.**
-  Small follow-up: `LobbyFrame.RewardsFrame` still shows nothing (scope, not data).
+  **✅ AD-UI REVIEW + MIRROR [AD-UI] (B24, 2026-08-16)** — the **five-item review backlog is CLEARED**:
+  B7/B8/B9/B10/B11 all read from source and all confirmed CORRECT, nothing needed changing. (B7's old
+  hardcoded `BannerType ~= "Standard"` still greps — it is a history COMMENT on line 183, not live
+  code.) `LobbyFrame.RewardsFrame` now **mirrors the Story panel off ONE `GoldBand` computation**
+  (`renderRewards` factored into `renderInto`; a second call site is how the two would drift), and
+  its `ItemIcon` got B16's authoring fix. **9/9 live asserts.** Two doc-vs-reality findings recorded:
+  `QuickSellButton` does **not** exist despite Phase C's note, and `LockUnitButon` (sic) is authored
+  but unwired.
+  🔲 **V2 kit NOT adopted.** The user's `Kit.{UnitIconV2, ItemIconV2, HotbarSlotV2}` are ADDITIONS
+  beside the v1s (drift stays green). **Three requested fields have NO data source** — placement cost
+  and element are AD-Game's, the trait icon is AD-Traits'; proposals filed. Favourite/Lock are
+  read-only (no remote writes them). Adoption is **cross-Place** (the Game's hotbar consumes
+  `Kit_HotbarSlot`), so it needs a both-Places session.
 - ✅ **Global matchmaking queue — BUILT at B23** on teleport v4. MemoryStore sorted map keyed
   `actId|stageNumber|mode|difficultyBucket`; **a queue entry is a PARTY, never a player** and packing
   only adds whole entries, so "never split a party" holds by construction; host = lowest userId, so

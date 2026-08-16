@@ -37,12 +37,19 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   schema** (v2→v3, additive-optional = Reconcile + bump + no-op `Migrations[2]`), **BOTH Places in
   ONE session** (invariant 5). Plan + the rejected `Counters.Global` shortcut:
   `docs/proposals/2026-08-09-selection-banner-choices.md`. Selection is one line after.
-- **PENDING (AD-UI review, five user-authorised items):** **B7** `SummonController` →
-  `BannerRegistry.BlockedReason` · **B8** `RATES / INDEX` button on `SummonScreen` · **B9**
-  `UnitsController.selectUnit` publishes the selected uuid · **B10** equip/unequip wiring +
-  `LoadoutChanged` listener in `HotbarController` · **B11** equip colours + one-per-family client
-  guard, `AscensionPanel` out of `SelectedUnitFrame` (ADR-0010). **Quests/login/codes still need a
-  NEW reveal answer** — the return-value trick only serves player-INITIATED grants.
+- **PENDING (AD-UI, design): quests/login/codes need a NEW reveal answer** — the return-value trick
+  only serves player-INITIATED grants, and no server→client push remote exists. Design work: propose
+  before building. (The five-item review backlog was **CLEARED at B24** — all five confirmed correct.)
+- **PENDING (AD-Game, from B24): the V2 unit icon needs PLACEMENT COST + ELEMENT** and neither exists
+  in the Lobby — `UnitStatsCatalog` is only `{DMG,RNG,SPA}` and tower configs are Game-only. Plan:
+  `docs/proposals/2026-08-16-tower-display-fields-for-uniticon-v2.md`. Fields are HIDDEN until then.
+- **PENDING (AD-Traits, from B24): `TraitDefinitions` has NO icon field**, so `UnitIconV2.TraitIcon`
+  cannot render. Additive + optional, but it is shared canon → drift procedure. Plan:
+  `docs/proposals/2026-08-16-trait-icons.md`.
+- **PENDING (AD-UI, from B24): adopt the V2 kit templates.** The user authored `Kit.UnitIconV2` /
+  `ItemIconV2` / `HotbarSlotV2`; the user chose **replace v1 outright**, which migrates the GAME's
+  hotbar too, so it is a **cross-Place, both-Places-one-session** job — not a Lobby-only task.
+  Favourite/Lock render read-only (no remote writes them; `LockUnitButon` is authored but unwired).
 - **PENDING (USER, design call — surfaced by B23's v4 survey): GAME SPEED IN A MATCHMADE MATCH.**
   Speed is match-wide and BOTH the authority to change it and the 3× gamepass entitlement come from
   the host alone. Matchmade, that host is an **elected stranger** (lowest userId), so a stranger's
@@ -99,15 +106,10 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 names. Different sequences, same letters. PlayGUI uses `P1…P7` to avoid a third collision.
 
 1. **USER** — republish both Places TOGETHER (v4 is a hard cutover), then run the loop live once.
-2. **PLAYGUI (user priority 2026-08-09)** — `docs/blueprints/playgui.md` is LAW. **P1–P6 ✅ DONE**
-   (B14–B19); detail in the blueprint's §9 and `docs/systems/play-menu.md`. The ADR-0011 remap is
-   isolated in `PlayGUI.DifficultyScale` — **the ONE conversion; never write a second.**
-   **B20 did the Integration half** (curve copied here; teleport v3 = Insane is live-reachable) and
-   **B21 closed both AD-UI items**: `OpenStageSelect` has a shipping-path listener again (CONTINUE
-   works) and the reward preview reads `RewardScalingConfig.GoldBand` and TRACKS the slider.
-   **P7 ✅ BUILT at B23** — the global queue ships on teleport v4: `MatchmakingService` +
-   `MatchmakingRules` + a `LaunchService` both launch callers share, `FindMatchButton` live.
-   **PlayGUI P1–P7 are COMPLETE.** **NEXT = the five-item AD-UI review backlog**, or a live
+2. **PLAYGUI — `docs/blueprints/playgui.md` is LAW. P1–P7 ✅ COMPLETE** (B14–B23); detail in §9 and
+   `docs/systems/play-menu.md`. The ADR-0011 remap is isolated in `PlayGUI.DifficultyScale` — **the
+   ONE conversion; never write a second.** B24 cleared the five-item review backlog and mirrored the
+   reward preview into `LobbyFrame`. **NEXT = the V2 kit adoption (cross-Place)**, or a live
    two-client queue test once the user republishes.
 3. **Phase B** (`phases-b-f-meta.md`). Landed B0–B8; Selection ⛔ on the `BannerChoices` schema
    PENDING above. **Phase C (B9): C3 ascension ✅**; **B11 moved it to an NPC screen (ADR-0010) —

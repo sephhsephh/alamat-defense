@@ -1,5 +1,5 @@
 # CONTEXT — Lobby place (LIVE, booted 2026-07-17)
-<!-- owner: lobby | scope: lobby | last-verified: 2026-08-16 (B23) -->
+<!-- owner: lobby | scope: lobby | last-verified: 2026-08-16 (B24) -->
 
 The social/meta Place: players land here, view their collection, roll banners, pick a stage +
 difficulty, form parties, and teleport into the Game place.
@@ -22,12 +22,12 @@ difficulty, form parties, and teleport into the Game place.
   (paired with `RS.Configs.Towers` being ABSENT — the Game has the tower configs, this Place does not).
 - **Flow:**
   - **`GetUnitViews` is the SINGLE profile read path** (ADR-0004): additive changes are free, a
-    breaking one needs contract treatment. **`GetCollection` is RETIRED;
-    do not add a second read path.** Per owned uuid: `Uuid, TowerId, Name, Tier` (shared
-    `ItemCatalog`), `Level, XP, Trait, Shiny, Ascension, Worthiness, Locked, Favorited, Equipped`
-    (uuid in `Loadout`), raw `StatRolls`, `Grades = {DMG,RNG,SPA}` — plus `Loadout`, `Currencies`,
-    `PlayerXP/PlayerLevel`, `MaxLoadout`, `Items {[itemId]=count}`. **No resolved DMG/RNG/SPA, no
-    XpPct.** Clients never read profiles. `RS.Remotes` holds **17** (B23 added the two queue ones).
+    breaking one needs contract treatment. **`GetCollection` is RETIRED; do not add a second read
+    path.** Per owned uuid: `Uuid, TowerId, Name, Tier` (shared `ItemCatalog`), `Level, XP, Trait,
+    Shiny, Ascension, Worthiness, Locked, Favorited, Equipped` (uuid in `Loadout`), raw `StatRolls`,
+    `Grades = {DMG,RNG,SPA}` — plus `Loadout`, `Currencies`, `PlayerXP/PlayerLevel`, `MaxLoadout`,
+    `Items {[itemId]=count}`. **No resolved DMG/RNG/SPA, no XpPct, NO cost and NO element** (B24).
+    Clients never read profiles. `RS.Remotes` holds **17**.
   - Stage select + difficulty = the `RS.Configs.StageRegistry` mirror + `GetStages`; captures
     (StageId, DifficultyPercent). `StageSelectScreen` was DELETED at B19 — PlayGUI covers stage
     select, difficulty and launch; `GetStages` SURVIVES (ReturnScreen calls it). **`ClientEvents
@@ -53,10 +53,10 @@ difficulty, form parties, and teleport into the Game place.
     match runs at the host's EXACT wire value — never an average**, which would move everyone's
     `GoldBand` payout. `MatchmakingRules.BucketOf` is the ONE home for queue difficulty arithmetic and
     is **not** the ADR-0011 conversion. Timeout 45s **OFFERS** solo. `RS.Remotes` = **17**.
-    **The mode joins the payload in `PartyService`, not in the UI:** P4 publishes `DifficultyMode` on
-    `SelectedAct`, P6's `LobbyController` passes it through `RequestLaunch` verbatim, and
-    `PartyService` validates it (anything but `"Insane"` becomes `"Normal"`) and builds the payload. `buildLoadout` = saved `Loadout` filtered to
-    still-owned uuids, else auto by MetaLevel desc, capped at `MaxLoadoutSize`. `GamePlaceId` =
+    **The mode joins the payload in `PartyService`, not the UI:** P4 publishes `DifficultyMode`, P6's
+    `LobbyController` passes it through `RequestLaunch` verbatim, `PartyService` validates it
+    (anything but `"Insane"` → `"Normal"`). `buildLoadout` = saved `Loadout` filtered to still-owned
+    uuids, else auto by MetaLevel desc, capped at `MaxLoadoutSize`. `GamePlaceId` =
     **125430066355564**. Only the party HOST may launch; errors come back on `PartyState`.
   - **MatchReturn (v3):** `Server.Lobby.MatchReturnService` reads `TeleportData.MatchReturn` on join
     (version from `LobbyConfig`, NOT hardcoded; validates version/Outcome/stage; drops an unknown
@@ -65,9 +65,9 @@ difficulty, form parties, and teleport into the Game place.
     **only fires on JOIN** — set it in the EDIT datamodel and restart Play.
   - **Starter tower choice:** `RS.Configs.StarterTowerConfig` (Archer/Knight/Mage),
     `Server.Lobby.StarterChoiceService` + `Remotes.{GetStarterOffer,ChooseStarterTower}`, modal
-    `StarterGui.StarterChoiceScreen` (no dismiss; REAL tree, card = `Root.Panel.CardsRow.CardTemplate`).
-    Eligible when the profile owns ZERO **units**. Grants a uuid `UnitInstance` mirroring the Game's
-    `GrantUnit` (**StatRolls via shared `StatGradeConfig.RollAll`**); never clobbers an existing one.
+    `StarterGui.StarterChoiceScreen` (REAL tree, card = `Root.Panel.CardsRow.CardTemplate`). Eligible
+    at ZERO **units**. Grants a uuid `UnitInstance` mirroring `GrantUnit` (**StatRolls via shared
+    `StatGradeConfig.RollAll`**); never clobbers an existing one.
     Harness `DevSimulateFirstJoin`. `MaxLoadoutSize = 6`.
 
 Run the bootstrap ritual + `tools/hash_shared.luau` every session; reconcile drift before any work.
@@ -97,8 +97,9 @@ queue paths both use the published `DifficultyWire` VERBATIM and REFUSE to act i
 **`SelectionSerial`**, and add no second channel. **(4)** every PlayGUI lookup is NON-RECURSIVE on
 purpose — `SelectedAct` exists under BOTH frames, `PlayersFrame` holds a ScrollingFrame of the same
 name, and there are THREE `SelectedDifficultyLable`s. **(5)** labels with no data source are HIDDEN,
-not zeroed — but the **reward preview is LIVE since B21**, reading `RewardScalingConfig.GoldBand` off
-the published wire and re-rendering on every slider move, so it cannot contradict the payout.
+not zeroed — but the **reward preview is LIVE since B21** (`RewardScalingConfig.GoldBand` off the
+published wire, re-rendered every slider move, so it cannot contradict the payout) and **B24 mirrors
+it into `LobbyFrame` from that ONE computation — never add a second `GoldBand` call site.**
 `LoadingScreen` is Lobby-local, NOT drift-controlled (§4).
 **P7 (the global queue, §11) SHIPPED at B23 on teleport v4.** `FindMatchButton` — under
 **StoryModeFrame**, not MainMenu — is LIVE: `PlayGUIController` no longer disables it and the new
@@ -115,16 +116,13 @@ Meta.MetaConfig}`, driven by `RS.Remotes.RequestSummon`. UI shipped B6/B7/B8. Ru
   its unit record stays byte-compatible with `StarterChoiceService` + the Game's `GrantUnit`.
 - **`RS.Shared.MetaMath` is SHARED canon** (`6badac1d`), **not deployed to the Game** — MISSING there
   is EXPECTED, not drift.
-- **Reveal = the remote's RETURN VALUE**; no push remote exists. Pity uses `Data.Pity[ref]` (no
-  schema bump); pulls count on `Counters.Global.GachaPulls`, NOT `Summons` (ADR-0008).
-
-## v2 candidates (not built)
-
-Gacha UI: only **Selection** is left, blocked on the `BannerChoices` schema bump. Party polish
-(persisted parties), currency shop, player-level display, trading hub, loadout picker UI. Convert
-legacy script-built screens when next touched (rule 2026-07-18): **Party** and **Return** remain.
+- **Reveal = the remote's RETURN VALUE**; no push remote. Pity uses `Data.Pity[ref]` (no schema
+  bump); pulls count on `Counters.Global.GachaPulls`, NOT `Summons` (ADR-0008).
 
 ## Open PENDINGs (see STATE.md — this is the Lobby-relevant subset)
+
+**Not built (row-by-row status: `docs/ROADMAP.md`):** **Selection** is the last gacha screen (blocked
+on the `BannerChoices` bump); **Party** and **Return** are still script-built (convert when touched).
 
 **`STATE.md` is the canon list — read it, not this.** Only the Lobby-specific detail lives here:
 
@@ -134,17 +132,20 @@ legacy script-built screens when next touched (rule 2026-07-18): **Party** and *
 - **USER (design call, B23): matchmade game speed** comes from an ELECTED STRANGER (lowest userId),
   including the 3× gate. B23 changed nothing and logs it. Your call.
 - **AD-UI:** per-unit models all `UnitModels.Placeholder`; Units action buttons animation-only (equip
-  works since B10). Hotbar hover TRIGGER unverified (`MouseEnter` cannot be fired from tooling);
-  `Kit_ItemHoverCard`'s master/clone split means editing the master does not update it.
-  **`LobbyFrame.RewardsFrame` still shows nothing** — mirror the Story panel's `refreshRewards` off
-  the SAME published attributes; do NOT add a second `GoldBand` call site.
-- **AD-Meta: P7 = contract v4** (`docs/proposals/2026-08-16-p7-global-queue.md`).
+  works since B10) — `LockUnitButon` (sic) is authored but UNWIRED, and `QuickSellButton` does **not**
+  exist despite Phase C's note. Hotbar hover TRIGGER unverified; `Kit_ItemHoverCard`'s master/clone
+  split means editing the master does not update it.
+- **AD-UI (B24): the V2 kit templates are authored but NOT adopted.** `Kit.{UnitIconV2, ItemIconV2,
+  HotbarSlotV2}` sit BESIDE the v1s, so drift stays green — ADDITIONS, not edits. The user chose
+  **replace v1 outright**, which migrates the GAME's hotbar too → **cross-Place, one session**.
+  `PlacementPrice`/`ElementIcons`/`TraitIcon` have **NO Lobby data source** (proposals filed for
+  AD-Game + AD-Traits) — HIDE them until those land. Favourite/Lock are **read-only**.
+- **AD-Meta:** P7 = contract v4 (`docs/proposals/2026-08-16-p7-global-queue.md`).
 
 ## Ownership notes
 
 - Lobby owns: teleport contract, lobby UI/scene. **AD-Gacha owns the banner catalog + grant
   pipeline** (`docs/systems/gacha.md`), home Place Lobby, built B3.
-- Lobby consumes (never edits): save schema, tower configs, progression config, trait configs,
-  and **`RewardScalingConfig`** (AD-Game's — read the curve, never re-author or retune it here).
-- Currency/XP/tower grants go through the same profile (never a second store) and through
-  **`GrantService`**, never inline.
+- Lobby consumes (never edits): save schema, tower configs, progression config, trait configs, and
+  **`RewardScalingConfig`** (AD-Game's — read the curve, never re-author it here). Currency/XP/tower
+  grants go through the same profile (never a second store) and **`GrantService`**, never inline.

@@ -1,5 +1,91 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-16 [lobby] B24 — AD-UI: the five-item review backlog **CLEARED** (all five correct), the reward preview mirrored into `LobbyFrame`, and the V2 kit audited — **three of its fields have no data source at all.**
+
+Bootstrap: **Lobby 26/26 matching, 0 drifted, 0 missing** (checked against the manifest value-by-value,
+not just for presence). Integration gate: **No Integration needed — proceeding** for everything that
+landed. **The active instance was the GAME again and BOTH ids had rotated** (the B19–B23 hazard, now
+5 sessions running), so the Lobby was resolved by NAME and every `execute_luau` opened with the
+aborting assertion.
+
+**THE FIVE-ITEM REVIEW BACKLOG IS CLEARED — all five confirmed CORRECT, nothing needed changing.**
+These were written by OTHER chats inside AD-UI's canon under the user's authorisation; this is the
+review AD-UI was owed. Read from source, not from the changelog's claims about it:
+- **B7** — `SummonController.blockedReason` delegates to `BannerRegistry.BlockedReason` and falls
+  back to `EndsInText`. ✅ **A grep for the old hardcoded `BannerType ~= "Standard"` DOES still hit —
+  on line 183, inside the comment that explains what it used to do.** Confirmed comment-only; the
+  live path is one delegating line. Worth recording so the next grep does not raise a false alarm.
+- **B8** — `IndexButton` exists on `SummonScreen.Main.Panel`; `IndexController` wires it itself and
+  listens on `OpenIndex`. `SummonController` does not mention it at all — which is the POINT: B8
+  changed no AD-UI controller code. ✅
+- **B9** — `selectUnit` publishes `Uuid` + `TowerId` as attributes on `SelectedUnitFrame`, the same
+  idiom `loadUnits` already uses per card. No second read path. ✅
+- **B10** — `doEquipToggle` computes a slot INDEX and asks; **the server's answer is taken as truth**
+  (`loadoutList = res.Loadout`), the dense-list contract is respected, and `LoadoutChanged` is fired
+  for the hotbar. ✅
+- **B11** — EQUIP/UNEQUIP gradient AND stroke are **set on every refresh rather than toggled**, so the
+  button cannot strand on the wrong colour; the one-per-family guard correctly EXEMPTS a same-family
+  swap from the "loadout full" block (a swap does not grow the list). `AscensionPanel` is absent from
+  `SelectedUnitFrame` and `UnitsController` does not mention Ascension at all — ADR-0010 held. ✅
+
+**TWO INCIDENTAL FINDINGS the review turned up, recorded rather than silently fixed:**
+- **`QuickSellButton` does not exist.** Phase C's sell-dupes note in `STATE.md`/`ROADMAP` says it
+  "needs the unwired `QuickSellButton`" — `SelectedUnitFrame` has no such child. The doc describes a
+  button that was never authored.
+- **`LockUnitButon`** (sic — missing an `n`) IS authored in `SelectedUnitFrame` and is **unwired**.
+  Directly relevant to the Lock feature below.
+
+**`LobbyFrame.RewardsFrame` now mirrors the Story panel — off ONE `GoldBand` computation.**
+B21's follow-up. `LobbyFrame` is the last thing a player reads before committing, so the two panels
+disagreeing about the payout would be worse than one of them being blank.
+- **Its `ItemIcon` was still unrenamed and `Visible = true`** — the exact authoring state the Story
+  panel had before B16's fix. Renamed to `ItemIconTemplate` + `Visible = false`, mirroring B16.
+- `renderRewards` was **factored into `renderInto(scroll, template, list)`**, and the single
+  `refreshRewards` (one `GoldBand` call) renders the SAME list into BOTH panels. **A second
+  `GoldBand` call site is exactly how the two would silently drift**, which is why the brief banned
+  it and why this is a factoring rather than a copy.
+- The Lobby path is spelled out NON-RECURSIVELY on purpose: `SelectedAct` exists under BOTH frames,
+  so `FindFirstChild("SelectedAct", true)` returns an arbitrary one.
+
+**THE V2 KIT: AUDITED, NOT ADOPTED — and the audit is the deliverable.** The user authored
+`Kit.{UnitIconV2, ItemIconV2, HotbarSlotV2}` and asked for equip/favourite/lock plus placement price,
+name, element icons, trait icon and level.
+- **They are ADDITIONS, not edits** — the v1 templates still hash to their manifest values, which is
+  why drift reads 26/26. Nothing was broken by their arrival.
+- **Three of the requested fields have NO data source in this Place, and no UI work fixes that:**
+  `UnitStatsCatalog` is literally `Archer = { DMG = 15, RNG = 20, SPA = 6 }` — **no cost, no
+  element**; `ItemCatalog` has neither; `RS.Configs.Towers` does not exist here by design.
+  `TraitDefinitions` has **no `Icon`/`Image`/`assetid` field at all**. Proposals filed:
+  `docs/proposals/2026-08-16-tower-display-fields-for-uniticon-v2.md` (AD-Game) and
+  `2026-08-16-trait-icons.md` (AD-Traits), each with the exact shape needed. **Same precedent as the
+  reward curve before B20:** the rendering is AD-UI's, the numbers are not, and a fabricated ₱67,000
+  is the identical class of lie §8 exists to prevent.
+- **Favourite and Lock are READ-ONLY.** `Favorited`/`Locked` are in the profile and the view, but
+  **none of the 17 remotes writes them**. Making them togglable needs a new remote + server writer —
+  and `AscensionRules` already treats both flags as protection from being consumed as a dupe, so
+  that is a gameplay change, not a UI one. The user chose display-only for now.
+- **Adoption is CROSS-PLACE and was NOT started.** The user chose "replace v1 outright", which
+  migrates the GAME's hotbar (it consumes `Kit_HotbarSlot` through the shared `UIKitHotbar`
+  controller) and rewrites the manifest for both Places. **That cannot land from a Lobby-only
+  session**, so this session stopped at the boundary rather than leave the manifest describing a
+  state that is not true in the Game. Recorded as a PENDING with the constraint spelled out.
+
+**Verified live from a REAL LocalScript + `get_console_output`** — never `execute_luau` for
+behaviour. `StarterPlayerScripts.B24Harness` **DELETED at landing**.
+**`[Test] B24 RESULT: PASS (9 pass, 0 fail)`**: at UI 1% / 50% / 100% both panels showed the
+identical band (`100-300`, `199-399`, `300-500`) matching `GoldBand`; Insane added the SAME 2 cells
+to BOTH (`Reward_BannerTicket`, `Reward_TraitRerollToken`) with the band unchanged; returning to
+Normal dropped both to the identical set; leave still closes. The `[DIAG]` line now reports
+`rendered: N cell(s) into 2 panel(s)`. All `Dev*` attributes swept OFF, no stray cells left in Edit.
+
+- **Contract impact: NONE.** No shared module, template or contract touched — the V2 templates were
+  READ, never adopted. Drift **26/26** before and after.
+- **PENDINGs: the five-item review backlog DELETED** (ADR-0006). **Three added:** AD-Game's display
+  fields, AD-Traits' trait icon, and AD-UI's cross-Place V2 adoption. The quests/login/codes reveal
+  answer was split out as its own design PENDING rather than staying buried in the review item.
+- **Push status:** `origin/main` was already current at bootstrap (the user pushes often), so this
+  session started at 0 unpushed and adds one.
+
 ## 2026-08-16 [both] B23 — AD-Integration: teleport **v3 → v4** and **P7, the global matchmaking queue, SHIPPED**. `ItemCatalog` drift cleared. **PlayGUI P1–P7 COMPLETE.**
 
 Both Studio ids had rotated **again** — five sessions running now (B19–B23) — so each Place was
