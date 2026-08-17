@@ -1,12 +1,11 @@
 # Alamat Defense — Constitution (read first, every session)
 
 This repo is the **single source of truth** for the Alamat Defense Experience (all Places:
-Game, Lobby, future Tutorial/Event Worlds). Rules here bind every Claude chat working on
-any Place. When this repo and anything else disagree (chat memory, in-Studio docs), **the
-repo wins** — except live code in Studio, which is canon for Place-local runtime behavior.
+Game, Lobby, future Tutorial/Event Worlds). Rules here bind every chat on any Place.
 
-**Canon model:** disk is canon for knowledge, contracts, and shared module source. Studio
-is canon for Place-local code and runtime. Git is the ledger.
+**Canon model:** disk is canon for knowledge, contracts and shared module source; Studio is
+canon for Place-local code and runtime; git is the ledger. The repo beats chat memory and
+in-Studio docs on everything except live Place-local runtime behaviour.
 
 ## Identity & Place binding
 
@@ -28,31 +27,40 @@ systems listed in `docs/OWNERSHIP.md`. Every chat mounts this repo.
 1. Read this file.
 2. Read `STATE.md` (project snapshot + open PENDINGs).
 3. Resolve Place binding (above), then read `places/<place>/CONTEXT.md`.
-4. Read `CHANGELOG.md` entries newer than your last session — this is the event bus;
-   other chats' landings appear here. Adapt to anything that touches your system.
+4. Read `CHANGELOG.md` **TOP-DOWN, stopping at the session counter you already know** — it is
+   newest-FIRST, so the newest entry starts at line 3, not at the end. **NEVER read it whole:**
+   ~4.5k lines ≈ 90k tokens to learn what the first ~70 say. Recipes: `tools/checklists.md`.
 5. **Drift check:** run `tools/hash_shared.luau` via `execute_luau` against your Place;
    compare with `shared/manifest.json`. Mismatch = STOP, reconcile before any work.
 6. If `STATE.md` lists a PENDING targeting your Place or system, do that first.
-7. **Integration gate (answer it out loud, every session):** after steps 1–6, tell the
-   user explicitly either "Run an AD-Integration session BEFORE this task" or "No
-   Integration needed — proceeding." Triggers in `tools/checklists.md`; the short form:
-   drift-check mismatch, a PENDING that needs the OTHER Place, an undeployed contract or
-   shared-module change in the changelog, or a task that spans both Places.
+7. **Integration gate (say it out loud, every session):** after 1–6, tell the user either
+   "Run an AD-Integration session BEFORE this task" or "No Integration needed — proceeding."
+   Short form of the triggers (full list in `tools/checklists.md`): drift mismatch, a PENDING
+   needing the OTHER Place, an undeployed contract/shared change, a task spanning both Places.
+
+## Reading budget (the usage limit is a real constraint — user rule, 2026-08-17)
+
+- **Bootstrap reads ONLY the four files in steps 1–4.** Nothing else is "orientation".
+- **Never read a file over ~200 lines whole to find something** — `grep -n` for it, then
+  `sed -n 'A,Bp'` on the hit's range. `CHANGELOG.md` (4.5k lines), `docs/ROADMAP.md` (450)
+  and `docs/design/ai-kms-architecture.md` are NEVER read whole. Recipes in `tools/checklists.md`.
+- `docs/INDEX.md` is the map: open a system/ADR/proposal doc only when the task touches it,
+  and read the section, not the file. Do not explore the game tree for orientation — the docs
+  are the index. Explore only the thing you're changing, or a doc flagged stale.
+- Prove with `script_grep`/`script_search` before `script_read`; print the ONE asserted value.
 
 ## Multi-chat synchronization (many chats, one truth)
 
 - `CHANGELOG.md` is the event bus: APPEND-only, newest first, one entry per landing.
-- **Re-read `STATE.md` + the changelog tail immediately BEFORE landing** — a sibling chat
-  may have landed mid-session. Merge your entry on top; never overwrite theirs.
+- **Immediately BEFORE landing, re-read `STATE.md` + the changelog's FIRST entry only**
+  (`sed -n '1,3p'`; "tail" would hand you the OLDEST). A sibling chat may have landed
+  mid-session. Merge your entry on top; never overwrite theirs.
 - Single-writer: only the owner (OWNERSHIP.md) edits a system's code/docs/contracts.
   Everyone else writes `docs/proposals/` + a PENDING.
 - Two chats must NOT live-edit the same Place at the same time unless their systems are
   disjoint. Contract or shared-module changes: strictly ONE chat at a time, no exceptions.
 - On any git conflict or unexpected dirty state: stop, read `git status` + changelog,
   reconcile, then land.
-
-Do not explore the game tree for orientation — the docs are the index. Explore only for
-the specific thing you're changing, or when a doc is flagged stale.
 
 ## Landing checklist (mandatory at session end + after each verified milestone)
 
@@ -74,13 +82,11 @@ the specific thing you're changing, or when a doc is flagged stale.
    (d) anything the user must do personally (publish a Place, set an id, buy nothing);
    (e) whether the user's NEXT session should be AD-Integration — state it explicitly
    either way ("run Integration next" / "no Integration needed yet");
-   (f) **a ready-to-paste NEXT SESSION PROMPT** (user rule, 2026-08-08) — ALWAYS, as the last
-   thing in the reply, in ONE copy-paste block. Name the chat identity + Place, state the ONE
-   session-task, carry forward the specific facts, paths and hazards that session needs so it
-   does not re-derive them, and restate the bootstrap + landing requirements. Never end a
-   session with only prose about what comes next.
-   If a cross-Place dependency is discovered MID-session, surface it immediately — do
-   not wait for landing.
+   (f) **a ready-to-paste NEXT SESSION PROMPT** (user rule, 2026-08-08) — ALWAYS, last in the
+   reply, ONE copy-paste block: chat identity + Place, the ONE session-task, and the specific
+   facts/paths/hazards it must not re-derive, plus bootstrap + landing requirements. Never end
+   a session with only prose about what comes next.
+   Discover a cross-Place dependency MID-session? Surface it at once, don't wait for landing.
 
 ## Ownership (single writer per system)
 
@@ -113,6 +119,7 @@ up next session. Unlisted new system → add it to OWNERSHIP.md as part of build
   designed `*Template` instance (Visible=false) that scripts clone and fill. Controllers
   only: read data, clone templates, set text/visibility, wire events. Legacy script-built
   screens get converted opportunistically when next touched.
+- **Looks changed or unusual? ASK THE USER whether they did it** (user rule, 2026-08-16); never "fix" it.
 
 ## Blueprint discipline (how lesser sessions stay on the rails)
 
@@ -136,9 +143,8 @@ up next session. Unlisted new system → add it to OWNERSHIP.md as part of build
 ## Doc size caps (keep bootstrap under ~3k tokens forever)
 
 CLAUDE.md ≤150 lines · STATE.md ≤120 · CONTEXT.md ≤150 · contract ≤300 · system ≤300.
-Over cap → split, register in `docs/INDEX.md`. Current-state docs describe NOW; history
-goes to CHANGELOG/ADRs. New durable decision → one-page ADR in `docs/decisions/`.
-
-**`STATE.md` is the documented exception to "split" (ADR-0006):** the bootstrap ritual reads
-it for PENDINGs, so it stays ONE file. Over 120 → **delete resolved PENDINGs** (their record is
-the changelog); strikethrough `~~DONE~~` entries are banned from the PENDING list.
+Over cap → split, register in `docs/INDEX.md`. Current-state docs describe NOW; history goes
+to CHANGELOG/ADRs. New durable decision → one-page ADR in `docs/decisions/`.
+**`STATE.md` is the documented exception to "split" (ADR-0006):** the bootstrap reads it for
+PENDINGs, so it stays ONE file. Over 120 → **delete resolved PENDINGs** (their record is the
+changelog); strikethrough `~~DONE~~` in the PENDING list is banned.

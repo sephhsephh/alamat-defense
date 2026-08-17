@@ -1,5 +1,70 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-17 [integration] B28a — AD-Integration: the bootstrap was quietly billing ~90k tokens a session for a file nobody needed whole. Reading budget is now constitutional.
+
+### The finding (user question, 2026-08-17)
+
+The user asked whether the docs already forbid reading the whole `CHANGELOG.md` every session.
+**Partially, and the one line that mattered was wrong.**
+
+- CLAUDE.md step 4 did say "entries newer than your last session" — an intent, with no method.
+  A chat with no recipe reaches for `Read CHANGELOG.md`, and the file is **4,511 lines /
+  349 KB / ~90k tokens**: a third of a session's budget spent before any work starts, to learn
+  what the first ~70 lines say.
+- **Line 45 was an active trap:** "re-read `STATE.md` + the changelog **tail**". The file is
+  newest-**first**. Its tail is 2026-07 archaeology; a chat obeying that line literally read the
+  oldest entries to check whether a sibling had just landed. Now: `sed -n '1,3p'`.
+- Nothing anywhere forbade whole-file reads of the other large docs — `docs/ROADMAP.md` (451
+  lines, edited every session to flip ONE row) and `ai-kms-architecture.md` (Tier-2 rationale).
+- The Tier-0/1/2 read budget existed **only** inside `ai-kms-architecture.md` §Bootstrap — a
+  document no chat reads at bootstrap. A budget nobody reads is not a budget.
+
+### What landed
+
+- **CLAUDE.md — new `## Reading budget` section** (user rule, 2026-08-17): bootstrap reads only
+  the four files of steps 1–4; never read a file over ~200 lines whole to find something
+  (`grep -n` then `sed -n 'A,Bp'`); `INDEX.md` is the map; `script_grep` before `script_read`;
+  print the ONE asserted value. Absorbs the old "don't explore the game tree for orientation".
+- **CLAUDE.md step 4 rewritten** to state the method and the direction: TOP-DOWN, stop at the
+  counter you already know, the newest entry starts at **line 3**, never read it whole.
+- **CLAUDE.md multi-chat rule** now says the pre-landing check is the changelog's FIRST entry
+  (`sed -n '1,3p'`), and names "tail" as the wrong direction.
+- **The B26 user rule is now constitutional** — "looks changed or unusual? ASK THE USER whether
+  they did it; never 'fix' it" was only ever in session prompts.
+- **`tools/checklists.md` — new first section, "Reading the CHANGELOG ... without burning the
+  session"**: five copy-paste recipes, and the cost-escalation order (STATE/CONTEXT → grep →
+  one entry's range → a doc's section) with the observation that most questions are answered
+  at step 1 and asked at step 4.
+- **No index file was created.** The `## ` entry headers are already written as full one-line
+  summaries, so `grep -n '^## ' CHANGELOG.md | head -15` IS the index — one that cannot rot,
+  costs ~15 lines, and buys four sessions of history.
+- Doc-gardening step 4 now rotates the changelog at **~3 months OR ~5k lines, whichever first**.
+
+### Measured, not asserted
+
+Catching up from B26 under the new recipe reads **279 lines instead of 4,511 — a 94% cut**.
+The pre-landing sibling check went from a whole-file read to **3 lines**. CLAUDE.md is 150/150
+after compressing five over-long passages to pay for the new section; `tools/checklists.md` 145.
+
+### Boot anomalies found and NOT "fixed" (user rule, B26)
+
+1. **`git diff HEAD --stat` reported `shared/src/UIKitMotion.luau` deleted (251 lines).** It is
+   not. The file is on disk and `git hash-object` gives `149c5267…`, **byte-identical to
+   `HEAD:shared/src/UIKitMotion.luau`**. The repo's *index* was missing the entry (71 entries vs
+   72 in HEAD's tree) — an artifact of B27c/d committing through a temp `GIT_INDEX_FILE`, which
+   is the documented workaround for this mount. Repaired by rebuilding the index from HEAD; zero
+   bytes of content changed. **This is the known trap's cost: the index lies, the blobs don't.**
+2. **`.git/HEAD.lock` was stuck** from the B27d landing; parked to `.git/_parked/` (device_bash
+   cannot delete). That directory now holds 13 parked locks and wants a sweep by the user.
+3. `git log origin/main..HEAD` returns 0 because no `origin/main` remote-tracking ref has ever
+   been fetched — the 8 unpushed commits are real; the count just cannot be derived that way.
+
+### Open threads
+
+Untouched this session, still the B28 queue: the `Kit_HotbarSlotV2` cross-Place drift (USER
+decision on which Place is canonical), the open/close SLIDE on `UIKit.Motion`, and real-click
+confirmation of the B27d `Active` fix.
+
 ## 2026-08-16 [both] B27d — AD-Integration: **`Active = false` had killed every click on a V2 card since B26.** Plus HUD.Left mutual exclusion, multi-colour hover strokes, and one unresolved template drift.
 
 ### The click regression, and how much bigger it was than reported

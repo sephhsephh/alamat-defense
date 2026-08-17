@@ -1,5 +1,39 @@
 # Operational checklists (expanded from CLAUDE.md)
 
+## Reading the CHANGELOG (and anything else large) without burning the session
+
+`CHANGELOG.md` is ~4.5k lines / ~90k tokens. Reading it whole once costs more than most
+sessions' entire useful output. It is **newest-first**, so what you want is at the TOP —
+`tail` hands you 2026-07 archaeology. **The `## ` entry headers ARE the index** (each is a
+written one-line summary), so there is no second index to maintain or let rot.
+
+Recipes — use one of these, never a whole-file read:
+
+- **Catch up since your last session** (the bootstrap step): `grep -n '^## ' CHANGELOG.md | head -12`,
+  find the line where the counter you already know (e.g. `B27d`) starts, then
+  `sed -n '1,<that line minus 1>p' CHANGELOG.md`. Nothing older ever enters context.
+- **"Did a sibling land while I worked?"** (pre-landing re-read): `sed -n '1,3p' CHANGELOG.md`.
+  Three lines is the whole check.
+- **Orientation with no detail:** `grep -n '^## ' CHANGELOG.md | head -15`. ~15 lines buys you
+  four sessions of history, because the headers are full summaries.
+- **History of one subject:** `grep -n -i '<term>' CHANGELOG.md | head`, then `sed -n 'A,Bp'`
+  on the ONE entry that matters (find B from the next `^## ` line number).
+- **Which landing touched a module:** `grep -n '<ModuleName>' CHANGELOG.md | head`.
+
+Rules that generalise past the changelog:
+
+- An entry is 60–150 lines. Read ONE. Reading five needs a reason you can state.
+- **Never `Read`/`cat` any file over ~200 lines to find something.** `grep -n` → `sed -n 'A,Bp'`.
+- `docs/ROADMAP.md` (451 lines): `grep -n '<system>' docs/ROADMAP.md` and edit that row. Never
+  read the whole board to flip one row.
+- `docs/design/ai-kms-architecture.md` is Tier-2 rationale: read it only when CHANGING how the
+  doc system works, never for orientation.
+- Confirm a size cap with `wc -l`, not by reading the file.
+- Escalate cost in this order, and stop as soon as you have the answer: (1) `STATE.md` +
+  `places/<place>/CONTEXT.md`, which are current-state by design; (2) `grep` the changelog;
+  (3) read ONE changelog entry's line range; (4) a system doc / ADR / proposal — its section,
+  not the file. Most questions are answered at step 1 and asked at step 4.
+
 ## Integration gate — evaluated by EVERY chat at bootstrap (constitution step 7)
 
 After the bootstrap ritual, the chat MUST tell the user one of, verbatim style:
@@ -106,5 +140,6 @@ the changelog so it is not mistaken for drift.
    subject; spot-check those docs against code; fix or re-stamp.
 3. Migrate one or two docs from the Game place's ServerStorage.Documentation into
    `docs/systems/` (migrate-on-touch also applies during normal sessions).
-4. Trim CHANGELOG (rotate entries older than ~3 months to `archive/`).
+4. Trim CHANGELOG: rotate entries older than ~3 months **or beyond ~5k lines, whichever
+   comes first**, into `archive/CHANGELOG-<period>.md`. Bootstrap cost scales with this file.
 5. Commit.
