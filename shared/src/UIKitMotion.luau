@@ -18,6 +18,9 @@
 -- `UIHoverStroke` with it -- while costing the neighbours nothing.
 
 local TweenService = game:GetService("TweenService")
+-- TierConfig DECIDES which colours a hover stroke should use; this module APPLIES that to the
+-- actual Instances. Keeping the split means the config module never touches a GuiObject.
+local TierConfig = require(game:GetService("ReplicatedStorage").Configs.Meta.TierConfig)
 
 local Motion = {}
 
@@ -205,6 +208,35 @@ function Motion.idleGradient(grad: UIGradient?, periodOverride: number?): Tween?
 	)
 	tween:Play()
 	return tween
+end
+
+-- ===== HOVER STROKE PAINT =====
+-- Applies `TierConfig.HoverStrokePaint`. Two shapes, and the second is the B27d user rule:
+--   * a TWO-colour tier (authored main + derived dark) -> one flat `stroke.Color`, the brightest.
+--   * a THREE-OR-MORE colour tier (Mythic's rainbow, any future authored palette) -> ALL of them,
+--     as a child `UIGradient` on the stroke, drifting on the same slow 45-degree idle as the card.
+--
+-- Two details that are easy to get wrong. **`stroke.Color` is forced to white in the gradient case**
+-- because a UIStroke MULTIPLIES its Color with a child UIGradient -- leaving the old tier colour
+-- there would tint the whole rainbow toward it. And **a stale gradient is destroyed** when a tier
+-- falls back to two colours, or a card recycled from a Mythic to a Rare would keep outlining in
+-- rainbow forever.
+function Motion.paintHoverStroke(stroke: UIStroke?, tier: string)
+	if not stroke then return end
+	local color, seq = TierConfig.HoverStrokePaint(tier)
+	local grad = stroke:FindFirstChildOfClass("UIGradient")
+	if seq then
+		if not grad then
+			grad = Instance.new("UIGradient")
+			grad.Parent = stroke
+		end
+		;(grad :: UIGradient).Color = seq
+		stroke.Color = Color3.new(1, 1, 1)
+		Motion.idleGradient(grad)
+	else
+		if grad then grad:Destroy() end
+		stroke.Color = color or Color3.new(1, 1, 1)
+	end
 end
 
 -- Convenience for the common card: isolate it, start its idle sheen, and return the UIScale plus

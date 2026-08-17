@@ -134,11 +134,12 @@ function ItemIcon.attach(card: GuiButton, itemId: string, qty: number?)
 	end
 	if stroke and stroke:IsA("UIStroke") then
 		stroke.Enabled = false -- authored state; hover is what turns it on
-		-- HOVER STROKE TAKES THE TIER'S **BRIGHTEST** COLOUR (user rule, B27), not `Colors[1]` and
-		-- certainly not the derived dark secondary: a stroke in the dark shade reads as a shadow
-		-- rather than a highlight. `BrightestColor` ranks by relative luminance, so Mythic's stroke
-		-- is its yellow rather than whichever rainbow entry happens to be first.
-		stroke.Color = TierConfig.BrightestColor(tier)
+		-- Hover-stroke paint, one call (B27d): a two-colour tier outlines in its BRIGHTEST single
+		-- colour (never the derived dark half, which would read as a shadow); a tier with THREE OR
+		-- MORE authored colours outlines in ALL of them via a child UIGradient. See
+		-- `TierConfig.HoverStrokePaint` for the reasoning and `Motion.paintHoverStroke` for the
+		-- two Instance-level traps it handles.
+		Motion.paintHoverStroke(stroke, tier)
 	end
 
 	-- ===== THE WHOLE CARD SCALES ON HOVER/PRESS, NOT JUST `Main` (user rule, B27) =====

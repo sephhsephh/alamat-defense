@@ -1,5 +1,74 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-16 [both] B27d — AD-Integration: **`Active = false` had killed every click on a V2 card since B26.** Plus HUD.Left mutual exclusion, multi-colour hover strokes, and one unresolved template drift.
+
+### The click regression, and how much bigger it was than reported
+
+The user reported the Units grid not selecting on click. The card was not covered by anything —
+`GetGuiObjectsAtPosition` at the card's centre returned the card itself, third in a clean stack. The
+card simply read **`Active = false`**, and **`GuiButton.Activated` does not fire on an inactive
+button**.
+
+All three V2 masters ship `Active = false`. So this was never a Units bug: **every `Activated`
+connection on a V2 card has been dead since the B26 adoption** — `IndexController`'s detail open,
+`AscensionController`'s dupe picker, `UIKit.ItemIcon.onActivated` (the Items grid), and **both
+hotbars' slot activation, which in the Game means placement**. Flipped to `true` on all three
+masters in both Places. `UIKitButton.setEnabled` still drives `Active` per-slot, so locked hotbar
+slots stay genuinely unclickable.
+
+Worth noting what made it invisible for two sessions: hover worked perfectly the whole time.
+`MouseEnter` does not require `Active`, so the cards looked alive.
+
+### Hover strokes: 3+ colour tiers use all their colours
+
+User rule. A tier on the **two-colour minimum** (an authored main plus the derived dark) still
+collapses to the single brightest colour — the dark half is only a shadow, and a stroke drawn in it
+reads as a smudge. A tier with **three or more authored colours** now outlines in **all of them**,
+as a child `UIGradient` on the stroke, drifting on the same 45° 9s idle as the card. Flattening
+Mythic's rainbow to one colour threw away the thing that identifies the tier.
+
+The decision lives in `TierConfig.HoverStrokePaint` (pure — returns a colour *or* a sequence, never
+touches an Instance) and the application in `Motion.paintHoverStroke`. Two Instance-level traps it
+handles: `stroke.Color` is forced to **white** in the gradient case, because a UIStroke *multiplies*
+its Color with a child gradient and the old tier colour would tint the whole rainbow; and a stale
+gradient is **destroyed** when a tier falls back to two colours, or a card recycled from Mythic to
+Rare would keep outlining in rainbow forever. Empty/locked hotbar slots clear it for the same reason.
+
+### One HUD.Left screen at a time
+
+New `ClientEvents.ScreenOpened`. Each HUD.Left screen announces its own name when it opens and
+closes itself on anyone else's announcement — so the outgoing screen runs **its own `close()`** (its
+real teardown: camera, filters, selection) rather than being blanket-hidden by whoever opened next.
+PlayGUI announces but deliberately does **not** listen: it already blanks every other GUI, and its
+close path runs through a loading veil that must not be triggered by another screen. Its announcement
+is fired *before* `hideOtherGuis` — that order matters, because `hideOtherGuis` snapshots what it hid
+so `leaveMenu` can restore it, and a merely-hidden Units screen would pop back open on leaving Play.
+
+### ⚠ Unresolved: `Kit_HotbarSlotV2` disagrees across Places
+
+After flipping `Active` in both, the two copies still hash differently — **Lobby `cd5a2aa0`, Game
+`9ca7a958`**. Diffed rather than guessed; two real differences, neither caused by the flip:
+
+- root `Size` is `{1,0},{1,0}` in the Lobby and `{0.225,0},{0.399,0}` in the Game
+- **`UIHoverStroke.Thickness` is `0.035` in the Lobby and `0.0` in the Game**
+
+The second matters beyond the hash: a zero-thickness stroke renders as **nothing**, so the Game's
+hotbar hover outline stays invisible even now that `.Enabled` is driven. Both copies matched
+`41c3c9e3` at B26, so one Place was edited afterwards. **Which is canonical is a user design call**,
+and reconciling a template across Places is a user copy — so nothing was overwritten.
+`deployed.Game` records the divergent hash on purpose, so the drift check keeps reporting it.
+
+### Acceptance — live Lobby
+
+8/8 Units cards `Active = true`; Necromancer (Mythic, 6 colours) outlines via a **13-stop child
+gradient at 45° with a white stroke**, while every two-colour tier outlines flat in its brightest
+colour and carries **no** gradient; firing `ScreenOpened("ItemsGUI")` closed the open UnitsGUI.
+All four shared modules and two of the three templates verified byte-identical in both Places.
+
+The click *trigger* itself still cannot be fired from tooling — `Activated` is in the same boat as
+`MouseEnter` — so what is proven is the precondition (`Active`), the connection, and that
+`selectUnit` fills the panel. That limit is the standing PENDING, now widened to cover clicks.
+
 ## 2026-08-16 [both] B27c — AD-Integration: **`UIKit.Motion`**, the kit's one motion home. Hovering a card no longer shoves its neighbours, the hotbar has a hover for the first time, and prices are temporarily visible by user override.
 
 Seven things from a play session. The first two turned out to be the same root cause seen from two

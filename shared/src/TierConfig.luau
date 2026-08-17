@@ -139,6 +139,27 @@ end
 -- HSV value Mythic's red, orange and blue all tie at 1.0 and the first one wins arbitrarily, while
 -- by luminance the yellow correctly wins -- which is what the eye calls "the brightest one".
 -- Ties resolve to the EARLIEST entry, so a tier's authored main colour wins a genuine tie.
+-- WHICH COLOURS A HOVER STROKE SHOULD USE for this tier. Returns (color, sequence) -- exactly one
+-- is non-nil, and the caller applies whichever it gets.
+--
+-- USER RULE, B27d: **a tier with THREE OR MORE colours outlines in ALL of them.** Only a tier whose
+-- palette is the two-colour minimum (an authored main plus the derived dark secondary) collapses to
+-- a single `BrightestColor`. The reasoning is that the two cases are not the same kind of palette:
+-- the derived pair is ONE colour and its shadow, so the shadow half carries no information and a
+-- stroke drawn in it reads as a smudge; Mythic's rainbow and any future multi-colour tier are
+-- authored, and flattening them to one colour throws away the exact thing that identifies the tier.
+--
+-- This function only DECIDES. Applying it -- creating the stroke's child UIGradient, or removing a
+-- stale one when a tier drops back to two colours -- belongs to the UI layer (`UIKitMotion`),
+-- because this module must stay pure config and touch no Instances.
+function TierConfig.HoverStrokePaint(tier: string): (Color3?, ColorSequence?)
+	local colors = TierConfig.get(tier).Colors
+	if #colors >= 3 then
+		return nil, TierConfig.seamlessSequence(tier)
+	end
+	return TierConfig.BrightestColor(tier), nil
+end
+
 function TierConfig.BrightestColor(tier: string): Color3
 	local colors = TierConfig.get(tier).Colors
 	local best, bestLum = colors[1], -1

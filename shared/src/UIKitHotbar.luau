@@ -281,9 +281,17 @@ function Hotbar.attach(container: GuiObject, opts: { [string]: any })
 		-- neutral outline, for the same reason its gradient falls back to grey: no unit, no tier.
 		local hoverStroke = btn:FindFirstChild("UIHoverStroke", true)
 		if hoverStroke and hoverStroke:IsA("UIStroke") then
-			hoverStroke.Color = showTier
-				and TierConfig.BrightestColor(entry.Tier or ItemCatalog.GetTier(entry.TowerId))
-				or Color3.fromRGB(150, 150, 165)
+			if showTier then
+				-- B27d: two-colour tiers outline in their brightest single colour; three-or-more
+				-- colour tiers outline in ALL of them via a child UIGradient on the stroke.
+				Motion.paintHoverStroke(hoverStroke, entry.Tier or ItemCatalog.GetTier(entry.TowerId))
+			else
+				-- Empty / locked: neutral outline, and any rainbow gradient left by a previous
+				-- occupant of this slot must go with it, or the slot keeps outlining as Mythic.
+				local stale = hoverStroke:FindFirstChildOfClass("UIGradient")
+				if stale then stale:Destroy() end
+				hoverStroke.Color = Color3.fromRGB(150, 150, 165)
+			end
 		end
 
 		-- V2-only fields.
