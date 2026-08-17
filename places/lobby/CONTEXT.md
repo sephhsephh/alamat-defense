@@ -125,21 +125,20 @@ on the `BannerChoices` bump); **Party** and **Return** are still script-built (c
 
 **`STATE.md` is the canon list — read it, not this.** Only the Lobby-specific detail lives here:
 
-- **USER (BLOCKING + URGENT): republish BOTH Places TOGETHER — again, for v4.** v3's republish was
-  confirmed done at B23, which then bumped to **v4**. v3/v4 do NOT interoperate — a PARTIAL publish
-  breaks EVERY launch with `[CONTRACT] PayloadVersion mismatch`. A live break, not an unverified path.
+- **Republishing BOTH Places together is STANDING PRACTICE (B25), not a PENDING** — state it only when
+  a contract bumps. v3/v4 do NOT interoperate: a partial publish breaks EVERY launch (version mismatch).
 - **USER (design call, B23): matchmade game speed** comes from an ELECTED STRANGER (lowest userId),
-  including the 3× gate. B23 changed nothing and logs it. Your call.
-- **AD-UI:** per-unit models all `UnitModels.Placeholder`; Units action buttons animation-only —
-  `LockUnitButon` (sic) is authored but UNWIRED and `QuickSellButton` does **not** exist despite
-  Phase C's note. Hotbar hover TRIGGER unverified; `Kit_ItemHoverCard` master/clone split stands.
-- **V2 kit: ✅ ADOPTED IN BOTH PLACES AT B26, v1 RETIRED** (deleted, dropped from the manifest and
-  `hash_shared.luau` — do not re-add). **Canon: `docs/systems/ui-kit.md`.** Not to re-derive: **rarity
-  is on the ROOT `UIGradient`, direct-children-only, NO tier border** (user, B25); **`UnitIconV2` has
-  THREE consumers** — Summon, Index, `AscensionController`. Acceptance 39+8 PASS / 0 FAIL. Recorded
-  rather than papered over: **no `ShinyBadge` in V2** (shiny unmarked on an ascension card), and
-  `ObtainRewardsController.paintTier` handles BOTH shapes — it also paints the v1-shaped
-  Lobby-local `UnitTemplate`.
+  incl. the 3× gate. B23 changed nothing. Your call.
+- **AD-UI:** unit models all `UnitModels.Placeholder`; Units action buttons animation-only —
+  `LockUnitButon` (sic) UNWIRED, no `QuickSellButton`. Hover TRIGGER unverified; `ItemHoverCard` split.
+- **V2 kit: ✅ ADOPTED BOTH PLACES AT B26, v1 RETIRED** (deleted, dropped from the manifest and
+  `hash_shared.luau` — do not re-add). **Canon: `docs/systems/ui-kit.md`.** Not to re-derive: rarity is
+  on the ROOT `UIGradient`, direct-children-only, **NO tier border** (user, B25); `UnitIconV2` has THREE
+  consumers (Summon, Index, Ascension); **no `ShinyBadge` in V2** — shiny unmarked on an ascension card.
+- **B28 — SCREENS SLIDE.** `UnitsGUI`/`ItemsGUI`/`SummonScreen`/`IndexScreen` open/close through
+  **`Motion.slideIn`/`slideOut`**, test **`Motion.isOpen(main)` not `gui.Enabled`** (the gui is STILL
+  Enabled during a close tween), and no longer clear `main.Visible`. Boot = `hideInstant()`; PlayGUI
+  excluded (veil); `AscensionScreen` untouched (its controller is not under that ScreenGui).
 
 ## Ownership notes
 

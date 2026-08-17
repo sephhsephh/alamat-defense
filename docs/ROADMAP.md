@@ -234,6 +234,16 @@ catalog/configs, icon kit, session plan A1–A7). Phases B–F:
   single-Place widget under drift control costs a cross-Place sync forever.
   Still 🔲: UnitHoverCard, ViewportPreview, NPCPrompt; a `UIKit.UnitIcon` controller (deferred —
   one consumer today, so `UIKit.Button` + the template suffice).
+- ✅ **`UIKit.Motion` — the kit's ONE animation home (B27c, 2026-08-16)**: hover/press scaling, the
+  45° 9s idle sheen, `isolate()`'s fixed-size wrapper (a UIScale on a layout child re-flows the row —
+  measured 30px of shove) and `lift()`. Retune the kit's feel in `Motion.Tuning`, never per screen.
+- ✅ **Open/close SLIDE — BOTH Places' shared module, wired in the Lobby (B28, 2026-08-17)**: the last
+  item of the user's B27 play-test queue. `Motion.slideIn`/`slideOut`/`isOpen` on `UnitsGUI`,
+  `ItemsGUI`, `SummonScreen`, `IndexScreen`. Enable-before-animate, parent-relative scale (never a
+  measured pixel), the authored rest captured once into `UIKitRestPosition`, and a per-frame token so
+  a fast open/close/open cannot strand a screen enabled-but-off-screen. 12/12 live asserts.
+  🔲 `AscensionScreen` — its controller does not live under that ScreenGui, so it was left alone.
+  ❌ `PlayGUI` — deliberately excluded; it opens behind the LoadingScreen veil.
 - ✅ **Hotbar rebuilt on kit — BOTH Places (2026-08-06)**: ONE component (`UIKitHotbar` +
   `Kit_HotbarSlot`, the user's own design), same look/hover/animation; only `OnActivated` differs
   (Lobby opens Units on that unit, Game starts placement). Always 6 slots, filled/empty/locked;

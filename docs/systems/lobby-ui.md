@@ -278,23 +278,22 @@ after, queue animates each batch, layout numbers identical to B1's. Drift stayed
 ## Client events (the screens' shared nervous system)
 
 `RS.ClientEvents`: `OpenStageSelect` · `OpenUnitsWithUuid` · `OpenSummon` · `OpenIndex` ·
-`ShowRewards` · **`LoadoutChanged`** (B10). Screens are opened by FIRING an event, never by calling
-another screen — that is what lets an NPC or a different button drive them later with no change.
-**PlayGUI is the exception so far:** it has no Open event yet, only the HUD button + Dev harness.
-Add one the day a second thing needs to open it.
+`ShowRewards` · **`LoadoutChanged`** (B10) · **`ScreenOpened`** (B27d). Screens are opened by FIRING
+an event, never by calling another screen — that is what lets an NPC or a different button drive them
+later. **PlayGUI is the exception:** no Open event yet, only the HUD button + Dev harness.
+**B28 — opening/closing:** `UnitsGUI`/`ItemsGUI`/`SummonScreen`/`IndexScreen` slide via
+`Motion.slideIn`/`slideOut`, test **`Motion.isOpen(main)` not `gui.Enabled`**, no longer clear
+`main.Visible`, and keep boot teardown instant. PlayGUI excluded. `docs/systems/ui-kit.md`.
 
 ## Studio harnesses (all left OFF/empty)
 
 `DevAutoOpen` on `UnitsGUI`/`ItemsGUI`/`CollectionScreen`/`SummonScreen`/`IndexScreen`/**`PlayGUI`**
-opens that screen on boot. Action hooks, each running the SAME function a real press runs (a
-`GuiButton`'s `Activated` cannot be fired from tooling, and there is no `GuiButton:Activate()`):
-**`DevEquip`** (UnitsGUI, a uuid) · `DevSelect` / `DevFakeUnobtained` (IndexScreen) · `DevPull` /
-`DevPage` (SummonScreen) · `DevDismiss` (ObtainRewardsGUI) · **`DevGoto`** (PlayGUI, a frame name)
-/ **`DevLeave`** (PlayGUI).
+opens that screen on boot. Action hooks each run the SAME function a real press runs (`Activated`
+cannot be fired from tooling, and there is no `GuiButton:Activate()`): **`DevEquip`** (UnitsGUI, a
+uuid) · `DevSelect`/`DevFakeUnobtained` (Index) · `DevPull`/`DevPage` (Summon) · `DevDismiss`
+(ObtainRewards) · **`DevGoto`** (PlayGUI, frame name) / **`DevLeave`**.
 
 ## Server read path
 
-**`GetUnitViews` is the SINGLE profile read path** for every Lobby screen since A7 retired
-`GetCollection` (ADR-0004). It is load-bearing: additive changes are free, a breaking one needs
-contract treatment. Clients never read profiles directly — the server decides what a unit "is",
-the client only renders it. See `places/lobby/CONTEXT.md` for the field list.
+**`GetUnitViews` is the SINGLE profile read path** since A7 retired `GetCollection` (ADR-0004).
+Load-bearing: additive is free, breaking needs contract treatment. Fields: `places/lobby/CONTEXT.md`.

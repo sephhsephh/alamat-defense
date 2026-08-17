@@ -1,5 +1,5 @@
 # CONTEXT — Game place ("Alamat Defense")
-<!-- owner: game | scope: game | last-verified: 2026-08-16 (B25) -->
+<!-- owner: game | scope: game | last-verified: 2026-08-17 (B28) -->
 
 The match Place: loads a map, runs waves, towers fight, rewards commit to the profile.
 Server-authoritative, registry/config-driven, signal-decoupled. `--!strict` throughout.
@@ -10,19 +10,16 @@ Server-authoritative, registry/config-driven, signal-decoupled. `--!strict` thro
 → InProgress → Victory/Defeat → Cleanup). It delegates: maps to `MapLoader`, waves to `WaveDirector`
 (virtual clock via `GameSpeed.Scheduler`), enemies to `EnemySpawner`/`EnemyController`, towers to
 `TowerManager`/`TowerController` (per-tier attacks, passives/abilities/summons), economy to
-`EconomyManager`, replication through the single `MatchReplicator` surface wired in
-`ReplicationBridge` (the only script that knows clients exist). Configs are data modules under
-`RS.Configs.*` with auto-scanning registries.
+`EconomyManager`, replication through the single `MatchReplicator` surface wired in `ReplicationBridge`
+(the only script that knows clients exist). Configs are data modules under `RS.Configs.*`, auto-scanned.
 
 ## Persistence (schema v2 — see docs/contracts/save-schema.md)
 
 `Server.Data.PlayerDataService` owns ProfileStore sessions; `PlayerInventoryService` (uuid-keyed
 `Units`/account/items + `GrantUnit`) and `SettingsService` are profile-backed facades. Schema v2 =
 uuid unit instances + `Currencies` map; `Migrations[1]` converts v1 on load. Each unit carries
-`StatRolls` + `Ascension`; `TowerStatResolver` folds them into DMG/RNG/SPA as a per-unit quality
-multiplier over the tier×meta×trait pipeline.
-Boot order in `ReplicationBridge`: data services first. `[DATA]`/`[CONTRACT]` log lines
-confirm profile load + schema version on every boot.
+`StatRolls` + `Ascension`; `TowerStatResolver` folds them into DMG/RNG/SPA over tier×meta×trait.
+Boot order in `ReplicationBridge`: data services first; `[DATA]`/`[CONTRACT]` lines confirm it.
 
 ## Key paths
 
@@ -40,15 +37,18 @@ confirm profile load + schema version on every boot.
 - **UI kit (AD-UI, shared canon)** — 5 controllers in `RS.Shared.UIKit` + 7 REAL templates in
   `RS.UITemplates.Kit` (ADR-0005) + `StarterPlayerScripts.UIKitBootstrap`. **The Game HOTBAR is on
   it**: `StarterGui.Hotbar` is the Lobby's ScreenGui driven by the shared `UIKit.Hotbar`, the only
-  Place difference being `OnActivated` → **start placement**. Editing a kit half in one Place only is
-  DRIFT (`docs/systems/ui-kit.md`, `tools/checklists.md`). Other
+  Place difference being `OnActivated` → **start placement**. Editing a kit half in ONE Place is DRIFT
+  (`docs/systems/ui-kit.md`, `tools/checklists.md`). Other
   Game screens are still Place-local and script-era. **Drift 25/26 at B26** (`MetaMath` MISSING,
   Phase D, expected). If a Kit template reads odd, ASK THE USER to re-copy it from the Lobby — never
   edit or rebuild it; cross-Place copy is a USER action (`tools/checklists.md` step 2).
   **✅ V2 IS ADOPTED HERE (B26).** The USER pasted `Kit.{UnitIconV2, ItemIconV2, HotbarSlotV2}` in;
-  verified byte-for-byte by hash, v1 trio **deleted**. This Place's hotbar renders through the SHARED
-  `UIKit.Hotbar` — what made adoption cross-Place, and the only V2 consumer here. `UIKit.ItemIcon` is
-  canon but has **no Game consumer yet**. Acceptance **18 PASS / 0 FAIL**. Canon: `ui-kit.md`.
+  verified by hash, v1 trio **deleted**; the hotbar is the only V2 consumer here (`UIKit.ItemIcon` is
+  canon but has no Game consumer).
+  **B28: `HotbarSlotV2` root `Size` was `{0.225,0.399}` here vs `{1,1}` in the Lobby — Lobby canonical
+  (user), so it is `{1,1}` now and both hash `cd5a2aa0`. THE GAME'S SLOTS RENDER BIGGER; that IS the
+  fix. `attach()` clones this master and never overrides Size; `UIAspectRatioConstraint` clamps it to
+  the square the Lobby draws. `UIKitMotion` → `a104e59d` (slide; no Game consumer). Canon: `ui-kit.md`.
 - Remotes: `RS.Remotes.{Placement, Towers, Match, Economy, Combat, Settings}`
 - Rich legacy docs: `ServerStorage.Documentation.*` (AIState, SystemIndex, HowTo, ...) —
   still valid; migrating to repo `docs/systems/` on touch.

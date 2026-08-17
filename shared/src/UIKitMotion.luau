@@ -46,6 +46,14 @@ Motion.Tuning = {
 	-- How far a hovered card is lifted above its neighbours, so a scaled card is never clipped
 	-- UNDER the sibling that happens to be drawn after it.
 	HoverZIndexLift = 5,
+	-- ===== OPEN / CLOSE SLIDE (B28) =====
+	-- Opening is the unhurried leg (like RestTime); closing gets out of the way faster than it
+	-- arrived, because a screen you have dismissed should not make you wait for it.
+	SlideInTime = 0.34,
+	SlideOutTime = 0.20,
+	-- Travel, as a fraction of the PARENT's axis. Deliberately parent-relative SCALE and not
+	-- measured pixels -- see the note above Motion.slideIn.
+	SlideDistance = 0.35,
 }
 
 -- ===== TEMPORARY (B27c, USER-REQUESTED): PLACEHOLDER PRICES ARE VISIBLE =====
@@ -237,6 +245,167 @@ function Motion.paintHoverStroke(stroke: UIStroke?, tier: string)
 		if grad then grad:Destroy() end
 		stroke.Color = color or Color3.new(1, 1, 1)
 	end
+end
+
+-- ===== OPEN / CLOSE SLIDE (B28) =====
+-- The user's ask, verbatim (B27 queue): "I also need animations when opening in closing, Like
+-- sliding up, not just popping visible and invisible."
+--
+-- It lives HERE, not in the screens, for the same reason hover does: a fourth animation dialect is
+-- exactly what this module exists to prevent.
+--
+-- THREE THINGS MAKE THIS HARDER THAN IT LOOKS. All three are handled here so no screen repeats them:
+--
+--   1. EVERY screen in this project toggles `ScreenGui.Enabled`, and a DISABLED ScreenGui DOES NOT
+--      LAY OUT -- everything under it reads `AbsoluteSize = 0`. So `slideIn` enables the gui BEFORE
+--      it touches Position, and `slideOut` disables it only AFTER the close tween completes.
+--   2. Because of (1), the travel is expressed in PARENT-RELATIVE SCALE and never in measured
+--      pixels. A measured slide would have to wait a frame for AbsoluteSize to stop being zero, and
+--      "a harness that reports 0 or 0x0 is usually the harness" is the most repeated false alarm in
+--      this project's history. Scale needs no measurement and a disabled gui cannot fool it.
+--   3. The designer's authored resting Position is CANON. It is captured ONCE into the
+--      `UIKitRestPosition` attribute -- UDim2 is a real attribute type, so the value is visible in
+--      Studio, survives a module reload, and is not re-derived from a frame that may already be
+--      mid-slide. Every tween runs TO or FROM that stored value. No screen coordinate is ever
+--      hardcoded in this module.
+--
+-- RE-ENTRANCY: a fast open/close/open must never strand a screen enabled-but-off-screen. Each call
+-- takes a token; a completion callback holding a stale token does nothing. That is precisely what
+-- stops a late slideOut from disabling a gui the user has already reopened.
+
+local REST_ATTR = "UIKitRestPosition"
+
+local slideTweens: { [GuiObject]: Tween } = {}
+local slideTokens: { [GuiObject]: number } = {}
+local slideState: { [GuiObject]: string } = {} -- "open" | "closed" | "opening" | "closing"
+
+-- Unit vectors, scaled by Tuning.SlideDistance. "up" means the panel STARTS BELOW its rest position
+-- and travels upward into place -- which is what the user asked for, so it is the default.
+local SLIDE_DIRECTIONS: { [string]: Vector2 } = {
+	up = Vector2.new(0, 1),
+	down = Vector2.new(0, -1),
+	left = Vector2.new(1, 0),
+	right = Vector2.new(-1, 0),
+}
+
+-- The authored resting Position, captured once and never re-derived.
+function Motion.restPosition(frame: GuiObject): UDim2
+	local stored = frame:GetAttribute(REST_ATTR)
+	if typeof(stored) == "UDim2" then
+		return stored
+	end
+	frame:SetAttribute(REST_ATTR, frame.Position)
+	return frame.Position
+end
+
+local function offsetFrom(rest: UDim2, direction: string?, distance: number?): UDim2
+	local vec = SLIDE_DIRECTIONS[direction or "up"] or SLIDE_DIRECTIONS.up
+	local d = distance or Motion.Tuning.SlideDistance
+	return UDim2.new(
+		rest.X.Scale + vec.X * d, rest.X.Offset,
+		rest.Y.Scale + vec.Y * d, rest.Y.Offset
+	)
+end
+
+local function screenGuiOf(frame: GuiObject, opts: { [string]: any }?): ScreenGui?
+	local given = opts and opts.gui
+	if given then return given end
+	return frame:FindFirstAncestorWhichIsA("ScreenGui")
+end
+
+local function stopSlide(frame: GuiObject)
+	local prev = slideTweens[frame]
+	if prev then
+		prev:Cancel()
+		slideTweens[frame] = nil
+	end
+end
+
+local function nextToken(frame: GuiObject): number
+	local t = (slideTokens[frame] or 0) + 1
+	slideTokens[frame] = t
+	return t
+end
+
+-- opts: { gui: ScreenGui?, direction: string?, distance: number?, time: number?, onComplete: () -> ()? }
+-- Returns the Tween so a caller can await `.Completed` or Cancel it.
+function Motion.slideIn(frame: GuiObject, opts: { [string]: any }?): Tween?
+	if not frame then return nil end
+	opts = opts or {}
+	local rest = Motion.restPosition(frame)
+	local gui = screenGuiOf(frame, opts)
+
+	stopSlide(frame)
+	local token = nextToken(frame)
+	slideState[frame] = "opening"
+
+	-- ENABLE FIRST: a disabled ScreenGui does not lay out, so nothing under it can be positioned
+	-- meaningfully until this line has run.
+	if gui and not gui.Enabled then
+		gui.Enabled = true
+	end
+	frame.Visible = true
+	frame.Position = offsetFrom(rest, opts.direction, opts.distance)
+
+	local tween = TweenService:Create(frame, info(opts.time or Motion.Tuning.SlideInTime), { Position = rest })
+	slideTweens[frame] = tween
+	tween.Completed:Connect(function()
+		if slideTokens[frame] ~= token then return end -- superseded; the newer call owns the frame
+		slideTweens[frame] = nil
+		slideState[frame] = "open"
+		frame.Position = rest
+		if opts.onComplete then opts.onComplete() end
+	end)
+	tween:Play()
+	return tween
+end
+
+-- Slides the panel away and only THEN disables its ScreenGui. Pass `{ keepEnabled = true }` when the
+-- caller owns the gui's Enabled flag itself.
+function Motion.slideOut(frame: GuiObject, opts: { [string]: any }?): Tween?
+	if not frame then return nil end
+	opts = opts or {}
+	-- Already gone: do not re-run, or a second call would re-disable a gui somebody just reopened.
+	if slideState[frame] == "closed" or slideState[frame] == "closing" then return nil end
+
+	local rest = Motion.restPosition(frame)
+	local gui = screenGuiOf(frame, opts)
+
+	stopSlide(frame)
+	local token = nextToken(frame)
+	slideState[frame] = "closing"
+
+	local away = offsetFrom(rest, opts.direction, opts.distance)
+	local tween = TweenService:Create(frame, info(opts.time or Motion.Tuning.SlideOutTime), { Position = away })
+	slideTweens[frame] = tween
+	tween.Completed:Connect(function()
+		if slideTokens[frame] ~= token then return end -- reopened mid-close; leave the gui alone
+		slideTweens[frame] = nil
+		slideState[frame] = "closed"
+		-- Restore the authored Position so anything that hard-sets `.Enabled = true` without going
+		-- through slideIn still shows the panel where the designer put it, not parked off-screen.
+		frame.Position = rest
+		if gui and not opts.keepEnabled then
+			gui.Enabled = false
+		end
+		if opts.onComplete then opts.onComplete() end
+	end)
+	tween:Play()
+	return tween
+end
+
+-- True while the panel is open or on its way open. Screens use this to make their toggle idempotent
+-- and to answer a ScreenOpened announcement without double-closing.
+function Motion.isOpen(frame: GuiObject): boolean
+	local s = slideState[frame]
+	return s == "open" or s == "opening"
+end
+
+-- Forget a frame's slide bookkeeping (call from a screen that destroys its panel).
+function Motion.forgetSlide(frame: GuiObject)
+	stopSlide(frame)
+	slideTokens[frame] = nil
+	slideState[frame] = nil
 end
 
 -- Convenience for the common card: isolate it, start its idle sheen, and return the UIScale plus

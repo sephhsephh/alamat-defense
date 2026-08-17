@@ -1,5 +1,5 @@
 # STATE — Alamat Defense
-<!-- owner: all | scope: global | last-verified: 2026-08-16 (B27) -->
+<!-- owner: all | scope: global | last-verified: 2026-08-17 (B28) -->
 <!-- SIZE RULE (ADR-0006): ONE file, cap 120 lines. A RESOLVED pending is DELETED (the changelog
      is its record) -- never struck through. Sections that duplicate a canon doc keep a pointer. -->
 
@@ -14,8 +14,8 @@ match-end rewards, **ProfileStore persistence (schema v2)**, a shared UI kit, an
 - **Lobby** — the social/meta Place, scene `Workspace.Lobby`. **`GetUnitViews` is its SINGLE profile
   read path** (ADR-0004); **`GrantService` is its SINGLE grant/spend path**. `places/lobby/CONTEXT.md`.
 - **Shared canon** (`shared/manifest.json`, drift-checked by `tools/hash_shared.luau`): **27 entries
-  = 20 modules + 7 templates** (`UIKitMotion` added B27c). All 26 PRESENT in the Lobby; the GAME reads 25/26 and that ONE gap is
-  EXPECTED, not drift — `MetaMath` stays Lobby-only until Phase D. **B26 adopted the V2 UI kit in BOTH
+  = 20 modules + 7 templates**. **B28: BOTH Places are drift-green on all 27 except `MetaMath`**, which is
+  PRESENT in the Lobby and MISSING in the Game — EXPECTED, not drift; it stays Lobby-only until Phase D. **B26 adopted the V2 UI kit in BOTH
   Places and RETIRED `Kit_UnitIcon`/`Kit_ItemIcon`/`Kit_HotbarSlot`** (dropped from
   `hash_shared.luau` — do not re-add). Templates hash as INSTANCE trees, no `shared/src` file
   (ADR-0005).
@@ -51,13 +51,6 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   `TraitRegistry.Roll(rng)` (there is no `RollTrait`), `"None"`→nil, failures WARN.
 - **PENDING (user): ONE settings system for BOTH Places** — same structure + GUI, entries scoped
   `Both`/`GameOnly`/`LobbyOnly`; nothing blocked. `docs/proposals/2026-08-09-unified-settings-both-places.md`.
-- **⚠ DRIFT (USER ACTION, B27d): `Kit_HotbarSlotV2` DISAGREES ACROSS PLACES** — Lobby `cd5a2aa0`,
-  Game `9ca7a958`. Two real differences, diffed not guessed: root `Size` is `{1,1}` (Lobby) vs
-  `{0.225,0.399}` (Game), and **`UIHoverStroke.Thickness` is 0.035 (Lobby) vs 0.0 (Game)** — a
-  zero-thickness stroke renders as NOTHING, so the Game's hotbar hover outline stays invisible.
-  Both matched `41c3c9e3` at B26, so one Place was edited after. **Which is canonical is your call**;
-  reconciling a template across Places is a USER copy. `deployed.Game` records the divergent hash on
-  purpose so the drift check keeps reporting it.
 - **PENDING (AD-Game, small): `RewardScalingConfig`'s HEADER COMMENT is stale** (says Insane cannot
   fire); fixing it re-hashes `1d789978` + redeploys to BOTH Places.
 - **PENDING (AD-UI, small):** HUD `CurrencyBar` refreshes on join only — Gold reads stale after a
@@ -71,14 +64,9 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 - **PENDING (AD-UI, small):** the **hover/click TRIGGERS** are unverified in BOTH Places — neither
   `MouseEnter` nor `Activated` can be fired from tooling; the effects they drive ARE proven. Also
   `Kit_ItemHoverCard`'s clone split.
-- **PENDING (USER B27 QUEUE): DONE except the open/close SLIDE.** Landed: two-colour minimum per tier
-  (derived dark secondary, hue kept, `SecondaryValueScale` 0.62); hover strokes from
-  `TierConfig.HoverStrokePaint` — brightest colour for 2-colour tiers, **ALL colours as a stroke
-  gradient for 3+**; the **whole card** scales; Units screen on `UnitIconV2` + the shared
-  `Kit.UnitPreviewTemplate`; **`UIKit.Motion`** (27th entry) owning `isolate()`'s fixed-size wrapper
-  (a UIScale on a layout child re-flows the row — measured 30px of shove), the Quint curve, the 45°
-  9s idle sheen and `lift()`; HUD.Left mutual exclusion via `ClientEvents.ScreenOpened`.
-  ⬜ REMAINING: **open/close SLIDE** — build it on `Motion`, do not start a fourth animation dialect.
+- **NOT A PENDING — B28 note: `PlayGUI` is DELIBERATELY EXCLUDED from the open/close slide.** It opens
+  and closes behind a `LoadingScreen` veil with a camera capture; a slide would fight the veil. If a
+  transition is ever wanted there, it belongs in that flow, not in a `Motion.slideIn` call.
 - **KNOWN REGRESSION (B26, accepted):** V2 has no `ShinyBadge` (`AscensionController` drove it from
   `view.Shiny`) — **shiny is not marked on an ascension card.** Re-add to the template, or drop it.
 - **PENDING (AD-Game, small):** a unit at `MAX_META_LEVEL` **loses stored XP** (`ApplyXP` discards

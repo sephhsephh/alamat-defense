@@ -24,7 +24,7 @@ update `shared/manifest.json`. Both deploy procedures are in `tools/checklists.m
 COPIED (Studio copy/paste, prove equality by hash) or built by one identical deterministic script
 run in both Places — **never rebuilt by hand or by eye**.
 
-## Controllers (`RS.Shared.UIKit`) — 5 manifest entries
+## Controllers (`RS.Shared.UIKit`) — 6 manifest entries
 
 | Manifest key | Deploy path | What it does |
 | --- | --- | --- |
@@ -33,6 +33,7 @@ run in both Places — **never rebuilt by hand or by eye**.
 | `UIKitItemIcon` | `Shared.UIKit.ItemIcon` | Item card on `Kit.ItemIconV2` (B26). Flat `ItemIcon` ImageLabel — **no ViewportFrame, items have no model** — `Amount` badge that hides at qty 0, `ItemName`, rarity on the ROOT `UIGradient` from the shared `TierConfig`. |
 | `UIKitFilterPanel` | `Shared.UIKit.FilterPanel` | Reusable filter panel. Clones `GroupTemplate`/`ToggleTemplate`; Apply commits pending→applied, Cancel reverts, Reset clears. `handle.selected(groupId)` returns nil when a group is unconstrained, so "no filters" means "show everything". |
 | `UIKitHotbar` | `Shared.UIKit.Hotbar` | ONE hotbar for BOTH Places. See below. |
+| `UIKitMotion` | `Shared.UIKit.Motion` | The kit's ONE animation home (B27c, extended B28). Hover/press scaling, the idle gradient sheen, `isolate()`'s fixed-size wrapper, `lift()`, and the **open/close slide**. See below. |
 
 Attribute vocabulary for `UIKitButton`: `HoverScale`, `HoverStrokeMult`, `HoverStrokeColor`,
 `HoverIconRotation`, `PressScale`, `TweenTime`, `GradientAnimate`, `GradientSpeed`,
@@ -235,6 +236,48 @@ which is still v1-shaped and was not migrated. `HotbarSlotV2` has **one**, the s
 and off, and that the stroke is authored `Enabled = false` at rest. In the live Items grid exactly
 one card had it on, and that was the **selected** card (`paintStroke` is `hovering or selected`).
 The engine-side trigger remains on an open PENDING.
+
+## `UIKit.Motion` — the kit's ONE animation home (B27c; slide added B28)
+
+It exists so a fourth animation dialect is never born. Everything with a curve or a duration in it
+belongs here, and `Motion.Tuning` is where the kit's feel is retuned — **never per screen**.
+
+`Tuning`: Quint ease-out · hover 1.07 / 0.26s · press 0.95 / 0.09s · rest 0.30s · idle gradient 9s
+at 45° · hover Z lift 5 · **slide in 0.34s / out 0.20s / distance 0.35**.
+
+API: `isolate` · `layoutNode` · `setVisible` · `setLayoutOrder` · `destroy` · `scaleTo` · `lift` ·
+`idleGradient` · `paintHoverStroke` · `prepareCard` · **`slideIn` · `slideOut` · `isOpen` ·
+`restPosition` · `forgetSlide`**.
+
+### The open/close slide (B28) — three traps handled ONCE
+
+The user's ask: *"I also need animations when opening in closing, Like sliding up, not just popping
+visible and invisible."* `slideIn(frame, opts)` / `slideOut(frame, opts)` return the Tween, so a
+caller can await `.Completed`. `opts`: `gui` · `direction` (`up` default, `down`/`left`/`right`) ·
+`distance` · `time` · `keepEnabled` · `onComplete`.
+
+1. **Enable before you animate.** Every screen toggles `ScreenGui.Enabled`, and a DISABLED ScreenGui
+   does not lay out — everything under it reads `AbsoluteSize = 0`. `slideIn` enables FIRST;
+   `slideOut` disables only after the tween completes. A screen must therefore call `slideIn`
+   *before* it clones its cards, or every card is built against a zero-size parent.
+2. **The travel is parent-relative SCALE, never measured pixels.** A measured slide would have to
+   wait a frame for `AbsoluteSize` to go non-zero — and "a harness that reports 0 or 0x0 is usually
+   the harness" is this project's most repeated false alarm. Scale needs no measurement.
+3. **The authored resting Position is canon.** Captured ONCE into the `UIKitRestPosition` attribute
+   (UDim2 is a real attribute type, so it is visible in Studio and survives a reload); every tween
+   runs to or from that value. No screen coordinate is hardcoded in the module, and `slideOut`
+   restores it on completion so a hard `Enabled = true` elsewhere still shows the panel in place.
+
+**Screens ask `Motion.isOpen(main)`, not `gui.Enabled`.** During a close tween the gui is still
+Enabled, so an `Enabled`-based toggle reads "open" and closes a second time — swallowing the click
+of a player reopening mid-slide. Re-entrancy is a per-frame token: a completion callback holding a
+stale token does nothing, which is what stops a late `slideOut` from disabling a gui just reopened.
+
+**Boot teardown must NOT slide.** A controller that hides itself at boot uses a direct
+`gui.Enabled = false` (`hideInstant()` in Summon/Index), or the screen flashes on every join.
+
+**`PlayGUI` is deliberately excluded** — it opens behind a `LoadingScreen` veil with a camera
+capture, and a slide would fight the veil.
 
 ## Rules that keep the kit healthy
 

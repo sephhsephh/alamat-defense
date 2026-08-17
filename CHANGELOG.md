@@ -1,5 +1,114 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-17 [both] B28 — AD-Integration: the `Kit_HotbarSlotV2` drift closed on ONE property, and the open/close SLIDE lands on `UIKit.Motion` — the last item of the user's B27 queue.
+
+### The drift was half the size B27d recorded
+
+B27d handed this session two divergent properties. **Only one of them was still real**, which is why
+the first thing B28 did was re-measure both Places instead of trusting the briefing:
+
+| Property | Lobby | Game (before) | Verdict |
+| --- | --- | --- | --- |
+| root `Size` | `{1,0},{1,0}` | `{0.225,0},{0.399,0}` | **REAL** — the whole hash gap |
+| `UIHoverStroke.Thickness` | 0.035 | **0.035** | **already matched** — B27d's "0.0 in the Game" no longer held |
+
+Nothing was written to `Thickness`; the value was asserted, not set. Had this session "reconciled"
+from the briefing it would have written a value that was already correct and reported a fix that
+fixed nothing — the exact failure the "measure, do not assume" rule exists to prevent.
+
+**User decision: the LOBBY is canonical.** Taken via the deterministic-edit path (`checklists.md`
+step 2's exception, the same route as B27b's `CanvasGroup` → `EXPLevelBar` rename) rather than a
+cross-Place copy — one property, so it was cheaper and safer than asking the user to paste a tree.
+
+**Why `{1,1}` is safe in the Game, established BEFORE the write, not after:** `UIKit.Hotbar.attach`
+CLONES this master `MaxSlots` times and never overrides `Size` (line 214); both Places'
+`StarterGui.Hotbar.Slots` are the identical `{0.420723,0},{0.157785,0}` Frame under a horizontal
+`UIListLayout`; and the master carries a `UIAspectRatioConstraint` (1.0034, FitWithinMaxSize, Width)
+which is what actually clamps a slot. So `{1,1}` resolves to the same square the Lobby already draws.
+**The Game's slots now render BIGGER — that is the fix, not a regression.** The authored
+`Slot1..Slot6` sitting in the Game's `StarterGui` needed no edit: `attach()` destroys and re-clones
+them on every boot.
+
+Result: `Kit_HotbarSlotV2 = cd5a2aa0` in BOTH Places. **All 27 manifest entries now agree across both
+Places except `MetaMath`** (Lobby `6badac1d`, Game MISSING — expected until Phase D).
+
+### The slide: `Motion.slideIn` / `slideOut` / `isOpen` / `restPosition` / `forgetSlide`
+
+User's ask, verbatim: *"I also need animations when opening in closing, Like sliding up, not just
+popping visible and invisible."* Built on `UIKit.Motion` (27th manifest entry) so a fourth animation
+dialect is not born. `Tuning` gains `SlideInTime = 0.34`, `SlideOutTime = 0.20`, `SlideDistance = 0.35`
+— opening is the unhurried leg, closing gets out of the way faster than it arrived.
+
+Three traps, each handled once in the module so no screen repeats them:
+
+1. **Enable before you animate.** Every screen toggles `ScreenGui.Enabled`, and a disabled ScreenGui
+   does not lay out — everything under it reads `AbsoluteSize = 0`. `slideIn` enables FIRST;
+   `slideOut` disables only after the tween completes. The screens call `slideIn` **before** cloning
+   their cards, or every card would be built against a zero-size parent.
+2. **The travel is parent-relative SCALE, never measured pixels.** A measured slide would have to
+   wait a frame for `AbsoluteSize` to go non-zero — and "a harness that reports 0 or 0x0 is usually
+   the harness" is this project's most repeated false alarm. Scale cannot be fooled by a disabled gui.
+3. **The authored resting Position is canon.** Captured ONCE into the `UIKitRestPosition` attribute
+   (UDim2 is a real attribute type, so it is visible in Studio and survives a reload); every tween
+   runs to or from that value, and `slideOut` restores it on completion so a hard `Enabled = true`
+   elsewhere still shows the panel in place rather than parked off-screen.
+
+**The screens ask `Motion.isOpen(main)`, not `gui.Enabled`.** This is a real bug avoided, not a
+stylistic choice: during a close tween the gui is STILL Enabled, so the old `if gui.Enabled and
+main.Visible` toggle read that as "open" and would have closed a second time — swallowing the click
+of a player reopening mid-slide. Re-entrancy is a per-frame token; a completion callback holding a
+stale token does nothing, which is what stops a late `slideOut` from disabling a gui just reopened.
+
+`close()` also stopped clearing `main.Visible`: a hidden frame cannot be seen sliding.
+
+Wired in the Lobby: **`UnitsGUI`, `ItemsGUI`, `SummonScreen`, `IndexScreen`** — including
+`UnitsController`'s `OpenUnitsWithUuid` route (the hotbar's "open on this unit") and every
+`ClientEvents.ScreenOpened` close, so a screen dismissed by a sibling's announcement runs the same
+slide-out rather than a hard hide. `ItemsController` gained the `Motion` require it never had.
+
+**Boot teardown must NOT slide** — `SummonController` and `IndexController` call `close()` at the end
+of their boot, and sliding there would flash the screen for a fifth of a second on every join. Both
+now call a new `hideInstant()`. `PlayGUI` is excluded as specified (its `LoadingScreen` veil).
+`AscensionScreen` was left alone: its controller does not live under that ScreenGui, so it did not
+"read naturally" and inventing a wiring for it was not this session's call.
+
+### Verified from a real LocalScript — 12 PASS / 0 FAIL
+
+`execute_luau` runs in a separate VM with its own require cache, so a `Motion` required there is not
+the module the controllers hold. The harness was a real `LocalScript` driving the controllers through
+the BindableEvents they already listen to (`Activated` cannot be fired from tooling), and it printed
+VALUES, not flags — the lesson B26's "LVL 100" placeholder bug taught for the third time:
+
+```
+authored rest Position = {0.5000,0},{0.4500,0} | gui.Enabled=false
+PASS open: gui is ENABLED before the tween finishes -- gui.Enabled=true at t=0.06
+PASS open: panel starts BELOW rest and is moving -- pos={0.5000,0},{0.5644,0} (dY.Scale=+0.1144)
+PASS open: settled EXACTLY on the authored rest -- pos={0.5000,0},{0.4500,0}
+PASS close: gui stays ENABLED during the slide-out -- a hard hide would already read false
+PASS close: an announcement runs the SLIDE, not a hard hide -- dY.Scale=+0.3045
+PASS close: gui disabled only AFTER the tween | authored Position RESTORED
+PASS re-entrancy: NOT stranded enabled-but-off-screen (open/close/open inside both tweens)
+PASS restPosition attribute == authored rest
+===== B28 SLIDE RESULT: 12 PASS / 0 FAIL =====
+```
+
+Harness deleted, all `Dev*` attributes confirmed OFF, and `StarterGui` confirmed free of stray
+`UIKitRestPosition` attributes (the runtime writes them onto the `PlayerGui` clone, which is discarded).
+
+### Canon
+
+`UIKitMotion` `ed800bf3` → **`a104e59d`**, deployed to BOTH Places in this session and hash-matched
+against `shared/src/UIKitMotion.luau` byte-for-byte (18,485 bytes). `Kit_HotbarSlotV2` `deployed.Game`
+`9ca7a958` → `cd5a2aa0`. `docs/systems/ui-kit.md` gains a `UIKit.Motion` section — and its controller
+table, which still said **5** manifest entries, is corrected to **6**: `UIKitMotion` was added at B27c
+and never registered in the doc.
+
+### Open threads
+
+**Not done this session** (the user chose the drift + the slide): TASK 3, real-click confirmation of
+B27d's `Active = false → true` fix. `Activated` still cannot be fired from tooling, so it needs a
+human click on one card in each Place. The PENDING stays open.
+
 ## 2026-08-17 [integration] B28a — AD-Integration: the bootstrap was quietly billing ~90k tokens a session for a file nobody needed whole. Reading budget is now constitutional.
 
 ### The finding (user question, 2026-08-17)
