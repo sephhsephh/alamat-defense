@@ -139,7 +139,24 @@ function Hotbar.attach(container: GuiObject, opts: { [string]: any })
 		;(preview :: GuiObject).Parent = screen
 	end
 
-	local function hidePreview()
+	-- ===== WHY THE HIDE IS OWNED (B29) =====
+	-- Roblox does NOT guarantee that MouseLeave(previous) fires before MouseEnter(next). Sweeping
+	-- quickly across the row delivers them out of order often enough to see, and the old
+	-- UNCONDITIONAL hide then blanked the preview the NEW slot had just shown -- so nothing was on
+	-- screen while the mouse sat genuinely hovering a real slot. Reported by the user at B29:
+	-- "it doesnt show even when mouse is still hovered on the card ... especially when moving fast
+	-- in between slots and cards."
+	-- A hide must therefore prove it still OWNS the preview. A stale leave is dropped; the current
+	-- owner's own leave still hides normally, so the guard can never strand the preview visible.
+	local previewOwner: GuiObject? = nil
+	local function hidePreview(requester: GuiObject?)
+		if requester ~= nil and previewOwner ~= nil and previewOwner ~= requester then
+			-- Evidence, not decoration: this line printing IS the race, caught in the act.
+			print(("[DIAG] hotbar hover: suppressed a stale hide from %s (preview owned by %s)")
+				:format(requester.Name, (previewOwner :: GuiObject).Name))
+			return
+		end
+		previewOwner = nil
 		if preview then preview.Visible = false end
 	end
 
@@ -148,6 +165,9 @@ function Hotbar.attach(container: GuiObject, opts: { [string]: any })
 	-- absent is simply skipped rather than printed as nil.
 	local function showPreview(slotBtn: GuiObject, entry: any)
 		if not (preview and entry) then return end
+		-- Claim ownership BEFORE any work below, so a MouseLeave from the slot we just left is
+		-- already recognisable as stale by the time it arrives.
+		previewOwner = slotBtn
 		local towerId = entry.TowerId
 		local name = entry.Name or ItemCatalog.GetName(towerId)
 		local tier = entry.Tier or ItemCatalog.GetTier(towerId)
@@ -348,7 +368,7 @@ function Hotbar.attach(container: GuiObject, opts: { [string]: any })
 			if on and entry and LoadoutConfig.IsSlotUnlocked(i, playerLevel) then
 				showPreview(slots[i].Button, entry)
 			else
-				hidePreview()
+				hidePreview(slots[i].Button)
 			end
 		end)
 	end

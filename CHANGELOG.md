@@ -1,5 +1,61 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-17 [both] B29a — AD-Integration: the hover preview's hide is now OWNED. A user-reported flicker turns out to be an out-of-order `MouseLeave`, in two surfaces at once.
+
+The user, confirming the B27d click fix: *"both work but the hover preview sometiems bugs, it doesnt
+show even when mouse is still hovered on the card, the previewtemplate doesnt show on the screen,
+especially when moving fast in between slots and cards."*
+
+**Roblox does not guarantee `MouseLeave(previous)` fires before `MouseEnter(next)`.** Sweeping the row
+quickly delivers them out of order often enough to see, and both hover surfaces hid the preview
+*unconditionally* on leave. The losing sequence:
+
+1. `MouseEnter(slot 4)` → `showPreview` → `preview.Visible = true`
+2. `MouseLeave(slot 3)` → `hidePreview()` → `preview.Visible = false`
+
+The stale leave wins, and the preview stays hidden while the mouse sits on a real, hovered slot. The
+"sometimes" in the report is the tell: a race, not a broken lookup.
+
+**Fix — a hide must prove it still OWNS the preview.** `hidePreview(requester)` drops the call when a
+different element owns the preview; `showPreview` claims ownership BEFORE any fill work, so a leave
+from the slot just vacated is already recognisable as stale when it lands. **The guard cannot strand
+the preview visible**, because the current owner's own leave still hides normally — the only calls it
+ever drops are ones that were already wrong.
+
+Two surfaces, same defect, same shape:
+
+- **`UIKit.Hotbar`** (shared canon, BOTH Places) — `dae52036` → **`3e905bc9`**, deployed to both and
+  hash-matched to `shared/src` byte-for-byte (19,297 bytes).
+- **`UnitsController`** (Lobby-local) — `card.MouseLeave` did `hoverPreview.Visible = false` with no
+  ownership test at all. Its `close()` now calls `hidePreview()` with no requester, which is exactly
+  what "close the whole screen" should mean.
+
+**A suppressed stale hide PRINTS.** `[DIAG] hotbar hover: suppressed a stale hide from <slot> (preview
+owned by <slot>)` — that line appearing IS the race caught in the act. The bug is therefore provable
+from the running game rather than argued from the source, which matters because the trigger
+(`MouseEnter`/`MouseLeave`) is one of the two things in this project that tooling cannot fire.
+
+Boot verified clean in the Lobby: 6 slots build, both preview instances present, no errors. The
+sweep itself is with the user — the same reason B27d's click fix needed a human.
+
+### Also this session
+
+**`ServerStorage.DevTools.HashShared` deployed to BOTH Places (TOOLVERSION `B29-1`).** The drift check
+meant pasting the 278-line `tools/hash_shared.luau` through `execute_luau` once per Place every
+session — ~8k tokens of input for 27 lines of output. It is now a module wrapped in
+`return function() ... end` (a bare return would be memoised by `require`'s cache and hand back a
+stale reading), so a bootstrap drift check is four lines. It reproduced all 27 known-good hashes in
+both Places on first run, which is the only reason to trust a compacted transcription.
+**The repo tool stays canon:** edit `tools/hash_shared.luau` — especially its `PROPS` whitelist — and
+you MUST re-deploy this and bump `TOOLVERSION`, or the check silently passes against an old
+definition and real drift becomes invisible. That hazard is written at the top of the module itself.
+
+### Closed
+
+**PENDING (AD-UI): the click TRIGGER is confirmed by the user in BOTH Places** — Units grid selects,
+Game hotbar placement fires. B27d's `Active = false → true` is proven end-to-end. The hover TRIGGER
+half of that PENDING stays open until the sweep above is confirmed.
+
 ## 2026-08-17 [both] B28 — AD-Integration: the `Kit_HotbarSlotV2` drift closed on ONE property, and the open/close SLIDE lands on `UIKit.Motion` — the last item of the user's B27 queue.
 
 ### The drift was half the size B27d recorded
