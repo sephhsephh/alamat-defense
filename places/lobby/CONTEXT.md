@@ -15,8 +15,8 @@ difficulty, form parties, and teleport into the Game place.
   / no trait / mid-roll / asc 0 — **SPA already inverted**. AD-Game owns it; the Lobby only consumes.
   `Get(towerId)` → nil for unknown ids; **Farm has no DMG/SPA keys**. Validator Game-only. ADR-0003.
 - **Boot:** `Server.Bootstrap` asserts the save contract, runs `PlayerDataService.Init()`. **Schema
-  v2** from **Beta1_PlayerDataDev1** (prod **Beta1_PlayerData**) — shares the Game's profile
-  (`63a0c98a`).
+  v3** (B29, `72d3944f`) from **Beta1_PlayerDataDev1** (prod **Beta1_PlayerData**) — shares the
+  Game's profile. v3 adds `BannerChoices`, unblocking Selection banners for AD-Gacha.
 - **Scene:** `Workspace.Lobby` blockout hub (plaza + sun emblem, pillars, title wall,
   COLLECTION/PLAY pedestals); spawn on the plaza. **Its presence is the Lobby Place assertion**
   (paired with `RS.Configs.Towers` being ABSENT — the Game has the tower configs, this Place does not).

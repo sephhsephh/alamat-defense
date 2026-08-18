@@ -149,11 +149,18 @@ function Hotbar.attach(container: GuiObject, opts: { [string]: any })
 	-- A hide must therefore prove it still OWNS the preview. A stale leave is dropped; the current
 	-- owner's own leave still hides normally, so the guard can never strand the preview visible.
 	local previewOwner: GuiObject? = nil
+	local staleHides = 0
 	local function hidePreview(requester: GuiObject?)
 		if requester ~= nil and previewOwner ~= nil and previewOwner ~= requester then
-			-- Evidence, not decoration: this line printing IS the race, caught in the act.
-			print(("[DIAG] hotbar hover: suppressed a stale hide from %s (preview owned by %s)")
-				:format(requester.Name, (previewOwner :: GuiObject).Name))
+			staleHides += 1
+			-- Evidence, not decoration: this line printing IS the race, caught in the act. THROTTLED
+			-- because B29's first instrumented run logged ~70 suppressions in ONE play session --
+			-- the race is not occasional, it is most of a fast sweep, and every one of those would
+			-- previously have blanked the preview. Unthrottled it buries every other console line.
+			if staleHides == 1 or staleHides % 50 == 0 then
+				print(("[DIAG] hotbar hover: suppressed %d stale hide(s); latest from %s (owner %s)")
+					:format(staleHides, requester.Name, (previewOwner :: GuiObject).Name))
+			end
 			return
 		end
 		previewOwner = nil

@@ -1,5 +1,5 @@
 # STATE — Alamat Defense
-<!-- owner: all | scope: global | last-verified: 2026-08-17 (B28) -->
+<!-- owner: all | scope: global | last-verified: 2026-08-17 (B29) -->
 <!-- SIZE RULE (ADR-0006): ONE file, cap 120 lines. A RESOLVED pending is DELETED (the changelog
      is its record) -- never struck through. Sections that duplicate a canon doc keep a pointer. -->
 
@@ -31,9 +31,13 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 - **NOT A PENDING — STANDING PRACTICE (B25): the user republishes BOTH Places EVERY session.** Never
   open a "republish" PENDING; only *state* it when a contract bumps. Still unconfirmed: a **live
   two-client v4 queue run** (`ReserveServer` 403 in Studio).
-- **PENDING (BLOCKS the Selection banner): add `BannerChoices` to the save schema** (v2→v3,
-  additive-optional), **BOTH Places, ONE session** (invariant 5). Plan:
-  `docs/proposals/2026-08-09-selection-banner-choices.md`.
+- **PENDING (AD-Gacha): BUILD THE SELECTION FLOW — the schema half is DONE (B29, v3).**
+  `BannerChoices` exists and round-trips in both Places. Remaining, all Lobby-local: a
+  `ChooseBannerUnit` remote (server re-checks cooldown + that the TowerId is in the pool — the
+  client is a request, never truth), a PER-PLAYER `BannerRegistry.FeaturedFor` (pick + `AutoCount`
+  deterministic randoms, excluding the pick), adding `Selection` to `SUPPORTED_TYPES`, and the
+  choice UI replacing a Selection card's `ClosedOverlay`. Spec:
+  `docs/proposals/2026-08-09-selection-banner-choices.md` §"Then the flow itself".
 - **PENDING (AD-UI, design): quests/login/codes need a NEW reveal answer** — the return-value trick
   only serves player-INITIATED grants; no server→client push remote exists. Propose before building.
 - **PENDING (AD-Game, B24): `UnitIconV2` needs PLACEMENT COST + ELEMENT** (Lobby has neither; tower
@@ -61,9 +65,11 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   only**; the Game still grants via `PlayerInventoryService`/`RewardCalculator`.
 - **PENDING (AD-UI, user deferred): `UnitIconV2` has FOUR inline consumers** repeating paint/viewport
   code; motion and stroke paint are shared now, the rest is not. **Units should SHAPE the controller.**
-- **PENDING (AD-UI, small):** the **hover/click TRIGGERS** are unverified in BOTH Places — neither
-  `MouseEnter` nor `Activated` can be fired from tooling; the effects they drive ARE proven. Also
-  `Kit_ItemHoverCard`'s clone split.
+- **PENDING (AD-UI, small):** `Kit_ItemHoverCard`'s master/clone split. **The click TRIGGER is
+  CONFIRMED by the user in BOTH Places (B29)** — B27d's `Active` fix is proven end-to-end. **The
+  hover race is FIXED (B29a): a hide must now prove it OWNS the preview**; ~70 stale hides were
+  logged in one play session, so it was most of a fast sweep, not an occasional glitch. Awaiting the
+  user's own sweep to close.
 - **NOT A PENDING — B28 note: `PlayGUI` is DELIBERATELY EXCLUDED from the open/close slide.** It opens
   and closes behind a `LoadingScreen` veil with a camera capture; a slide would fight the veil. If a
   transition is ever wanted there, it belongs in that flow, not in a `Motion.slideIn` call.
@@ -71,8 +77,9 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   `view.Shiny`) — **shiny is not marked on an ascension card.** Re-add to the template, or drop it.
 - **PENDING (AD-Game, small):** a unit at `MAX_META_LEVEL` **loses stored XP** (`ApplyXP` discards
   overflow). **(AD-PlayerLevel):** promote `TowerProgressionConfig` to shared for a real XP bar.
-- **PENDING (Game):** real-DataStore round-trip for the PLAYER profile; plus the
-  `ServerStorage.Documentation` → `docs/systems/` migration.
+- **PENDING (Game):** the `ServerStorage.Documentation` → `docs/systems/` migration. (The
+  real-DataStore round trip on the PLAYER JOIN path was CONFIRMED at B29, closing A7's scratch-key
+  caveat: the live profile migrated v2→v3 on join and a written key survived a stop/start.)
 
 - **PENDING:** `Data.Items`' only shipping writer is an **INSANE Victory** (v3, B20), so item counts
   stay 0 until someone clears one.
@@ -82,9 +89,13 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 
 ## Contracts (versions only — detail in `docs/contracts/`)
 
-- **Save schema v2** — `shared/src/ProfileTemplate.luau`, hash `63a0c98a`, drift-green in BOTH Places.
-  Store `Beta1_PlayerData` (Studio `Beta1_PlayerDataDev1`, API access ON); `Migrations[1]` v1→v2
-  re-verified live at A7 on a real ProfileStore round trip.
+- **Save schema v3** (B29) — `shared/src/ProfileTemplate.luau`, hash `72d3944f`, drift-green in BOTH
+  Places. Store `Beta1_PlayerData` (Studio `Beta1_PlayerDataDev1`, API access ON). v3 adds
+  `BannerChoices` (additive-optional); **`Migrations[2]` is a deliberate NO-OP and must stay one** —
+  `Migrate()` warns and STOPS at a missing step, so the gap would strand every later migration.
+  `ChosenAtDay` is a `MetaMath.Slot` DAY NUMBER, never a timestamp. Verified live 8 PASS / 0 FAIL: v1
+  walks 2 steps, v2 walks 1 non-destructively, and a written entry survived a real DataStore round
+  trip. **Forward-tolerant** (Reconcile never prunes), but publish both Places together anyway.
 - **Teleport payload v4** (B23) — `docs/contracts/teleport.md`. Both sides + both directions, ONE
   session. v4 adds `IsMatchmade`, widens `HostUserId` to the ELECTED match host, and **REPEALS "a
   match server contains exactly one party"** (P7 groups strangers across lobby servers); v3 added
@@ -101,7 +112,8 @@ names — same letters, different sequences. PlayGUI uses `P1…P7` to avoid a t
 2. **PLAYGUI — `docs/blueprints/playgui.md` is LAW. P1–P7 ✅ COMPLETE** (B14–B23); detail in §9 and
    `docs/systems/play-menu.md`. The ADR-0011 remap is isolated in `PlayGUI.DifficultyScale` — **the
    ONE conversion; never write a second.** B25 audited the V2 kit, **B26 ADOPTED it and retired v1**,
-   B27a–d did the user's play-test queue. **NEXT = the open/close SLIDE + the HotbarSlotV2 drift.**
+   B27a–d did the user's play-test queue; **B28 landed the open/close SLIDE and closed the
+   `Kit_HotbarSlotV2` drift.** PlayGUI needs nothing further.
 3. **Phase B** (`phases-b-f-meta.md`). Landed B0–B8; Selection ⛔ on the `BannerChoices` PENDING.
    **Phase C (B9): C3 ascension ✅**; **B11 moved it to an NPC screen (ADR-0010) — C1/C2/C4 copy that
    shape.** C1+C2 (AD-Traits) and C3's sell-dupes half are UNBLOCKED by B12; sell-dupes needs the

@@ -13,12 +13,13 @@ Server-authoritative, registry/config-driven, signal-decoupled. `--!strict` thro
 `EconomyManager`, replication through the single `MatchReplicator` surface wired in `ReplicationBridge`
 (the only script that knows clients exist). Configs are data modules under `RS.Configs.*`, auto-scanned.
 
-## Persistence (schema v2 — see docs/contracts/save-schema.md)
+## Persistence (schema **v3** — see docs/contracts/save-schema.md)
 
 `Server.Data.PlayerDataService` owns ProfileStore sessions; `PlayerInventoryService` (uuid-keyed
-`Units`/account/items + `GrantUnit`) and `SettingsService` are profile-backed facades. Schema v2 =
-uuid unit instances + `Currencies` map; `Migrations[1]` converts v1 on load. Each unit carries
-`StatRolls` + `Ascension`; `TowerStatResolver` folds them into DMG/RNG/SPA over tier×meta×trait.
+`Units`/account/items + `GrantUnit`) and `SettingsService` are profile-backed facades. **v3 (B29,
+`72d3944f`) adds `BannerChoices`; `Migrations[2]` is a DELIBERATE NO-OP that must stay one — a gap
+would strand every later step.** v2 = uuid unit instances + `Currencies`; `Migrations[1]` converts v1
+on load. Each unit's `StatRolls` + `Ascension` fold into DMG/RNG/SPA over tier×meta×trait.
 Boot order in `ReplicationBridge`: data services first; `[DATA]`/`[CONTRACT]` lines confirm it.
 
 ## Key paths
@@ -136,15 +137,14 @@ Boot order in `ReplicationBridge`: data services first; `[DATA]`/`[CONTRACT]` li
   handler that YIELDS blocks every later handler, including `MatchEndPresenter`, which drives the
   reward/counter commit (A9 burned three runs on this). To inspect post-commit state, `task.spawn`
   the body and return immediately — never `task.wait` inside a Signal handler here.
-- A unit at `MAX_META_LEVEL` LOSES stored XP (`ApplyXP` discards overflow): Archer Lv100 went
-  `XP 400 → 0` at A7. Cosmetic but visible on the Units screen.
-- `DevSetOwnedTowers` REPLACES `data.Units` with new uuids, orphaning the Lobby's saved
-  `Data.Loadout`. Fails safe, but the hotbar reports a stale "N equipped" count until the next equip.
-- Real-DataStore round-trip for the PLAYER profile still PENDING (A7 used a scratch key: it
-  exercised Reconcile + Migrate, not the player join path).
+- A unit at `MAX_META_LEVEL` LOSES stored XP (`ApplyXP` discards overflow): Archer Lv100 went `XP 400
+  → 0` at A7. Cosmetic but visible on the Units screen.
+- `DevSetOwnedTowers` REPLACES `data.Units` with new uuids, orphaning the Lobby's `Data.Loadout`.
+  Fails safe, but the hotbar reports a stale "N equipped" count until the next equip.
+- ✅ Real-DataStore round trip on the PLAYER JOIN PATH confirmed at B29 (A7 had only used a scratch
+  key): the live dev profile migrated v2→v3 on join and a written key survived a stop/start.
 - **Stat rolls live + actually rolling (A3+):** `TowerStatResolver` reads each unit's `StatRolls` +
   `Ascension`; Archer + Mage are the `BaseStats` pilots. **All grant paths ROLL** — `GrantUnit`,
   `DevSetOwnedTowers` and the Lobby's `StarterChoiceService` all call `StatGradeConfig.RollAll(rng)`
   off one persistent `Random`. Existing units + the v1→v2 migration stay grandfathered at 0.5.
-- **USER (BLOCKING): both Places must be republished TOGETHER for v4** — see STATE.md. v3's
-  republish was confirmed done at B23; a live end-to-end run of the loop is still unconfirmed.
+- Republishing both Places together is STANDING PRACTICE (B25); a live v4 loop run is unconfirmed.

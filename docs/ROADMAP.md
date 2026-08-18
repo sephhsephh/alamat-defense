@@ -364,11 +364,20 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
   trio shifted once as an accepted cosmetic side effect. Verified live incl. both refusal paths.
   One authorised change to `SummonController` (AD-UI canon) delegating banner-type policy to the
   registry — **AD-UI review PENDING**.
-- ⛔ **Selection banners (blueprint B4's other half) — BLOCKED ON A CONTRACT, not on effort.**
-  Schema v2 has no `BannerChoices` field, and invariant 5 forbids leaving the two Places out of
-  schema sync across a session boundary, so a Lobby-only session must not start the bump. Plan:
-  `docs/proposals/2026-08-09-selection-banner-choices.md`. They stay registered, validated and
-  refused (`banner_type_not_supported_yet`) meanwhile; turning them on afterwards is one line.
+- 🟡 **Selection banners (blueprint B4's other half) — THE CONTRACT BLOCKER IS GONE (B29).**
+  **Schema v3 adds `BannerChoices`, deployed to BOTH Places in one session** (invariant 5) and
+  verified across a real DataStore round trip. What remains is the FLOW, and it is all Lobby-local
+  AD-Gacha work: a `ChooseBannerUnit` remote (the server re-checks cooldown + pool membership — the
+  client is a request, never truth), a PER-PLAYER `BannerRegistry.FeaturedFor` (the pick plus
+  `AutoCount` deterministic randoms, excluding the pick so it cannot appear twice), adding
+  `Selection` to `SUPPORTED_TYPES`, and the choice UI replacing a Selection card's `ClosedOverlay`.
+  Spec: `docs/proposals/2026-08-09-selection-banner-choices.md`. They stay registered, validated and
+  refused (`banner_type_not_supported_yet`) until then; turning them on afterwards is one line.
+- ✅ **Hover preview no longer blanks on a fast sweep (B29a, 2026-08-17)** — user-reported. Roblox
+  does not guarantee `MouseLeave(previous)` before `MouseEnter(next)`, so a stale leave blanked the
+  preview the new slot had just shown. A hide must now prove it OWNS the preview. Fixed in
+  `UIKit.Hotbar` (shared, both Places) AND `UnitsController` (Lobby). **~70 suppressions logged in
+  one play session** — it was most of a fast sweep, not an occasional glitch.
 - ✅ **B8 — the UNIT INDEX / CODEX (AD-Gacha, 2026-08-09).** Blueprint B5, all four requirements
   DERIVED not typed: every `ItemCatalog` Tower, obtained silhouettes (own ANY instance, via
   `GetUnitViews`), source text from the banner pools, and **exact per-banner rates computed from

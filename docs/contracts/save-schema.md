@@ -1,5 +1,5 @@
 # Contract: Save Schema
-<!-- owner: game | scope: global | version: 2 | last-verified: 2026-08-01 -->
+<!-- owner: game | scope: global | version: 3 | last-verified: 2026-08-17 (B29) -->
 
 Canonical implementation: `shared/src/ProfileTemplate.luau` (deployed to
 `ReplicatedStorage.Shared.ProfileTemplate` in every Place). This doc explains it; the
@@ -13,7 +13,7 @@ whole Experience.
 > exact store 2026-08-01** (drift check during the v2 work) — no split-brain. Store target only,
 > unrelated to the schema version.
 
-## v2 shape (current)
+## v3 shape (current)
 
 ```luau
 {
@@ -40,6 +40,10 @@ whole Experience.
 	} },
 	Loadout: { string },              -- up to 6 unit uuids (slot gating by PlayerLevel later)
 	Pity: { [string]: { Legendary: number, Mythic: number, Secret: number } },
+	BannerChoices: { [string]: {     -- v3: bannerId -> this player's Selection-banner pick
+		TowerId: string,
+		ChosenAtDay: number,          -- a MetaMath.Slot DAY NUMBER, *not* a timestamp (see below)
+	} },
 	Counters: { Global: { [string]: any }, PerUnit: { [string]: { [string]: number } } },
 	Quests, LoginStreak, ShopStock, Titles, Spirits, Battlepass, -- exact shapes in ProfileTemplate
 	Settings: { [string]: any },      -- client settings, SettingsConfig.Sanitize'd
@@ -54,6 +58,32 @@ first-join starter choice grants the first unit (eligibility = zero owned). uuid
 a new `Units[uuid]` instance (mid stat rolls 0.5, Ascension 0, not shiny, ObtainedAt now);
 `Loadout = {}` (auto-loadout rebuilds it). `Reconcile()` fills every other new v2 key. Existing
 account XP / items / settings are preserved.
+
+**Migration 2→3** (`Migrations[2]`, B29 2026-08-17): adds `BannerChoices` — the Selection banner's
+per-player stored pick, which blueprint task B4 needs and B7 shipped the Event half without.
+
+- **The step is a DELIBERATE NO-OP, and must stay one.** `BannerChoices` is an additive-optional
+  key and `Reconcile()` runs *before* `Migrate()`, so the key is already an empty table by the time
+  the step executes. It exists anyway because **`Migrate()` warns and STOPS at a missing step** — a
+  silent gap at v2→v3 would strand every migration added after it. Never delete it, never repurpose
+  it for a later change.
+- **`ChosenAtDay` is a `MetaMath.Slot(86400, MetaConfig.ResetOffsetSec)` day number, not a
+  timestamp.** That is what makes `Featured.ChoiceCooldown` agree across servers with no stored
+  clock (cross-phase invariant 3). The cooldown test is `currentDay - ChosenAtDay >= cooldownDays`.
+- **This bump is FORWARD-TOLERANT, unlike teleport v4.** `Reconcile()` only fills missing keys and
+  never prunes, and `Migrate()`'s loop does not run when `data.SchemaVersion` already exceeds a
+  Place's `SCHEMA_VERSION` — so a v2 server reading a v3 profile leaves `BannerChoices` intact
+  rather than destroying it. Both Places were still deployed in ONE session (invariant 5), and both
+  must still be republished together; the tolerance is a safety net, not a licence to split.
+- Verified live (B29, 8 PASS / 0 FAIL from a real server Script): a v1 table walks **2 steps** to
+  v3 with `Currencies.Gold` and its migrated unit intact; a v2 table walks **1 step**
+  non-destructively; the live dev profile logged `[DATA] Migrated ... forward 1 step(s) to v3` on a
+  real DataStore (`DataStoreState=Access`); and a written `BannerChoices` entry **survived a
+  stop/start round trip**.
+
+The *flow* on top — the `ChooseBannerUnit` remote, a per-player `BannerRegistry.FeaturedFor`, and
+adding `Selection` to `SUPPORTED_TYPES` — is AD-Gacha's work and is NOT part of this bump. Until it
+lands, Selection banners stay validated-but-refused (`banner_type_not_supported_yet`).
 
 ## Access rules
 

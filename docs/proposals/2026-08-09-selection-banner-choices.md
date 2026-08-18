@@ -1,7 +1,19 @@
 # PROPOSAL — `BannerChoices`: the Selection banner's stored pick
 
-<!-- author: AD-Gacha (B7, 2026-08-09) | status: OPEN, needs a both-Places session -->
+<!-- author: AD-Gacha (B7, 2026-08-09) | status: SCHEMA HALF EXECUTED B29 2026-08-17 (AD-Integration) -->
 <!-- blocks: blueprint task B4's Selection half. The Event half shipped at B7 without it. -->
+
+> **THE CONTRACT HALF IS DONE (B29, 2026-08-17, AD-Integration).** Steps 1–4 of "Recommended route"
+> below are executed exactly as written: `BannerChoices` + the `BannerChoice` type are in
+> `ProfileData` and `Template`, `SCHEMA_VERSION` is **3**, `Migrations[2]` is the deliberate no-op
+> with the comment saying so, and `ProfileTemplate` (`63a0c98a` → **`72d3944f`**) is deployed to
+> BOTH Places in ONE session per invariant 5. Verified live, 8 PASS / 0 FAIL from a real server
+> Script: a v1 table walks 2 steps to v3, a v2 table walks 1 non-destructively, the live dev profile
+> logged `Migrated ... forward 1 step(s) to v3` on a real DataStore, and a written entry survived a
+> stop/start round trip.
+>
+> **WHAT IS LEFT IS THE FLOW — §"Then the flow itself" — and it is AD-Gacha's, all Lobby-local.**
+> Nothing blocks it now. Selection banners stay validated-but-refused until it lands.
 
 ## Why this is a proposal and not just code
 

@@ -16,7 +16,7 @@
 
 local ProfileTemplate = {}
 
-ProfileTemplate.SCHEMA_VERSION = 2
+ProfileTemplate.SCHEMA_VERSION = 3
 ProfileTemplate.STORE_NAME = "Beta1_PlayerData" -- one store for the whole Experience (production)
 
 -- Live store name. In Studio ALL data goes to a separate dev store, so playtests and
@@ -48,6 +48,16 @@ export type UnitInstance = {
 -- Alias kept for readers that still think in the v1 record shape (MetaLevel / XP / Trait).
 export type OwnedTower = UnitInstance
 
+-- A player's stored pick on a Selection banner (schema v3, B29). Blueprint B4's shape, unchanged.
+-- `ChosenAtDay` is a `MetaMath.Slot(86400, MetaConfig.ResetOffsetSec)` DAY NUMBER, **not a
+-- timestamp** -- that is precisely what makes `Featured.ChoiceCooldown` agree across servers with
+-- no stored clock (cross-phase invariant 3). The cooldown test is
+-- `currentDay - ChosenAtDay >= cooldownDays`. Do not "improve" this into os.time().
+export type BannerChoice = {
+	TowerId: string,
+	ChosenAtDay: number,
+}
+
 export type ProfileData = {
 	SchemaVersion: number,
 	PlayerXP: number,
@@ -57,6 +67,7 @@ export type ProfileData = {
 	Units: { [string]: UnitInstance },
 	Loadout: { string },
 	Pity: { [string]: { Legendary: number, Mythic: number, Secret: number } },
+	BannerChoices: { [string]: BannerChoice }, -- v3: keyed by bannerId; Selection banners only
 	Counters: { Global: { [string]: any }, PerUnit: { [string]: { [string]: number } } },
 	Quests: { Progress: { [string]: any }, Claimed: { [string]: any }, PinnedQuestId: string? },
 	LoginStreak: { Day: number, LastClaimDayNumber: number },
@@ -79,6 +90,7 @@ ProfileTemplate.Template = {
 	Units = {},
 	Loadout = {},
 	Pity = {},
+	BannerChoices = {},
 	Counters = { Global = {}, PerUnit = {} },
 	Quests = { Progress = {}, Claimed = {}, PinnedQuestId = nil },
 	LoginStreak = { Day = 0, LastClaimDayNumber = 0 },
@@ -129,6 +141,18 @@ ProfileTemplate.Migrations[1] = function(data)
 	data.Towers = nil
 
 	data.Loadout = {}
+end
+
+-- v2 -> v3: add `BannerChoices`, the Selection banner's per-player stored pick (blueprint B4).
+-- *** THIS STEP IS A DELIBERATE NO-OP AND MUST STAY ONE. ***
+-- `BannerChoices` is an ADDITIVE-OPTIONAL key, and ProfileStore's `Reconcile()` runs BEFORE
+-- `Migrate()`, so by the time this executes the key is already present as an empty table. There is
+-- genuinely nothing to convert. The step exists anyway because `Migrate()` WARNS AND STOPS at a
+-- missing step -- a silent gap at v2->v3 would strand every migration added after it. Do not delete
+-- it, and do not "fill it in" later: a new shape change gets its OWN step (rule 3 above -- never
+-- remove or repurpose an existing migration).
+ProfileTemplate.Migrations[2] = function(_data)
+	-- intentionally empty; see above
 end
 
 -- Walks data forward to SCHEMA_VERSION. Returns the number of steps applied.

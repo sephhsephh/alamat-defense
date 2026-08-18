@@ -1,5 +1,108 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-17 [both] B29 — AD-Integration: **save schema v2 → v3.** `BannerChoices` lands, Selection banners stop being contract-blocked, and the hover race turns out to be ~70 events per play session.
+
+### The bump (blueprint B4's blocker, open since B7)
+
+`Selection` banners have been registered, validated and *refused* since B7 for one reason: schema v2
+had nowhere to store a player's chosen featured unit, and cross-phase invariant 5 forbids leaving the
+two Places out of schema sync across a session boundary — so the Lobby-only B7 session correctly
+refused to start the bump. This is the both-Places session it was waiting for.
+
+Executed exactly as `docs/proposals/2026-08-09-selection-banner-choices.md` specifies, with no
+improvisation on the shape:
+
+```luau
+BannerChoices: { [bannerId]: { TowerId: string, ChosenAtDay: number } }
+```
+
+- `SCHEMA_VERSION` **2 → 3**; `BannerChoices = {}` in `Template`; a new exported `BannerChoice` type.
+- **`ChosenAtDay` is a `MetaMath.Slot(86400, ResetOffsetSec)` DAY NUMBER, not a timestamp.** That is
+  the whole point: it makes `Featured.ChoiceCooldown` agree across servers with no stored clock
+  (invariant 3). The module says so in a comment ending "do not 'improve' this into `os.time()`".
+- **`Migrations[2]` is a deliberate no-op.** `Reconcile()` runs before `Migrate()`, so the key is
+  already an empty table by the time the step executes — there is genuinely nothing to convert. The
+  step exists because **`Migrate()` warns and STOPS at a missing step**, so a silent gap at v2→v3
+  would strand every migration added after it.
+- `ProfileTemplate` `63a0c98a` → **`72d3944f`**, deployed to BOTH Places in this session,
+  hash-matched to `shared/src` byte-for-byte (7,094 bytes).
+
+**A property worth knowing before the next contract change: this bump is FORWARD-TOLERANT, unlike
+teleport v4.** `Reconcile()` only fills missing keys and never prunes, and `Migrate()`'s loop does
+not run when `data.SchemaVersion` already exceeds a Place's `SCHEMA_VERSION`. So a v2 server reading
+a v3 profile leaves `BannerChoices` intact rather than destroying it. Both Places were still deployed
+together and must still be republished together — the tolerance is a safety net, not a licence.
+
+### Verified 8 PASS / 0 FAIL, from a real server Script
+
+`execute_luau` runs in a separate VM whose externally-required modules are empty copies that *mimic
+data-loss bugs*, so a schema claim proven there would be worthless. This ran as a real `Script`:
+
+```
+PASS SCHEMA_VERSION is 3 | PASS Migrations[2] exists -- typeof=function
+PASS v2 -> v3 applies exactly 1 step -- steps=1 SchemaVersion=3
+PASS v2 -> v3 is NON-DESTRUCTIVE -- PlayerLevel=7 Units.abc.TowerId=Kapre
+PASS v1 walks ALL THE WAY to v3 (the gap the no-op step prevents) -- steps=2 Currencies.Gold=250 units=1
+[DATA] Migrated SuperiorBeing_S's profile forward 1 step(s) to v3
+[DATA] [CONTRACT] Profile v3 loaded (store=Beta1_PlayerDataDev1, DataStoreState=Access)
+PASS real profile is at v3 | PASS BannerChoices exists and is a table
+PASS PROBE SURVIVED A REAL DATASTORE ROUND TRIP -- read back TowerId=Necromancer ChosenAtDay=20670
+```
+
+The probe test is two Play sessions on purpose: write, stop (ProfileStore autosaves on `EndSession`),
+start, read back. That is what separates "Reconcile filled a key in memory" from "the field
+persists". The `v1 → v3` case is the regression guard the no-op step exists for — it fails loudly the
+day someone deletes `Migrations[2]`.
+
+**This also closes A7's outstanding caveat:** the real-DataStore round trip had only ever been done
+on a *scratch key*, never the player join path. B29 did it on the join path.
+
+### The hover race — user-reported, and far bigger than "sometimes"
+
+The user, confirming the B27d click fix: *"both work but the hover preview sometiems bugs, it doesnt
+show even when mouse is still hovered on the card ... especially when moving fast in between slots
+and cards."* Full diagnosis and fix in **B29a** below. What belongs here is the measurement:
+
+**One instrumented play session logged ~70 suppressed stale hides.** The race is not an occasional
+glitch — it is *most of a fast sweep*, and every one of those events would previously have blanked
+the preview. The "sometimes" in the report was the tell that this was a race; the count is what
+showed how badly it was losing.
+
+That volume is also why the `[DIAG]` line is now **throttled** (first occurrence, then every 50th):
+70 unthrottled lines bury every other message in the console, which is its own bug.
+`UIKitHotbar` `3e905bc9` → **`ef691df9`** for the throttle; `UnitsController` got the same treatment.
+
+### Cheaper bootstraps: `ServerStorage.DevTools.HashShared`
+
+The mandatory drift check meant pasting the 278-line `tools/hash_shared.luau` through `execute_luau`
+**once per Place, every session** — ~8k tokens of input for 27 lines of output. It is now an in-Place
+module (`TOOLVERSION B29-1`) wrapped in `return function() ... end`, so the check is four lines. The
+wrapper is not decoration: a ModuleScript returning the report directly would be memoised by
+`require`'s cache and hand back a stale reading on a second call.
+
+It reproduced all 27 known-good hashes in both Places on its first run, which is the only reason to
+trust a compacted transcription. **The repo tool stays canon** — edit `tools/hash_shared.luau`,
+especially its `PROPS` whitelist, and you MUST re-deploy this and bump `TOOLVERSION`, or the check
+passes against an old definition and real drift becomes invisible. That hazard is written at the top
+of the module itself, where the next session will actually read it.
+
+### Closed this session
+
+- **The B27d click TRIGGER is CONFIRMED by the user in BOTH Places** — Units grid selects, Game
+  hotbar placement fires. `Active = false → true` is proven end-to-end, two sessions after the fix.
+- **Real-DataStore round trip on the player join path** (A7's scratch-key caveat).
+- **The `BannerChoices` schema PENDING** — replaced by an AD-Gacha PENDING for the flow itself.
+
+### Open threads
+
+The flow on top of v3 — a `ChooseBannerUnit` remote (server re-checks cooldown *and* pool membership;
+the client is a request, never truth), a per-player `BannerRegistry.FeaturedFor`, `Selection` into
+`SUPPORTED_TYPES`, and the choice UI replacing a Selection card's `ClosedOverlay` — is **AD-Gacha's
+next session**, all Lobby-local, and nothing blocks it.
+
+The user's own fast-sweep confirmation of the hover fix is still outstanding; the ~70-event log is
+strong evidence the race was real and is now caught, but the eye test is theirs.
+
 ## 2026-08-17 [both] B29a — AD-Integration: the hover preview's hide is now OWNED. A user-reported flicker turns out to be an out-of-order `MouseLeave`, in two surfaces at once.
 
 The user, confirming the B27d click fix: *"both work but the hover preview sometiems bugs, it doesnt
