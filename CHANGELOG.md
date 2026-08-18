@@ -1,5 +1,129 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-18 [lobby] B30 — AD-Gacha: **SELECTION banners are live.** Blueprint task B4 is complete, and the first featured set in this game that config + the clock cannot produce.
+
+**Place asserted before every write:** `PlaceId 83342803778137` + `Workspace.Lobby` present.
+Drift at boot and at landing: **27/27 GREEN** in the Lobby against `shared/manifest.json`
+(`MetaMath` Game = null, expected), `HashShared TOOLVERSION B29-1`. **Nothing shared changed, so
+nothing was re-hashed and the Game is not stale.** No Integration needed; stated at bootstrap.
+
+### The one line B7 promised, and the four pieces underneath it
+
+B7 shipped the Event half of blueprint B4 and stopped, because Selection needs a per-player stored
+pick and schema v2 had nowhere to put one. B29 landed `BannerChoices` in v3 in both Places. So the
+switch really was one line — `Selection` into `BannerRegistry.SUPPORTED_TYPES` — and neither
+`SummonService`'s refusal path nor the summon card needed a change, because B7 had already moved
+banner-type policy into `BannerRegistry.BlockedReason`, which both of them read. That is the design
+paying off two sessions later.
+
+Built exactly to `docs/proposals/2026-08-09-selection-banner-choices.md` §"Then the flow itself":
+
+**1. `BannerRegistry` grew a per-player featured path, and the pure one is untouched.** The
+deterministic draw was extracted into a private `drawFeatured(cfg, count, period, nowSec, excludeId)`
+that BOTH paths call, so there is one draw rather than two that can drift. `FeaturedFor` still
+returns `{}` for a `PlayerChoice` banner and still produces Standard's and the event's sets from the
+clock alone — verified unchanged (`Standard` = Warchief/Babaylan/Meteor, `EventFirstLight` =
+Mage/Meteor, before and after). New and all **pure**: `CurrentDay`, `ChoiceCooldownDays` (seconds →
+whole days, **rounded up**, so a sub-day config can never round down to a free change),
+`IsPlayerChoice`, `ChoicePool` (flat, SORTED, Secret excluded), `IsChoosable`, `ChoiceState` →
+`{ TowerId, ChosenAtDay, CanChange, DaysLeft }`, and **`FeaturedForPlayer`** = the pick FIRST, then
+`AutoCount` randoms from `RngForSlot(slot(AutoRotation), bannerId)` **excluding the pick** so it
+cannot appear twice. `Validate()` now also rejects a Selection banner with no `PlayerChoice`, a
+negative `ChoiceCooldown`, an `AutoCount > 0` with no positive `AutoRotation` (which would ask
+`MetaMath.Slot` for a zero period and silently draw nothing forever), or an empty choice pool.
+
+> **Why every one of those is pure and shared:** the server ENFORCES the cooldown and the screen
+> EXPLAINS it. Two copies of that arithmetic is how a greyed-out button and a server refusal come to
+> disagree — the exact failure `BlockedReason` was created to prevent at B7.
+
+**2. `SSS.Server.Meta.BannerChoiceService` — the ONE writer of `Data.BannerChoices`**, the same
+single-writer shape `GrantService` has for grants. `RS.Remotes.ChooseBannerUnit` (**Remotes 17 → 18**)
+is a RemoteFunction with two modes: `(bannerId)` READS pick + eligibility + options + resolved
+featured, `(bannerId, towerId)` WRITES. One remote, not two, because the spec names one — and the read
+is a few fields only this system wants, so it does not join `GetUnitViews` either (that is the
+COLLECTION read path, ADR-0004, and a banner-policy field does not belong in it). **The client is a
+request, never truth:** the handler re-derives that the banner exists, is a supported Selection
+banner, is inside its window, that the id is in *that* banner's pool, and that the cooldown elapsed.
+Two decisions worth keeping: **re-picking the unit you already have is a no-op** (`Unchanged = true`)
+that deliberately does NOT rewrite `ChosenAtDay`, so a stray double-click cannot restart a one-day
+cooldown; and a pick that has fallen out of a re-curated pool is refused rather than boosted.
+
+**3. `SummonEngine.BuildContext(cfg, nowSec, featuredOverride)`** — a third optional argument, and
+the only non-pure input that module has. It is a **LIST**, not a profile or a player, so the engine
+still knows nothing about persistence and the 10k odds harness still calls it the old way.
+`SummonService` resolves `FeaturedForPlayer` and refuses a Selection pull with **`choice_required`**
+when nothing is stored: charging 130 Gold for a featured set of pure auto-randoms is precisely the
+half-serve B7 declined to ship.
+
+**4. The choice UI, as REAL authored instances** (user rule, 2026-07-18 — nothing generated in
+script). `ChoiceOverlay` (Title/Subtitle/`ChoiceRow` ScrollingFrame/Status/Confirm/Cancel) and
+`ChooseButton` on `BannerCardTemplate`, matching the card's authored language (gold `#C49E5C`,
+GothamBlack, `TextScaled`, `UICorner 8`). It **replaces `ClosedOverlay`'s role** on a Selection card:
+with no pick the chooser *is* the card; once a pick exists `ChooseButton` brings it back. Option
+chips are clones of the shared `Kit.UnitIconV2` master filled by `SummonController`'s existing
+helpers (invariant 2 — no new inline consumer of the kit was written and no unit-icon controller was
+built, which is still the user's deferred call), and the authored `UIHoverStroke` doubles as the
+selected marker on `hovering or selected` — the rule `UIKit.ItemIcon` and the Units grid already use.
+
+**Shipped `RS.Configs.Banners.SelectionAncestors` ("Call of the Ancestors")** — Gold 130/pull,
+curated pool of 7 (Farm excluded, same reasoning as the event), `Boost = 4`, `ChoiceCooldown = 86400`,
+`AutoCount = 2` on a daily `AutoRotation`, `PityRef = "Default"`, always open. Rates are deliberately
+*worse* at the top than the event's (Mythic 1.5% vs 2%): the value is aiming the Boost, not the curve.
+
+### Verified live — real Play, real remote, real profile, values printed not flags
+
+`ChosenAtDay` is a day number, so the whole cooldown is only testable if the stored value is printed.
+It was. `MetaMath.Slot(86400, -57600)` = **day 20682** on 2026-08-18.
+
+| Assertion | Result |
+| --- | --- |
+| Pull with nothing stored | `ok=false reason=choice_required` (server, before any spend) |
+| Pick `Farm` (not in the pool) | `not_in_pool`, plus a `[DIAG]` naming player + id + banner |
+| Pick `Necromancer` | `nil → Necromancer at day 20682`, `Changed=true`, `CanChange=false`, `DaysLeft=1` |
+| Did it reach the PROFILE? | `[Test] POLL: BannerChoices['SelectionAncestors'] = { TowerId = Necromancer, ChosenAtDay = 20682 }` |
+| Re-pick `Necromancer` | `Unchanged=true`, `ChosenAtDay` **still 20682** — the cooldown did not restart |
+| Pick `Mage` the same day | `choice_on_cooldown`, `TowerId=Necromancer`, `DaysLeft=1` |
+| Client vs server featured | **MATCH** on all four reads: `[Necromancer/Warchief/Archer]` both sides |
+| Pick FIRST, never duplicated | `Necromancer/Warchief/Archer`; pick=Archer draws `Archer/Warchief/Babaylan` (the exclusion shifts the draw, as designed) |
+| `ChoiceState` day maths | today → `CanChange=false DaysLeft=1`; yesterday → `CanChange=true DaysLeft=0`; half-written record (no day) → changeable, not locked out forever |
+| Real x10 Selection pull | Gold **3000 → 1700** (130 × 10), 10 uuids granted, `FEATURED` tagged on the boosted ids, reveal `n=10 cols=5 rows=2 scrollbar=false` |
+| UI state machine | no pick → overlay ON / ChooseButton OFF / Cancel OFF / pulls greyed; after the pick → overlay OFF / ChooseButton ON / Cancel ON / pulls ACTIVE |
+| Chips | 7 built from the sorted pool, 104px from the row's authored `ChipWidth`, laid out and spaced; selected chip's `UIHoverStroke` ON and only that one |
+| No regression on the other cards | `Standard` trio unchanged, `EventFirstLight` still "Ends in 13d", `ChoiceOverlay`/`ChooseButton` stay hidden on both, all three pages price + gate correctly |
+
+New Studio harness, same convention as `DevPull`: set `SummonScreen`'s **`DevChoose`** to a towerId to
+run the real chip-then-CONFIRM path (a chip click cannot be fired from tooling). Left at `""`; the
+temporary `B30Verify` server harness was **deleted** before landing.
+
+### Docs
+
+`docs/systems/gacha.md` hit its 300-line cap, so the Selection material was **split** into
+**`docs/systems/gacha-selection.md`** (71 lines) and registered in `docs/INDEX.md`, per CLAUDE.md's
+"over cap → split". `gacha.md` came back to 264 by also condensing two history-only blocks (B3's
+verification figures and the B7 rotation fix) down to pointers at this changelog — current-state docs
+describe NOW. `STATE.md` is at 120/120 with the Selection PENDING **deleted** (ADR-0006; its record is
+this entry) along with the AD-Gacha trait-on-summon review PENDING, which was discharged by reading
+`SummonEngine`: `TraitRegistry.Roll(rng)`, `"None"` → nil, failure WARNs once — all present and
+correct. `places/lobby/CONTEXT.md` is at 149/150. Also corrected two stale numbers found in passing:
+`STATE.md`'s snapshot still said "schema v2", and `CONTEXT.md` still said "26/26 shared canon
+(19 modules)" when the manifest has had 27 (20 modules) since B28.
+
+### Open threads
+
+- **Not exercised, reasoned only:** `choice_no_longer_in_pool`. Reaching it needs a banner re-curated
+  underneath a player who had already chosen, and banner configs are required and cached at boot, so
+  it cannot be provoked mid-Play without editing config during a session. The branch is three lines
+  and shares `IsChoosable` with the write path that *was* exercised.
+- **The dev profile still carries `BannerChoices["B29ProbeBanner"]`** from B29's probe — a banner id
+  that does not exist, so nothing reads it. Left alone (user rule: ask before "fixing" something that
+  looks odd). It is also the surviving evidence of B29's round trip.
+- `Boost = 4` on a curated pool where **Necromancer is the only Mythic** means the pick's in-tier
+  boost is unobservable when the pick is Necromancer. The mechanism is proven by the `FEATURED` tags
+  on Archer/Warchief and by the printed `ctx.FeaturedList`; a second Mythic would make it visible.
+- `SummonController` is now **841 lines**. Place-local, so no doc cap applies, but it is the largest
+  screen controller in the Lobby and the choice flow is a coherent ~230-line block if AD-UI ever
+  wants it in its own script.
+
 ## 2026-08-17 [both] B29 — AD-Integration: **save schema v2 → v3.** `BannerChoices` lands, Selection banners stop being contract-blocked, and the hover race turns out to be ~70 events per play session.
 
 ### The bump (blueprint B4's blocker, open since B7)

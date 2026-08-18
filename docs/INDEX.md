@@ -40,6 +40,11 @@
   one grant path), `BannerRegistry` + banner file shape, the exact summon order, pity, the
   empty-pool fallback, and the "remote returns the views" reveal decision. Read before touching
   anything that grants, spends, rotates or rolls.
+- `gacha-selection.md` — **AD-Gacha canon**: SELECTION banners only (blueprint B4's other half,
+  B30). The `PlayerChoice` config shape, `BannerChoices` (schema v3) and why `ChosenAtDay` is a DAY
+  NUMBER and not a timestamp, the pure `BannerRegistry` choice API, `BannerChoiceService` as the ONE
+  writer + `ChooseBannerUnit`'s two modes and refusal codes, and the `ChoiceOverlay` UI. Split out
+  of `gacha.md` at B30 on its 300-line cap.
 - `lobby-ui.md` — the LOBBY's screens only (Units, Items, Collection, Hotbar, CurrencyBar, HUD
   buttons, the legacy script-built four) + the `DevAutoOpen` Studio harness. Split out of
   `places/lobby/CONTEXT.md` at A5 when that file passed its 150-line cap.

@@ -1,22 +1,21 @@
 # CONTEXT — Lobby place (LIVE, booted 2026-07-17)
-<!-- owner: lobby | scope: lobby | last-verified: 2026-08-16 (B25) -->
+<!-- owner: lobby | scope: lobby | last-verified: 2026-08-18 (B30) -->
 
 The social/meta Place: players land here, view their collection, roll banners, pick a stage +
 difficulty, form parties, and teleport into the Game place.
 
 ## Current live state
 
-- **Shared canon: 26/26 PRESENT here (19 modules + 7 templates), hashes in `shared/manifest.json`.**
-  `MetaMath` stays Lobby-only, so the GAME reports 25/26 — expected, not drift.
-  **`ItemCatalog` drift CLEARED at B23** — the user's real icon assetids (`fc4b8023`, Gold / Silver /
-  BannerTicket / TraitRerollToken / GoldenSeed) now match in BOTH Places. Every entry matches.
+- **Shared canon: 27/27 PRESENT here (20 modules + 7 templates), hashes in `shared/manifest.json`.**
+  `MetaMath` stays Lobby-only, so the GAME reports 26/27 — expected, not drift. Every other entry
+  matches (`ItemCatalog`'s real icon assetids included, since B23). History: CHANGELOG.
 - **Trait rarity table (B12):** `RS.Configs.Traits.{TraitRegistry,TraitDefinitions}` are SHARED canon; API is `TraitRegistry.Roll(rng)`, there is no `RollTrait`.
 - **`UnitStatsCatalog`** = GENERATED cache of each tower's resolved base DMG/RNG/SPA at tier 1 / ML 1
-  / no trait / mid-roll / asc 0 — **SPA already inverted**. AD-Game owns it; the Lobby only consumes.
-  `Get(towerId)` → nil for unknown ids; **Farm has no DMG/SPA keys**. Validator Game-only. ADR-0003.
+  / no trait / mid-roll / asc 0 — **SPA already inverted**. AD-Game owns it, the Lobby only consumes;
+  `Get(towerId)` → nil for unknown ids, **Farm has no DMG/SPA keys**, validator Game-only. ADR-0003.
 - **Boot:** `Server.Bootstrap` asserts the save contract, runs `PlayerDataService.Init()`. **Schema
   v3** (B29, `72d3944f`) from **Beta1_PlayerDataDev1** (prod **Beta1_PlayerData**) — shares the
-  Game's profile. v3 adds `BannerChoices`, unblocking Selection banners for AD-Gacha.
+  Game's profile. v3's `BannerChoices` is what Selection banners (B30) store their pick in.
 - **Scene:** `Workspace.Lobby` blockout hub (plaza + sun emblem, pillars, title wall,
   COLLECTION/PLAY pedestals); spawn on the plaza. **Its presence is the Lobby Place assertion**
   (paired with `RS.Configs.Towers` being ABSENT — the Game has the tower configs, this Place does not).
@@ -27,7 +26,7 @@ difficulty, form parties, and teleport into the Game place.
     Shiny, Ascension, Worthiness, Locked, Favorited, Equipped` (uuid in `Loadout`), raw `StatRolls`,
     `Grades = {DMG,RNG,SPA}` — plus `Loadout`, `Currencies`, `PlayerXP/PlayerLevel`, `MaxLoadout`,
     `Items {[itemId]=count}`. **No resolved DMG/RNG/SPA, no XpPct, NO cost and NO element** (B24).
-    Clients never read profiles. `RS.Remotes` holds **17**.
+    Clients never read profiles. `RS.Remotes` holds **18** (B30 added `ChooseBannerUnit`).
   - Stage select + difficulty = the `RS.Configs.StageRegistry` mirror + `GetStages`; captures
     (StageId, DifficultyPercent). `StageSelectScreen` was DELETED at B19 — PlayGUI covers stage
     select, difficulty and launch; `GetStages` SURVIVES (ReturnScreen calls it). **`ClientEvents
@@ -44,20 +43,20 @@ difficulty, form parties, and teleport into the Game place.
     `IsMatchmade` and widens `HostUserId` to the ELECTED match host.
   - **`Server.Lobby.LaunchService` (B23) is THE launch body** — loadout, payload, reserve+teleport —
     required by BOTH `PartyService` and `MatchmakingService`. **ONE path with one more caller, NOT a
-    second path** (§12): `PartyService` is a `Script` and cannot be required, which is why the body
-    had to move. `Remotes.RequestLaunch` is still the only CLIENT entry.
-  - **`Server.Lobby.{MatchmakingService, MatchmakingRules}` (P7, B23) — the GLOBAL QUEUE.**
-    MemoryStore map keyed `actId|stageNumber|mode|difficultyBucket` off the attributes P4 publishes.
-    **An entry is a PARTY, never a player**; packing only adds WHOLE entries, so "never split" holds
-    by construction. Host = **lowest userId** (every server elects identically, no round trip). **The
-    match runs at the host's EXACT wire value — never an average**, which would move everyone's
-    `GoldBand` payout. `MatchmakingRules.BucketOf` is the ONE home for queue difficulty arithmetic and
-    is **not** the ADR-0011 conversion. Timeout 45s **OFFERS** solo. `RS.Remotes` = **17**.
-    **The mode joins the payload in `PartyService`, not the UI:** P4 publishes `DifficultyMode`, P6's
-    `LobbyController` passes it through `RequestLaunch` verbatim, `PartyService` validates it
-    (anything but `"Insane"` → `"Normal"`). `buildLoadout` = saved `Loadout` filtered to still-owned
-    uuids, else auto by MetaLevel desc, capped at `MaxLoadoutSize`. `GamePlaceId` =
-    **125430066355564**. Only the party HOST may launch; errors come back on `PartyState`.
+    second path** (§12): `PartyService` is a `Script` and cannot be required, which is why the body had
+    to move. `Remotes.RequestLaunch` is still the only CLIENT entry.
+  - **`Server.Lobby.{MatchmakingService, MatchmakingRules}` (P7, B23) — the GLOBAL QUEUE.** MemoryStore
+    map keyed `actId|stageNumber|mode|difficultyBucket` off the attributes P4 publishes. **An entry is a
+    PARTY, never a player**; packing only adds WHOLE entries, so "never split" holds by construction.
+    Host = **lowest userId** (every server elects identically, no round trip). **The match runs at the
+    host's EXACT wire value — never an average**, which would move everyone's `GoldBand` payout.
+    `MatchmakingRules.BucketOf` is the ONE home for queue difficulty arithmetic and is **not** the
+    ADR-0011 conversion. Timeout 45s **OFFERS** solo. **The mode joins the payload in `PartyService`,
+    not the UI:** P4 publishes `DifficultyMode`, P6's `LobbyController` passes it through
+    `RequestLaunch` verbatim, `PartyService` validates it (anything but `"Insane"` → `"Normal"`).
+    `buildLoadout` = saved `Loadout` filtered to still-owned uuids, else auto by MetaLevel desc, capped
+    at `MaxLoadoutSize`. `GamePlaceId` = **125430066355564**. Only the party HOST may launch; errors
+    come back on `PartyState`.
   - **MatchReturn (v3):** `Server.Lobby.MatchReturnService` reads `TeleportData.MatchReturn` on join
     (version from `LobbyConfig`, NOT hardcoded; validates version/Outcome/stage; drops an unknown
     `SuggestNextActId` — a stale mirror fails safe) and serves it via `Remotes.GetMatchReturn`.
@@ -66,23 +65,21 @@ difficulty, form parties, and teleport into the Game place.
   - **Starter tower choice:** `RS.Configs.StarterTowerConfig` (Archer/Knight/Mage),
     `Server.Lobby.StarterChoiceService` + `Remotes.{GetStarterOffer,ChooseStarterTower}`, modal
     `StarterGui.StarterChoiceScreen` (REAL tree, card = `Root.Panel.CardsRow.CardTemplate`). Eligible
-    at ZERO **units**. Grants a uuid `UnitInstance` mirroring `GrantUnit` (**StatRolls via shared
-    `StatGradeConfig.RollAll`**); never clobbers an existing one.
-    Harness `DevSimulateFirstJoin`. `MaxLoadoutSize = 6`.
-
-Run the bootstrap ritual + `tools/hash_shared.luau` every session; reconcile drift before any work.
+    at ZERO **units**; grants a uuid `UnitInstance` mirroring `GrantUnit` (**StatRolls via shared
+    `StatGradeConfig.RollAll`**), never clobbering an existing one. Harness `DevSimulateFirstJoin`.
+    `MaxLoadoutSize = 6`.
 
 ## UI kit + screens (AD-UI)
 
-Three docs: **`ui-kit.md`** = the Place-neutral kit (5 controllers in `RS.Shared.UIKit` + 7 templates
-in `RS.UITemplates.Kit`, drift-controlled). **`lobby-ui.md`** = this Place's SCREENS (Units, Items,
-Collection, Hotbar, CurrencyBar, HUD buttons, legacy Party/Return/StarterChoice). **`play-menu.md`**
-= PlayGUI + LoadingScreen. All `DevAutoOpen` harnesses OFF.
+Three docs: **`ui-kit.md`** = the Place-neutral kit (5 controllers in `RS.Shared.UIKit` + 7 templates in
+`RS.UITemplates.Kit`, drift-controlled). **`lobby-ui.md`** = this Place's SCREENS (Units, Items,
+Collection, Hotbar, CurrencyBar, HUD buttons, legacy Party/Return/StarterChoice). **`play-menu.md`** =
+PlayGUI + LoadingScreen. All `DevAutoOpen` harnesses OFF.
 Units-screen cards are screen-local, not `Kit.UnitIconV2` clones (ADR-0009) — **user wants that changed: migrate `UnitsGUI…UnitsContainer` onto `UnitIconV2` (B27 queue).**
 
 **`ObtainRewardsGUI` — the reward-reveal surface. Detail in `lobby-ui.md`.** Fire it, never rebuild:
-`ClientEvents.ShowRewards:Fire({{Id="Archer",Level=12},{Id="Gold",Qty=250}})`. Grants QUEUE, click 1
-= SKIP, click 2 = CLOSE. Its pop `UIScale` is on runtime CLONES only — **never add one to
+`ClientEvents.ShowRewards:Fire({{Id="Archer",Level=12},{Id="Gold",Qty=250}})`. Grants QUEUE, click 1 =
+SKIP, click 2 = CLOSE. Its pop `UIScale` is on runtime CLONES only — **never add one to
 `Kit_ItemIconV2`, it is hashed canon.**
 
 **`PlayGUI` + `LoadingScreen` — the Play menu, **P1–P7 COMPLETE** (B14–B23). FULL DOC:
@@ -117,11 +114,14 @@ Meta.MetaConfig}`, driven by `RS.Remotes.RequestSummon`. UI shipped B6/B7/B8. Ru
   is EXPECTED, not drift.
 - **Reveal = the remote's RETURN VALUE**; no push remote. Pity uses `Data.Pity[ref]` (no schema
   bump); pulls count on `Counters.Global.GachaPulls`, NOT `Summons` (ADR-0008).
+- **SELECTION banners LIVE at B30 (blueprint B4 COMPLETE) — FULL DOC: `docs/systems/gacha-selection.md`,
+  read it first.** `SSS.Server.Meta.BannerChoiceService` + `Remotes.ChooseBannerUnit` are **the ONE
+  writer of `Data.BannerChoices`**; **`ChosenAtDay` is a `MetaMath.Slot` DAY NUMBER, not a timestamp.**
 
 ## Open PENDINGs (see STATE.md — this is the Lobby-relevant subset)
 
-**Not built (row-by-row status: `docs/ROADMAP.md`):** **Selection** is the last gacha screen (blocked
-on the `BannerChoices` bump); **Party** and **Return** are still script-built (convert when touched).
+**Not built (row-by-row status: `docs/ROADMAP.md`):** **Party** and **Return** are still script-built
+(convert when touched). Every gacha screen exists now — Selection was the last, and it shipped at B30.
 
 **`STATE.md` is the canon list — read it, not this.** Only the Lobby-specific detail lives here:
 
@@ -136,14 +136,14 @@ on the `BannerChoices` bump); **Party** and **Return** are still script-built (c
   on the ROOT `UIGradient`, direct-children-only, **NO tier border** (user, B25); `UnitIconV2` has THREE
   consumers (Summon, Index, Ascension); **no `ShinyBadge` in V2** — shiny unmarked on an ascension card.
 - **B28 — SCREENS SLIDE.** `UnitsGUI`/`ItemsGUI`/`SummonScreen`/`IndexScreen` open/close through
-  **`Motion.slideIn`/`slideOut`**, test **`Motion.isOpen(main)` not `gui.Enabled`** (the gui is STILL
-  Enabled during a close tween), and no longer clear `main.Visible`. Boot = `hideInstant()`; PlayGUI
-  excluded (veil); `AscensionScreen` untouched (its controller is not under that ScreenGui).
+  **`Motion.slideIn`/`slideOut`**, test **`Motion.isOpen(main)` not `gui.Enabled`** (still Enabled mid
+  close-tween), and no longer clear `main.Visible`. Boot = `hideInstant()`; PlayGUI excluded (veil),
+  `AscensionScreen` untouched (its controller is not under that ScreenGui).
 
 ## Ownership notes
 
-- Lobby owns: teleport contract, lobby UI/scene. **AD-Gacha owns the banner catalog + grant
-  pipeline** (`docs/systems/gacha.md`), home Place Lobby, built B3.
-- Lobby consumes (never edits): save schema, tower configs, progression config, trait configs, and
-  **`RewardScalingConfig`** (AD-Game's — read the curve, never re-author it here). Currency/XP/tower
-  grants go through the same profile (never a second store) and **`GrantService`**, never inline.
+- Lobby owns the teleport contract + the lobby UI/scene. **AD-Gacha owns the banner catalog + grant
+  pipeline** (`docs/systems/gacha.md`, `gacha-selection.md`), home Place Lobby. Lobby CONSUMES and
+  never edits: save schema, tower configs, progression config, trait configs, **`RewardScalingConfig`**
+  (AD-Game's — read the curve, never re-author it here). Currency/XP/tower grants go through the same
+  profile (never a second store) and **`GrantService`**, never inline.

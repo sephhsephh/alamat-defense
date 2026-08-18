@@ -1,20 +1,18 @@
 # SYSTEM — Gacha (banner engine + the grant pipeline)
 
 <!-- owner: AD-Gacha | home Place: Lobby | scope: lobby (MetaMath is shared) -->
-<!-- last-verified: 2026-08-09 (B7, live Play) | blueprint: docs/blueprints/phases-b-f-meta.md -->
+<!-- last-verified: 2026-08-18 (B30, live Play) | blueprint: docs/blueprints/phases-b-f-meta.md -->
 
 Engine built at **B3** (the blueprint's B1 + B2 session-tasks, done together by user decision).
 The **summon UI** landed at **B6** (`docs/systems/lobby-ui.md` — this doc was left stale by that
 session and was corrected at B7). **Event banners went live at B7.**
 
-Blueprint status: B1 ✅ · B2 ✅ · B3 (summon UI) ✅ · **B4 half-done — Event ✅, Selection ⛔** ·
-B5 (Index/Codex) 🔲.
+Blueprint status: B1 ✅ · B2 ✅ · B3 (summon UI) ✅ · **B4 ✅ COMPLETE — Event B7, Selection B30** ·
+B5 (Index/Codex) ✅ (B8).
 
-**Selection is deliberately still refused.** It needs a per-player stored pick and schema v2 has no
-`BannerChoices` field; adding one is a contract change spanning BOTH Places, and invariant 5 forbids
-leaving them out of schema sync across a session boundary. Full plan:
-`docs/proposals/2026-08-09-selection-banner-choices.md`. Turning it on afterwards is one line —
-add `Selection` to `SUPPORTED_TYPES`.
+**Selection banners went live at B30**, once schema v3 (B29) gave the player's pick somewhere to
+live. Turning them on really was the one line the B7 note promised — `Selection` into
+`SUPPORTED_TYPES`. The rest of that flow has its own doc: `docs/systems/gacha-selection.md`.
 
 ## Where everything lives
 
@@ -30,6 +28,7 @@ add `Selection` to `SUPPORTED_TYPES`.
 | `SummonEngine` | `SSS.Server.Meta.SummonEngine` | Lobby-local (ModuleScript) |
 | `SummonService` | `SSS.Server.Meta.SummonService` | Lobby-local (Script) |
 | remote | `RS.Remotes.RequestSummon` | RemoteFunction (Remotes 12 → 13) |
+| Selection-only pieces | `BannerChoiceService`, `ChooseBannerUnit`, `SelectionAncestors` | see `docs/systems/gacha-selection.md` |
 
 Only `MetaMath` is under drift control. The rest is Place-local on purpose: a module in
 `shared/manifest.json` costs a cross-Place sync forever (the CurrencyBar precedent, A6), and
@@ -107,17 +106,18 @@ from `Slot` + `RngForSlot(slot, bannerId)`, **secrets excluded** (blueprint). Se
 derive the identical set from config + clock; the server re-derives at pull time and never takes
 the client's word for anything.
 
-> **Boost = 5 is aggressive.** With 2 Commons and Archer featured, Archer takes ~83% of the Common
-> tier — measured 49.6% of ALL pulls over 10k. Tune `Boost` in the banner file; nothing else moves.
+> **Boost = 5 is aggressive.** With 2 Commons and Archer featured, Archer takes ~83% of its tier —
+> measured 49.6% of ALL pulls over 10k. Tune `Boost` in the banner file; nothing else moves.
 
 ### Which banner types are summonable — ONE source of truth (B7)
 
-`BannerRegistry.SUPPORTED_TYPES` (currently `Standard` + `Event`) is read by **both**
+`BannerRegistry.SUPPORTED_TYPES` (**all three since B30**: `Standard`, `Selection`, `Event`) is read by **both**
 `SummonService` (to refuse) and `SummonController` (to grey the card out), so the server and the
 screen can never disagree about what is pullable. `BannerRegistry.BlockedReason(cfg)` returns the
 single player-facing string for *why*, and the screen delegates to it — B7 removed the hardcoded
 `BannerType ~= "Standard"` test from the UI (AD-UI canon, changed with the user's authorisation).
-**Adding a banner type is now a registry change and nothing else.**
+**Adding a banner type is now a registry change and nothing else** — B30 turning Selection on
+really was this one line, with no change to the service's refusal path or the screen's card.
 
 ## Event banners (B7) — a banner with a `Window`
 
@@ -147,24 +147,29 @@ grinding an event should not have hard-pity progress stranded when it ends), win
 2026-08-01 → 2026-09-01. Rates are richer than Standard at the top (Mythic 2% vs 0.995%), which is
 what justifies the higher cost.
 
-**It is also the first CURATED pool.** Standard uses `Pool = "AllSummonable"`, so the explicit
-`Pool = { [tier] = { ids } }` form had never actually executed until B7. `EventFirstLight` uses it,
-and **excludes Farm on purpose** — a support tower is a dud as an event prize. It also carries no
-`Secret` weight, which is why it produces none of Standard's empty-pool content-gap note.
+**It is also the first CURATED pool** — the explicit `Pool = { [tier] = { ids } }` form, which
+Standard's `"AllSummonable"` never exercised. It **excludes Farm on purpose** (a support tower is a
+dud as a prize) and carries no `Secret` weight, so it avoids Standard's empty-pool content-gap note.
 
-> **Currency:** Gold, not an event token. The blueprint allows `Currency = { Event = tokenId }` and
-> the registry validates that shape, but nothing can spend it yet: a token needs a catalogued id and
-> `ItemCatalog` is SHARED canon, so it would make the Game place stale. `SummonService` refuses a
-> table currency with `unsupported_currency` rather than half-serving it. Note EventTokens live in
-> `Currencies`, so this does **not** touch the standing "no writer for `Data.Items`" item.
+> **Currency:** Gold, not an event token. `Currency = { Event = tokenId }` parses and validates, but
+> nothing can spend it — a token needs a catalogued id and `ItemCatalog` is SHARED canon — so
+> `SummonService` refuses a table currency with `unsupported_currency` rather than half-serving it.
 
 ### Rotation slots use the configured reset hour (B7 fix)
 
-`FeaturedFor` now offsets its slot by `MetaConfig.ResetOffsetSec` instead of `0`. B3 passed `0`,
-which was invisible while every banner rotated hourly — but the first **daily** rotation would have
-flipped at 00:00 UTC while the game's day boundary is 16:00 UTC. Verified flipping at 16:00 UTC.
-**Accepted cosmetic side effect:** Standard's featured trio changed once at that landing, because
-the slot *number* shifted and the slot is the seed. Hourly boundaries themselves did not move.
+`FeaturedFor` offsets its slot by `MetaConfig.ResetOffsetSec`, not `0`, so a **daily** rotation flips
+at the game's 16:00 UTC day boundary rather than at midnight UTC. Verified. (B3 passed `0`, which was
+invisible while every banner was hourly; the fix moved Standard's trio once. See CHANGELOG B7.)
+
+## Selection banners (B30) — LIVE, full doc: `docs/systems/gacha-selection.md`
+
+A **Selection** banner (`Featured.PlayerChoice = true`) is the one banner whose featured set is NOT
+derivable from config + the clock: it contains **the player's own stored pick**, save-schema v3's
+`BannerChoices[bannerId] = { TowerId, ChosenAtDay }`. `ChosenAtDay` is a `MetaMath.Slot` DAY NUMBER,
+never a timestamp. `Server.Meta.BannerChoiceService` (via `RS.Remotes.ChooseBannerUnit`) is its ONE
+writer; `BannerRegistry.FeaturedForPlayer` resolves the set and `SummonService` hands it to
+`BuildContext` as an override. Shipped: **`SelectionAncestors`**. Everything else — the API, the
+refusal codes, the UI, the cooldown rule — is in the split doc above.
 
 ## Summon algorithm
 
@@ -228,38 +233,32 @@ x10 = ONE remote call, ONE reveal with 10 entries (blueprint: *"one RewardPopup"
 > a return value because nobody asked. Do not quietly add a push remote to `SummonService` to serve
 > them — it is a real design decision for the session that ships the first one.
 
-## Verified live (B3, real Play, `[Test]`/`[DIAG]` prints in real Scripts)
+## Verified live
 
-- **10k dry rolls, `0` distribution failures.** Every tier inside 4σ: Common 5967/6000, Rare
-  2557/2500, Epic 992/1000, Legendary 404/400, Mythic 80/99.5, Secret 0/0.5. Shiny 0.870% vs 1.000%
-  configured. 60 pity upgrades, 0 pool fallbacks in that seed.
-- GrantService: currency, item, **MaxOwned cap** (99999 tickets → granted 9996, total 9999,
-  `Capped=true`), tower with opts (L40 shiny Necromancer), **duplicates in one call** (Archer ×2,
-  distinct uuids), uncatalogued id refused, negative qty refused, **atomicity** (good+bad → gold
-  delta 0), spend + insufficient_funds.
-- Pity: forced 49/50 upgraded a Rare roll to Legendary; all-three-due awarded **Secret** and fell
-  back to the Mythic pool; `ApplyPity` 10/20/30 → 11/0/31 → 12/1/32.
-- End-to-end: x1 and x10 through the real remote → real reveal.
-  `ObtainRewards SHOW n=10 cols=5 rows=2 scrollbar=false` — 10 in 2 rows, no scroll.
-  Refusals: unknown banner, count 7, count 999999.
-- Persisted: units 8 → 22, Gold 50000 → 48800 (100 spend test + 100 + 1000), `GachaPulls` 11,
-  **`Summons` unchanged at 1152** (ADR-0008), `Pity.Default` L11/M11/S11.
-- Drift **23/23 GREEN** in the Lobby at landing.
+**B3** (real Play, `[Test]`/`[DIAG]` prints in real Scripts): 10k dry rolls, **0 distribution
+failures**, every tier inside 4σ; GrantService across currency/item/MaxOwned-cap/tower-with-opts/
+duplicates-in-one-call/atomicity/spend; pity forcing and `ApplyPity`; x1 and x10 through the real
+remote into a real reveal; persistence (`GachaPulls` counted, `Summons` untouched — ADR-0008).
+**B30** (Selection): server refuses `choice_required` with nothing stored, `not_in_pool` for Farm,
+writes `nil → Necromancer` at day 20682 and the value lands in the PROFILE, a re-pick returns
+`Unchanged` **without** rewriting `ChosenAtDay`, a different unit the same day is refused
+`choice_on_cooldown` `DaysLeft=1`, client and server featured lists **MATCH** on every read, and a
+real x10 pull spent 1300 Gold and tagged `FEATURED` on the boosted ids.
+Full figures: `CHANGELOG.md` (B3, B30). Drift GREEN in the Lobby at both landings.
 
-## The UI on top of this (B6, 2026-08-09 — blueprint task B3 DONE)
+## The UI on top of this (B6 — blueprint task B3 DONE)
 
 `StarterGui.SummonScreen` + `SummonController` (AD-UI, `docs/systems/lobby-ui.md`). It reads
 `BannerRegistry` / `GachaConfig` **directly** — which is what this module's ReplicatedStorage
 placement was for — and sends only a banner id and a pull count. Opened by firing
-`RS.ClientEvents.OpenSummon`, so the blueprint's NPC is a later drop-in with no screen change.
-It consumes `RequestSummon`'s return value and passes `result.Rewards` to `ShowRewards`
-unchanged, exactly as the reveal contract above specifies. Verified live: x1 and x10 through the
-real remote, Gold `48800 → 46700` across 21 pulls, refusals surfaced, featured set derived on the
-client matching the server's `FEATURED` tags.
+`RS.ClientEvents.OpenSummon`, so the blueprint's NPC is a later drop-in with no screen change. It
+consumes `RequestSummon`'s return value and passes `result.Rewards` to `ShowRewards` unchanged,
+exactly as the reveal contract above specifies.
 
 ## Open
 
-- ~~No gacha UI~~ **built at B6** · no Selection/Event flows (B4) · no Index/Codex (B5).
+- ~~No gacha UI~~ **built at B6** · ~~no Selection/Event flows~~ **both DONE** (Event B7,
+  Selection B30) · ~~no Index/Codex~~ **built at B8**. Blueprint task B4 is COMPLETE.
 - Trait-on-summon: **DONE at B12** — rarity table promoted to shared canon, traits roll for real.
 - Game-side `GrantService` convergence (invariant 1 is Lobby-only today).
 - No Secret/Exclusive/Bathala tower exists, so those tiers are unreachable content.

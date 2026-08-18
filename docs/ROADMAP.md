@@ -364,15 +364,22 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
   trio shifted once as an accepted cosmetic side effect. Verified live incl. both refusal paths.
   One authorised change to `SummonController` (AD-UI canon) delegating banner-type policy to the
   registry — **AD-UI review PENDING**.
-- 🟡 **Selection banners (blueprint B4's other half) — THE CONTRACT BLOCKER IS GONE (B29).**
-  **Schema v3 adds `BannerChoices`, deployed to BOTH Places in one session** (invariant 5) and
-  verified across a real DataStore round trip. What remains is the FLOW, and it is all Lobby-local
-  AD-Gacha work: a `ChooseBannerUnit` remote (the server re-checks cooldown + pool membership — the
-  client is a request, never truth), a PER-PLAYER `BannerRegistry.FeaturedFor` (the pick plus
-  `AutoCount` deterministic randoms, excluding the pick so it cannot appear twice), adding
-  `Selection` to `SUPPORTED_TYPES`, and the choice UI replacing a Selection card's `ClosedOverlay`.
-  Spec: `docs/proposals/2026-08-09-selection-banner-choices.md`. They stay registered, validated and
-  refused (`banner_type_not_supported_yet`) until then; turning them on afterwards is one line.
+- ✅ **SELECTION banners are LIVE (AD-Gacha, Lobby, 2026-08-18, B30). Blueprint task B4 is now
+  COMPLETE** (Event half B7, Selection half B30). Schema v3's `BannerChoices` (B29) gave the pick
+  somewhere to live, and everything B30 added is Lobby-local: `Selection` into `SUPPORTED_TYPES` (the
+  one line B7 promised), a pure per-player `BannerRegistry.FeaturedForPlayer` (**the pick FIRST**,
+  then `AutoCount` deterministic randoms from `RngForSlot(slot(AutoRotation), bannerId)` EXCLUDING
+  the pick, sharing one extracted `drawFeatured` with the untouched `FeaturedFor`), the pure
+  `ChoiceState`/`ChoicePool`/`CurrentDay`/`ChoiceCooldownDays` rules that the server ENFORCES and the
+  screen EXPLAINS, `SSS.Server.Meta.BannerChoiceService` as **the ONE writer of `Data.BannerChoices`**
+  behind `RS.Remotes.ChooseBannerUnit` (READ `(bannerId)` / WRITE `(bannerId, towerId)`, Remotes
+  17 → 18), `SummonEngine.BuildContext`'s third `featuredOverride` argument, and the authored
+  `ChoiceOverlay` + `ChooseButton` that replace `ClosedOverlay`'s role on a Selection card. Shipped
+  **`SelectionAncestors`** (Gold 130/pull, curated pool of 7, Boost 4, 1-day choice cooldown, 2 daily
+  autos). Verified live: `choice_required` before a pick, `not_in_pool`, a real write landing in the
+  PROFILE at day 20682, a re-pick returning `Unchanged` WITHOUT restarting the cooldown,
+  `choice_on_cooldown DaysLeft=1`, client/server featured lists MATCH, and a real x10 for 1300 Gold.
+  Docs: `docs/systems/gacha-selection.md` (split from `gacha.md` on its 300-line cap).
 - ✅ **Hover preview no longer blanks on a fast sweep (B29a, 2026-08-17)** — user-reported. Roblox
   does not guarantee `MouseLeave(previous)` before `MouseEnter(next)`, so a stale leave blanked the
   preview the new slot had just shown. A hide must now prove it OWNS the preview. Fixed in

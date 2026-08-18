@@ -1,5 +1,5 @@
 # STATE — Alamat Defense
-<!-- owner: all | scope: global | last-verified: 2026-08-17 (B29) -->
+<!-- owner: all | scope: global | last-verified: 2026-08-18 (B30) -->
 <!-- SIZE RULE (ADR-0006): ONE file, cap 120 lines. A RESOLVED pending is DELETED (the changelog
      is its record) -- never struck through. Sections that duplicate a canon doc keep a pointer. -->
 
@@ -7,7 +7,8 @@
 
 Data-driven Roblox tower defense (Filipino myth theme). ~70% of the core loop as a two-Place vertical
 slice: full match lifecycle (Stage 1, Acts 1–3), 8 towers, passives/abilities/summons, progression +
-match-end rewards, **ProfileStore persistence (schema v2)**, a shared UI kit, and the gacha engine.
+match-end rewards, **ProfileStore persistence (schema v3)**, a shared UI kit, and the gacha engine
+(Standard + Event + **Selection** banners all live).
 
 - **Game** — the match Place; `MatchEntryService` is the production entry. Owns tower configs,
   combat, the stat resolver, match runtime. Detail: `places/game/CONTEXT.md`.
@@ -31,13 +32,14 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 - **NOT A PENDING — STANDING PRACTICE (B25): the user republishes BOTH Places EVERY session.** Never
   open a "republish" PENDING; only *state* it when a contract bumps. Still unconfirmed: a **live
   two-client v4 queue run** (`ReserveServer` 403 in Studio).
-- **PENDING (AD-Gacha): BUILD THE SELECTION FLOW — the schema half is DONE (B29, v3).**
-  `BannerChoices` exists and round-trips in both Places. Remaining, all Lobby-local: a
-  `ChooseBannerUnit` remote (server re-checks cooldown + that the TowerId is in the pool — the
-  client is a request, never truth), a PER-PLAYER `BannerRegistry.FeaturedFor` (pick + `AutoCount`
-  deterministic randoms, excluding the pick), adding `Selection` to `SUPPORTED_TYPES`, and the
-  choice UI replacing a Selection card's `ClosedOverlay`. Spec:
-  `docs/proposals/2026-08-09-selection-banner-choices.md` §"Then the flow itself".
+- **NOT A PENDING — SELECTION BANNERS ARE LIVE (B30).** Blueprint B4 is COMPLETE. `BannerChoices` is
+  written by **`Server.Meta.BannerChoiceService` ONLY** (`RS.Remotes.ChooseBannerUnit`; Remotes = **18**);
+  `BannerRegistry.FeaturedForPlayer` resolves pick + autos and `SummonService` hands it to
+  `BuildContext` as an override. **`ChosenAtDay` is a `MetaMath.Slot` DAY NUMBER, never a timestamp.**
+  Shipped `SelectionAncestors`. Doc: `docs/systems/gacha-selection.md`.
+- **PENDING (USER, tidy): the dev profile still carries `BannerChoices["B29ProbeBanner"]`** — B29's
+  probe entry for a banner that does not exist. Harmless (no banner matches that id, so nothing reads
+  it) and it is the surviving proof of B29's round trip. Delete it or keep it — your call.
 - **PENDING (AD-UI, design): quests/login/codes need a NEW reveal answer** — the return-value trick
   only serves player-INITIATED grants; no server→client push remote exists. Propose before building.
 - **PENDING (AD-Game, B24): `UnitIconV2` needs PLACEMENT COST + ELEMENT** (Lobby has neither; tower
@@ -51,8 +53,6 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 - **PENDING (USER, balance):** `StartingLives` is **3 / 15 / 10** across Acts 1–3 while
   `BaseHealthScale` climbs 1.0/1.6/2.4 — Act 1's `3` looks like a leftover test value. P5 fixed only
   Act 2's false comment; the numbers are a design call.
-- **PENDING (AD-Gacha review):** Integration fixed trait-on-summon in `SummonEngine` —
-  `TraitRegistry.Roll(rng)` (there is no `RollTrait`), `"None"`→nil, failures WARN.
 - **PENDING (user): ONE settings system for BOTH Places** — same structure + GUI, entries scoped
   `Both`/`GameOnly`/`LobbyOnly`; nothing blocked. `docs/proposals/2026-08-09-unified-settings-both-places.md`.
 - **PENDING (AD-Game, small): `RewardScalingConfig`'s HEADER COMMENT is stale** (says Insane cannot
@@ -114,7 +114,7 @@ names — same letters, different sequences. PlayGUI uses `P1…P7` to avoid a t
    ONE conversion; never write a second.** B25 audited the V2 kit, **B26 ADOPTED it and retired v1**,
    B27a–d did the user's play-test queue; **B28 landed the open/close SLIDE and closed the
    `Kit_HotbarSlotV2` drift.** PlayGUI needs nothing further.
-3. **Phase B** (`phases-b-f-meta.md`). Landed B0–B8; Selection ⛔ on the `BannerChoices` PENDING.
+3. **Phase B** (`phases-b-f-meta.md`). Landed B0–B8 + **B30: Selection ✅, so B4 is COMPLETE.**
    **Phase C (B9): C3 ascension ✅**; **B11 moved it to an NPC screen (ADR-0010) — C1/C2/C4 copy that
    shape.** C1+C2 (AD-Traits) and C3's sell-dupes half are UNBLOCKED by B12; sell-dupes needs the
    unwired `QuickSellButton` + a `GrantService` sell path. Row-by-row status: `docs/ROADMAP.md`.
