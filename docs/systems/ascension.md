@@ -4,7 +4,7 @@
 <!-- last-verified: 2026-08-09 (B11, live Play) | blueprint: docs/blueprints/phases-b-f-meta.md Phase C -->
 
 Blueprint **Phase C task C3**, ascension half. Built at **B9 (2026-08-09)**.
-**The sell-dupes half is NOT built** — see "Deferred" at the bottom.
+**The sell-dupes half shipped at B31** — see the section at the bottom.
 
 Phase C's other tasks belong to **AD-Traits** (trait reroll C1, stat reroll C2 — the blueprint's own
 Phase C header says so, as does `OWNERSHIP.md`). Ascension is AD-Gacha's row.
@@ -129,16 +129,57 @@ opening lists **4 eligible Mythic+ units** and the detail pane reads `A3 / A3  D
 >    unit displayed **`DMG x1.00`** — telling the player their three ascensions had done nothing.
 >    What a unit is worth NOW does not depend on whether it can ascend again.
 
-## Deferred
+## Sell dupes (blueprint C3's other half) — BUILT at B31, 2026-08-19
 
-**Sell dupes** (the other half of blueprint C3) is **UNBLOCKED since B12 (2026-08-09)**:
-`TierConfig.SellValueByTier` and `TierConfig.GetSellValue(tier)` are shared canon, deployed and
-hash-matched in BOTH Places. Silver by tier — Common 10, Rare 25, Epic 60, Legendary 150,
-Mythic 400, Secret 1000, Exclusive 1500, Bathala 3000; **retune that one table, never the callers**.
-`GetSellValue` falls back to **0** for an unknown tier (deliberately unlike `GetColor`/`get`, which
-fall back to Common) because this one pays currency and an unknown tier must never mint Silver.
+Prices are SHARED canon: `TierConfig.SellValueByTier` + `GetSellValue(tier)`, deployed and
+hash-matched in BOTH Places (`eee2b3ad`). Silver by tier — Common 10, Rare 25, Epic 60,
+Legendary 150, Mythic 400, Secret 1000, Exclusive 1500, Bathala 3000. **Retune that one table, never
+the callers.** `GetSellValue` falls back to **0** for an unknown tier, deliberately unlike
+`GetColor`/`get` which fall back to Common, because this one pays currency and an unknown tier must
+never mint Silver — `UnitConsumeRules` refuses a 0-value unit rather than destroying one for nothing.
 
-Still to build: `UnitsGUI` has an unwired `QuickSellButton` waiting, plus a `GrantService` sell path,
-with Locked / Favorited / in-Loadout units unselectable. Note the tension with ascension — a Mythic
-dupe is ALSO the ascension material this system consumes, which is why its sell price is high enough
-to make selling one a real decision rather than free money.
+**`Server.Meta.UnitConsumeRules` is now THE ONE DEFINITION of "may this unit be destroyed."** Both
+destroyers call it: ascension's `PickDupe` (which used to carry the condition inline) and the sell
+path. A second copy is how "locked means safe" quietly stops being true on one of the two paths.
+It is a requireable ModuleScript for the same reason `AscensionRules` is split from its Script —
+`RemoteFunction.OnServerInvoke` is write-only, so a rule inside a handler cannot be called from a
+`[Test]` harness, and "which unit do we permanently destroy" must be directly testable.
+
+- `Reason(data, uuid, equipped?)` → nil, or a code in FIXED precedence:
+  `bad_uuid → not_owned → locked → favorited → equipped → has_spirit`. `has_spirit` is unexercised
+  and deliberate: `SpiritUuid` has no writer yet, and destroying the unit holding one would orphan a
+  `Data.Spirits` record silently.
+- `EquippedSet(data)` is exposed so `PickDupe` builds it once for its whole loop.
+- `Quote(data, uuids)` is the ONE arithmetic the confirm dialog, the refusal and the write all use —
+  B9's lesson, stated in `AscensionRules`' header. It also refuses a **repeated uuid**
+  (`duplicate_uuid`), which would otherwise be credited twice and destroyed once, and caps a batch at
+  `MaxBatch = 100`: a client can send any list it likes, so an unbounded batch is an unbounded write.
+
+**`GrantService.SellUnits` is the only code in the project that deletes a `Data.Units` record.** It
+lives in `GrantService` for the reason `Spend` and `SpendItems` do — invariant 1 puts every currency
+write there, and the destruction has to sit beside the credit or the two could come apart. It
+**credits first and destroys second**, deliberately: `Grant` validates and can refuse, while the
+deletion is plain table writes that cannot fail, so the other order could destroy a player's units
+and then fail to pay for them. `RS.Remotes.SellUnits` (Remotes 18 → 19) and the thin
+`Server.Meta.SellService` are the remote; **the client sends a list of uuids and nothing else.**
+Every completed sale prints one `[DATA] SOLD` line naming each uuid and its price — selling is
+irreversible, so that log is part of the feature.
+
+**UI: multi-select in the Units screen** (blueprint C3's own words, and the user's explicit call at
+B31 over ADR-0010's NPC shape). `Main.Bottom.QuickSellButton` — which **does exist** and always did,
+under `Bottom`, not under `SelectedUnitFrame` — is now one button with three states: `Quick Sell` →
+`Cancel` (armed, nothing ticked) → `Sell 3 - 285 Silver`. Pressing the third opens the authored
+`SellConfirm` panel, which lists every unit by name, tier, level and price; only that panel can fire
+the remote, so a destructive action never happens on the click that armed it. Ticked cards stay
+popped with their `UIHoverStroke` on (the existing selected-marker rule); ineligible cards are dimmed
+via the root ImageButton's own colour and transparency and stay CLICKABLE, because a dim cannot say
+why — clicking one writes the reason to `Main.Bottom.SellStatus`. **Nothing is added to
+`Kit_UnitIconV2`; it is hashed canon.** The Silver comes back through `ClientEvents.ShowRewards`
+unchanged (user decision) — the same reveal every other grant uses, no second path.
+
+Harness: `UnitsGUI.DevSell`. `"uuidA,uuidB"` arms and opens the confirm without selling; a leading
+`!` commits. It ticks through `toggleSell`, not straight into the selection set, so it cannot tick a
+card the button would refuse.
+
+Note the standing tension with ascension: a Mythic dupe is ALSO the material this system consumes,
+which is why its sell price is high enough to make selling one a real decision rather than free money.

@@ -1,5 +1,5 @@
 # STATE — Alamat Defense
-<!-- owner: all | scope: global | last-verified: 2026-08-18 (B30) -->
+<!-- owner: all | scope: global | last-verified: 2026-08-19 (B31) -->
 <!-- SIZE RULE (ADR-0006): ONE file, cap 120 lines. A RESOLVED pending is DELETED (the changelog
      is its record) -- never struck through. Sections that duplicate a canon doc keep a pointer. -->
 
@@ -8,7 +8,7 @@
 Data-driven Roblox tower defense (Filipino myth theme). ~70% of the core loop as a two-Place vertical
 slice: full match lifecycle (Stage 1, Acts 1–3), 8 towers, passives/abilities/summons, progression +
 match-end rewards, **ProfileStore persistence (schema v3)**, a shared UI kit, and the gacha engine
-(Standard + Event + **Selection** banners all live).
+(Standard + Event + **Selection** banners live; ascension AND **selling dupes for Silver** both live).
 
 - **Game** — the match Place; `MatchEntryService` is the production entry. Owns tower configs,
   combat, the stat resolver, match runtime. Detail: `places/game/CONTEXT.md`.
@@ -32,14 +32,14 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 - **NOT A PENDING — STANDING PRACTICE (B25): the user republishes BOTH Places EVERY session.** Never
   open a "republish" PENDING; only *state* it when a contract bumps. Still unconfirmed: a **live
   two-client v4 queue run** (`ReserveServer` 403 in Studio).
-- **NOT A PENDING — SELECTION BANNERS ARE LIVE (B30).** Blueprint B4 is COMPLETE. `BannerChoices` is
-  written by **`Server.Meta.BannerChoiceService` ONLY** (`RS.Remotes.ChooseBannerUnit`; Remotes = **18**);
-  `BannerRegistry.FeaturedForPlayer` resolves pick + autos and `SummonService` hands it to
-  `BuildContext` as an override. **`ChosenAtDay` is a `MetaMath.Slot` DAY NUMBER, never a timestamp.**
-  Shipped `SelectionAncestors`. Doc: `docs/systems/gacha-selection.md`.
-- **PENDING (USER, tidy): the dev profile still carries `BannerChoices["B29ProbeBanner"]`** — B29's
-  probe entry for a banner that does not exist. Harmless (no banner matches that id, so nothing reads
-  it) and it is the surviving proof of B29's round trip. Delete it or keep it — your call.
+- **NOT A PENDING — SELECTION BANNERS LIVE (B30, blueprint B4 ✅) and SELL DUPES LIVE (B31, C3 ✅).**
+  `BannerChoices` is written by **`Server.Meta.BannerChoiceService` ONLY**; `Data.Units` is DELETED by
+  **`GrantService.SellUnits` ONLY**, and **`Server.Meta.UnitConsumeRules` is THE ONE definition of
+  "may this unit be destroyed"** — ascension's `PickDupe` delegates to it. `ChosenAtDay` is a
+  `MetaMath.Slot` DAY NUMBER, not a timestamp. `RS.Remotes`=**19**. `docs/systems/{gacha-selection,ascension}.md`.
+- **PENDING (USER, tidy):** the dev profile carries `BannerChoices["B29ProbeBanner"]` (B29's probe, a
+  banner id that does not exist) and B31's harness left one unit **Locked** and one **Favorited** —
+  useful, since no remote writes those flags. Keep or clear; your call.
 - **PENDING (AD-UI, design): quests/login/codes need a NEW reveal answer** — the return-value trick
   only serves player-INITIATED grants; no server→client push remote exists. Propose before building.
 - **PENDING (AD-Game, B24): `UnitIconV2` needs PLACEMENT COST + ELEMENT** (Lobby has neither; tower
@@ -114,7 +114,7 @@ names — same letters, different sequences. PlayGUI uses `P1…P7` to avoid a t
    ONE conversion; never write a second.** B25 audited the V2 kit, **B26 ADOPTED it and retired v1**,
    B27a–d did the user's play-test queue; **B28 landed the open/close SLIDE and closed the
    `Kit_HotbarSlotV2` drift.** PlayGUI needs nothing further.
-3. **Phase B** (`phases-b-f-meta.md`). Landed B0–B8 + **B30: Selection ✅, so B4 is COMPLETE.**
-   **Phase C (B9): C3 ascension ✅**; **B11 moved it to an NPC screen (ADR-0010) — C1/C2/C4 copy that
-   shape.** C1+C2 (AD-Traits) and C3's sell-dupes half are UNBLOCKED by B12; sell-dupes needs the
-   unwired `QuickSellButton` + a `GrantService` sell path. Row-by-row status: `docs/ROADMAP.md`.
+3. **Phase B** (`phases-b-f-meta.md`): B0–B8 + **B30 Selection ✅ → B4 COMPLETE.** **Phase C: C3
+   COMPLETE** (ascension B9, **selling B31**); B11 moved ascension to an NPC screen (ADR-0010) —
+   **C1/C2 copy that shape, selling deliberately did not** (blueprint C3 says "in Units screen").
+   **C1+C2 are AD-TRAITS' and unblocked since B12.** Row-by-row: `docs/ROADMAP.md`.

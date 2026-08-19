@@ -82,10 +82,10 @@ systems listed in `docs/OWNERSHIP.md`. Every chat mounts this repo.
    (d) anything the user must do personally (publish a Place, set an id, buy nothing);
    (e) whether the user's NEXT session should be AD-Integration — state it explicitly
    either way ("run Integration next" / "no Integration needed yet");
-   (f) **a ready-to-paste NEXT SESSION PROMPT** (user rule, 2026-08-08) — ALWAYS, last in the
-   reply, ONE copy-paste block: chat identity + Place, the ONE session-task, and the specific
-   facts/paths/hazards it must not re-derive, plus bootstrap + landing requirements. Never end
-   a session with only prose about what comes next.
+   (f) **a NEXT SESSION PROMPT — but only when HANDING OFF to a different chat** (user rules
+   2026-08-08 / 2026-08-19). Last in the reply, ONE copy-paste block: chat identity + Place, the
+   ONE session-task, the facts/paths/hazards it must not re-derive, bootstrap + landing needs.
+   **If THIS chat continues into the next session, write no prompt — just ask whether to carry on.**
    Discover a cross-Place dependency MID-session? Surface it at once, don't wait for landing.
 
 ## Ownership (single writer per system)

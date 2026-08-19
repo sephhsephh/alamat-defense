@@ -1,5 +1,182 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-19 [lobby] B31 — AD-Gacha: **sell dupes.** Blueprint task C3 is complete, and the rule "which unit may we permanently destroy" now has exactly one definition instead of two.
+
+**Place asserted before every write:** `PlaceId 83342803778137` + `Workspace.Lobby` present. Worth
+noting how that mattered this session: Studio's instance ids had rotated and **the ACTIVE instance
+was the GAME**, so the first `script_read` failed. Resolving by NAME and re-asserting is not
+ceremony — it is the only reason nothing was written into the wrong Place.
+Drift at boot and at landing: **27/27 GREEN**, every hash byte-identical to B29/B30
+(`MetaMath` Game = null, expected), `TOOLVERSION B29-1`. **Nothing shared changed, so nothing was
+re-hashed and the Game is not stale.** No Integration needed; stated at bootstrap.
+
+### The interesting part is not the selling, it is the de-duplication
+
+Two systems in this project permanently destroy a player's unit: ascension eats a duplicate (B9) and
+now selling converts one to Silver. Until this session the protections — Locked, Favorited, in
+`Data.Loadout` — were an **inline condition inside `AscensionRules.PickDupe`**. That was fine with one
+consumer. Adding a second consumer with its own copy is exactly how "locked means safe" quietly stops
+being true on one of the two paths, and nobody notices until a player loses something.
+
+So the predicate moved out first, and **both destroyers now call it**:
+
+**`Server.Meta.UnitConsumeRules`** (new ModuleScript, pure — no writes, no yields, no remotes):
+
+- `Reason(data, uuid, equipped?)` → nil, or a code in FIXED precedence:
+  `bad_uuid → not_owned → locked → favorited → equipped → has_spirit`. The precedence is fixed so the
+  message a player sees cannot change with table iteration order.
+- **`has_spirit` is deliberately unexercised.** `UnitInstance.SpiritUuid` is a schema field with no
+  writer (there is no `Kind = "Spirit"` catalog entry), so nothing can carry one today — but the day
+  spirits ship, destroying the unit holding one would silently orphan a `Data.Spirits` record.
+  Refusing now costs three lines; discovering it later costs a player's spirit.
+- `EquippedSet(data)` is exposed rather than rebuilt inside `Reason`, because `PickDupe` walks every
+  owned unit and would otherwise rebuild the whole set per candidate.
+- **`Quote(data, uuids)` is the ONE arithmetic** the confirm dialog, the refusal and the write all
+  share. That is B9's lesson restated: a preview and a commit that each work it out for themselves can
+  show a player one thing and charge them another. It also refuses a **repeated uuid**
+  (`duplicate_uuid`) — which would be credited twice and destroyed once — and caps a batch at
+  **`MaxBatch = 100`**, because a client can send any list it likes and an unbounded batch is an
+  unbounded write.
+- It is REQUIREABLE for the same reason `AscensionRules` is split from its Script:
+  `RemoteFunction.OnServerInvoke` is write-only, so a rule inside a handler cannot be called from a
+  `[Test]` harness — and this is the last rule in the project that should only be reachable via a remote.
+
+`AscensionRules.PickDupe` lost its inline condition and gained `UnitConsumeRules.Reason(...) == nil`.
+Re-verified live and unchanged afterwards, including `BuildInfo` on a locked Epic still reporting
+`TierEligible=false / "Mythic+ units only"`.
+
+### `GrantService.SellUnits` — and why it credits BEFORE it destroys
+
+**The only code in the project that deletes a `Data.Units` record.** It sits in `GrantService` for the
+reason `Spend` and `SpendItems` do: invariant 1 puts every currency write there, and the destruction
+has to sit beside the credit or the two can come apart.
+
+The order is the load-bearing decision. `Grant` VALIDATES and can refuse; the deletion is plain table
+writes that cannot. Credit-then-destroy means a failure leaves the player whole. Destroy-then-credit
+could take a player's units and then fail to pay for them — the one outcome with no recovery.
+
+It also asserts (and warns rather than assumes) that no sold uuid survives in `Data.Loadout` — that
+list is DENSE and the match launcher reads it. It cannot happen, because `UnitConsumeRules` refuses an
+equipped unit; the assertion exists so that if it ever does, it says so instead of breaking a launch.
+`Counters.PerUnit` needs no cleanup: it is a schema field with **no writer anywhere**, noted in the
+code so whoever writes one first knows to drop keys here.
+
+`RS.Remotes.SellUnits` (**Remotes 18 → 19**) + `Server.Meta.SellService`, deliberately thin: it owns
+the remote and nothing else. **The client sends a list of uuids; that is the whole of its authority.**
+Every completed sale prints one `[DATA] SOLD` line naming each uuid and its price — selling is
+irreversible, so if a player ever reports losing a unit that line is the only record.
+
+### The UI: multi-select, which is C3's own wording
+
+The user chose the blueprint's letter over this row's old "copy B11's NPC-screen shape" note, and the
+blueprint agrees with them: *"multi-select in Units screen"*. So the deviation recorded in
+`docs/ROADMAP.md` is deliberate and now says so.
+
+**`QuickSellButton` exists and always did.** B24 recorded that it did not, having looked in
+`SelectedUnitFrame`; it is at `UnitsGUI.Main.Bottom.QuickSellButton`, authored with a `ButtonText`
+child and unwired since whenever it was drawn. Three ROADMAP/AIState notes repeated that error for
+seven sessions. Corrected.
+
+One button, three states, so there is no second control to keep in step with the selection:
+`Quick Sell` → `Cancel` (armed, nothing ticked) → `Sell 3 - 285 Silver`. Pressing the third opens the
+authored **`SellConfirm`** panel (mirroring `FilterPanel`'s exact language: centred, gold 2px stroke,
+12px corner, `Title` / scroller / `Buttons`), which lists **every** unit by name, tier, level and price
+above a total. **Only that panel can fire the remote** — a destructive action never happens on the
+click that armed it. `CANCEL` closes the panel and LEAVES the selection intact; the button's own
+`Cancel` state is what disarms.
+
+Two card-visual decisions worth keeping:
+
+- A ticked card **stays popped with its `UIHoverStroke` on** — the existing "this is the selected card"
+  marker, reused rather than a second visual language invented for sell mode. Outside sell mode the
+  stroke still means "the detail pane is describing this"; the two states never overlap.
+- An ineligible card is **dimmed but stays CLICKABLE**, because a dim cannot say *why*. Clicking one
+  writes the reason to the new `Main.Bottom.SellStatus`. The dim moves the root ImageButton's own
+  `ImageColor3`/`ImageTransparency` and restores the authored values on exit — the root `UIGradient`
+  multiplies with `ImageColor3`, so the tier paint dims with it, ONE surface (B25's rule).
+  **Nothing is added to `Kit_UnitIconV2`: it is hashed canon and gains no child, ever.**
+
+The Silver returns through `ClientEvents.ShowRewards` **unchanged** (user decision) — `SellUnits`
+hands back `GrantService.Grant`'s own views, so selling needed no reveal surface of its own and
+nothing inside `ObtainRewardsGUI` was touched.
+
+> **The client's eligibility predicate IS a second copy, and that is admitted in the code.**
+> `UnitConsumeRules` reads a PROFILE and lives in ServerScriptService, so a client cannot require it
+> (clients never read profiles, ADR-0004). The client copy decides which cards LOOK sellable from the
+> fields `GetUnitViews` already publishes plus the SHARED `TierConfig.GetSellValue`, and it returns the
+> SAME reason codes — so a disagreement surfaces as the server refusing something the grid offered, and
+> `doSell` prints exactly that rather than letting it read as a generic failure. Same arrangement as
+> `BannerRegistry.BlockedReason`.
+
+### Verified live — real Play, real remote, real profile, values printed not flags
+
+`UnitConsumeRules.Quote` was called **directly** from a real server Script, which is the whole reason
+it is requireable:
+
+| Assertion | Result |
+| --- | --- |
+| `Quote{}` / `Quote"nope"` | `nothing_selected` / `bad_request` |
+| Locked unit · Favorited unit | `locked` / `favorited`, each naming the offending uuid |
+| Equipped unit (a REAL equipped Necromancer, not a forced one) | `equipped` |
+| Same uuid twice | `duplicate_uuid` |
+| Unknown uuid | `not_owned` |
+| 101 uuids | `too_many` (`MaxBatch = 100`) |
+| `AscensionRules.PickDupe` after the refactor | unchanged; `BuildInfo(locked Epic)` → `TierEligible=false`, `"Mythic+ units only"` |
+
+Then the same eight cases through the REMOTE, as a client that ignores its own grey-out — **all
+refused, nothing destroyed, units still 18, Silver still 0.** `clean + locked` refused the WHOLE batch,
+which is all-or-nothing proven rather than asserted.
+
+UI state, read off the live instances: armed with 5 uuids of which 3 were protected → **2 ticked**
+(`Sell 2 - 20 Silver`), confirm panel listing `Archer Common LVL 1 — 10 Silver` twice and
+`TOTAL 20 Silver (2 units)`; ticked cards `color=1,1,1 transp=0.00 stroke=true scale=1.070`, protected
+cards `color=0.42 transp=0.35 stroke=false scale=1.000`, an untouched eligible card
+`color=1,1,1 stroke=false scale=1.000`.
+
+Real sale of 3 (2× Archer + 1 Warchief):
+`[DATA] SOLD 3 unit(s): +170 Silver (now 170)` with every uuid and price named ·
+`client previewed 170 Silver, server paid 170` **MATCH** · units **18 → 15** · grid rebuilt to 15 ·
+`Loadout` 1 entry, all still owned · reveal fired `n=1` · sell mode exited ·
+`SellStatus = "Sold 3 unit(s) for 170 Silver"`. Then a **real stop/start round trip**: 15 units,
+Silver 170, and the three sold uuids gone for good.
+
+New harness `UnitsGUI.DevSell`: `"uuidA,uuidB"` arms and opens the confirm **without selling** (so
+every visual state can be inspected), a leading `!` commits. It ticks **through `toggleSell`**, not
+straight into the selection set — a harness that can tick a card the button would refuse is a second
+copy of the eligibility rule and would hide the bug it exists to catch. The temporary `B31Verify`
+server harness was **deleted** before landing.
+
+### Docs, and three stale claims corrected in passing
+
+`docs/systems/ascension.md` 144 → 185 (cap 300); its "Deferred" section became the shipped one.
+`STATE.md` 120/120 and `places/lobby/CONTEXT.md` 150/150, both at cap — room was made by deleting two
+CONTEXT bullets that duplicated `STATE.md` verbatim, which that file's own rule already forbade.
+
+Corrected:
+
+1. **`QuickSellButton` does exist** (ROADMAP + three AIState/RecentChanges notes said otherwise).
+2. **`CONTEXT.md` claimed Units cards are screen-local, not `Kit.UnitIconV2` clones (ADR-0009), and
+   asked for a migration that had already happened at B27b.** The controller has resolved the SHARED
+   master since then and destroys any stray copy in `UnitsContainer` at boot. Flagged to the user as a
+   possible hand-edit first, per the 2026-08-16 ask-first rule; the changelog answered it instead.
+3. `STATE.md`'s snapshot still said "schema v2" (fixed at B30) and `CONTEXT.md` still said
+   "26/26 shared canon (19 modules)" against a manifest that has had 27/20 since B28.
+
+`CLAUDE.md` step 8(f) now says a paste-ready NEXT SESSION PROMPT is for **handing off to a different
+chat**; when the same chat continues, ask whether to carry on instead (user rule, 2026-08-19).
+
+### Open threads
+
+- **Not exercised, reasoned only:** `has_spirit` (no writer for `SpiritUuid` exists) and
+  `credit_failed` (reachable only if `"Silver"` left `ItemCatalog`, which would break far more).
+- Nothing writes `Locked` or `Favorited` — **no remote does** — so the only way to test those
+  protections was a harness setting them directly. It left one unit Locked and one Favorited in the
+  dev profile, which is useful; the user can clear them. `LockUnitButon` (sic) is still unwired, and
+  wiring it is the natural next AD-UI/AD-Gacha step now that Locked actually protects something.
+- `UnitsController` is now **1265 lines** — the largest client script in the project. Place-local, so
+  no doc cap applies, but the sell flow is a coherent ~230-line block if AD-UI ever wants it split.
+- Selling and ascension compete for the same Mythic dupes by design; `SellValueByTier` is the one knob.
+
 ## 2026-08-18 [lobby] B30 — AD-Gacha: **SELECTION banners are live.** Blueprint task B4 is complete, and the first featured set in this game that config + the clock cannot produce.
 
 **Place asserted before every write:** `PlaceId 83342803778137` + `Workspace.Lobby` present.

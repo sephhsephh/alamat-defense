@@ -100,9 +100,10 @@ everything untradeable at launch).
   hardcoded `BannerType ~= "Standard"` still greps — it is a history COMMENT on line 183, not live
   code.) `LobbyFrame.RewardsFrame` now **mirrors the Story panel off ONE `GoldBand` computation**
   (`renderRewards` factored into `renderInto`; a second call site is how the two would drift), and
-  its `ItemIcon` got B16's authoring fix. **9/9 live asserts.** Two doc-vs-reality findings recorded:
-  `QuickSellButton` does **not** exist despite Phase C's note, and `LockUnitButon` (sic) is authored
-  but unwired.
+  its `ItemIcon` got B16's authoring fix. **9/9 live asserts.** Two doc-vs-reality findings recorded,
+  **one of which was itself wrong and is corrected at B31: `QuickSellButton` DOES exist** — at
+  `UnitsGUI.Main.Bottom.QuickSellButton`, not under `SelectedUnitFrame`, which is where B24 looked.
+  It was unwired until B31 wired it. `LockUnitButon` (sic) is authored and still unwired.
   🟡 **V2 kit — AUDITED at B25, adoption BLOCKED ON THE USER.** `Kit.{UnitIconV2, ItemIconV2,
   HotbarSlotV2}` are ADDITIONS beside the v1s (drift stays green), Lobby-only, not in the manifest.
   **✅ Rarity is DECIDED: it goes on the ROOT `UIGradient` and the tier BORDER is dropped** — v1's
@@ -432,11 +433,24 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
   blueprint already says "NPC → UI" for C1 and C2. **C1/C2 should copy this shape.** It also retired
   three B9 problems: no dependency on AD-UI's selection, no ResetOnSpawn re-binding, and no "reopen
   Units to refresh" caveat (the screen owns its own picker). Server unchanged.
-- 🔲 **Sell dupes (C3's other half) — UNBLOCKED B12 (2026-08-09).** `TierConfig.SellValueByTier` +
-  `GetSellValue(tier)` are shared canon in BOTH Places (Silver: Common 10 → Bathala 3000; unknown
-  tier pays 0 by design so it can never mint currency). Still to build: wire the unwired
-  `UnitsGUI.QuickSellButton` + a `GrantService` sell path, with Locked/Favorited/in-Loadout
-  unselectable. Copy B11's NPC-screen shape (ADR-0010), not a pane in the Units frame.
+- ✅ **SELL DUPES SHIPPED (AD-Gacha, Lobby, 2026-08-19, B31) — blueprint task C3 is COMPLETE**
+  (ascension B9/B11, selling B31). Prices were already shared canon (`TierConfig.SellValueByTier`,
+  Common 10 → Bathala 3000; unknown tier pays 0 by design so it can never mint currency), so
+  **nothing shared changed and nothing was re-hashed.** New: **`Server.Meta.UnitConsumeRules`, THE ONE
+  definition of "may this unit be destroyed"** — `AscensionRules.PickDupe` carried that condition
+  inline since B9 and now delegates to it, so the two destroyers cannot drift; its `Quote` is the ONE
+  arithmetic the confirm dialog, the refusal and the write all share, and it also refuses a repeated
+  uuid (credited twice, destroyed once) and caps a batch at 100. **`GrantService.SellUnits`** is the
+  only code in the project that deletes a `Data.Units` record; it **credits first and destroys
+  second**, because `Grant` can refuse and the deletion cannot. `RS.Remotes.SellUnits` (Remotes
+  18 → 19) + the thin `Server.Meta.SellService`. UI is **multi-select in the Units screen** — the
+  blueprint's own wording and the user's explicit call at B31, so this row's old "copy B11's
+  NPC-screen shape" note is deliberately NOT followed: `QuickSellButton` is one button with three
+  states, and the authored `SellConfirm` panel is the only thing that can fire the remote. Silver
+  returns through `ClientEvents.ShowRewards` unchanged. Verified live: 8/8 malicious-client refusals
+  destroying nothing, a real 3-unit sale (18 → 15 units, Silver 0 → 170) with client preview and
+  server payment **MATCHing**, and the deletions surviving a real DataStore stop/start.
+  Docs: `docs/systems/ascension.md`.
 - 🔲 **Trait reroll (C1) + Stat reroll (C2) — UNBLOCKED B12, still AD-TRAITS' ROW (not AD-Gacha's).**
   The trait rarity table (`TraitRegistry` + `TraitDefinitions`) is now shared canon in both Places.
   **API is `TraitRegistry.Roll(rng)` — there is NO `RollTrait`;** `SummonEngine` assumed that name

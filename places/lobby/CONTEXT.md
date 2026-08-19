@@ -1,5 +1,5 @@
 # CONTEXT — Lobby place (LIVE, booted 2026-07-17)
-<!-- owner: lobby | scope: lobby | last-verified: 2026-08-18 (B30) -->
+<!-- owner: lobby | scope: lobby | last-verified: 2026-08-19 (B31) -->
 
 The social/meta Place: players land here, view their collection, roll banners, pick a stage +
 difficulty, form parties, and teleport into the Game place.
@@ -26,7 +26,7 @@ difficulty, form parties, and teleport into the Game place.
     Shiny, Ascension, Worthiness, Locked, Favorited, Equipped` (uuid in `Loadout`), raw `StatRolls`,
     `Grades = {DMG,RNG,SPA}` — plus `Loadout`, `Currencies`, `PlayerXP/PlayerLevel`, `MaxLoadout`,
     `Items {[itemId]=count}`. **No resolved DMG/RNG/SPA, no XpPct, NO cost and NO element** (B24).
-    Clients never read profiles. `RS.Remotes` holds **18** (B30 added `ChooseBannerUnit`).
+    Clients never read profiles. `RS.Remotes` holds **19** (B30 `ChooseBannerUnit`, B31 `SellUnits`).
   - Stage select + difficulty = the `RS.Configs.StageRegistry` mirror + `GetStages`; captures
     (StageId, DifficultyPercent). `StageSelectScreen` was DELETED at B19 — PlayGUI covers stage
     select, difficulty and launch; `GetStages` SURVIVES (ReturnScreen calls it). **`ClientEvents
@@ -75,7 +75,7 @@ Three docs: **`ui-kit.md`** = the Place-neutral kit (5 controllers in `RS.Shared
 `RS.UITemplates.Kit`, drift-controlled). **`lobby-ui.md`** = this Place's SCREENS (Units, Items,
 Collection, Hotbar, CurrencyBar, HUD buttons, legacy Party/Return/StarterChoice). **`play-menu.md`** =
 PlayGUI + LoadingScreen. All `DevAutoOpen` harnesses OFF.
-Units-screen cards are screen-local, not `Kit.UnitIconV2` clones (ADR-0009) — **user wants that changed: migrate `UnitsGUI…UnitsContainer` onto `UnitIconV2` (B27 queue).**
+Units-screen cards ARE `Kit.UnitIconV2` clones since **B27b** — ADR-0009's screen-local `UnitTemplate` is gone, and any stray copy left in `UnitsContainer` is destroyed at boot. (This line claimed the opposite until B31.)
 
 **`ObtainRewardsGUI` — the reward-reveal surface. Detail in `lobby-ui.md`.** Fire it, never rebuild:
 `ClientEvents.ShowRewards:Fire({{Id="Archer",Level=12},{Id="Gold",Qty=250}})`. Grants QUEUE, click 1 =
@@ -117,28 +117,29 @@ Meta.MetaConfig}`, driven by `RS.Remotes.RequestSummon`. UI shipped B6/B7/B8. Ru
 - **SELECTION banners LIVE at B30 (blueprint B4 COMPLETE) — FULL DOC: `docs/systems/gacha-selection.md`,
   read it first.** `SSS.Server.Meta.BannerChoiceService` + `Remotes.ChooseBannerUnit` are **the ONE
   writer of `Data.BannerChoices`**; **`ChosenAtDay` is a `MetaMath.Slot` DAY NUMBER, not a timestamp.**
+- **SELL DUPES LIVE at B31 (blueprint C3 COMPLETE) — doc: `docs/systems/ascension.md`.**
+  **`Server.Meta.UnitConsumeRules` is THE ONE definition of "may this unit be destroyed"** (Locked /
+  Favorited / equipped / has-spirit), shared with ascension's `PickDupe`; **`GrantService.SellUnits` is
+  the ONLY code that deletes a `Data.Units` record** and it CREDITS BEFORE DESTROYING. Prices are
+  shared `TierConfig.GetSellValue` (0 for an unknown tier, so it can never mint Silver).
+  `Remotes.SellUnits` + `Server.Meta.SellService`; UI = multi-select in the Units screen
+  (`QuickSellButton` → authored `SellConfirm` → `ShowRewards`). Harness `UnitsGUI.DevSell`.
 
 ## Open PENDINGs (see STATE.md — this is the Lobby-relevant subset)
 
-**Not built (row-by-row status: `docs/ROADMAP.md`):** **Party** and **Return** are still script-built
-(convert when touched). Every gacha screen exists now — Selection was the last, and it shipped at B30.
+**Not built (`docs/ROADMAP.md` has the rows):** **Party** and **Return** are still script-built.
 
 **`STATE.md` is the canon list — read it, not this.** Only the Lobby-specific detail lives here:
 
-- **Republishing BOTH Places together is STANDING PRACTICE (B25), not a PENDING** — state it only when
-  a contract bumps. v3/v4 do NOT interoperate: a partial publish breaks EVERY launch (version mismatch).
-- **USER (design call, B23): matchmade game speed** comes from an ELECTED STRANGER (lowest userId),
-  incl. the 3× gate. B23 changed nothing. Your call.
-- **AD-UI:** unit models all `UnitModels.Placeholder`; Units action buttons animation-only —
-  `LockUnitButon` (sic) UNWIRED, no `QuickSellButton`. Hover TRIGGER unverified; `ItemHoverCard` split.
-- **V2 kit: ✅ ADOPTED BOTH PLACES AT B26, v1 RETIRED** (deleted, dropped from the manifest and
-  `hash_shared.luau` — do not re-add). **Canon: `docs/systems/ui-kit.md`.** Not to re-derive: rarity is
-  on the ROOT `UIGradient`, direct-children-only, **NO tier border** (user, B25); `UnitIconV2` has THREE
-  consumers (Summon, Index, Ascension); **no `ShinyBadge` in V2** — shiny unmarked on an ascension card.
+- **v3/v4 do NOT interoperate:** a partial publish breaks EVERY launch (version mismatch).
+- **AD-UI:** unit models are all `UnitModels.Placeholder`; `LockUnitButon` (sic) is still UNWIRED and
+  nothing writes `Locked`/`Favorited`. **`QuickSellButton` IS wired now (B31).** `ItemHoverCard` split.
+- **V2 kit: ✅ ADOPTED BOTH PLACES AT B26, v1 RETIRED** (do not re-add). **Canon: `ui-kit.md`.** Not to
+  re-derive: rarity is on the ROOT `UIGradient`, direct-children-only, **NO tier border** (user, B25);
+  **no `ShinyBadge` in V2** — shiny is unmarked on an ascension card.
 - **B28 — SCREENS SLIDE.** `UnitsGUI`/`ItemsGUI`/`SummonScreen`/`IndexScreen` open/close through
-  **`Motion.slideIn`/`slideOut`**, test **`Motion.isOpen(main)` not `gui.Enabled`** (still Enabled mid
-  close-tween), and no longer clear `main.Visible`. Boot = `hideInstant()`; PlayGUI excluded (veil),
-  `AscensionScreen` untouched (its controller is not under that ScreenGui).
+  **`Motion.slideIn`/`slideOut`** and test **`Motion.isOpen(main)`, not `gui.Enabled`** (still Enabled
+  mid close-tween); boot = `hideInstant()`; PlayGUI excluded (veil), `AscensionScreen` untouched.
 
 ## Ownership notes
 
