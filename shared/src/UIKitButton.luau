@@ -23,6 +23,12 @@
 --   GradientAnimate   bool    true   scroll the UIGradient offset in a seamless loop
 --   GradientSpeed     number  Motion.Tuning.IdleGradientPeriod   seconds per gradient loop
 --   UseAutoButtonColor bool   false  Roblox built-in image darken (off by default)
+--   HoverSound        string  "Hover"  SoundService.UI.<name>; "" silences this button
+--   ClickSound        string  "Click"  as above
+--   ButtonStyle       string  auto   "panel" | "flat" -- overrides the B32 style detection
+--   GradientMode      string  auto   "spin" | "scroll" -- how the STROKE gradient moves
+--   GradientSpinPeriod number Motion.Tuning.GradientSpinPeriod  seconds per 360
+--   HoverStrokeThickness number authored  what a GROWING (panel-style) stroke grows to
 --
 -- Usage:
 --   local Button = require(ReplicatedStorage.Shared.UIKit.Button)
@@ -46,6 +52,32 @@ local TEMPLATE_PATHS = {
 -- stops a scaling card from shoving its neighbours. These DEFAULTS now DEFER to it, so retuning the
 -- kit means editing `Motion.Tuning` and nothing else. Per-button Attributes still override.
 local Motion = require(script.Parent:WaitForChild("Motion"))
+-- ===== SOUND (B32) =====
+-- EVERY button in the project already comes through this controller (CollectionService tag
+-- "UIKitButton"), which makes this the one place hover + click audio can be given to all of them at
+-- once. Assigning the actual audio is pasting a SoundId onto `SoundService.UI.Hover` / `.Click` in
+-- Studio -- see `UIKit.Sound`. Per-button overrides are the `HoverSound` / `ClickSound` attributes;
+-- set either to "" to silence just that button.
+-- A sibling module that may not be deployed YET must never hang this one. `WaitForChild` with no
+-- timeout blocks FOREVER, and this controller is attached to every tagged button at boot -- so in a
+-- Place caught mid-deploy that would freeze the entire UI instead of merely losing the audio.
+-- Found exactly that way at B32: `Button` reached the Game place before `Sound` did and `require`
+-- never returned. Audio is a nicety; a button that does not respond is not.
+local function optionalSibling(name: string, stub: any): any
+	local inst = script.Parent:FindFirstChild(name) or script.Parent:WaitForChild(name, 10)
+	if inst == nil then
+		warn("[UIKit.Button] no sibling module '" .. name .. "' after 10s -- carrying on without it. " ..
+			"Deploy it to this Place to get that feature back.")
+		return stub
+	end
+	local ok, mod = pcall(require, inst)
+	if not ok then
+		warn("[UIKit.Button] sibling module '" .. name .. "' failed to load: " .. tostring(mod))
+		return stub
+	end
+	return mod
+end
+local Sound = optionalSibling("Sound", { play = function() end, Names = {} })
 
 local DEFAULTS = {
 	HoverScale = Motion.Tuning.HoverScale,
@@ -60,6 +92,15 @@ local DEFAULTS = {
 	StrokeHiddenUntilHover = false,          -- true = stroke invisible until hover (unit-slot glow style)
 	HoverStrokeColor = false,                -- Color3 = on hover set the stroke to this colour (e.g. white)
 	                                         -- instead of/in addition to thickening (set HoverStrokeMult=1)
+	-- B32 additions. All three DEFER TO DETECTION (see `panelStyle` in attach) rather than carrying a
+	-- fixed default, so the older buttons keep their exact feel and the new panel-style ones get the
+	-- new one with no per-button setup:
+	--   ButtonStyle          "panel" | "flat"   override the detection
+	--   GradientMode         "spin" | "scroll"  how the STROKE's gradient moves
+	--   GradientSpinPeriod   number             seconds per 360; default Motion.Tuning
+	--   HoverStrokeThickness number             what a GROWING stroke grows to; default = authored
+	HoverSound = "Hover",
+	ClickSound = "Click",
 }
 
 local function cfg(inst: Instance, key: string)
@@ -140,11 +181,38 @@ function Button.attach(btn: GuiButton, opts: { [string]: any }?)
 	-- when it assigns `Position`. For a free-positioned button `centerAnchor` compensates `Position`
 	-- itself, so that case is safe too. Without the centre anchor the button would swell toward its
 	-- bottom-right corner instead of growing in place.
-	local scaleTarget: GuiObject = btn
+	-- ===== PANEL-STYLE vs FLAT (B32) -- DETECTED, NOT CONFIGURED =====
+	-- The user's new HUD buttons put `UICorner` + `UIHoverStroke` on `Main` and leave the ROOT bare
+	-- (it carries only the aspect constraint). Every older button in this project does the opposite:
+	-- corner and stroke on the root, content inside. That one difference decides three things, so it
+	-- is detected ONCE here instead of being configured on every button:
+	--   * WHAT SCALES. B27's rule is "scale the thing that owns the corner and the stroke, or the
+	--     button comes apart at its edges on every hover". On a panel-style button that furniture is
+	--     on `Main`, so scaling `Main` IS that rule -- and it is layout-safe for free, because the
+	--     instance the UIListLayout measures is the untouched root.
+	--   * HOW THE STROKE APPEARS. Panel-style GROWS it from nothing to its authored thickness (the
+	--     user's ask); flat buttons keep thickening from a base via `HoverStrokeMult`.
+	--   * HOW ITS GRADIENT MOVES. Panel-style SPINS the stroke gradient's Rotation; flat keeps the
+	--     seamless Offset scroll.
+	-- `ButtonStyle` ("panel"/"flat") overrides the detection for anything that does not fit.
+	local function hasFurniture(o: Instance): boolean
+		return o:FindFirstChildOfClass("UICorner") ~= nil or o:FindFirstChildOfClass("UIStroke") ~= nil
+	end
+	local styleAttr = btn:GetAttribute("ButtonStyle")
+	local panelStyle: boolean
+	if type(styleAttr) == "string" then
+		panelStyle = string.lower(styleAttr) == "panel"
+	else
+		panelStyle = (contentRoot ~= btn) and hasFurniture(contentRoot) and not hasFurniture(btn)
+	end
+	local scaleTarget: GuiObject = if panelStyle then contentRoot else btn
 	-- Text/Icon by convention: "Text"/"Icon" (Frame-style) or "ButtonText"/"ButtonImgIcon".
 	local textLabel = contentRoot:FindFirstChild("Text") or contentRoot:FindFirstChild("ButtonText")
 		or btn:FindFirstChild("ButtonText", true)
+	-- `LogoContainer` is the user's B32 name for the thing that tilts. It comes AFTER the two older
+	-- names so no existing button changes which instance it rotates.
 	local icon = contentRoot:FindFirstChild("Icon") or contentRoot:FindFirstChild("ButtonImgIcon")
+		or contentRoot:FindFirstChild("LogoContainer")
 		or btn:FindFirstChild("ButtonImgIcon", true)
 	-- Glow stroke: prefer the named one anywhere under the button, else any UIStroke.
 	local glowName = opt("GlowStrokeName")
@@ -163,9 +231,14 @@ function Button.attach(btn: GuiButton, opts: { [string]: any }?)
 	-- Any UIScale still sitting on the old inner target is reset to 1, so a template that shipped
 	-- with one cannot multiply against this one into a double-size card.
 	centerAnchor(scaleTarget)
-	if contentRoot ~= btn then
-		local innerScale = contentRoot:FindFirstChildOfClass("UIScale")
-		if innerScale then innerScale.Scale = 1 end
+	-- Neutralise a UIScale on whichever of the two nodes is NOT the scale target -- two would
+	-- multiply into a double-size button. Which one that is now depends on the style.
+	local otherNode: GuiObject? = if scaleTarget == btn
+		then (if contentRoot ~= btn then contentRoot else nil)
+		else btn
+	if otherNode then
+		local strayScale = otherNode:FindFirstChildOfClass("UIScale")
+		if strayScale then strayScale.Scale = 1 end
 	end
 	local uiScale = scaleTarget:FindFirstChildOfClass("UIScale")
 	if not uiScale then
@@ -190,6 +263,21 @@ function Button.attach(btn: GuiButton, opts: { [string]: any }?)
 	-- and nothing appeared. Detect it from the authored state rather than demanding a new Attribute
 	-- on every template: a stroke that starts disabled can only be meant to appear on hover.
 	local hoverOnlyStroke = (stroke ~= nil) and (stroke.Enabled == false)
+	-- What a GROWING stroke grows TO. The AUTHORED thickness is canon; `HoverStrokeThickness`
+	-- overrides it for a template whose authored value is a placeholder.
+	local growTarget = tonumber(btn:GetAttribute("HoverStrokeThickness")) or baseThickness
+	-- Said out loud rather than silently corrected: a sub-pixel stroke animates perfectly and is
+	-- still invisible, which reads as "the hover is broken" instead of "the number is too small".
+	-- No value is invented here -- the fix is one property in Studio.
+	if panelStyle and stroke ~= nil and growTarget < 1 then
+		warn(string.format("[UIKit.Button] %s: hover stroke Thickness is %.3f, which is invisible on screen. " ..
+			"Raise it in Studio or set the HoverStrokeThickness attribute.", btn:GetFullName(), growTarget))
+	end
+	-- How the stroke's gradient moves. Defaults follow the detected style.
+	local gradientModeAttr = btn:GetAttribute("GradientMode")
+	local gradientMode: string = if type(gradientModeAttr) == "string" then string.lower(gradientModeAttr)
+		else (if panelStyle then "spin" else "scroll")
+	local spinPeriod = tonumber(btn:GetAttribute("GradientSpinPeriod"))
 	local baseStrokeColor = (stroke and stroke.Color) or Color3.new(1, 1, 1)
 	local baseStrokeSeq: ColorSequence? = strokeGradient and strokeGradient.Color or nil
 
@@ -207,13 +295,27 @@ function Button.attach(btn: GuiButton, opts: { [string]: any }?)
 	local function setHover(on: boolean)
 		-- Scale through Motion so every hovering thing in both Places shares one curve and duration.
 		Motion.scaleTo(uiScale, on and "hover" or "rest", baseScale)
-		if stroke then
+		if stroke and panelStyle then
+			-- Motion owns the enable-before-grow / disable-after-shrink ordering. That ordering is
+			-- load-bearing: a DISABLED UIStroke tweening its Thickness animates nothing at all,
+			-- which is exactly the bug B27c found on the hotbar.
+			Motion.growStroke(stroke, on, growTarget)
+			if strokeGradient and gradientMode == "spin" then
+				if on then
+					Motion.spinGradient(strokeGradient, spinPeriod)
+				elseif not hoverOnlyStroke then
+					-- An always-visible border keeps spinning; only a hover-only one stops.
+				else
+					Motion.stopSpin(strokeGradient)
+				end
+			end
+		elseif stroke then
 			if hoverOnlyStroke then stroke.Enabled = on end
 			local thick = on and (baseThickness * opt("HoverStrokeMult")) or baseThickness
 			local tr = on and (hideStroke and 0 or baseTransparency) or baseTransparency
 			play("stroke", stroke, { Thickness = thick, Transparency = tr })
 			local hc = opt("HoverStrokeColor")
-			if typeof(hc) == "Color3" then
+			if typeof(hc) == "Color3" then -- flat-style only; panel-style paints via its gradient
 				if strokeGradient then
 					strokeGradient.Color = on and ColorSequence.new(hc)
 						or (baseStrokeSeq or ColorSequence.new(baseStrokeColor))
@@ -248,7 +350,24 @@ function Button.attach(btn: GuiButton, opts: { [string]: any }?)
 		table.insert(conns, sig:Connect(fn))
 	end
 
-	bind(btn.MouseEnter, function() hovering = true; refresh(); fireHover(true) end)
+	bind(btn.MouseEnter, function()
+		hovering = true
+		refresh()
+		fireHover(true)
+		local hs = opt("HoverSound")
+		if type(hs) == "string" and hs ~= "" then Sound.play(hs, "UI") end
+	end)
+	-- CLICK: the sound plus the dip/overshoot, on `Activated` so it fires for mouse, touch AND
+	-- gamepad/keyboard selection -- and only when the button is actually Active, which is what makes
+	-- a disabled button silent for free.
+	bind(btn.Activated, function()
+		local cs = opt("ClickSound")
+		if type(cs) == "string" and cs ~= "" then Sound.play(cs, "UI") end
+		-- `refresh` is handed in as the completion step so the button lands back on whatever state
+		-- it is really in -- hovered if the pointer is still on it, rest if the click closed the
+		-- screen out from under it. pressPop deliberately does not guess.
+		Motion.pressPop(uiScale, baseScale, refresh)
+	end)
 	bind(btn.MouseLeave, function() hovering = false; pressed = false; refresh(); fireHover(false) end)
 	bind(btn.InputBegan, function(input: InputObject)
 		if input.UserInputType == Enum.UserInputType.MouseButton1
@@ -275,7 +394,11 @@ function Button.attach(btn: GuiButton, opts: { [string]: any }?)
 		if not opt("GradientAnimate") then return end
 		-- Idle drift runs through Motion, which owns the 45-degree tilt and the (slower, B27c) period.
 		for _, g in ipairs({ strokeGradient, bodyGradient }) do
-			if g then
+			if g and not (g == strokeGradient and gradientMode == "spin") then
+				-- A SPINNING stroke gradient is driven by hover instead, and is deliberately NOT made
+				-- seamless: `makeSeamless` tiles the palette, which would visibly change a border the
+				-- designer authored with three stops. Skipping it here also avoids leaving dozens of
+				-- invisible borders scrolling forever.
 				makeSeamless(g)
 				local t = Motion.idleGradient(g, opt("GradientSpeed"))
 				if t then table.insert(gradTweens, t) end
@@ -284,6 +407,11 @@ function Button.attach(btn: GuiButton, opts: { [string]: any }?)
 		if strokeGradient then baseStrokeSeq = strokeGradient.Color end
 	end
 	startGradient()
+	-- "as long as it is shown or hovered": a stroke authored VISIBLE spins from boot and never
+	-- stops. A hover-only stroke starts and stops with the hover, in setHover above.
+	if gradientMode == "spin" and strokeGradient and not hoverOnlyStroke then
+		Motion.spinGradient(strokeGradient, spinPeriod)
+	end
 
 	setHover(false)
 

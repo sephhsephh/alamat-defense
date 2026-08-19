@@ -54,6 +54,21 @@ Motion.Tuning = {
 	-- Travel, as a fraction of the PARENT's axis. Deliberately parent-relative SCALE and not
 	-- measured pixels -- see the note above Motion.slideIn.
 	SlideDistance = 0.35,
+	-- ===== BUTTON HOVER / IDLE / CLICK (B32) =====
+	-- The user's HUD-button spec, in the one place the kit's feel is retuned.
+	--   * the hover stroke GROWS FROM NOTHING to its authored thickness -- it does not thicken from
+	--     a base, which is what `HoverStrokeMult` does for the older buttons.
+	--   * its gradient SPINS (Rotation) rather than scrolling (Offset). A spin reads as a rotating
+	--     light source on a border; a scroll reads as a progress bar, which is wrong on a frame.
+	--   * a click DIPS, then OVERSHOOTS on release, then settles. A click that only dips feels like
+	--     nothing happened; the overshoot is what makes it read as a button being pushed.
+	StrokeGrowTime = 0.22,
+	GradientSpinPeriod = 4,    -- seconds for one full 360-degree turn
+	ClickDipScale = 0.93,
+	ClickPopScale = 1.10,
+	ClickDipTime = 0.06,
+	ClickPopTime = 0.10,
+	ClickSettleTime = 0.16,
 }
 
 -- ===== TEMPORARY (B27c, USER-REQUESTED): PLACEHOLDER PRICES ARE VISIBLE =====
@@ -186,6 +201,43 @@ function Motion.scaleTo(uiScale: UIScale?, state: string, baseScale: number?)
 	tween:Play()
 end
 
+-- ===== CLICK: dip -> overshoot -> settle (B32) =====
+-- Three short legs on ONE UIScale, sharing `activeScaleTweens` with `scaleTo` so a click and a hover
+-- can never fight over the same scale. `onComplete` hands control back to the caller, which then
+-- re-asserts its own hover/rest state -- this function deliberately does not guess where to land,
+-- because by the time a click finishes the button may have closed the screen it lived on.
+function Motion.pressPop(uiScale: UIScale?, baseScale: number?, onComplete: (() -> ())?)
+	if not uiScale then return end
+	local base = baseScale or 1
+	local t = Motion.Tuning
+	local prev = activeScaleTweens[uiScale]
+	if prev then prev:Cancel() end
+
+	local function leg(scale: number, time: number, style: Enum.EasingStyle, after: (() -> ())?)
+		local tween = TweenService:Create(
+			uiScale,
+			TweenInfo.new(time, style, Enum.EasingDirection.Out),
+			{ Scale = scale }
+		)
+		activeScaleTweens[uiScale] = tween
+		tween.Completed:Connect(function(state: Enum.PlaybackState)
+			-- A cancelled leg means something else (a hover, another click) has taken the scale over.
+			-- Abandoning the chain here is what stops two clicks from interleaving their legs.
+			if state ~= Enum.PlaybackState.Completed then return end
+			if activeScaleTweens[uiScale] ~= tween then return end
+			if after then after() end
+		end)
+		tween:Play()
+	end
+
+	leg(base * t.ClickDipScale, t.ClickDipTime, Enum.EasingStyle.Quad, function()
+		-- Back/Out is what produces the overshoot; it is the only place in the kit that is not Quint.
+		leg(base * t.ClickPopScale, t.ClickPopTime, Enum.EasingStyle.Back, function()
+			if onComplete then onComplete() end
+		end)
+	end)
+end
+
 -- Lift a hovered card above its neighbours. Applied to the WRAPPER when there is one, because that
 -- is the instance the layout stacks.
 function Motion.lift(card: GuiObject, on: boolean)
@@ -214,6 +266,94 @@ function Motion.idleGradient(grad: UIGradient?, periodOverride: number?): Tween?
 		TweenInfo.new(period, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1),
 		{ Offset = Vector2.new(1, 0) }
 	)
+	tween:Play()
+	return tween
+end
+
+-- ===== SPINNING GRADIENT (B32) =====
+-- The idle animation for a bordered button: rotate the gradient forever. Distinct from
+-- `idleGradient` above, which slides Offset across a card face -- both exist because they read
+-- completely differently, and a button border wants the spin.
+--
+-- The base Rotation is stored in an ATTRIBUTE for the same reason `UIKitRestPosition` is: the
+-- designer's authored value is canon, it stays visible in Studio, it survives a module reload, and
+-- it is never re-derived from an instance that may already be mid-spin.
+--
+-- Idempotent: spinning an already-spinning gradient returns the existing tween rather than stacking
+-- a second one, so a controller that re-runs on every hover cannot pile up tweens.
+local spinTweens: { [UIGradient]: Tween } = {}
+local BASE_ROTATION_ATTR = "UIKitBaseRotation"
+
+function Motion.spinGradient(grad: UIGradient?, periodOverride: number?): Tween?
+	if not grad then return nil end
+	local existing = spinTweens[grad]
+	if existing then return existing end
+
+	local base = grad:GetAttribute(BASE_ROTATION_ATTR)
+	if type(base) ~= "number" then
+		base = grad.Rotation
+		grad:SetAttribute(BASE_ROTATION_ATTR, base)
+	end
+	grad.Rotation = base :: number
+
+	-- Linear, or the border would visibly stall once per turn. The loop point is invisible because a
+	-- full 360 lands exactly where it started.
+	local tween = TweenService:Create(
+		grad,
+		TweenInfo.new(periodOverride or Motion.Tuning.GradientSpinPeriod, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1),
+		{ Rotation = (base :: number) + 360 }
+	)
+	spinTweens[grad] = tween
+	tween:Play()
+	return tween
+end
+
+function Motion.stopSpin(grad: UIGradient?)
+	if not grad then return end
+	local t = spinTweens[grad]
+	if t then
+		t:Cancel()
+		spinTweens[grad] = nil
+	end
+	local base = grad:GetAttribute(BASE_ROTATION_ATTR)
+	if type(base) == "number" then grad.Rotation = base end
+end
+
+-- ===== A STROKE THAT GROWS FROM NOTHING (B32) =====
+-- `Motion.growStroke(stroke, on, target)` tweens Thickness 0 <-> target and owns `.Enabled`:
+-- enabled BEFORE growing, disabled only AFTER shrinking. That ordering is the B27c lesson --
+-- a DISABLED UIStroke tweening its Thickness animates nothing at all, which is exactly why the
+-- hotbar appeared to have no hover for a whole session.
+--
+-- Thickness is zeroed only when the stroke was actually off, so re-hovering mid-shrink grows from
+-- wherever it had got to instead of snapping back to nothing first.
+local strokeTweens: { [UIStroke]: Tween } = {}
+
+function Motion.growStroke(stroke: UIStroke?, on: boolean, target: number, timeOverride: number?): Tween?
+	if not stroke then return nil end
+	local prev = strokeTweens[stroke]
+	if prev then prev:Cancel() end
+
+	if on and not stroke.Enabled then
+		stroke.Thickness = 0
+		stroke.Enabled = true
+	end
+
+	local tween = TweenService:Create(
+		stroke,
+		info(timeOverride or Motion.Tuning.StrokeGrowTime),
+		{ Thickness = if on then target else 0 }
+	)
+	strokeTweens[stroke] = tween
+	if not on then
+		tween.Completed:Connect(function(state: Enum.PlaybackState)
+			if state ~= Enum.PlaybackState.Completed then return end
+			if strokeTweens[stroke] ~= tween then return end
+			stroke.Enabled = false
+			stroke.Thickness = target -- leave the AUTHORED value on the instance, not a tweened 0
+			strokeTweens[stroke] = nil
+		end)
+	end
 	tween:Play()
 	return tween
 end

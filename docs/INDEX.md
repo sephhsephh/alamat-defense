@@ -48,6 +48,14 @@
 - `lobby-ui.md` — the LOBBY's screens only (Units, Items, Collection, Hotbar, CurrencyBar, HUD
   buttons, the legacy script-built four) + the `DevAutoOpen` Studio harness. Split out of
   `places/lobby/CONTEXT.md` at A5 when that file passed its 150-line cap.
+- `ui-feedback.md` — **AD-UI canon, BOTH Places**: how the UI answers the player (B32). The
+  `UIKitButton` tag as the one wiring mechanism; PANEL-STYLE vs FLAT buttons **detected, not
+  configured** (what scales, how the hover stroke grows, whether its gradient spins); `LogoContainer`
+  tilt and the click dip/overshoot; **audio, where assigning a sound is pasting a SoundId onto a real
+  `Sound` under `SoundService` and never a code change** (name a Sound after an act id to give that
+  stage music); and `UIKit.Confirm`'s 2-second grey→green Yes gate. Also records the
+  `optionalSibling` rule — a bare `WaitForChild` on a sibling module blocks FOREVER and froze the
+  whole UI mid-deploy. Split out of `ui-kit.md` at B32 on its 300-line cap.
 - `play-menu.md` — **AD-UI canon for `PlayGUI` + `LoadingScreen`** (P2/B15): the Play-button entry
   and GUI hide/restore, the veil's `Show`/`Hide` module API, the menu camera + cursor parallax and
   its respawn release, and the CanvasGroup frame transitions. **Says why `MainMenu`/`StoryModeFrame`/

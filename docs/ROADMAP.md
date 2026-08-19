@@ -103,7 +103,7 @@ everything untradeable at launch).
   its `ItemIcon` got B16's authoring fix. **9/9 live asserts.** Two doc-vs-reality findings recorded,
   **one of which was itself wrong and is corrected at B31: `QuickSellButton` DOES exist** — at
   `UnitsGUI.Main.Bottom.QuickSellButton`, not under `SelectedUnitFrame`, which is where B24 looked.
-  It was unwired until B31 wired it. `LockUnitButon` (sic) is authored and still unwired.
+  It was unwired until B31 wired it. `LockUnitButon` (sic) + `FavoriteButton` were wired at B32.
   🟡 **V2 kit — AUDITED at B25, adoption BLOCKED ON THE USER.** `Kit.{UnitIconV2, ItemIconV2,
   HotbarSlotV2}` are ADDITIONS beside the v1s (drift stays green), Lobby-only, not in the manifest.
   **✅ Rarity is DECIDED: it goes on the ROOT `UIGradient` and the tier BORDER is dropped** — v1's
@@ -157,6 +157,30 @@ everything untradeable at launch).
 - 🟡 Item economy: `Data.Items` got its FIRST shipping writer at B20 — an **INSANE Victory** pays
   `BannerTicket` + `TraitRerollToken` through the Game's `RewardCalculator` (verified live). Nothing
   else grants an item yet, so counts stay 0 until someone clears an Insane run.
+- ✅ **THE SHARED FEEDBACK LAYER — hover/click/sound/confirm (AD-Gacha, BOTH Places, 2026-08-19, B32).
+  FULL DOC: `docs/systems/ui-feedback.md`; read it before touching any button, sound or confirm.** The
+  user rebuilt `HUD.Left.Buttons` into rectangle panels, so all six entry points renamed
+  (`UnitsButton`/`SummonButton`/`PlayButton`/`InventoryButton`/`QuestsButton`/`ProfileButton`; `Play`
+  had vanished and `ShopButton` became it — PlayGUI had NO entry point for a while and said so in the
+  console). Rather than a per-button config, **`UIKit.Button` DETECTS panel-style** (a content root
+  carrying the `UICorner`/`UIStroke` the button itself lacks) and scales THAT, so the ~55 existing
+  tagged buttons changed behaviour not at all while the six new ones get stroke-grow + a continuously
+  spinning `UIGradient` + a 45° `LogoContainer` tilt + a press dip/pop with zero setup;
+  `ButtonStyle`/`HoverStrokeThickness` attributes override the guess. Three new `Motion` primitives
+  (`pressPop`, `spinGradient`/`stopSpin`, `growStroke`) keep every curve in the ONE dialect —
+  `growStroke` owns `.Enabled` because a disabled `UIStroke` tweening Thickness animates nothing (the
+  B27c hotbar bug, now a documented hazard). **Audio has NO config file: `UIKit.Sound` resolves real
+  `Sound` instances by name under `SoundService`**, so assigning a track is pasting a SoundId in the
+  Explorer; BGM cross-fades and no-ops when the same track is already playing. **`UIKit.Confirm` is
+  the ONE confirmation dialog for both Places** (the user's authored `ConfirmationPopupUI`): 2-second
+  grey/inactive gate counting down in the button text, then green and clickable; re-entrancy is
+  refused, not queued, and every failure path returns false. Also B32: **`Server.Meta.UnitFlagsService`
+  is THE ONE writer of `Favorited`/`Locked`** (`SetUnitFlags`, Remotes 19 → 20, whitelisted fields
+  only, returns the STORED values), the authored `SellButtons` + `RaritySelect` rarity picker replace
+  the script-built confirm, and `Kit.UnitIconV2` gained `SelectedToSellOverlay` (hash-matched in both
+  Places). **Hazard learned the hard way: a `WaitForChild` with no timeout in a shared module hangs
+  `require` forever in the Place where the sibling isn't deployed yet** — both new modules now use a
+  10s-timeout optional-sibling helper with a no-op stub.
 
 ## Cross-Place
 
@@ -446,7 +470,8 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
   18 → 19) + the thin `Server.Meta.SellService`. UI is **multi-select in the Units screen** — the
   blueprint's own wording and the user's explicit call at B31, so this row's old "copy B11's
   NPC-screen shape" note is deliberately NOT followed: `QuickSellButton` is one button with three
-  states, and the authored `SellConfirm` panel is the only thing that can fire the remote. Silver
+  states, and only an authored confirm panel can fire the remote (B32 moved that to `UIKit.Confirm`
+  and `SellConfirm` is now unused). Silver
   returns through `ClientEvents.ShowRewards` unchanged. Verified live: 8/8 malicious-client refusals
   destroying nothing, a real 3-unit sale (18 → 15 units, Silver 0 → 170) with client preview and
   server payment **MATCHing**, and the deletions surviving a real DataStore stop/start.

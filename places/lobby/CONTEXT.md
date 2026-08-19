@@ -1,5 +1,5 @@
 # CONTEXT — Lobby place (LIVE, booted 2026-07-17)
-<!-- owner: lobby | scope: lobby | last-verified: 2026-08-19 (B31) -->
+<!-- owner: lobby | scope: lobby | last-verified: 2026-08-19 (B32) -->
 
 The social/meta Place: players land here, view their collection, roll banners, pick a stage +
 difficulty, form parties, and teleport into the Game place.
@@ -71,32 +71,33 @@ difficulty, form parties, and teleport into the Game place.
 
 ## UI kit + screens (AD-UI)
 
+**B32 — THE SHARED FEEDBACK LAYER. FULL DOC: `docs/systems/ui-feedback.md` — read it before touching any
+button, sound or confirm.** The user REBUILT `HUD.Left.Buttons`, so every screen's entry point renamed to
+**`UnitsButton`/`SummonButton`/`PlayButton`/`InventoryButton`/`QuestsButton`/`ProfileButton`** (`Play` had
+vanished; `ShopButton` became it). All six are tagged `UIKitButton` and are **panel-style**, which
+`UIKit.Button` DETECTS. **Audio = paste a SoundId onto a real `Sound` under `SoundService`.**
+`UIKit.Confirm` = the ONE confirm dialog; `Server.Meta.UnitFlagsService` = the ONE `Favorited`/`Locked` writer.
+
 Three docs: **`ui-kit.md`** = the Place-neutral kit (5 controllers in `RS.Shared.UIKit` + 7 templates in
 `RS.UITemplates.Kit`, drift-controlled). **`lobby-ui.md`** = this Place's SCREENS (Units, Items,
 Collection, Hotbar, CurrencyBar, HUD buttons, legacy Party/Return/StarterChoice). **`play-menu.md`** =
 PlayGUI + LoadingScreen. All `DevAutoOpen` harnesses OFF.
 Units-screen cards ARE `Kit.UnitIconV2` clones since **B27b** — ADR-0009's screen-local `UnitTemplate` is gone, and any stray copy left in `UnitsContainer` is destroyed at boot. (This line claimed the opposite until B31.)
 
-**`ObtainRewardsGUI` — the reward-reveal surface. Detail in `lobby-ui.md`.** Fire it, never rebuild:
-`ClientEvents.ShowRewards:Fire({{Id="Archer",Level=12},{Id="Gold",Qty=250}})`. Grants QUEUE, click 1 =
-SKIP, click 2 = CLOSE. Its pop `UIScale` is on runtime CLONES only — **never add one to
-`Kit_ItemIconV2`, it is hashed canon.**
+**`ObtainRewardsGUI` — the reward-reveal surface (detail in `lobby-ui.md`). Fire it, never rebuild:**
+`ClientEvents.ShowRewards:Fire({{Id="Archer",Level=12},{Id="Gold",Qty=250}})`. Grants QUEUE; click 1 =
+SKIP, 2 = CLOSE. Its pop `UIScale` is on runtime CLONES only — **never add one to hashed canon.**
 
 **`PlayGUI` + `LoadingScreen` — the Play menu, **P1–P7 COMPLETE** (B14–B23). FULL DOC:
-`docs/systems/play-menu.md` — read it first; law: `blueprints/playgui.md`.** `HUD.Left.Buttons.Play`
-(NOT HUD.Right) → veil → other ScreenGuis hidden → `Main.MainMenu`. Five things not to get wrong:
-**(1)** the three frames are **CanvasGroups**; the menu camera is Scriptable at
-`Workspace.PlayGUICamera.CFrame` — **read it, never write it**. **(2)** `PlayGUI.DifficultyScale` is
-**THE ONE ADR-0011 conversion** (UI 1–100 ↔ wire 100–1000) — **never write a second**; the launch and
-queue paths both use the published `DifficultyWire` VERBATIM and REFUSE to act if it is absent.
-**(3)** selection travels as ATTRIBUTES on `StoryModeFrame.SelectedAct`; edge-trigger on
-**`SelectionSerial`**, and add no second channel. **(4)** every PlayGUI lookup is NON-RECURSIVE on
-purpose — `SelectedAct` exists under BOTH frames, `PlayersFrame` holds a ScrollingFrame of the same
-name, and there are THREE `SelectedDifficultyLable`s. **(5)** labels with no data source are HIDDEN,
-not zeroed — but the **reward preview is LIVE since B21** (`RewardScalingConfig.GoldBand` off the
-published wire, re-rendered every slider move, so it cannot contradict the payout) and **B24 mirrors
-it into `LobbyFrame` from that ONE computation — never add a second `GoldBand` call site.**
-`LoadingScreen` is Lobby-local, NOT drift-controlled (§4).
+`docs/systems/play-menu.md` — read it FIRST; law: `blueprints/playgui.md`.** Entry is
+**`HUD.Left.Buttons.PlayButton`** (renamed from `Play` at B32) → veil → other ScreenGuis hidden →
+`Main.MainMenu`. Five things not to re-derive: the three frames are **CanvasGroups** and the menu
+camera is Scriptable (**read `Workspace.PlayGUICamera.CFrame`, never write it**);
+**`PlayGUI.DifficultyScale` is THE ONE ADR-0011 conversion** — never write a second; selection travels
+as ATTRIBUTES on `StoryModeFrame.SelectedAct`, edge-triggered on **`SelectionSerial`**; every lookup is
+NON-RECURSIVE on purpose (duplicate names under both frames); labels with no data source are HIDDEN,
+not zeroed, except the **live B21 reward preview**, mirrored into `LobbyFrame` from ONE `GoldBand`
+computation. `LoadingScreen` is Lobby-local, NOT drift-controlled (§4).
 **P7 (the global queue, §11) SHIPPED at B23 on teleport v4.** `FindMatchButton` — under
 **StoryModeFrame**, not MainMenu — is LIVE: `PlayGUIController` no longer disables it and the new
 `MatchmakingController` (the FIFTH PlayGUI script) owns it; its `InactiveOverlay` stays authored but
@@ -118,12 +119,11 @@ Meta.MetaConfig}`, driven by `RS.Remotes.RequestSummon`. UI shipped B6/B7/B8. Ru
   read it first.** `SSS.Server.Meta.BannerChoiceService` + `Remotes.ChooseBannerUnit` are **the ONE
   writer of `Data.BannerChoices`**; **`ChosenAtDay` is a `MetaMath.Slot` DAY NUMBER, not a timestamp.**
 - **SELL DUPES LIVE at B31 (blueprint C3 COMPLETE) — doc: `docs/systems/ascension.md`.**
-  **`Server.Meta.UnitConsumeRules` is THE ONE definition of "may this unit be destroyed"** (Locked /
-  Favorited / equipped / has-spirit), shared with ascension's `PickDupe`; **`GrantService.SellUnits` is
-  the ONLY code that deletes a `Data.Units` record** and it CREDITS BEFORE DESTROYING. Prices are
-  shared `TierConfig.GetSellValue` (0 for an unknown tier, so it can never mint Silver).
-  `Remotes.SellUnits` + `Server.Meta.SellService`; UI = multi-select in the Units screen
-  (`QuickSellButton` → authored `SellConfirm` → `ShowRewards`). Harness `UnitsGUI.DevSell`.
+  **`UnitConsumeRules` = THE ONE "may this unit be destroyed" rule** (Locked/Favorited/equipped/spirit),
+  shared with ascension's `PickDupe`; **`GrantService.SellUnits` is the ONLY `Data.Units` delete** and it
+  CREDITS BEFORE DESTROYING. Prices are shared `TierConfig.GetSellValue` (0 for an unknown tier, so it can
+  never mint Silver). UI = multi-select in the Units screen; B32 routes the confirm through
+  `UIKit.Confirm` and the authored `SellButtons` row. Harness `UnitsGUI.DevSell`.
 
 ## Open PENDINGs (see STATE.md — this is the Lobby-relevant subset)
 
@@ -132,8 +132,8 @@ Meta.MetaConfig}`, driven by `RS.Remotes.RequestSummon`. UI shipped B6/B7/B8. Ru
 **`STATE.md` is the canon list — read it, not this.** Only the Lobby-specific detail lives here:
 
 - **v3/v4 do NOT interoperate:** a partial publish breaks EVERY launch (version mismatch).
-- **AD-UI:** unit models are all `UnitModels.Placeholder`; `LockUnitButon` (sic) is still UNWIRED and
-  nothing writes `Locked`/`Favorited`. **`QuickSellButton` IS wired now (B31).** `ItemHoverCard` split.
+- **AD-UI:** unit models are all `UnitModels.Placeholder`; `ItemHoverCard` split. `QuickSellButton` wired
+  B31; `FavoriteButton` + `LockUnitButon` (sic) wired B32 through `UnitFlagsService` (the ONE writer).
 - **V2 kit: ✅ ADOPTED BOTH PLACES AT B26, v1 RETIRED** (do not re-add). **Canon: `ui-kit.md`.** Not to
   re-derive: rarity is on the ROOT `UIGradient`, direct-children-only, **NO tier border** (user, B25);
   **no `ShinyBadge` in V2** — shiny is unmarked on an ascension card.

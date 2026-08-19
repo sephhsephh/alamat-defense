@@ -1,5 +1,143 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-19 [lobby+game] B32 — AD-Gacha: **the shared feedback layer.** Hover, click, sound and confirmation became kit-level concerns instead of per-screen ones, and the Lobby's sell UI moved onto instances the user can edit without running the game.
+
+**Place asserted before every write:** `PlaceId 83342803778137` + `Workspace.Lobby` present for Lobby
+writes; absence of `Workspace.Lobby` + `RS.Configs.Towers` present for the Game. Studio's ids had
+rotated again and **neither instance was active at bootstrap**, so `list_roblox_studios` +
+`set_active_studio` came first. **Shared canon DID change this session** (5 entries), so both Places
+were re-deployed and re-hashed: `shared/manifest.json` 27 → 29 entries, `TOOLVERSION B29-1 → B32-2`.
+Every changed entry proven **byte-identical across repo / Lobby / Game**: `UIKitMotion`
+`a104e59d → 2d217ede`, `UIKitButton` `9728e897 → 30da2e10`, **new** `UIKitSound` `108ef36e`, **new**
+`UIKitConfirm` `999c40f3`, `Kit_UnitIconV2` `0bf1a11e → bf39c6c8`.
+
+### Detection beat configuration
+
+The user rebuilt `HUD.Left.Buttons` from scratch as rectangle panels, which renamed every screen's
+entry point: **`UnitsButton` / `SummonButton` / `PlayButton` / `InventoryButton` / `QuestsButton` /
+`ProfileButton`**. `Play` had simply vanished and `ShopButton` had taken its place, so for part of the
+session the Play menu had **no entry point at all** and PlayGUI said exactly that in the console —
+which is the only reason it was caught rather than shipped.
+
+The new feel is: hover grows `Main.UIHoverStroke` to its authored thickness, an idle `UIGradient`
+rotation spins continuously while shown or hovered, `Main` scales up slightly, `LogoContainer` tilts
+45°, and a click dips then pops. The obvious implementation is a config table listing which buttons
+are "the new kind". That was rejected. **`UIKit.Button` DETECTS panel-style instead**: if the content
+root carries the `UICorner`/`UIStroke` furniture that the button itself lacks, the button is a panel
+and the CONTENT ROOT is what scales. The consequence is the point — the **~55 already-tagged buttons
+changed behaviour not at all**, while the six new ones get the whole treatment with zero per-button
+setup. `ButtonStyle` ("panel") and `HoverStrokeThickness` attributes override the guess when the
+heuristic is wrong, so detection is a default and never a trap.
+
+`Main` scaling without disturbing its `UIListLayout` siblings is `Motion.isolate` doing the job it was
+built for at B27. Verified by measurement, not by eye: on hover `Main.UIScale` read **1.07** while the
+next button's `AbsolutePosition` stayed at `0, 517.142517` — unchanged to the decimal.
+
+### Three primitives, and why `growStroke` owns `.Enabled`
+
+The constitution forbids a fourth animation dialect, so everything with a curve went into
+`UIKitMotion`: **`pressPop`**, **`spinGradient`/`stopSpin`**, **`growStroke`** — plus `StrokeGrowTime`,
+`GradientSpinPeriod`, and the four click-timing values in `Motion.Tuning`, which stays the one place to
+retune feel.
+
+`growStroke` owning `UIStroke.Enabled` is the load-bearing detail: it enables the stroke **before**
+growing and disables it only **after** shrinking. A disabled `UIStroke` tweening `Thickness` animates
+nothing at all — that was the B27c hotbar bug, and it is now written down in `ui-feedback.md` as a
+hazard rather than remembered.
+
+`spinGradient` caches the authored base rotation in a `UIKitBaseRotation` attribute and is idempotent,
+so re-entering hover cannot stack tweens. Verified live at ≈4s per turn: `462 → 504 → 192 → 240 → 282`.
+
+### Audio with no config file
+
+`UIKit.Sound` deliberately has **no configuration module**. It resolves real `Sound` instances **by
+name** under `SoundService`, so "assign the lobby BGM" means pasting a SoundId onto an instance in the
+Explorer — the thing the user asked for, and the thing that does not require a code change per track.
+`play(name, category?)`, `playBGM(name, opts?)`, `stopBGM`, `setCategoryVolume`, and a `report()` that
+prints what resolved and what did not. `playBGM` **no-ops if that track is already playing** (so a
+re-entry cannot restart the music), cross-fades otherwise, and falls back to `BGM.Default` when the
+requested name is missing. Base volume is cached in `UIKitBaseVolume` so a fade cannot become the new
+volume. The tree is authored in both Places: `Groups/Master > UI/SFX/BGM`, 8 UI sounds, and BGM slots
+`Lobby` / `Default` / `Stage1_Act1-3`. `UIKit.Button` plays `HoverSound` on `MouseEnter` and
+`ClickSound` on `Activated`, so every tagged button in the game is already wired.
+
+### One confirmation dialog for two Places
+
+The user authored `ConfirmationPopupUI` and asked for it to be used **globally, including in the Game**,
+so `UIKit.Confirm` is shared canon rather than a Lobby screen. `Confirm.ask{Title, Text, YesText?,
+NoText?, Delay?}` yields and returns a boolean. The 2-second gate is the specified behaviour: Yes is
+grey and inactive, counting down in its own label (`GO (2)`, `GO (1)`), then turns green and becomes
+clickable. Re-entrancy is **refused, not queued** — a second `ask` while one is open returns false
+rather than stacking dialogs over each other — and **every failure path returns false**, because a
+confirmation that fails open is worse than one that fails closed. Parts are resolved fresh on each
+`ask`, since the ScreenGui is `ResetOnSpawn`.
+
+**A note on measurement, because it nearly produced a false bug report.** Driving the dialog with one
+tool call and sampling with the next showed Yes already green "at t~0.3s" — inter-tool round trips take
+seconds, so the clock had moved far more than the transcript suggested. Driving `ask` and sampling
+**inside a single `execute_luau`** proved the gate exactly. The general form of this is worth keeping:
+when the thing under test is sub-second, the harness cannot be the tool boundary.
+
+### `UnitFlagsService` — the one writer of `Favorited` / `Locked`
+
+The user added a favourite button, and the docs had said "nothing writes `Locked`/`Favorited`" since
+B24. Rather than let a screen write profile fields, **`Server.Meta.UnitFlagsService` is the only writer**,
+behind `RS.Remotes.SetUnitFlags` (Remotes **19 → 20**). It whitelists exactly `{Favorited, Locked}`,
+refuses non-booleans (`bad_value_*`) and non-whitelisted fields (`bad_field_*`), and **returns the
+STORED values** rather than echoing the request, so the client cannot end up painting a state the
+profile does not hold. 7/7 live cases passed, including a `MetaLevel` write attempt being refused —
+which matters more than the happy paths, since a field whitelist that isn't tested is a field
+whitelist that isn't there.
+
+This closes the loop with `UnitConsumeRules` from B31: the predicate that protects a unit from being
+destroyed and the service that sets the protecting flag are now each singular.
+
+### The sell UI became authored instances
+
+The user's constraint was explicit — **put it in StarterGui, do not build it from a script**, so it can
+be edited without running the game. `QuickSellButton` now reveals the authored **`SellButtons`** row,
+and "select all by rarity" opens **`RaritySelect`**, whose buttons are `RarityButtonTemplate` clones
+walked in `TierConfig.Order` and labelled with live sellable counts and Silver values. Selection paints
+`Main.SelectedToSellOverlay` on the card — added to the shared `Kit.UnitIconV2` (the user's call) by an
+**identical deterministic script run in both Places**, the manifest's sanctioned second route for
+template canon, hash-matching at `bf39c6c8`. Two deliberate deviations from the authored copy:
+`Visible = false` at rest, and `ZIndex = 20` because at 1 it drew underneath `TraitIcon`, `CountLabel`
+and the flag strip.
+
+Confirmation routes through `UIKit.Confirm`, which retires the screen-local `SellConfirm` panel.
+Verified live: the rarity picker selected **exactly its own tier** (Meteor + Warchief, 300 Silver), and
+a real sale took units **8 → 6** and Silver **0 → 300** with the reveal firing.
+
+**A real bug the live run found:** after a completed sale, `SellButtons` and `RaritySelect` stayed
+visible, because `doSell` cleared `sellMode`/`sellSet` inline instead of calling the teardown that also
+hides the panels. Two code paths for "leave sell mode" is the same class of mistake B31 spent its whole
+session removing from the destroy predicate. Now there is one: `exitSellMode()`.
+
+### Hazard: a `WaitForChild` with no timeout in a shared module
+
+`require(UIKitButton)` hung for **60 seconds in the Game** — because it did
+`script.Parent:WaitForChild("Sound")` with no timeout and `Sound` had not been deployed there yet. In a
+shared module this is not a slow path, it is a **deadlock the other Place inherits at boot**. Both new
+modules now go through an `optionalSibling` helper: 10-second timeout, `pcall(require)`, and a no-op
+stub on failure, so a missing sibling degrades to silence instead of a hung client. Recorded as a
+first-class hazard in `ui-feedback.md`.
+
+- **Contract impact:** shared canon changed (5 entries, manifest 27 → 29, `TOOLVERSION B32-2`) and BOTH
+  Places carry it. `RS.Remotes` 19 → 20 (`SetUnitFlags`). Save schema UNCHANGED at v3 — `Favorited` and
+  `Locked` were already fields; B32 only gave them a writer. New system doc
+  **`docs/systems/ui-feedback.md`** (132 lines), registered in `docs/INDEX.md`; `ui-kit.md` points to it.
+- **Scope note:** the user explicitly allowed a one-time constitution bypass to do all of B32 in one
+  session ("do what can be done or must be done first, then list all the others as pending"). Every
+  requested feature landed; the leftovers below are authoring and asset tasks, not code.
+- **Open threads (PENDINGs in `STATE.md`):** the 13 `Sound` instances need real SoundIds pasted;
+  `ConfirmationPopupUI` must be copied into the **Game's** StarterGui; the six buttons'
+  `UIHoverStroke.Thickness` is `0.05` and needs raising (the kit animates to the authored value and
+  warns rather than inventing one); `SellButtons.CancelButton` overlaps `QuickSellButton`; `PlayButton`
+  still wears the Shop logo; the **Game has no audio owner** for per-act BGM; the pre-existing
+  `hash_shared.luau` repo-vs-deployed divergence is still unreconciled (new entries added to BOTH, per
+  the ask-first rule); `UnitsGUI.SellConfirm` is now unused and deletable; HUD.Left's `QuestsButton` and
+  `ProfileButton` duplicate HUD.Right's and are unwired.
+
 ## 2026-08-19 [lobby] B31 — AD-Gacha: **sell dupes.** Blueprint task C3 is complete, and the rule "which unit may we permanently destroy" now has exactly one definition instead of two.
 
 **Place asserted before every write:** `PlaceId 83342803778137` + `Workspace.Lobby` present. Worth

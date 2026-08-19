@@ -1,4 +1,5 @@
 -- tools/hash_shared.luau
+-- TOOLVERSION: B32-2
 -- DRIFT CHECK: run via execute_luau (Edit datamodel) in ANY Place at bootstrap.
 -- Prints fnv1a32 hashes of the deployed shared canon; compare against shared/manifest.json.
 -- Anything absent in this Place returns "MISSING" (expected before its first deploy).
@@ -221,6 +222,14 @@ local MODULES = {
 	-- drift, the tuning table behind both, and `isolate()`, the fixed-size wrapper that stops a
 	-- scaling card from re-flowing its layout and shoving every sibling.
 	UIKitMotion = "ReplicatedStorage.Shared.UIKit.Motion",
+	-- Added B32 2026-08-19 (owner AD-UI): the kit's AUDIO. UI one-shots + music, resolved BY NAME
+	-- from real `Sound` instances under SoundService, so assigning a sound is pasting an id in
+	-- Studio and never a code change. CLIENT module -- the server plays sound for nobody.
+	UIKitSound = "ReplicatedStorage.Shared.UIKit.Sound",
+	-- Added B32 2026-08-19 (owner AD-UI): ONE confirmation dialog for the whole experience, both
+	-- Places. The DESIGN is StarterGui.ConfirmationPopupUI; this is the behaviour, including the
+	-- two-second grey->green gate on the Yes button for irreversible actions.
+	UIKitConfirm = "ReplicatedStorage.Shared.UIKit.Confirm",
 	-- Promoted 2026-08-09 (Integration, owner AD-Traits): the trait rarity table. It was GAME-only,
 	-- which is exactly why the Lobby could not build trait reroll (C1) or stat reroll (C2) and why
 	-- trait-on-summon sat inert. The two promote TOGETHER -- TraitRegistry requires its sibling

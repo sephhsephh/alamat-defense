@@ -1,12 +1,15 @@
 # SYSTEM — UI kit (shared canon, BOTH Places)
 
-<!-- owner: AD-UI | scope: global | last-verified: 2026-08-16 (B25) -->
+<!-- owner: AD-UI | scope: global | last-verified: 2026-08-19 (B32) -->
 
 Split out of `docs/systems/lobby-ui.md` at A7 (2026-08-06). That file described the kit from a
 Lobby-only viewpoint, which stopped being true on 2026-08-06 when the Game place's hotbar was
 rebuilt on it. **This file is Place-neutral: it describes the kit itself.** `lobby-ui.md` now
 describes only the Lobby's screens. Studio remains canon for the actual instances and controller
 source (ADR-0001); this doc says what exists and why.
+
+> **B32 SPLIT: button motion, AUDIO (`UIKit.Sound`) and the confirmation dialog (`UIKit.Confirm`)
+> live in `docs/systems/ui-feedback.md`** — read it before touching any button, sound or confirm.
 
 ## What the kit is
 
