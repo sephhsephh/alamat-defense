@@ -1,7 +1,7 @@
 # SYSTEM — UI feedback: button motion, audio, and the confirmation dialog
 
 <!-- owner: AD-UI | home Place: BOTH | scope: shared -->
-<!-- last-verified: 2026-08-20 (B33: toasts + the WaitForChild rule, live Play in the Lobby) -->
+<!-- last-verified: 2026-08-20 (B34: UIKit.Notify + UIKit.UnitCard promoted, watchdog proven live) -->
 <!-- split out of ui-kit.md at B32: that file was at 295/300 and this is three new subsystems -->
 
 How the UI answers the player: what a button does when you touch it, what you hear, and how an
@@ -202,3 +202,55 @@ Lobby started depending on it: **a missing toast system must cost toasts, never 
 Lobby scripts. Most are on infrastructure and are fine. They were NOT swept — a 334-site mechanical
 rewrite risks more than it fixes — so this is a PENDING, and the rule above applies to anything
 touched from here.
+
+## B34 — the toasts became canon, and the fork closed
+
+`UIKit.Notify` is shared canon (`5e2b09d4`, both Places, manifest entry 30). B33 left the toast
+system **forked**: the Game's original at `Client.UI.NotificationController`, the Lobby's copy at
+`StarterPlayerScripts.NotificationController`, in *different paths*, in *neither manifest*, with only
+the Lobby's hardened. That is the exact failure the shared-canon system exists to prevent, so it did
+not get to survive a session.
+
+Both copies are retired by **rename** (`*_RETIRED_2026-08-20`, the `Hotbar_RETIRED_2026-08-06`
+convention — deleting a file is the user's call, and a renamed module stays visible in the Explorer).
+All five consumers were repointed: Lobby `UnitsController` / `SummonController` /
+`AscensionController`, Game `PlacementController` / `TowerSelectionUI`. **The API did not change**, so
+repointing was ONE line per consumer and the ~20 call sites were untouched.
+
+Same split as `UIKit.Confirm`: the **module** is canon, the **GUI** (`StarterGui.Notifications` —
+`Container` + `CardTemplate`) stays per-Place authored art. It is a CLIENT module; a server require
+warns and degrades to print-only rather than erroring.
+
+`UIKit.UnitCard` (`bd2421c5`, entry 31) landed the same way, for the four screens that each carried
+their own `setViewportModel` and `paintTier`. The duplication was **measured, not assumed**: three of
+each were byte-identical, and Units differed only in where the model came from (`viewport()` takes the
+model) and in two behaviours (`paintTier(root, tier, {Idle, StrokeOff})`). Four copies of a camera
+formula is four places for it to drift, and that drift is silent — a card framed differently on one
+screen just reads as an art bug.
+
+## The watchdog: why 334 bare `WaitForChild` were NOT swept
+
+The obvious response to B33 was to give all 334 a timeout. That was costed at B34 and **rejected**:
+it means rewriting ~100 authored-instance lookups across 14 working files, and then making every
+downstream use nil-tolerant. Bigger diff, bigger risk, than the bug it prevents.
+
+**The real defect at B33 was never the missing timeout — it was that the failure was SILENT.** A
+screen died and the only evidence was one `Infinite yield possible` line in a wall of healthy boot
+output. So instead of changing 100 lookups:
+
+- every boot script ends with `script:SetAttribute("BootComplete", true)` (18 of them, one line each);
+- **`StarterPlayerScripts.ScreenBootWatchdog`** waits 15s, then NAMES every script that carries the
+  marker but never reached it — one `warn` each, because a single combined line is what gets scrolled
+  past;
+- scripts that *should* be instrumented but aren't (`*Controller` with no marker) are reported too,
+  since an uninstrumented script is invisible to the check;
+- Roblox's own injected `LocalScript`s (`FreecamScript`, `PlayerScriptsLoader`, `RbxCharacterSounds`)
+  are filtered by name — **a watchdog that cries wolf every boot is one everybody learns to ignore.**
+
+Verified live: clean baseline (19/19, zero false positives), and clearing one script's marker to
+simulate a hang produced exactly one named STUCK report.
+
+**This is diagnosability chosen over prevention, deliberately.** A screen can still hang. It can no
+longer hang *quietly*, and it catches hangs from causes a timeout sweep never would — a remote that
+never returns, a yield in a future script nobody has written yet. The `need()` rule still applies to
+anything touched from here; see the section above.

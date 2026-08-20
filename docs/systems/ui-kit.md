@@ -10,11 +10,13 @@ source (ADR-0001); this doc says what exists and why.
 
 > **B32 SPLIT: button motion, AUDIO (`UIKit.Sound`) and the confirmation dialog (`UIKit.Confirm`)
 > live in `docs/systems/ui-feedback.md`** — read it before touching any button, sound or confirm.
+> **B34 added two more controllers there: `UIKit.Notify`** (toasts — one module, both Places, ending
+> B33's two-copy fork) **and `UIKit.UnitCard`** (the ViewportFrame camera framing + the tier paint
+> that Units / Summon / Index / Ascension each had their own copy of).
 
 ## What the kit is
 
-Two halves, both under drift control — **22 manifest entries (15 modules + 7 templates), all GREEN
-in both Places.** Was 24 until B2 (2026-08-08) retired `UIKitRewardPopup` + `Kit_RewardPopup`.
+Two halves, both under drift control — **31 manifest entries (24 modules + 7 templates), all GREEN in both Places** (B34).
 
 - **CONTROLLERS** — client ModuleScripts in `ReplicatedStorage.Shared.UIKit`, with `shared/src`
   files as disk canon. Hashed as SOURCE.

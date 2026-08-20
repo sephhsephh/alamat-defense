@@ -1,5 +1,5 @@
 # STATE — Alamat Defense
-<!-- owner: all | scope: global | last-verified: 2026-08-20 (B33) -->
+<!-- owner: all | scope: global | last-verified: 2026-08-20 (B34) -->
 <!-- SIZE RULE (ADR-0006): ONE file, cap 120 lines. A RESOLVED pending is DELETED (the changelog
      is its record) -- never struck through. Sections that duplicate a canon doc keep a pointer. -->
 
@@ -14,9 +14,9 @@ and the gacha engine (Standard + Event + Selection banners; ascension AND sellin
   combat, the stat resolver, match runtime. Detail: `places/game/CONTEXT.md`.
 - **Lobby** — the social/meta Place, scene `Workspace.Lobby`. **`GetUnitViews` is its SINGLE profile
   read path** (ADR-0004); **`GrantService` is its SINGLE grant/spend path**. `places/lobby/CONTEXT.md`.
-- **Shared canon** (`shared/manifest.json`, drift-checked by `tools/hash_shared.luau`): **29 entries
-  = 22 modules + 7 templates** (B32 added `UIKitSound` + `UIKitConfirm`). **BOTH Places drift-green on all
-  29 except `MetaMath`** (re-verified B33 start AND end, byte-identical), which is
+- **Shared canon** (`shared/manifest.json`, drift-checked by `tools/hash_shared.luau`): **31 entries
+  = 24 modules + 7 templates** (B32 `UIKitSound`+`UIKitConfirm`; B34 `UIKitNotify`+`UIKitUnitCard`). **BOTH
+  Places drift-green on all 31 except `MetaMath`** (re-verified every session start AND end), which is
   PRESENT in the Lobby and MISSING in the Game — EXPECTED, not drift; it stays Lobby-only until Phase D. **B26 adopted the V2 UI kit in BOTH
   Places and RETIRED `Kit_UnitIcon`/`Kit_ItemIcon`/`Kit_HotbarSlot`** (dropped from
   `hash_shared.luau` — do not re-add). Templates hash as INSTANCE trees, no `shared/src` file
@@ -32,52 +32,54 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 
 - **NOT A PENDING — STANDING PRACTICE (B25): the user republishes BOTH Places EVERY session.** Only *state* it when a contract bumps.
   Still unconfirmed: a **live two-client v4 queue run** (403 in Studio).
-- **NOT A PENDING — ONE WRITER EACH, do not add a second:** `BannerChoiceService`→`BannerChoices` (Selection banners live, B30, B4 ✅)
-  · `GrantService.SellUnits`→the only `Data.Units` delete (C3 ✅, B31) · **`UnitConsumeRules`= the ONE "may this be destroyed" rule**
+- **NOT A PENDING — ONE WRITER EACH, do not add a second:** `BannerChoiceService`→`BannerChoices` (Selection banners live, B30, B4 ✅) ·
+  `GrantService.SellUnits`→the only `Data.Units` delete (C3 ✅, B31) · **`UnitConsumeRules`= the ONE "may this be destroyed" rule**
   (ascension delegates) · `UnitFlagsService`→`Favorited`/`Locked` (B32). `ChosenAtDay` is a DAY NUMBER, never a timestamp. Docs:
   `docs/systems/{gacha-selection,ascension,ui-feedback}.md`.
 - **NOT A PENDING — B32'S FEEDBACK LAYER IS SHARED CANON, HASH-MATCHED BOTH PLACES:** `UIKit.Sound` + `UIKit.Confirm` (2s gate);
   `Button` DETECTS panel vs flat; siblings use `optionalSibling` (10s+stub).
-- **NOT A PENDING — B33: UNITS SCREEN REPAIRED, TOASTS ADOPTED, NOTHING SHARED CHANGED** (drift identical at session start AND end) —
-  all Lobby-local, the Game is NOT stale. `Remotes`=**21**; `CurrencyChanged` is a server→client PING with **no payload** (a balance
-  on the wire = a second source of truth beside ADR-0004's `GetUnitViews`), fired debounced by `GrantService`, the ONE place that
-  writes `Currencies`. **Toast rule: TOAST EVENTS, LABEL STATE** — toasts self-erase at 3.5s, so conditions stay on labels.
-- **PENDING (USER, B32): PASTE THE 13 SOUND IDS** into `SoundService.{UI.*, BGM.*}` — all empty, so the game is silent. **Also copy
-  `StarterGui.ConfirmationPopupUI` into the GAME** (art cannot be scripted, B26); until then `Confirm.ask` there warns once and
-  auto-answers **NO**.
-- **PENDING (USER, B32, art/layout):** the six HUD buttons' `UIHoverStroke.Thickness` is **0.05** — animates perfectly, invisible
+- **NOT A PENDING — B33:** `Remotes`=**21**; `CurrencyChanged` is a server→client PING with **no payload** (a balance on the wire = a
+  second source of truth beside ADR-0004's `GetUnitViews`), fired debounced by `GrantService`, the ONE place that writes `Currencies`.
+  **Toast rule: TOAST EVENTS, LABEL STATE** — toasts self-erase at 3.5s, so conditions stay on their label.
+- **PENDING (USER, B32): PASTE THE 13 SOUND IDS** into `SoundService.{UI.*, BGM.*}` — all empty, the game is silent. **Also copy
+  `StarterGui.ConfirmationPopupUI` into the GAME** (B26: art cannot be scripted); till then `Confirm.ask` there auto-answers **NO**.
+- **PENDING (USER, B32, art/layout):** the nine HUD buttons' `UIHoverStroke.Thickness` is **0.05** — animates perfectly, invisible
   (warns at boot; raise it or set `HoverStrokeThickness`). `CancelButton` (x≈475) nearly overlaps `QuickSellButton` (x≈513);
-  `PlayButton` still wears the old **Shop** logo.
+  `PlayButton` still wears the **Shop** logo.
 - **PENDING (USER, B33): the new `StarterGui.Summon` is UNFINISHED — do NOT touch.** It replaces `SummonScreen` when the user says so.
   `HUD.Right` gained `BattlePassButton` / `EventButton` / `DailyRewardsButton` (renamed at their request) — **none are wired.**
 - **PENDING (USER, B33, their design, NOT built): nothing grants `Data.PlayerXP`,** so the ExpBar reads 0 forever and that is not its
   bug. Intent: small/wave, decent/stage clear, big FIRST clear, smaller repeats; owner = the GAME's match-end path, and it MUST roll
   over via `PlayerLevelConfig.ApplyXP`.
-- **PENDING (B33, balance): the curve may be too steep.** User's pick `100 × 1.15^(level-1)` → level 5 = **490** XP, 20 = **8,830**,
-  50 = **627,540** (~12,500 stage clears) while `LoadoutConfig` gates slot 6 at level 50. Three numbers retune it. `PlayerLevelConfig`
-  is **LOBBY-LOCAL on purpose** (the Game reads no curve); **promote it to shared the day the Game grants XP** or the Places will
-  disagree.
-- **PENDING (B33): `NotificationController` is in BOTH Places, different paths, NEITHER manifest** (Game `Client.UI.*`, Lobby
-  `StarterPlayerScripts.*`; only the Lobby copy was hardened) — promote to `UIKit.Notify` or accept the fork. **Also 334 bare
-  `WaitForChild` vs 23 timed** in Lobby scripts; a bare one never times out and cost the WHOLE Units screen at B33. NOT swept. Rule +
-  `need()`: `ui-feedback.md`.
+- **PENDING (B33, balance): the curve may be too steep.** User's pick `100 × 1.15^(level-1)` → level 5 = **490** XP, 20 = **8,830**, 50
+  = **627,540** (~12,500 stage clears) while `LoadoutConfig` gates slot 6 at level 50. Three numbers retune it. `PlayerLevelConfig` is
+  **LOBBY-LOCAL on purpose** (the Game reads no curve); **promote it to shared the day the Game grants XP** or the Places will disagree.
+- **NOT A PENDING — B34 PROMOTED TWO KIT MODULES, BOTH PLACES HASH-MATCHED.** `UIKit.Notify` ends B33's toast FORK (two copies, two
+  paths, neither manifest — both retired `*_RETIRED_2026-08-20`, all 5 consumers repointed); `UIKit.UnitCard` ends the FOUR-copy
+  `setViewportModel`/`paintTier` duplication. **The 334 bare `WaitForChild` were deliberately NOT swept** — ~100 authored lookups across
+  14 working files is a bigger diff and risk than the bug. Instead every boot script sets `BootComplete` and **`ScreenBootWatchdog`**
+  NAMES whatever never finished: the real defect at B33 was that the failure was SILENT, not the missing timeout. A screen can still
+  hang, it just cannot hang QUIETLY. Proven live (clean baseline + a simulated hang caught).
+- **PENDING (AD-Integration / USER, B34): C4 FEEDING IS BLOCKED ON DATA, NOT CODE** — `docs/proposals/2026-08-20-c4-feeding.md`.
+  `ItemCatalog` has NO `FeedValue`, there is no unit XP curve and no writer for `UnitInstance.XP`. Needs food items + a curve + a
+  decision on how food is obtained (nothing grants items today but an INSANE victory). Every piece of machinery it reuses already
+  exists.
 - **PENDING (USER, tidy):** the dev profile carries `BannerChoices["B29ProbeBanner"]` — a dead id nothing reads. Keep or clear.
-- **PENDING (AD-Game, B32): the GAME has no audio owner.** `UIKit.Sound` + the `SoundService` tree are deployed there but nothing
-  calls `playBGM(actId)`. Copy `LobbyAudio`'s shape; per-act slots exist.
+- **PENDING (AD-Game, B32): the GAME has no audio owner.** `UIKit.Sound` + the `SoundService` tree are deployed there but nothing calls
+  `playBGM(actId)`. Copy `LobbyAudio`'s shape; per-act slots exist.
 - **PENDING (AD-UI, design): quests/login/codes still need a reveal answer** — `ShowRewards`' return-value trick only serves
   player-INITIATED grants; B33's toasts are a *message* surface, not a reveal. Propose.
-- **PENDING (AD-Game, B24): `UnitIconV2` needs PLACEMENT COST + ELEMENT** (Game-only). Prices are TEMPORARILY the template placeholder
-  — `Motion.SHOW_PLACEHOLDER_PRICES=false` reverts both Places. **(AD-Traits): `TraitDefinitions` has NO icon field.** Proposals:
+- **PENDING (AD-Game, B24): `UnitIconV2` needs PLACEMENT COST + ELEMENT** (Game-only). Prices are TEMPORARILY the template placeholder —
+  `Motion.SHOW_PLACEHOLDER_PRICES=false` reverts both Places. **(AD-Traits): `TraitDefinitions` has NO icon field.** Proposals:
   `2026-08-16-{tower-display-fields-for-uniticon-v2,trait-icons}.md`.
 - **PENDING (USER, design — B23): GAME SPEED IN A MATCHMADE MATCH** — match-wide, and both the authority and the 3× gate come from an
   **elected stranger**. leave as-is · disable 3× · per-player.
-- **PENDING (USER, balance):** `StartingLives` **3 / 15 / 10** across Acts 1–3 while `BaseHealthScale` climbs 1.0/1.6/2.4 — Act 1's
-  `3` looks like a leftover test value. A design call.
+- **PENDING (USER, balance):** `StartingLives` **3 / 15 / 10** across Acts 1–3 while `BaseHealthScale` climbs 1.0/1.6/2.4 — Act 1's `3`
+  looks like a leftover test value. A design call.
 - **PENDING (user): ONE settings system for BOTH Places**, scoped `Both`/`GameOnly`/`LobbyOnly`; nothing blocked (audio has
   SoundGroups). `docs/proposals/2026-08-09-unified-settings-both-places.md`.
-- **PENDING (AD-Meta at Phase D):** deploy `MetaMath` to the GAME + flip `deployed.Game`; till then its `MetaMath=MISSING` is
-  EXPECTED. **(AD-Integration):** invariant 1 is **Lobby-only** — the Game still grants via
-  `PlayerInventoryService`/`RewardCalculator`.
+- **PENDING (AD-Meta at Phase D):** deploy `MetaMath` to the GAME + flip `deployed.Game`; till then its `MetaMath=MISSING` is EXPECTED.
+  **(AD-Integration):** invariant 1 is **Lobby-only** — the Game still grants via `PlayerInventoryService`/`RewardCalculator`.
 - **PENDING (AD-UI): `UnitIconV2` has FOUR inline consumers** repeating paint/viewport code — Units should SHAPE the controller.
   **(small)** `Kit_ItemHoverCard`'s master/clone split; its hover race is FIXED (B29a), awaiting the user's fast-sweep confirmation to
   close.

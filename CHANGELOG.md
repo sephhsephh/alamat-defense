@@ -1,5 +1,135 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-20 [lobby+game] B34 — AD-Gacha: **two kit modules promoted, and a watchdog instead of a 334-site sweep.** The toast fork B33 created lasted exactly one session, four copies of a camera-framing formula became one, and the fix for silent boot hangs turned out not to be timeouts.
+
+**Places asserted before every write** (ids had rotated again; neither was active at bootstrap).
+Shared canon **DID** change: `shared/manifest.json` **29 → 31**, `TOOLVERSION B32-2 → B34-1`, both
+Places re-deployed and hash-matched byte-for-byte. Drift green at session start and end.
+
+### The fork closed after one session, on purpose
+
+B33 ended with `NotificationController` existing **twice**: the Game's original at
+`Client.UI.NotificationController` (used by `PlacementController` and `TowerSelectionUI`), and the
+Lobby's copy at `StarterPlayerScripts.NotificationController` (used by Units, Summon, Ascension).
+Different paths. Neither in the manifest. **Only the Lobby's hardened.**
+
+That is not a small untidiness — it is precisely the failure the shared-canon system exists to
+prevent, and it was left open with a PENDING rather than fixed at the time. A fork that survives one
+session survives ten: the two copies had already diverged in hardening, and the next divergence would
+have been behavioural.
+
+**`UIKit.Notify` (`5e2b09d4`, manifest entry 30)** is now the one. Both copies are retired by
+**rename** — `*_RETIRED_2026-08-20`, following the existing `Hotbar_RETIRED_2026-08-06` convention —
+rather than deleted: deleting the user's file is the user's call, and a renamed module stays visible
+in the Explorer instead of vanishing from a session's mental model.
+
+**The API was deliberately not changed**, and that is what made this cheap: repointing all five
+consumers was ONE line each, and roughly twenty `Notify.Error(...)` / `Notify.Success(...)` call
+sites were never touched. Keeping the local variable name `NotificationController` in the two Game
+scripts meant their thirteen call sites did not move either.
+
+It takes `UIKit.Confirm`'s shape exactly: the **module** is shared canon, the **GUI** it drives
+(`StarterGui.Notifications` — `Container` + `CardTemplate`) stays per-Place authored art, because art
+cannot be scripted and copying a ScreenGui between Places is a user action (B26). It is a CLIENT
+module, so a server require warns and degrades to print-only rather than erroring — a misplaced
+require should cost a toast, never a boot.
+
+### `UIKit.UnitCard`: the duplication was measured, not assumed
+
+Four screens each carried their own `setViewportModel` and `paintTier`: Units, Summon, Index,
+Ascension. The standing PENDING said "Units should shape the controller", which is a design opinion.
+Before acting on it, the four copies were extracted and diffed:
+
+- **`setViewportModel`** — Summon, Index and Ascension were **byte-identical to each other**. Units
+  differed in exactly one way: the *source* of the model (its own `modelFor` helper, which handles
+  ascended forms, instead of an inline clone).
+- **`paintTier`** — again byte-identical across those three. Units additionally ran the idle sheen and
+  forced the hover stroke off.
+
+So the shared function takes the **model** rather than a tower id, and the differences that were real
+became two flags: `paintTier(root, tier, {Idle, StrokeOff})`. Everything else merged exactly.
+**`UIKit.UnitCard` (`bd2421c5`, entry 31)**, −104 lines across the four consumers, and the local
+wrapper functions kept their names so no call site changed.
+
+The point is not line count. Four copies of a camera-framing formula is four places for it to drift,
+and **that drift is silent**: a card framed slightly differently on one screen doesn't error, it just
+reads as an art bug nobody files. `Framing{FieldOfView, DistancePadding, DistanceBias,
+HeightFraction}` is now the single place to retune it.
+
+Two details preserved from the originals because they were load-bearing: the WorldModel is cleared
+**before** the nil check (a recycled card must not keep showing the previous unit even when there is
+no new model), and the UIGradient lookup stays **direct-child** (V2 nests further gradients under
+`UnitLevel` / `PlacementPrice` / `TraitIcon`, so a recursive find repaints the wrong thing).
+
+### Why 334 bare `WaitForChild` were NOT given timeouts
+
+This was the session's most consequential decision, and it went against the obvious answer.
+
+B33 lost the entire Units screen to a bare `WaitForChild` pointing at a deleted instance. The
+follow-up written into STATE was "334 bare vs 23 timed, NOT swept" — and the tempting B34 task was to
+sweep them. It was costed instead: ~100 of those are authored-instance lookups across 14 *working*
+files, every one of which would then need its downstream uses made nil-tolerant. That is a larger
+diff, and a larger regression surface, than the bug it prevents — in files that currently work.
+
+**And it would have been aimed at the wrong thing.** The defect at B33 was never the missing timeout.
+It was that the failure was **silent**: no error, no stack, one `Infinite yield possible` line buried
+in a wall of healthy boot output, and it was missed. A timeout sweep would have converted a silent
+hang into a silent *nil dereference* in most of those files.
+
+So the fix targets silence:
+
+- 18 boot scripts each end with `script:SetAttribute("BootComplete", true)` — one line, appended
+  after their existing final statement, no logic touched.
+- **`StarterPlayerScripts.ScreenBootWatchdog`** waits 15 seconds, then emits **one `warn` per script**
+  that carries the marker and never reached it. One warn each, not a combined line, because a
+  combined line is exactly the kind of thing that gets scrolled past.
+- Scripts named `*Controller` with **no** marker are reported separately — an uninstrumented script is
+  invisible to the check, and a check with a blind spot nobody knows about is worse than no check.
+- Roblox's own injected LocalScripts (`FreecamScript`, `PlayerScriptsLoader`, `RbxCharacterSounds`)
+  are filtered by name. **A watchdog that cries wolf on every boot is a watchdog everybody learns to
+  ignore**, and that failure mode is quiet too.
+
+The list of candidates is **discovered, not hardcoded** — a hardcoded list rots the first time someone
+adds a screen, and a rotted list reports nothing while looking healthy.
+
+This is diagnosability chosen over prevention, knowingly. A screen can still hang. It can no longer
+hang *quietly* — and it now catches hangs from causes a timeout sweep never would: a remote that
+never returns, a yield in a script nobody has written yet. The `need()` rule from B33 still governs
+anything touched from here.
+
+Verified live: clean baseline at **19/19** with **zero** false positives, and clearing one script's
+marker to simulate a hang produced exactly one named STUCK report, then restored cleanly.
+
+### C4 feeding: a proposal, not a skeleton
+
+The session's fourth task was to build a feeding skeleton. Scouting killed it, and the honest output
+is `docs/proposals/2026-08-20-c4-feeding.md` rather than code: `ItemCatalog` has **no** `FeedValue`,
+there is **no** unit XP curve anywhere, and **nothing writes** `UnitInstance.XP`. Every piece of
+machinery feeding would reuse already exists (`UnitConsumeRules`, `GrantService.SpendItems`, the
+multi-select UI, `Confirm`, `Notify`) — the missing part is entirely data.
+
+Building the service now would mean a remote that refuses every call because its config is empty, and
+a config whose *shape* is a guess: is food per-tier, per-stage, flat, or diminishing? Each answer
+implies a different table, so the skeleton would be rewritten the moment the real shape arrived. The
+proposal records the design, the reuse, and one thing worth flagging: feeding makes the standing
+"a unit at `MAX_META_LEVEL` loses stored XP" bug **reachable by a player** rather than theoretical.
+
+Also noted there: the protections asymmetry. Selling destroys the unit; feeding destroys the *items*.
+Reusing `UnitConsumeRules.IsConsumable` unchanged would wrongly block feeding a locked or favourited
+unit, so feeding needs a narrower predicate — the kind of thing that is cheap to get right on paper
+and expensive to discover after shipping.
+
+- **Contract impact:** shared canon 29 → 31 (`UIKitNotify` `5e2b09d4`, `UIKitUnitCard` `bd2421c5`),
+  both Places carry both, `TOOLVERSION B34-1`. `RS.Remotes` unchanged at **21**. Save schema unchanged
+  at **v3**. No Place-specific behaviour changed for any existing user-visible feature.
+- **Retired (renamed, not deleted):** `StarterPlayer.StarterPlayerScripts.Client.UI.NotificationController`
+  (Game) and `StarterPlayer.StarterPlayerScripts.NotificationController` (Lobby).
+- **Open threads (`STATE.md`):** C4 blocked on data · no XP granter and the 627k level-50 curve
+  (B33) · the user's `StarterGui.Summon` is unfinished and untouched · `HUD.Right`'s three buttons
+  unwired · and the three B32 asset items still outstanding, which the user has asked to be reminded
+  of every session: **the 13 sound ids** (the game is silent), **`ConfirmationPopupUI` into the Game**,
+  and the **nine `UIHoverStroke.Thickness` values still at 0.05**.
+
 ## 2026-08-20 [lobby] B33 — AD-Gacha: **the Units screen was dead.** A deletion I had recommended, six lookups that could not fail safely, and no error message anywhere. Plus toasts across the Lobby, a live currency bar, and the exp bar wired to a real curve.
 
 **Place asserted before every write:** `PlaceId 83342803778137` + `Workspace.Lobby` present. Studio ids

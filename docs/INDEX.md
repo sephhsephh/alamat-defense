@@ -95,6 +95,9 @@
   2026-08-09)
 
 ## proposals/
+- `2026-08-20-c4-feeding.md` — AD-Gacha: C4 feeding is **blocked on DATA, not code**. `ItemCatalog`
+  has no `FeedValue`, there is no unit XP curve and no writer for `UnitInstance.XP`; every piece of
+  machinery it would reuse already exists. Needs food items + a curve + a source of food. OPEN.
 - `2026-08-14-reward-preview-wiring.md` — AD-Integration→AD-UI: `RewardScalingConfig` is deployed in
   the Lobby (B20) so the preview has real numbers, but `renderRewards` cannot express a min–max BAND
   and re-runs only on act select while the slider keeps moving. Needs a rendering decision + a

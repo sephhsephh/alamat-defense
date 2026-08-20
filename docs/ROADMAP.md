@@ -215,6 +215,36 @@ everything untradeable at launch).
   never by child order, since the two shared a name). Doc: `docs/systems/ui-feedback.md`.
 
 
+- ✅ **B34 (AD-Gacha, BOTH Places, 2026-08-20) — TWO KIT MODULES PROMOTED, AND A WATCHDOG INSTEAD OF A
+  334-SITE SWEEP.** Manifest **29 → 31**, `TOOLVERSION B34-1`, both Places hash-matched byte-for-byte.
+  **`UIKit.Notify` (`5e2b09d4`)** ends the fork B33 created: the Game's original
+  (`Client.UI.NotificationController`, used by `PlacementController` + `TowerSelectionUI`) and the Lobby's
+  copy (`StarterPlayerScripts.*`, used by Units/Summon/Ascension) sat in **different paths, in neither
+  manifest, with only the Lobby's hardened** — a fork with no drift control, which is the exact failure the
+  shared-canon system exists to prevent. Both retired by rename (`*_RETIRED_2026-08-20`); the API was
+  unchanged, so repointing all five consumers was ONE line each and ~20 call sites were untouched. Same
+  split as `UIKit.Confirm`: module is canon, `StarterGui.Notifications` stays per-Place authored art.
+  **`UIKit.UnitCard` (`bd2421c5`)** ends the four-copy `setViewportModel`/`paintTier` duplication across
+  Units / Summon / Index / Ascension. The duplication was **measured before extracting**: three of each
+  were byte-identical, and Units differed only in where the model came from (so `viewport()` takes the
+  model) and in two behaviours (so `paintTier` takes `{Idle, StrokeOff}`). −104 lines from the consumers,
+  one definition of the camera framing. **THE 334 BARE `WaitForChild` WERE DELIBERATELY NOT SWEPT** —
+  giving them all timeouts means rewriting ~100 authored lookups across 14 working files and then making
+  every downstream use nil-tolerant, a bigger diff and risk than the bug. B33's real defect was that the
+  failure was **silent**, so the fix targets that instead: 18 boot scripts each set `BootComplete`, and
+  **`ScreenBootWatchdog`** names whatever never finished, one warn per script, with Roblox's own injected
+  LocalScripts filtered out because a watchdog that cries wolf every boot is one everybody ignores.
+  Diagnosability over prevention, chosen knowingly: a screen can still hang, it just cannot hang quietly —
+  and this catches causes a timeout sweep never would. Verified live in both Places: Game boots clean to
+  wave 1, all four Lobby card screens render (viewports framed, tiers painted, idle sheen on Units only),
+  toasts fire through the shared module, watchdog clean at 19/19 and correctly caught a simulated hang.
+  🔲 **C4 Feeding is SCOPED and BLOCKED ON DATA, not code** —
+  `docs/proposals/2026-08-20-c4-feeding.md`. `ItemCatalog` has no `FeedValue`, there is no unit XP curve
+  and no writer for `UnitInstance.XP`; the machinery it would reuse (`UnitConsumeRules`,
+  `GrantService.SpendItems`, multi-select, `Confirm`, `Notify`) all exists. Needs food items, a curve, and
+  a decision on how food is obtained — nothing grants items today but an INSANE victory.
+
+
 ## Cross-Place
 
 - ✅ Save schema v1 shared + deployed to both Places

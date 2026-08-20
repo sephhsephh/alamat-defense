@@ -1,5 +1,5 @@
 # CONTEXT — Lobby place (LIVE, booted 2026-07-17)
-<!-- owner: lobby | scope: lobby | last-verified: 2026-08-20 (B33) -->
+<!-- owner: lobby | scope: lobby | last-verified: 2026-08-20 (B34) -->
 
 The social/meta Place: players land here, view their collection, roll banners, pick a stage + difficulty, form parties, and teleport
 into the Game place.
@@ -56,6 +56,15 @@ into the Game place.
   `DevSimulateFirstJoin`. `MaxLoadoutSize = 6`.
 
 ## UI kit + screens (AD-UI)
+
+**B34 — TWO KIT MODULES PROMOTED, AND A WATCHDOG INSTEAD OF A SWEEP.** `UIKit.Notify` (`5e2b09d4`) ends B33's toast FORK -- the Game's
+original and the Lobby's copy sat in different paths, in neither manifest, only one hardened; both are retired `*_RETIRED_2026-08-20`
+and all five consumers repointed (API unchanged, so ONE line each). `UIKit.UnitCard` (`bd2421c5`) ends the FOUR-copy
+`setViewportModel`/`paintTier` duplication -- measured first: three of each were byte-identical, Units differed only in its model
+source and two flags. Manifest **29 -> 31**, hash-matched both Places, `TOOLVERSION B34-1`. **The 334 bare `WaitForChild` were NOT
+swept** (~100 lookups across 14 working files = a bigger risk than the bug); instead every boot script sets `BootComplete` and
+`StarterPlayerScripts.ScreenBootWatchdog` NAMES whatever never finished -- B33's real defect was SILENCE, not a missing timeout.
+C4 feeding is scoped and BLOCKED ON DATA: `docs/proposals/2026-08-20-c4-feeding.md`.
 
 **B33 — THE UNITS SCREEN DIED AND THE FIX IS A RULE.** B32 retired `SellConfirm` and called it "deletable"; the user deleted it; six
 bare `WaitForChild` calls in `UnitsController` still pointed at it. **A bare `WaitForChild` NEVER times out**, so the controller

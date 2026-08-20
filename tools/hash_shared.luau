@@ -1,5 +1,5 @@
 -- tools/hash_shared.luau
--- TOOLVERSION: B32-2
+-- TOOLVERSION: B34-1
 -- DRIFT CHECK: run via execute_luau (Edit datamodel) in ANY Place at bootstrap.
 -- Prints fnv1a32 hashes of the deployed shared canon; compare against shared/manifest.json.
 -- Anything absent in this Place returns "MISSING" (expected before its first deploy).
@@ -230,6 +230,20 @@ local MODULES = {
 	-- Places. The DESIGN is StarterGui.ConfirmationPopupUI; this is the behaviour, including the
 	-- two-second grey->green gate on the Yes button for irreversible actions.
 	UIKitConfirm = "ReplicatedStorage.Shared.UIKit.Confirm",
+	-- Promoted B34 2026-08-20 (owner AD-UI): TOAST notifications. The GAME grew this first as
+	-- Client.UI.NotificationController; B33 copied it into the Lobby for Lobby-wide use, which left
+	-- TWO copies, in DIFFERENT paths, in NEITHER manifest, with only the Lobby's hardened -- a fork
+	-- with no drift control. Both are retired (renamed *_RETIRED_2026-08-20) and this is the one.
+	-- Same split as UIKitConfirm: the MODULE is canon, the GUI it drives (StarterGui.Notifications)
+	-- stays per-Place authored art. CLIENT module; a server require degrades to print-only.
+	UIKitNotify = "ReplicatedStorage.Shared.UIKit.Notify",
+	-- Added B34 2026-08-20 (owner AD-UI): unit-card presentation -- the ViewportFrame camera
+	-- framing and the tier paint. FOUR screens (Units, Summon, Index, Ascension) each carried
+	-- their own copy; three of each were BYTE-IDENTICAL and Units differed only in where the
+	-- model came from, which is a caller's concern. Four copies of a framing formula is four
+	-- places for it to drift, and that drift is silent -- a card framed slightly differently on
+	-- one screen just reads as an art bug.
+	UIKitUnitCard = "ReplicatedStorage.Shared.UIKit.UnitCard",
 	-- Promoted 2026-08-09 (Integration, owner AD-Traits): the trait rarity table. It was GAME-only,
 	-- which is exactly why the Lobby could not build trait reroll (C1) or stat reroll (C2) and why
 	-- trait-on-summon sat inert. The two promote TOGETHER -- TraitRegistry requires its sibling
