@@ -182,6 +182,39 @@ everything untradeable at launch).
   `require` forever in the Place where the sibling isn't deployed yet** — both new modules now use a
   10s-timeout optional-sibling helper with a no-op stub.
 
+- ✅ **B33 (AD-Gacha, Lobby, 2026-08-20) — THE UNITS SCREEN WAS DEAD, TOASTS ARE IN, THE EXP BAR IS WIRED.
+  NOTHING SHARED CHANGED** (drift byte-identical at session start AND end), so the Game is not stale.
+  **The repair is the headline, and it is a process failure worth keeping:** B32 retired B31's itemised
+  `SellConfirm` panel, reported it to the user as "unused and deletable", the user deleted it — and six
+  bare `WaitForChild("SellConfirm")` calls were still sitting in `UnitsController`. A bare `WaitForChild`
+  **never times out**, so the controller stopped dead at its first declaration and the ENTIRE Units screen
+  silently never booted: no grid, no equip, no favourite, no sell, no error, no stack trace. Advising a
+  deletion without grepping for the readers is what caused it. Authored-instance lookups now go through
+  **`need()`** — bounded wait, one warn naming every missing full path, and a **detached stand-in** so
+  `.Visible = false` on a missing frame is a no-op rather than a crash — and the feature **refuses to arm**
+  (`sellEnabled`) instead of half-working. A scan found **334 bare `WaitForChild` vs 23 timed** across
+  Lobby scripts; they were deliberately NOT swept (a 334-site mechanical rewrite risks more than it fixes)
+  and the count is a PENDING. **TOASTS:** the user copied the Game's `Notifications` GUI +
+  `NotificationController` into the Lobby and asked for it Lobby-wide, so `UnitsGUI`, `SummonScreen` and
+  `AscensionController` now route messages through one funnel each under the rule **TOAST EVENTS, LABEL
+  STATE** — a toast self-erases after 3.5s, which is right for "sold 1 unit for 25 Silver" and actively
+  wrong for "this banner is blocked", so persistent conditions stay on their label. `UnitsGUI`'s 17 sell
+  messages moved onto toasts by changing ONE function body, which is the whole reason it was a funnel.
+  **CURRENCY BAR:** `Remotes.CurrencyChanged` (20 → 21) is a server→client PING with **no payload** —
+  ADR-0004 makes `GetUnitViews` the single read path, so a balance on the wire would be a second source of
+  truth — fired **debounced per user** by `GrantService`, the one module that writes `Currencies`. Verified
+  live: Silver 385 → 395 within 0.6s of a sale, no rejoin (it had needed one since the bar was written; its
+  own header comment asked for exactly this fix). **EXP BAR:** the user's authored `ExpBar` is wired to
+  real `PlayerLevel`/`PlayerXP` through the new Lobby-local **`PlayerLevelConfig`** — the ONE XP-per-level
+  curve, user's call: `100 × 1.15^(level-1)` rounded to 10. It is Lobby-local **on purpose** (nothing in
+  the Game reads a curve because nothing anywhere grants player XP yet) and gets promoted the day that
+  changes. Two honest consequences recorded rather than hidden: the bar reads **0 forever** until a granter
+  exists, and level 50 — where `LoadoutConfig` gates the 6th hotbar slot — costs **627,540** XP total,
+  which at ~50 XP a stage clear is ~12,500 clears and probably wants retuning. Also: `HUD.Right`'s second
+  `EventButton` renamed to **`DailyRewardsButton`** at the user's request (identified by its label text,
+  never by child order, since the two shared a name). Doc: `docs/systems/ui-feedback.md`.
+
+
 ## Cross-Place
 
 - ✅ Save schema v1 shared + deployed to both Places

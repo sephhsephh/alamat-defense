@@ -1,5 +1,155 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-20 [lobby] B33 — AD-Gacha: **the Units screen was dead.** A deletion I had recommended, six lookups that could not fail safely, and no error message anywhere. Plus toasts across the Lobby, a live currency bar, and the exp bar wired to a real curve.
+
+**Place asserted before every write:** `PlaceId 83342803778137` + `Workspace.Lobby` present. Studio ids
+had rotated again and NEITHER instance was active, so `list_roblox_studios` + `set_active_studio` came
+first. **NOTHING SHARED CHANGED THIS SESSION** — the drift report was taken at the start AND at the end
+and is byte-identical, all 29 entries (`MetaMath` Game = null, expected). No re-hash, no manifest edit,
+**the Game is not stale by this session.** Everything below is Lobby-local.
+
+### The failure, in order, because every step looked reasonable
+
+1. B32 retired B31's itemised `SellConfirm` panel — the global `ConfirmationPopupUI` replaced it.
+2. B32's closing advisory told the user it was "now unused and deletable".
+3. The user deleted it. Correctly. They were doing exactly what they were told was safe.
+4. Six `gui:WaitForChild("SellConfirm")` calls were still sitting at the top of `UnitsController`.
+5. **A bare `WaitForChild` never times out.** The controller stopped at declaration one.
+6. The entire Units screen never finished booting — no grid, no equip, no favourite, no sell.
+
+There was no error. No stack. No red text. `UnitsController ready` simply never printed, and the only
+evidence in a wall of healthy-looking boot output was a single `Infinite yield possible` line.
+
+**The lesson is not "add timeouts".** It is that *recommending a deletion without grepping for the
+readers is half an advisory*. B32 checked that nothing USED the panel functionally and missed that six
+lines still LOOKED FOR it. Those are different questions and only one of them got asked.
+
+### `need()` — and why a detached stand-in beats a nil check
+
+Authored-instance lookups in `UnitsController` now go through one helper:
+
+```lua
+local function need(parent, name, className)
+    local inst = parent:FindFirstChild(name)
+    if inst == nil and parent:IsDescendantOf(game) then inst = parent:WaitForChild(name, 5) end
+    if inst == nil then
+        table.insert(sellMissing, parent:GetFullName() .. "." .. name)
+        local stub = Instance.new(className); stub.Name = name; return stub   -- DETACHED
+    end
+    return inst
+end
+```
+
+Three decisions in there worth stating. The **stand-in** means a missing frame turns
+`.Visible = false` into a harmless no-op instead of an `attempt to index nil` — the alternative was
+nil-guarding ~30 use sites across a 1,476-line file, which is a bigger diff and a bigger risk than the
+bug. The **`IsDescendantOf(game)` guard** stops a stand-in's children from each burning the full
+timeout; without it one missing frame costs 5s per child it was meant to contain. And `sellMissing`
+collects every failure so ONE warn line names them all — the answer to "why is Quick Sell dead?" belongs
+in the console, not in a diff of the Explorer against the script.
+
+The feature then **refuses to arm** (`sellEnabled`) rather than half-working. A sell UI that is missing
+its Cancel button should say so, not let a player into a mode they cannot leave.
+
+**Deliberately NOT done:** a scan found **334 bare `WaitForChild` calls against 23 timed** across Lobby
+scripts. They were not swept. Most sit on infrastructure whose absence means the screen is meaningless
+anyway (`Main`, `Bottom`, the remotes folder), and a 334-site mechanical rewrite of working boot code
+risks more than it fixes. The count is recorded as a PENDING and the rule applies to anything touched
+from here. Scope honestly stated beats a sweep nobody can review.
+
+### Toasts: adopted Lobby-wide, with one rule that stops them being wrong
+
+The user copied the Game's toast system into the Lobby — the authored `StarterGui.Notifications` plus
+`StarterPlayerScripts.NotificationController` — and asked for it "in the whole lobby ... instead of the
+'hint' text label". `Notify.Error / Success / Warning / Info`, cards stack in a `UIListLayout`, cap at 5,
+auto-dismiss at 3.5s.
+
+`UnitsGUI` was the easy half: `setSellStatus` was already the ONE funnel all 17 sell messages went
+through, so **changing its body moved every one of them onto toasts without editing a single call site.**
+That is precisely why it was a function instead of 17 inline label writes, and it is the second time this
+session that a past decision about single-definition paid for itself.
+
+`SummonScreen` and `AscensionController` needed a judgement call, and it became a rule:
+
+> **TOAST EVENTS, LABEL STATE.** A toast erases itself after 3.5 seconds. That is right for something
+> that HAPPENED — refused, failed, sold, ascended — and actively wrong for something that IS TRUE.
+> "This banner is blocked" and "this DESTROYS 1 duplicate" are conditions; wiping them off the screen
+> after 3.5s is worse than never having shown them.
+
+So those two screens toast only when the call site names a `kind`, and always write their label. Every
+funnel still writes the label, so a Place with the toast GUI deleted degrades to the old behaviour
+exactly. `NotificationController`'s own three lookups were hardened the same way as `need()` when the
+Lobby started depending on it: **a missing toast system must cost toasts, never a screen.**
+
+One landmine found while patching: `SummonController` **already had** a local `setStatus`, declared
+inside the B30 Selection-choice closure and writing a different label. Lua scoping resolves both
+correctly, but two same-named functions writing different labels in one 850-line file is a trap, so mine
+is `setSummonStatus`.
+
+### The currency bar's own comment asked for this fix months ago
+
+`CurrencyBarController` carried this since it was written: *"When a shop or gacha lands, give it a
+RemoteEvent and call `refresh()` from that — do not poll."* Both landed. Summoning spends and selling
+credits, so "nothing spends Gold or Silver" had quietly stopped being true and the bar read stale until
+the next rejoin.
+
+`Remotes.CurrencyChanged` (**20 → 21**) is a server→client ping with **no payload**. That is the load-
+bearing choice: ADR-0004 makes `GetUnitViews` the single Lobby profile read path, so shipping a balance
+on this event would create a second source of truth free to disagree with it. The event says "something
+changed"; the client re-reads through the one path.
+
+It lives in **`GrantService`** for the same reason `Spend` does — invariant 1 puts every currency write
+there, so it is the only place an announcement can live without adding a second thing to grep for. Put
+it in the callers and the day someone adds a third write site the bar goes stale again and nothing says
+so. **Debounced per user via `task.defer`**, so a `Grant` writing several currencies in one loop sends
+ONE ping; deferring also means it lands *after* the write, which is what makes the client's re-read see
+the new value instead of the old one.
+
+Verified live: Silver **385 → 395 within 0.6s** of a sale, no rejoin.
+
+### The exp bar, and the two numbers I refused to invent
+
+The user's authored `ExpBar` is now driven by real data: `Data.PlayerLevel` and `Data.PlayerXP`, both
+already served by `GetUnitViews` since A5 and never displayed until now.
+
+The curve did not exist anywhere in the project. The authored label read `Level 1 (0 / 100)XP` and that
+100 was a designer placeholder, so I stopped and asked rather than picking a number — inventing balance
+data is exactly what this project's placeholder-price episode was about. The user chose a gentle
+exponential, and **`Configs.Meta.PlayerLevelConfig`** is now the ONE definition:
+`100 × 1.15^(level-1)`, rounded to 10, retunable by three constants.
+
+It is **Lobby-local on purpose.** `LoadoutConfig` is shared because both Places must agree which hotbar
+slots are unlocked — but they key that off the STORED `Data.PlayerLevel`, not off a curve, and nothing
+in the Game reads one because nothing anywhere grants player XP. Promoting a config with exactly one
+consumer buys a permanent drift obligation for no present benefit; it gets promoted the day the Game
+awards XP. `ApplyXP` is there, uncalled, so that when a granter arrives the rollover rule already has
+one definition instead of being invented at the call site.
+
+Two consequences recorded rather than smoothed over:
+
+- **The bar reads 0 forever.** Nothing writes `PlayerXP` — verified, the only assignments anywhere are
+  the ProfileTemplate defaults. That is not a bug in the bar. The user's intent is filed: small XP per
+  wave cleared, decent per stage clear, big for a first clear, smaller for repeats, owned by the Game's
+  match-end path.
+- **Level 50 may be unreachable.** The chosen curve costs **627,540 XP** cumulatively to reach it —
+  ~12,500 stage clears at ~50 XP each — and `LoadoutConfig` gates the 6th hotbar slot at exactly level
+  50. Flagged as a balance PENDING rather than silently shipped; three numbers fix it.
+
+- **Contract impact:** `RS.Remotes` **20 → 21** (`CurrencyChanged`). Save schema UNCHANGED at v3.
+  Nothing shared changed, so no re-hash and no manifest edit. New Lobby-local
+  `Configs.Meta.PlayerLevelConfig`; new `StarterGui.ExpBar.ExpBarController`.
+- **Also:** `HUD.Right`'s second `EventButton` renamed to **`DailyRewardsButton`** at the user's request,
+  matched by its label TEXT and never by child order — the two shared a name, which is what makes dot
+  access pick an arbitrary one. Two stale `-- CURRENT ####` markers left on the B28 section of BOTH
+  Places' `ServerStorage.Documentation.AIState` by earlier sessions were demoted; each file had been
+  claiming two current states.
+- **Open threads (`STATE.md`):** no XP granter · the 627k level-50 curve · promote `PlayerLevelConfig`
+  when the Game grants XP · `NotificationController` now exists in both Places, in different paths, in
+  neither manifest, with only the Lobby copy hardened · 334 bare `WaitForChild` · the user's new
+  `StarterGui.Summon` is UNFINISHED and must not be touched · `HUD.Right`'s three buttons are unwired ·
+  and all of B32's user-side items still stand (13 sound ids, `ConfirmationPopupUI` into the Game, the
+  0.05 hover strokes, the `CancelButton` overlap, `PlayButton`'s Shop logo, the Game's missing audio owner).
+
 ## 2026-08-19 [lobby+game] B32 — AD-Gacha: **the shared feedback layer.** Hover, click, sound and confirmation became kit-level concerns instead of per-screen ones, and the Lobby's sell UI moved onto instances the user can edit without running the game.
 
 **Place asserted before every write:** `PlaceId 83342803778137` + `Workspace.Lobby` present for Lobby

@@ -1,7 +1,7 @@
 # SYSTEM — UI feedback: button motion, audio, and the confirmation dialog
 
 <!-- owner: AD-UI | home Place: BOTH | scope: shared -->
-<!-- last-verified: 2026-08-19 (B32, live Play in the Lobby; deploy hash-matched in the Game) -->
+<!-- last-verified: 2026-08-20 (B33: toasts + the WaitForChild rule, live Play in the Lobby) -->
 <!-- split out of ui-kit.md at B32: that file was at 295/300 and this is three new subsystems -->
 
 How the UI answers the player: what a button does when you touch it, what you hear, and how an
@@ -130,3 +130,75 @@ A bare `WaitForChild` on a sibling module **blocks forever**. `Button` is attach
 button at boot, so in a Place caught mid-deploy that does not lose the audio, it **freezes the entire
 UI**. Found exactly that way: `Button` reached the Game place before `Sound` did and `require` never
 returned. **Deploy order still matters, but it is no longer load-bearing.**
+
+## Toasts (B33, Lobby) — and the rule for when NOT to use one
+
+The user copied the Game's toast system into the Lobby — `StarterGui.Notifications` (the authored
+`Container` + `CardTemplate`) and `StarterPlayerScripts.NotificationController` — and asked for it
+across the whole Lobby. **It is NOT shared canon and NOT in the manifest**, so the Lobby and Game
+copies are free to diverge; unifying them is a PENDING, not a fact.
+
+API: `Notify.Error / Success / Warning / Info(msg)`, or `Notify.Notify(msg, kind)`. Cards pop in,
+stack in a `UIListLayout` so they never overlap, cap at 5, and **auto-dismiss after 3.5 s**.
+Colour is the kind: Error `255,90,90` · Success `110,225,140` · Warning `255,190,70` · Info
+`110,190,255`. Require it from `Players.LocalPlayer.PlayerScripts`.
+
+**THE RULE: TOAST EVENTS, LABEL STATE.** A toast erases itself after 3.5 s. That makes it right for
+something that **happened** — refused, failed, sold, ascended — and actively wrong for something that
+**is true**: "this banner is blocked", "this unit cannot ascend", "this DESTROYS a duplicate". Wiping
+a still-current condition off the screen after 3.5 s is worse than never having shown it.
+
+So each adopting screen keeps ONE funnel and the CALL SITE decides:
+
+| screen | funnel | behaviour |
+|---|---|---|
+| `UnitsGUI` | `setSellStatus(txt, kind?)` | toasts by default — `SellStatus` was a pure transient hint label, which is the one the user pointed at |
+| `SummonScreen` | `setSummonStatus(txt, kind?)` | label always; toast **only** when a `kind` is named |
+| `AscensionController` | `setAscStatus(txt, kind?)` | same — `AscStatus` carries persistent per-unit state |
+
+Every funnel still writes its label, so a Place with the toast GUI deleted degrades to exactly the
+old behaviour. **`SummonController` already had an unrelated local `setStatus`** inside the B30
+Selection-choice closure, writing a different label — hence `setSummonStatus`, not a second
+`setStatus` shadowing it.
+
+## The bare `WaitForChild` hazard, second occurrence — now a rule
+
+B32 lost an hour to a shared module waiting forever on an undeployed sibling. **B33 lost the entire
+Units screen to the same pattern**, and the sequence is worth keeping because nothing looked wrong:
+
+1. B32 retired `SellConfirm` and reported it to the user as "unused and deletable".
+2. The user deleted it — correctly.
+3. Six bare `WaitForChild("SellConfirm")` calls in `UnitsController` were still there.
+4. A bare `WaitForChild` **never times out**. The controller stopped at its first declaration.
+5. No error. No stack. The Units screen simply never finished booting — no grid, no equip, no sell.
+
+**The rule.** A bare `WaitForChild` is acceptable ONLY on instances whose absence makes the screen
+meaningless anyway (`Main`, `Bottom`, `UnitsContainer`, the remotes folder). For anything a
+**designer is actively editing**, use a bounded lookup that warns with the full path:
+
+```lua
+local function need(parent, name, className)   -- UnitsController's form
+    local inst = parent:FindFirstChild(name)
+    if inst == nil and parent:IsDescendantOf(game) then inst = parent:WaitForChild(name, 5) end
+    if inst == nil then
+        table.insert(sellMissing, parent:GetFullName() .. "." .. name)
+        local stub = Instance.new(className); stub.Name = name; return stub   -- DETACHED
+    end
+    return inst
+end
+```
+
+Two details that matter. The **detached stand-in** means `.Visible = false` on a missing frame is a
+harmless no-op instead of a crash, so one deleted instance costs one feature rather than the screen.
+The **`IsDescendantOf(game)` guard** stops a stand-in's children from each burning the full timeout —
+without it, one missing frame costs 5 s per child it was supposed to contain.
+
+The feature then **refuses to arm** (`sellEnabled`) and names every missing instance in one warn
+line, so "why is Quick Sell dead?" is answered by the console instead of by diffing the Explorer
+against the script. `NotificationController`'s own three lookups were hardened the same way when the
+Lobby started depending on it: **a missing toast system must cost toasts, never a screen.**
+
+**Still outstanding:** a scan at B33 found **334 bare `WaitForChild` calls against 23 timed** across
+Lobby scripts. Most are on infrastructure and are fine. They were NOT swept — a 334-site mechanical
+rewrite risks more than it fixes — so this is a PENDING, and the rule above applies to anything
+touched from here.
