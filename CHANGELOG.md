@@ -1,5 +1,143 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-20 [lobby+game] B35 — AD-Gacha: **one settings system for both Places.** A proposal that had been open since B6 turns out to have been cheap all along — and building it surfaced two bugs that had been quietly live the whole time.
+
+**Places asserted before every write.** Shared canon changed: `shared/manifest.json` **31 → 35**,
+`TOOLVERSION B34-1 → B35-1`, both Places re-deployed and hash-matched byte-for-byte. Drift green at
+session start and end. Resolves `docs/proposals/2026-08-09-unified-settings-both-places.md`.
+
+### The proposal's own first step was "do not design against a guess"
+
+That instruction earned its keep immediately. The proposal worried that a persisted preference would
+mean a **save-schema bump** — the contract protocol, a migration, a PENDING for the other Place. It
+also flagged one sentence of the user's as ambiguous and said to confirm it before building.
+
+Reading first settled both, and both landed on the cheap side:
+
+- **`Data.Settings` has been `{ [string]: any }` since v1.** New keys are additive by construction,
+  so there is **no bump, no migration, nothing to publish in lockstep.** The most expensive-looking
+  part of the job did not exist.
+- The clipped sentence — *"there will be a button for 'Restart Match' and 'Return to lobby' and 'TP
+  to Spawn', but only 'TP to spawn'"* — meant what the proposal guessed: the Game shows all three,
+  the Lobby shows only Teleport to Spawn. Ten seconds of asking, as promised.
+
+### Identical paths are the whole trick
+
+The Game already had all four pieces. The instinct was to move them somewhere tidier —
+`ReplicatedStorage.Shared` — but **five Game scripts require `ClientSettings` by a relative path**
+(`script.Parent.Parent.Settings.ClientSettings`): `VFXController`, `WavePrepUI`, `EnemyHealthbars`,
+`SummonHealthbars`, `SettingsUI`. Moving it meant editing five working files in another owner's Place
+for no behaviour change at all.
+
+So nothing moved. Every module was promoted **exactly where it already sat**, and the Lobby grew the
+same `Client/Settings` and `Client/UI` folders to match:
+
+| module | path (identical in both) | hash |
+|---|---|---|
+| `SettingsConfig` | `ReplicatedStorage.Configs.Global.SettingsConfig` | `5f0dc44d` |
+| `SettingsService` | `ServerScriptService.Server.Settings.SettingsService` | `8b3b1a72` |
+| `ClientSettings` | `StarterPlayer…Client.Settings.ClientSettings` | `a3a9d32f` |
+| `SettingsUI` | `StarterPlayer…Client.UI.SettingsUI` (LocalScript) | `8e899dab` |
+
+Promotion cost **zero consumer edits**. `SettingsUI` is a LocalScript hashed as source — the
+`UIKitBootstrap` precedent, already established at B6.
+
+The one genuine code change promotion required: `SettingsService` required `PlayerDataService` by a
+*relative* path that only resolves in the Game's folder layout. It is now absolute, which works in
+both Places because `PlayerDataService` is itself canon at a fixed path.
+
+### `Scope` and `Kind`, and the line that matters most
+
+Two fields per schema entry carry the user's whole requirement. **`Scope`** (`Both` / `GameOnly` /
+`LobbyOnly`) decides where an entry is *shown*; **`Kind`** (`Preference` / `Action`) decides whether
+it *persists*.
+
+The consequence is the part worth stating: **`SettingsUI` contains no Place-specific branch
+anywhere.** It asks `SettingsConfig.EntriesFor("All", place)` and draws the answer. A Place
+difference is a config field, permanently. Verified live: the Game renders 11 rows across 5 tabs, the
+Lobby renders 6, from the same file.
+
+**⚠ And then the trap, which is the single most important line in the system.**
+
+One profile serves both Places. The obvious implementation of `Scope` is to filter in `Sanitize` —
+and it would have been a data-loss bug of the worst kind. The moment a player changed *any* setting
+in the Lobby, every `GameOnly` preference they had — `AutoSkipWave`, `ShowHealthBar`, `EnableVFX`,
+`SimplifyHealthBar` — would be sanitized out of the payload and **permanently lost**. And the reverse
+in the Game. Silent, gradual, and irreversible.
+
+So `Sanitize` processes **every** `Preference` regardless of `Scope`, always. `Scope` is a rendering
+concern and nothing else. It is commented as such in the file, in the manifest, and in the system
+doc, because it is exactly the kind of thing a future reader would "optimise".
+
+It is proven rather than asserted. Down the real remote, from the real client: a Game-side save left
+the `LobbyOnly` `SkipRevealAnim` intact, and a `MusicVolume` of 0.25 set in the **Game** was read
+back and applied in the **Lobby**. That round trip is the system working.
+
+The same test threw a hostile payload at it — an out-of-range number, a wrong type, an Action key and
+an unknown key. Clamped to 1, defaulted to 1, and both junk keys dropped.
+
+### Two bugs that were already live
+
+**The volume slider controlled nothing.** `ClientSettings` drove a SoundGroup named `MasterSFX`.
+That group has never existed in either Place — B32 created `SoundService.Groups.Master > UI/SFX/BGM`.
+Confirmed by looking rather than assuming: `SoundService:FindFirstChild("MasterSFX")` is nil and the
+`SFXVolume` attribute it published was nil too. There are now three sliders, one per real group, and
+a missing group is **skipped rather than created** — inventing audio routing behind the player's back
+is worse than a slider that visibly does nothing.
+
+**Settings silently reverted to defaults on join.** The client fetches once at boot and caches the
+answer for the session. That fetch regularly landed *before* ProfileStore finished loading, `Get()`
+fell through to `Sanitize(nil)`, and the player spent the whole session with their real settings on
+the server and default ones on screen — which is experienced as *"my settings reset every time I
+join"*, with nothing in the log to explain it. `OnServerInvoke` now calls `WaitForData` first.
+
+This one was caught by a number that did not match: the server reported `MusicVolume 0.25` while the
+BGM group sat at `0.5`. Both halves were individually plausible; only the comparison showed the bug.
+
+### Actions
+
+An Action is a button, not a preference — it persists nothing, and `Sanitize` skips it, because
+storing a button press as a preference is how a "Restart Match" ends up saved to a profile.
+
+*What* an action does is Place-specific, so the config **declares** actions and each Place
+**supplies** behaviour via `ClientSettings.RegisterAction`. An action with no handler renders
+**disabled** and says "N/A". The Lobby registers `TeleportToSpawn`, aimed at the real
+`SpawnLocation` found at call time rather than a coordinate written down here that would stop
+matching the moment the scene moved.
+
+The Game's three are deliberately **not** registered by this session. `ReturnToLobby` has to respect
+teleport contract v4, and inventing that is precisely the kind of cross-owner guess this project's
+proposal protocol exists to prevent. They render disabled, honestly, until AD-Game wires them.
+
+A subtle ordering bug got fixed before it shipped: action buttons were painted once at build, but
+handlers are registered by *separate* scripts and LocalScript run order is not guaranteed — so a
+registrar running second would leave the button reading "N/A" forever. They repaint on every open.
+
+### Two syntax lessons, learned the hard way
+
+The first deploy took down both the service and the panel, and both were my own style:
+
+- A statement beginning with `(` parses as a **call to the previous line**. Luau reports "ambiguous
+  syntax" and refuses to load the module — which took the entire settings service down with it.
+- A leading `;` is **not a legal way to start a block** in Luau at all, unlike Lua 5.4.
+
+Both are now avoided by binding typed locals once, and both are commented in the file so the next
+person does not rediscover them. A compile pre-flight (require a `ModuleScript` copy and read the
+error) now runs before deploy rather than after.
+
+- **Contract impact:** shared canon 31 → 35, both Places, `TOOLVERSION B35-1`. `RS.Remotes` **21 →
+  22** (a `Settings` folder holding `GetSettings` + `SaveSettings`). **Save schema UNCHANGED at v3.**
+  New system doc `docs/systems/settings.md`; the B6 proposal is marked RESOLVED.
+- **Also this session:** the five `HUD.Right.UpperRight` buttons the user added (`RedeemCodes`,
+  `LeaderBoards`, `InviteFriends`, `Inbox`, `Settings`) are tagged `UIKitButton` at their request, so
+  they hover, click and sound like every other button. Only `Settings` is wired.
+- **User decision recorded:** the six/nine HUD buttons' `UIHoverStroke.Thickness` of `0.05` is
+  **deliberate** — "disregard it, its fine". It is no longer a pending and should not be re-raised.
+- **Open threads (`STATE.md`):** the user copies `StarterGui.Settings` into the Lobby (art is a user
+  action) · AD-Game registers the Game's three actions · the 13 sound ids are still 10 empty (Hover,
+  Click and Open now have ids) · C4 feeding still blocked on data · `StarterGui.Summon` is the user's
+  unfinished work and was not touched.
+
 ## 2026-08-20 [lobby+game] B34 — AD-Gacha: **two kit modules promoted, and a watchdog instead of a 334-site sweep.** The toast fork B33 created lasted exactly one session, four copies of a camera-framing formula became one, and the fix for silent boot hangs turned out not to be timeouts.
 
 **Places asserted before every write** (ids had rotated again; neither was active at bootstrap).

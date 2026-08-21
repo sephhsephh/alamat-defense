@@ -48,6 +48,10 @@
 - `lobby-ui.md` — the LOBBY's screens only (Units, Items, Collection, Hotbar, CurrencyBar, HUD
   buttons, the legacy script-built four) + the `DevAutoOpen` Studio harness. Split out of
   `places/lobby/CONTEXT.md` at A5 when that file passed its 150-line cap.
+- `settings.md` — **AD-Game + AD-UI canon, BOTH Places**: the ONE settings system (B35). `Scope`
+  (Both/GameOnly/LobbyOnly) + `Kind` (Preference/Action) mean the shared screen builder has no
+  Place branch at all. Read the `Sanitize`-is-Scope-blind warning before touching it: one profile
+  serves both Places, so scope-filtering persistence would permanently lose the other Place's keys.
 - `ui-feedback.md` — **AD-UI canon, BOTH Places**: how the UI answers the player (B32). The
   `UIKitButton` tag as the one wiring mechanism; PANEL-STYLE vs FLAT buttons **detected, not
   configured** (what scales, how the hover stroke grows, whether its gradient spins); `LogoContainer`

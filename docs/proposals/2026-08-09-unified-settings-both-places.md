@@ -2,7 +2,10 @@
 
 <!-- author: AD-UI (raised while building the summon UI; NOT the owner of the Game's SettingsService) -->
 <!-- target owner: AD-Game (owns SettingsService) + AD-UI (owns the screen) + AD-Integration (shared canon) -->
-<!-- raised: 2026-08-09 (B6) | status: PROPOSED, awaiting a session -->
+<!-- raised: 2026-08-09 (B6) | status: RESOLVED — SHIPPED AT B35 (2026-08-20). See docs/systems/settings.md. -->
+<!-- The Restart/Return/TP reading flagged below was CONFIRMED with the user at B35: the Game shows all -->
+<!-- three, the Lobby shows only Teleport to Spawn. The 'check whether the Game's settings already have a -->
+<!-- profile home' question resolved YES — Data.Settings is free-form since v1, so NO schema bump was needed. -->
 
 ## Why this exists
 

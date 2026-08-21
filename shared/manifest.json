@@ -364,6 +364,54 @@
       },
       "comment": "Kit CONTROLLER (unit-card presentation). ADDED B34 2026-08-20 (owner AD-UI). The two things every screen showing a Kit.UnitIconV2 had to do for itself: frame a model in a ViewportFrame, and paint the card in its tier's colours. FOUR screens each carried their own copy -- Units, Summon, Index, Ascension -- and it was MEASURED before extracting rather than assumed: `setViewportModel` was BYTE-IDENTICAL across Summon/Index/Ascension and Units differed in exactly ONE way, the SOURCE of the model (its own `modelFor` helper for ascended forms instead of an inline clone); `paintTier` was again byte-identical across those three, with Units additionally running the idle sheen and forcing the hover stroke off. So viewport() takes the MODEL (the caller keeps the difference that was real) and paintTier() takes {Idle, StrokeOff} (the two behaviours that were real). Everything else merged exactly. FOUR copies of a camera-framing formula is four places for it to drift, and the drift would be SILENT -- a card framed slightly differently on one screen reads as an art bug nobody files. Framing{FieldOfView=40, DistancePadding=1.3, DistanceBias=2, HeightFraction=0.05} is the one place to retune it; the bias exists so a TINY model does not end up with the camera inside it. viewport() CLEARS the WorldModel unconditionally BEFORE the nil check, or a recycled card keeps showing the previous unit. paintTier's UIGradient lookup is DIRECT-CHILD on purpose and must stay one: V2 nests further UIGradients under UnitLevel/PlacementPrice/TraitIcon and a recursive find would repaint one of those instead of the card. CLIENT module, owns no state. Deployed to BOTH Places for kit uniformity even though all four consumers are currently Lobby-side. Dependencies (Motion, TierConfig) load through BOUNDED lookups -- the B32/B33 lesson: a bare WaitForChild in a module required by screen controllers stops being 'this feature is missing' and becomes 'that screen never finishes booting', with no error to read.",
       "kind": "module"
+    },
+    "SettingsConfig": {
+      "file": "shared/src/SettingsConfig.luau",
+      "hash": "5f0dc44d",
+      "owner": "game",
+      "deployPath": "ReplicatedStorage.Configs.Global.SettingsConfig",
+      "deployed": {
+        "Game": "5f0dc44d",
+        "Lobby": "5f0dc44d"
+      },
+      "comment": "PROMOTED TO SHARED CANON B35 2026-08-20 (owner AD-Game, schema shared with AD-UI). The one structure behind the unified settings system the user asked for: 'there will be one settings system for both game and lobby ... but both should use same structure, same gui.' Two fields carry that: Scope (Both/GameOnly/LobbyOnly) decides where an entry is SHOWN, Kind (Preference/Action) decides whether it PERSISTS. A Place difference is therefore a config field and NEVER a branch in a script -- SettingsUI contains no Place-specific `if` at all. *** THE TRAP, AND THE REASON Sanitize IGNORES Scope: one profile serves BOTH Places. If Sanitize dropped out-of-scope keys, changing any setting in the Lobby would sanitize every GameOnly preference out of the payload and PERMANENTLY LOSE it (and vice versa). So Sanitize processes every Preference regardless of Scope; Scope is a rendering concern only. Proven live at B35: a Game-side save left the LobbyOnly SkipRevealAnim intact, and MusicVolume set in the Game was read back in the Lobby. *** Actions have no Default and are skipped by Sanitize entirely, so a button press can never persist as a preference. KEY-NAME NOTE: `SoundVolume` IS the SFX slider -- do NOT rename it to SFXVolume; it shipped as the only volume key and players have saved values under it, so a rename silently resets everyone. Place() is the ONE definition of the Workspace.Lobby assertion every script in the project otherwise repeats. NO save-schema bump was needed: Data.Settings has been free-form {[string]: any} since v1.",
+      "kind": "module"
+    },
+    "SettingsService": {
+      "file": "shared/src/SettingsService.luau",
+      "hash": "8b3b1a72",
+      "owner": "game",
+      "deployPath": "ServerScriptService.Server.Settings.SettingsService",
+      "deployed": {
+        "Game": "8b3b1a72",
+        "Lobby": "8b3b1a72"
+      },
+      "comment": "PROMOTED TO SHARED CANON B35 2026-08-20 (owner AD-Game). The server side of settings: profile-backed, Sanitize as the trust boundary before any write, persistence riding ProfileStore's session autosave. ONE profile serves both Places, so two independently-written services would eventually sanitize differently and each quietly clobber the other's keys -- which is the whole argument for promoting it. The only change promotion required was the PlayerDataService require: it was `script.Parent.Parent.Data.PlayerDataService`, a RELATIVE path that only resolves in the Game's folder layout; it is now absolute and resolves in both Places because PlayerDataService is itself canon at a fixed path. *** THE REMOTE WAITS FOR THE PROFILE (WaitForData, 20s) AND THAT IS NOT OPTIONAL. *** The client fetches once at boot and caches the answer for the whole session; without the wait that fetch lands before ProfileStore finishes loading, Get() falls through to Sanitize(nil) = DEFAULTS, and the player spends the session with real settings on the server and default ones on screen -- experienced as 'my settings reset every time I join', with nothing in the log to explain it. Caught live at B35 in the Lobby: the server held MusicVolume 0.25 while the BGM SoundGroup sat at the 0.5 default.",
+      "kind": "module"
+    },
+    "ClientSettings": {
+      "file": "shared/src/ClientSettings.luau",
+      "hash": "a3a9d32f",
+      "owner": "game",
+      "deployPath": "StarterPlayer.StarterPlayerScripts.Client.Settings.ClientSettings",
+      "deployed": {
+        "Game": "a3a9d32f",
+        "Lobby": "a3a9d32f"
+      },
+      "comment": "PROMOTED TO SHARED CANON B35 2026-08-20 (owner AD-Game). One in-memory home for the local player's settings, with a Changed signal every client system subscribes to. *** THE DEPLOY PATH DELIBERATELY DID NOT MOVE: *** five Game scripts require it as `script.Parent.Parent.Settings.ClientSettings`, so keeping the path identical in both Places made promotion cost ZERO consumer edits -- the Lobby simply grew the same Client/Settings folders. Moving it to Shared would have been tidier and would have meant editing five working files in another owner's Place for no behaviour change. *** FIXES A REAL DEAD SLIDER: *** the old code drove a SoundGroup called `MasterSFX`, which has never existed in either Place, so the volume setting controlled precisely nothing. It now drives the B32 groups (SoundService.Groups.Master > UI/SFX/BGM) with one slider each for Music/SFX/UI; a missing group is skipped rather than created, because inventing audio routing behind the player's back is worse than a slider that visibly does nothing. Also owns the ACTION registry (RegisterAction/HasAction/RunAction): an action is the one part of settings that genuinely differs per Place, so the config DECLARES actions and each Place SUPPLIES behaviour; unregistered actions render disabled instead of pretending. RunAction spawns the handler so a yielding action cannot block the click and an erroring one cannot take the panel down.",
+      "kind": "module"
+    },
+    "SettingsUI": {
+      "file": "shared/src/SettingsUI.luau",
+      "hash": "8e899dab",
+      "owner": "ui",
+      "deployPath": "StarterPlayer.StarterPlayerScripts.Client.UI.SettingsUI",
+      "deployed": {
+        "Game": "8e899dab",
+        "Lobby": "8e899dab"
+      },
+      "comment": "PROMOTED TO SHARED CANON B35 2026-08-20 (owner AD-UI). LocalScript, hashed as source -- same precedent as UIKitBootstrap. ONE screen builder for both Places: it asks SettingsConfig what is in scope and draws exactly that, so there is NO Place-specific branch anywhere in the file (Game renders 11 rows / 5 tabs, Lobby renders 6 rows -- verified live at B35). Rows are cloned from the authored templates, so adding a setting stays a config edit. THE GUI IS PER-PLACE AUTHORED ART: StarterGui.Settings is NOT canon, because copying a ScreenGui between Places is a USER action (B26) -- so this script degrades to one clear warning and stands down when the art is not there yet, which is exactly the Lobby's state until the user copies it across. Action buttons repaint on every OPEN, not just at build: handlers are registered by separate scripts and LocalScript run order is not guaranteed, so a build-time-only paint would show N/A forever whenever the registrar happened to run second. Two syntax lessons are baked into the file's comments after they took it down on first deploy: a statement beginning with `(` parses as a call to the previous line (Luau: 'ambiguous syntax'), and a leading `;` is not a legal way to start a block in Luau at all -- both are avoided by binding typed locals once.",
+      "kind": "module"
     }
   },
   "templatesNote": "Templates are under drift control since 2026-08-06 (ADR-0005). They have NO shared/src file: the Instance is the canon. Two safe ways to get one into another Place: COPY it (Studio copy/paste) and prove equality by hash, OR build it with an identical DETERMINISTIC script run in both Places and hash-match (used for Kit_UnitIcon). Never rebuild by hand/by eye. See tools/checklists.md."

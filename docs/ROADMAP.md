@@ -245,6 +245,36 @@ everything untradeable at launch).
   a decision on how food is obtained — nothing grants items today but an INSANE victory.
 
 
+- ✅ **B35 (AD-Gacha, BOTH Places, 2026-08-20) — THE UNIFIED SETTINGS SYSTEM. Resolves
+  `docs/proposals/2026-08-09-unified-settings-both-places.md`; full doc `docs/systems/settings.md`.**
+  Manifest **31 → 35**, `TOOLVERSION B35-1`, both Places hash-matched byte-for-byte:
+  `SettingsConfig` `5f0dc44d`, `SettingsService` `8b3b1a72`, `ClientSettings` `a3a9d32f`,
+  `SettingsUI` `8e899dab`. **All four deploy at IDENTICAL paths in both Places, which is the whole
+  trick** — five Game scripts require `ClientSettings` by a relative path, so keeping every path put
+  meant promotion cost **zero consumer edits** and the Lobby simply grew the same folders.
+  Each schema entry now declares **`Scope`** (`Both`/`GameOnly`/`LobbyOnly`) and **`Kind`**
+  (`Preference`/`Action`), so **`SettingsUI` contains no Place-specific branch anywhere** — it asks
+  the config what is in scope and draws it (Game 11 rows / 5 tabs, Lobby 6 rows, verified live).
+  ⚠ **`Sanitize` ignores `Scope` on purpose:** one profile serves both Places, so dropping
+  out-of-scope keys would mean a Lobby save permanently destroying every `GameOnly` preference. That
+  is the single most important line in the system, and it is proven — a Game-side save left the
+  `LobbyOnly` `SkipRevealAnim` intact, and `MusicVolume` set in the Game was read back and applied in
+  the Lobby. **No save-schema bump was needed**: `Data.Settings` has been free-form since v1.
+  **Two real bugs fixed on the way.** (1) The volume slider controlled *nothing* — it drove a
+  SoundGroup named `MasterSFX` that has never existed in either Place; it now drives B32's
+  `Groups.Master > UI/SFX/BGM` with one slider each for Music/SFX/UI. (2) Settings silently reverted
+  to defaults on join: the client fetches once and caches, and that fetch regularly beat the profile
+  load, so `Get()` fell through to defaults and the player ran the whole session with real settings
+  on the server and default ones on screen. `OnServerInvoke` now waits for the profile.
+  Actions are declared centrally but supplied per Place (`ClientSettings.RegisterAction`), and an
+  unregistered action renders **disabled**, never silently inert. `Remotes` **21 → 22**.
+  🔲 **Two follow-ups, both named in `STATE.md`:** the user must copy `StarterGui.Settings` into the
+  LOBBY (B26 — art is a user action; until then `SettingsUI` warns once and stands down), and
+  **AD-Game must register the Game's three actions** (`RestartMatch` / `ReturnToLobby` /
+  `TeleportToSpawn`), which render disabled there. `ReturnToLobby` must respect teleport contract v4,
+  which is exactly why AD-Gacha did not invent it.
+
+
 ## Cross-Place
 
 - ✅ Save schema v1 shared + deployed to both Places

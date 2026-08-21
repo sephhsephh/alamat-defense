@@ -1,5 +1,5 @@
 # CONTEXT — Lobby place (LIVE, booted 2026-07-17)
-<!-- owner: lobby | scope: lobby | last-verified: 2026-08-20 (B34) -->
+<!-- owner: lobby | scope: lobby | last-verified: 2026-08-20 (B35) -->
 
 The social/meta Place: players land here, view their collection, roll banners, pick a stage + difficulty, form parties, and teleport
 into the Game place.
@@ -57,25 +57,29 @@ into the Game place.
 
 ## UI kit + screens (AD-UI)
 
-**B34 — TWO KIT MODULES PROMOTED, AND A WATCHDOG INSTEAD OF A SWEEP.** `UIKit.Notify` (`5e2b09d4`) ends B33's toast FORK -- the Game's
-original and the Lobby's copy sat in different paths, in neither manifest, only one hardened; both are retired `*_RETIRED_2026-08-20`
-and all five consumers repointed (API unchanged, so ONE line each). `UIKit.UnitCard` (`bd2421c5`) ends the FOUR-copy
-`setViewportModel`/`paintTier` duplication -- measured first: three of each were byte-identical, Units differed only in its model
-source and two flags. Manifest **29 -> 31**, hash-matched both Places, `TOOLVERSION B34-1`. **The 334 bare `WaitForChild` were NOT
-swept** (~100 lookups across 14 working files = a bigger risk than the bug); instead every boot script sets `BootComplete` and
-`StarterPlayerScripts.ScreenBootWatchdog` NAMES whatever never finished -- B33's real defect was SILENCE, not a missing timeout.
+**B35 — ONE SETTINGS SYSTEM FOR BOTH PLACES. FULL DOC: `docs/systems/settings.md`.** 4 new shared entries at IDENTICAL paths in both
+Places (`SettingsConfig` `5f0dc44d`, `SettingsService` `8b3b1a72`, `ClientSettings` `a3a9d32f`, `SettingsUI` `8e899dab`) -- identical
+paths are why it cost ZERO consumer edits in the Game. Entries declare `Scope` + `Kind`, so **`SettingsUI` has no Place branch
+anywhere**: Game 11 rows, Lobby 6. **`Sanitize` is Scope-BLIND ON PURPOSE** -- one profile serves both Places, so dropping
+out-of-scope keys would permanently lose the other Place's prefs. Manifest **31 -> 35**, `TOOLVERSION B35-1`, `Remotes` **21 -> 22**.
+Two real bugs fixed: the volume slider drove a `MasterSFX` group that never existed, and the join-time fetch could beat the profile
+load and cache DEFAULTS for the whole session. **`StarterGui.Settings` is per-Place ART and is NOT here yet** -- until the user copies
+it, `SettingsUI` warns once and stands down. `StarterPlayerScripts.LobbySettingsActions` registers `TeleportToSpawn`.
+
+**B34 — TWO KIT MODULES PROMOTED, AND A WATCHDOG INSTEAD OF A SWEEP.** `UIKit.Notify` (`5e2b09d4`) ends B33's toast FORK (two copies,
+two paths, neither manifest -- both retired `*_RETIRED_2026-08-20`, five consumers repointed one line each); `UIKit.UnitCard`
+(`bd2421c5`) ends the FOUR-copy `setViewportModel`/`paintTier` duplication, measured before extracting. **The 334 bare `WaitForChild`
+were NOT swept** (~100 lookups across 14 working files = a bigger risk than the bug); instead every boot script sets `BootComplete`
+and `StarterPlayerScripts.ScreenBootWatchdog` NAMES whatever never finished -- B33's real defect was SILENCE, not a missing timeout.
 C4 feeding is scoped and BLOCKED ON DATA: `docs/proposals/2026-08-20-c4-feeding.md`.
 
-**B33 — THE UNITS SCREEN DIED AND THE FIX IS A RULE.** B32 retired `SellConfirm` and called it "deletable"; the user deleted it; six
-bare `WaitForChild` calls in `UnitsController` still pointed at it. **A bare `WaitForChild` NEVER times out**, so the controller
-stopped at its first declaration and the whole screen silently never booted. Authored-instance lookups now go through `need()`
-(bounded + detached stand-in + one warn naming every missing path) and the feature refuses to arm rather than half-work. **334 bare
-vs 23 timed remain Lobby-wide — NOT swept.** Also B33, all Lobby-local (**nothing shared changed**): the toast system the user
-copied from the Game (`Notifications` + `PlayerScripts. NotificationController`) is adopted across the Lobby under the rule **TOAST
-EVENTS, LABEL STATE**; `Remotes`=**21** with `CurrencyChanged` (no payload — `GetUnitViews` stays the one read path) fired debounced
-by `GrantService`; `Configs.Meta.PlayerLevelConfig` is the ONE XP-per-level curve (Lobby-local on purpose) and drives the new
-`ExpBar`. **`StarterGui.Summon` is the user's UNFINISHED replacement for `SummonScreen` — do not touch it.** All of it:
-`docs/systems/ui-feedback.md`.
+**B33 — THE UNITS SCREEN DIED AND THE FIX IS A RULE.** A retired `SellConfirm` was deleted while six bare `WaitForChild` calls still
+pointed at it; **a bare `WaitForChild` NEVER times out**, so the controller stopped at its first declaration and the whole screen
+silently never booted. Authored lookups now use `need()` (bounded + detached stand-in + one warn per missing path) and the feature
+refuses to arm rather than half-work. Also B33: toasts adopted Lobby-wide under **TOAST EVENTS, LABEL STATE**; `CurrencyChanged` (no
+payload — `GetUnitViews` stays the one read path) fired debounced by `GrantService`; `Configs.Meta.PlayerLevelConfig` is the ONE
+XP-per-level curve (Lobby-local on purpose) and drives `ExpBar`. **`StarterGui.Summon` is the user's UNFINISHED replacement for
+`SummonScreen` — do not touch it.** Detail: `docs/systems/ui-feedback.md`.
 
 **B32 — THE SHARED FEEDBACK LAYER. FULL DOC: `docs/systems/ui-feedback.md` — read it before touching any button, sound or confirm.**
 The user REBUILT `HUD.Left.Buttons`, so every screen's entry point renamed to
@@ -84,11 +88,10 @@ became it). All six are tagged `UIKitButton` and are **panel-style**, which `UIK
 real `Sound` under `SoundService`.** `UIKit.Confirm` = the ONE confirm dialog; `Server.Meta.UnitFlagsService` = the ONE
 `Favorited`/`Locked` writer.
 
-Three docs: **`ui-kit.md`** = the Place-neutral kit (5 controllers in `RS.Shared.UIKit` + 7 templates in `RS.UITemplates.Kit`,
-drift-controlled). **`lobby-ui.md`** = this Place's SCREENS (Units, Items, Collection, Hotbar, CurrencyBar, HUD buttons, legacy
-Party/Return/StarterChoice). **`play-menu.md`** = PlayGUI + LoadingScreen. All `DevAutoOpen` harnesses OFF. Units-screen cards ARE
-`Kit.UnitIconV2` clones since **B27b** — ADR-0009's screen-local `UnitTemplate` is gone, and any stray copy left in `UnitsContainer`
-is destroyed at boot. (This line claimed the opposite until B31.)
+Four docs: **`ui-kit.md`** = the Place-neutral kit (9 controllers in `RS.Shared.UIKit` + 7 templates, drift-controlled).
+**`ui-feedback.md`** = buttons/sound/confirm/toasts. **`settings.md`** = the cross-Place settings system. **`lobby-ui.md`** = this
+Place's SCREENS; **`play-menu.md`** = PlayGUI + LoadingScreen. All `DevAutoOpen` harnesses OFF. Units-screen cards ARE
+`Kit.UnitIconV2` clones since **B27b** — ADR-0009's screen-local `UnitTemplate` is gone and any stray copy is destroyed at boot.
 
 **`ObtainRewardsGUI` — the reward-reveal surface (detail in `lobby-ui.md`). Fire it, never rebuild:**
 `ClientEvents.ShowRewards:Fire({{Id="Archer",Level=12},{Id="Gold",Qty=250}})`. Grants QUEUE; click 1 = SKIP, 2 = CLOSE. Its pop
@@ -103,8 +106,7 @@ lookup is NON-RECURSIVE on purpose (duplicate names under both frames); labels w
 the **live B21 reward preview**, mirrored into `LobbyFrame` from ONE `GoldBand` computation. `LoadingScreen` is Lobby-local, NOT
 drift-controlled (§4). **P7 (the global queue, §11) SHIPPED at B23 on teleport v4.** `FindMatchButton` — under **StoryModeFrame**,
 not MainMenu — is LIVE: `PlayGUIController` no longer disables it and the new `MatchmakingController` (the FIFTH PlayGUI script)
-owns it; its `InactiveOverlay` stays authored but hidden. **MemoryStore works from Studio; `ReserveServer` is 403 here**, so the
-cross-server handoff and every multi-client §11 clause need a live two-client run.
+owns it; its `InactiveOverlay` stays authored but hidden. **MemoryStore works from Studio; `ReserveServer` is 403 here**, so the cross-server handoff needs a live two-client run.
 
 ## Gacha — banner ENGINE built (B3, 2026-08-09). **Full doc: `docs/systems/gacha.md` — read it**
 
@@ -122,8 +124,8 @@ cross-server handoff and every multi-client §11 clause need a live two-client r
 - **SELL DUPES LIVE at B31 (blueprint C3 COMPLETE) — doc: `docs/systems/ascension.md`.** **`UnitConsumeRules` = THE ONE "may this unit
   be destroyed" rule** (Locked/Favorited/equipped/spirit), shared with ascension's `PickDupe`; **`GrantService.SellUnits` is the ONLY
   `Data.Units` delete** and it CREDITS BEFORE DESTROYING. Prices are shared `TierConfig.GetSellValue` (0 for an unknown tier, so it
-  can never mint Silver). UI = multi-select in the Units screen; B32 routes the confirm through `UIKit.Confirm` and the authored
-  `SellButtons` row; B33 moved its messages onto toasts and DELETED the retired `SellConfirm` references. Harness `UnitsGUI.DevSell`.
+  can never mint Silver). UI = multi-select in Units; the confirm goes through `UIKit.Confirm`, messages through toasts (B32/B33).
+  Harness `UnitsGUI.DevSell`.
 
 ## Open PENDINGs (see STATE.md — this is the Lobby-relevant subset)
 
@@ -133,17 +135,16 @@ cross-server handoff and every multi-client §11 clause need a live two-client r
 
 - **v3/v4 do NOT interoperate:** a partial publish breaks EVERY launch (version mismatch).
 - **AD-UI:** unit models are all `UnitModels.Placeholder`; `ItemHoverCard` split. `QuickSellButton` wired B31; `FavoriteButton` +
-  `LockUnitButon` (sic) wired B32 through `UnitFlagsService` (the ONE writer).
+  `LockUnitButon` (sic) wired B32 through `UnitFlagsService` (the ONE writer). **`HUD.Right.UpperRight`'s five buttons
+  (`RedeemCodes`/`LeaderBoards`/`InviteFriends`/`Inbox`/`Settings`) are the user's, tagged at B35 — only `Settings` is wired.**
 - **V2 kit: ✅ ADOPTED BOTH PLACES AT B26, v1 RETIRED** (do not re-add). **Canon: `ui-kit.md`.** Not to re-derive: rarity is on the
-  ROOT `UIGradient`, direct-children-only, **NO tier border** (user, B25); **no `ShinyBadge` in V2** — shiny is unmarked on an
-  ascension card.
-- **B28 — SCREENS SLIDE.** `UnitsGUI`/`ItemsGUI`/`SummonScreen`/`IndexScreen` open/close through **`Motion.slideIn`/`slideOut`** and
-  test **`Motion.isOpen(main)`, not `gui.Enabled`** (still Enabled mid close-tween); boot = `hideInstant()`; PlayGUI excluded (veil),
-  `AscensionScreen` untouched.
+  ROOT `UIGradient`, direct-children-only, **NO tier border** (user, B25); **no `ShinyBadge` in V2**.
+- **B28 — SCREENS SLIDE** via **`Motion.slideIn`/`slideOut`**; test **`Motion.isOpen(main)`, not `gui.Enabled`** (still Enabled
+  mid close-tween). Boot = `hideInstant()`; PlayGUI excluded (veil), `AscensionScreen` untouched.
 
 ## Ownership notes
 
 - Lobby owns the teleport contract + the lobby UI/scene. **AD-Gacha owns the banner catalog + grant pipeline**
-  (`docs/systems/gacha.md`, `gacha-selection.md`), home Place Lobby. Lobby CONSUMES and never edits: save schema, tower configs,
-  progression config, trait configs, **`RewardScalingConfig`** (AD-Game's — read the curve, never re-author it here).
-  Currency/XP/tower grants go through the same profile (never a second store) and **`GrantService`**, never inline.
+  (`docs/systems/gacha.md`, `gacha-selection.md`), home Place Lobby. Lobby CONSUMES and never edits: save schema, tower/progression/
+  trait configs, **`RewardScalingConfig`** (AD-Game's — read the curve, never re-author it). Currency/XP/tower grants go through the
+  same profile (never a second store) and **`GrantService`**, never inline.
