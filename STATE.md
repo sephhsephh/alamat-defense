@@ -1,5 +1,5 @@
 # STATE — Alamat Defense
-<!-- owner: all | scope: global | last-verified: 2026-08-21 (B36) -->
+<!-- owner: all | scope: global | last-verified: 2026-08-21 (B37) -->
 <!-- SIZE RULE (ADR-0006): ONE file, cap 120 lines. A RESOLVED pending is DELETED (the changelog
      is its record) -- never struck through. Sections that duplicate a canon doc keep a pointer. -->
 
@@ -32,18 +32,16 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 
 - **NOT A PENDING — STANDING PRACTICE (B25): the user republishes BOTH Places EVERY session.** Only *state* it when a contract bumps.
   Still unconfirmed: a **live two-client v4 queue run** (403 in Studio).
-- **NOT A PENDING — ONE WRITER EACH, do not add a second:** `BannerChoiceService`→`BannerChoices` (Selection banners live, B30, B4 ✅) ·
-  `GrantService.SellUnits`→the only `Data.Units` delete (C3 ✅, B31) · **`UnitConsumeRules`= the ONE "may this be destroyed" rule**
-  (ascension delegates) · `UnitFlagsService`→`Favorited`/`Locked` (B32). `ChosenAtDay` is a DAY NUMBER, never a timestamp. Docs:
-  `docs/systems/{gacha-selection,ascension,ui-feedback}.md`.
-- **NOT A PENDING — B32/B33:** `UIKit.Sound` + `UIKit.Confirm` (2s gate); `Button` DETECTS panel vs flat; siblings use
-  `optionalSibling` (10s+stub). `Remotes`=**22**. `CurrencyChanged` is a server→client PING with **no payload** (a balance on the wire
-  = a second source of truth beside ADR-0004's `GetUnitViews`), debounced by `GrantService`. **TOAST EVENTS, LABEL STATE.**
+- **NOT A PENDING — ONE WRITER EACH, do not add a second:** `BannerChoiceService`→`BannerChoices` · `GrantService.SellUnits`→the only
+  `Data.Units` delete · `UnitConsumeRules`= the ONE "may this be destroyed" rule · `UnitFlagsService`→`Favorited`/`Locked` ·
+  `SettingsService`→`Data.Settings`. `ChosenAtDay` is a DAY NUMBER.
+- **NOT A PENDING — B32/B33:** `UIKit.Sound` + `UIKit.Confirm` (2s gate); `Button` DETECTS panel vs flat; siblings use `optionalSibling`
+  (10s+stub). `Remotes`=**22**. `CurrencyChanged` is a server→client PING with **no payload** (a balance on the wire = a second source of
+  truth beside ADR-0004's `GetUnitViews`), debounced by `GrantService`. **TOAST EVENTS, LABEL STATE.**
 - **PENDING (USER, B32): PASTE THE 13 SOUND IDS** into `SoundService.{UI.*, BGM.*}` — all empty, the game is silent. **Also copy
   `StarterGui.ConfirmationPopupUI` into the GAME** (B26: art cannot be scripted); till then `Confirm.ask` there auto-answers **NO**.
-- **PENDING (USER, B32, art/layout):** `SellButtons.CancelButton` (x≈475) nearly overlaps `QuickSellButton` (x≈513), and `PlayButton`
-  still wears the **Shop** logo. **NOT a pending: the 0.05 `UIHoverStroke.Thickness` is DELIBERATE** — the user reviewed it at B35 and
-  said leave it. Do not "fix" it, and do not re-raise it.
+- **PENDING (USER, B32, art/layout):** `SellButtons.CancelButton` (x≈475) nearly overlaps `QuickSellButton` (x≈513); `PlayButton`
+  still wears the **Shop** logo. **NOT a pending: the 0.05 `UIHoverStroke.Thickness` is DELIBERATE (user, B35) — do not re-raise.**
 - **PENDING (USER, B33): the new `StarterGui.Summon` is UNFINISHED — do NOT touch.** It replaces `SummonScreen` when the user says so.
   `HUD.Right` gained `BattlePassButton` / `EventButton` / `DailyRewardsButton` (renamed at their request) — **none are wired.**
 - **PENDING (USER, B33, their design, NOT built): nothing grants `Data.PlayerXP`,** so the ExpBar reads 0 forever and that is not its bug.
@@ -58,9 +56,15 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   `ItemCatalog` has NO `FeedValue`, no unit XP curve, no writer for `UnitInstance.XP`. Needs food items + a curve + a source of food.
 - **PENDING (AD-Game, B32): the GAME has no audio owner.** `UIKit.Sound` + the `SoundService` tree are deployed there but nothing calls
   `playBGM(actId)`. Copy `LobbyAudio`'s shape; per-act slots exist.
-- **PENDING (AD-UI, design): quests/login/codes still need a reveal answer** — `ShowRewards`' return-value trick only serves
-  player-INITIATED grants; toasts are a *message* surface, not a reveal. **`HUD.Right.UpperRight`'s `RedeemCodes`/`LeaderBoards`/
-  `InviteFriends`/`Inbox` are tagged but UNWIRED — the same question gates them.**
+- **NOT A PENDING — B37 ANSWERED THE REVEAL QUESTION.** `Remotes.PushRewards` (22→**23**) + `Server.Meta.RewardPush` +
+  `RewardPushReceiver` let the SERVER reveal an unasked-for grant. Lobby-local; **shared canon unchanged**. **OPT-IN —
+  `GrantService` NEVER pushes**, so a double reveal is impossible by construction. **Click → return value; server → `RewardPush`.**
+  `ObtainRewardsGUI` unchanged. **GAP: a grant made while the player is AWAY is never revealed.** `docs/systems/rewards.md`.
+- **PENDING (AD-UI, features): DailyRewards / RedeemCodes / Inbox / Quests are UNBLOCKED but UNBUILT** — each needs its own data (a
+  reward table, a code registry, per-player redemption tracking) before it can be built.
+- **KNOWN GAP (B37): a grant made while the player is AWAY is never revealed** — `RewardPush` returns `player_not_in_server` and the grant
+  stays safe on the profile. Persisting unseen reveals needs a profile queue (schema change) + an overflow rule. Do NOT improvise one
+  inside `RewardPush`; it is presentation transport and owns no storage.
 - **PENDING (AD-Game, B24): `UnitIconV2` needs PLACEMENT COST + ELEMENT** (Game-only); prices are the template placeholder —
   `Motion.SHOW_PLACEHOLDER_PRICES=false` reverts both Places. **(AD-Traits)** `TraitDefinitions` has NO icon field.
 - **PENDING (USER, design — B23): GAME SPEED IN A MATCHMADE MATCH** — match-wide, and both the authority and the 3× gate come from an
@@ -69,16 +73,15 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   looks like a leftover test value. A design call.
 - **NOT A PENDING — B35 SHIPPED THE UNIFIED SETTINGS SYSTEM, BOTH PLACES HASH-MATCHED.** 4 shared entries at IDENTICAL paths in both
   Places (`SettingsConfig` `5f0dc44d`, `SettingsService` `8b3b1a72`, `ClientSettings` `a3a9d32f`, `SettingsUI` `7e5a736a`), so it cost
-  ZERO consumer edits. Entries declare **`Scope`** + **`Kind`** — a Place difference is a config field, never a branch. **`Sanitize`
-  is Scope-BLIND ON PURPOSE:** one profile serves both Places, so dropping out-of-scope keys would permanently lose the other
-  Place's prefs. NO schema bump. Doc: `settings.md`.
-- **NOT A PENDING — B36: the Lobby settings screen is LIVE** (the user copied `StarterGui.Settings` across). Verified: 6 rows / 5 tabs
-  vs the Game's 11, `TeleportToSpawn` enabled, `MusicVolume` set in the GAME showing 25% here. **Tidy:** the dev profile still carries
-  a dead `BannerChoices["B29ProbeBanner"]`.
-- **NOT A PENDING — B36 FIXED THE WATCHDOG, WHICH HAD NEVER RUN.** It read `script.Source` at runtime — **a LocalScript cannot**
-  (plugin capability) — so it threw every boot from B34. B34's "verified 19/19" tested a re-implementation inside `execute_luau`,
-  **which HAS plugin capability**. Now a PAIRED marker (`false` first line, `true` last) needs no `Source` read; `SettingsUI`
-  re-hashed **`7e5a736a`**. **The start marker goes AFTER `--!strict`** — prepending broke strict mode in all 21. `ui-feedback.md`.
+  ZERO consumer edits. Entries declare **`Scope`** + **`Kind`** — a Place difference is a config field, never a branch. **`Sanitize` is
+  Scope-BLIND ON PURPOSE:** one profile serves both Places, so dropping out-of-scope keys would permanently lose the other Place's prefs.
+  NO schema bump. Doc: `settings.md`.
+- **NOT A PENDING — B36: the Lobby settings screen is LIVE** (the user copied `StarterGui.Settings` across) — 6 rows / 5 tabs vs the
+  Game's 11, from the same file. **Tidy:** the dev profile still carries a dead `BannerChoices["B29ProbeBanner"]`.
+- **NOT A PENDING — B36 FIXED THE WATCHDOG, WHICH HAD NEVER RUN** (it read `script.Source` at runtime; a LocalScript cannot).
+  **THE LESSON: testing a copy of the code in a MORE PRIVILEGED context is not testing the code** — B34 verified a
+  re-implementation inside `execute_luau`, which has plugin capability. Paired markers now; **the start marker goes AFTER
+  `--!strict`** or Luau silently drops strict mode. `ui-feedback.md`.
 - **PENDING (AD-Game, B35): the Game's three settings ACTIONS have no handler** (`RestartMatch`/`ReturnToLobby`/`TeleportToSpawn` render
   disabled) — wire via `ClientSettings.RegisterAction(id, fn)`; `ReturnToLobby` must respect teleport v4, which is why it was left.
 - **PENDING (AD-Meta at Phase D):** deploy `MetaMath` to the GAME + flip `deployed.Game`; till then its `MetaMath=MISSING` is EXPECTED.
@@ -93,9 +96,6 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   (B26, accepted):** V2 has no `ShinyBadge` — shiny is unmarked on an ascension card; re-add or drop it deliberately.
 - **NOT a bug:** Units stat NUMBERS are per-TOWER (mid-roll ref), so two copies show equal numbers while GRADES differ (ADR-0003).
   `Data.Loadout` is dense. Difficulty: UI 1–100, wire 100–1000 (ADR-0011).
-
-## Contracts (versions only — detail in `docs/contracts/`)
-
 - **Save schema v3** (B29) — `ProfileTemplate` `72d3944f`, drift-green BOTH Places. Store
   `Beta1_PlayerData` (Studio `Beta1_PlayerDataDev1`, API access ON). **`Migrations[2]` is a deliberate
   NO-OP and must stay one** — `Migrate()` warns and STOPS at a missing step, stranding every later one.

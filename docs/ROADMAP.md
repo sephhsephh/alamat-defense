@@ -300,6 +300,38 @@ everything untradeable at launch).
   finished after 15s` — a line that had never once appeared.
 
 
+- ✅ **B37 (AD-Gacha, Lobby, 2026-08-21) — THE PUSH-REVEAL PATH. The server can finally show a
+  player something they never asked for.** Full doc: `docs/systems/rewards.md`.
+  Every reveal until now needed the **client** to invoke a remote and get views **back**. Nothing the
+  **server** starts — daily rewards, redeemed codes, quest completions, inbox gifts — has an
+  invocation to return from, and that single gap is why four of the HUD's buttons could not be built.
+  Three Lobby-local pieces close it: **`RS.Remotes.PushRewards`** (Remotes **22 → 23**),
+  **`Server.Meta.RewardPush`**, and **`StarterPlayerScripts.RewardPushReceiver`**. **Shared canon did
+  not change** — manifest stays at 35.
+  ⚠ **It is OPT-IN: `GrantService` never pushes.** Auto-push was considered and rejected (the user's
+  call): summon and sell would then reveal *twice*, once from the return value and once from the
+  push, so every existing caller would need a suppression flag — and a flag someone forgets is a
+  double popup in a player's face. Opt-in makes the double reveal **impossible by construction rather
+  than by discipline**, and that was verified by enumeration rather than asserted: the only live
+  caller of `RewardPush.To` in the whole server tree was the test harness, with `SummonService` still
+  revealing through `Rewards = views` exactly as before.
+  **The rule, and it greps:** player's own click → the **return value**; server decided → **`RewardPush`**.
+  **`ObtainRewardsGUI` needed zero changes**, which was the design goal: a server-initiated reward is
+  not a new *kind* of reveal, just the same reveal with a different origin, so the receiver is a pure
+  adapter (remote in, `ClientEvents.ShowRewards` out) and the surface keeps its B4 contract of "fire
+  it, never rebuild it". The surface already queues, so a push landing mid-reveal was safe for free.
+  Verified live end to end: a server-initiated grant moved Gold 15 → 265 and Silver 0 → 100 and the
+  reveal opened showing `Gold x250` / `Silver x100`. The harness also proved the refusal path — when
+  `GrantService` rejected a malformed grant, **nothing was pushed**, because a reveal for a grant that
+  did not happen is a lie to the player.
+  🔲 **Known gap, deliberately not built:** a grant made while the player is **away** is never
+  revealed — `RewardPush` returns `player_not_in_server` and the grant stays safe on the profile.
+  Persisting unseen reveals needs a queue on the profile (a schema change) plus an overflow rule, and
+  must not be improvised inside `RewardPush`, which owns no storage.
+  🔲 **Now unblocked but unbuilt:** DailyRewards, RedeemCodes, Inbox and Quests. Each still needs its
+  own data — a reward table, a code registry, per-player redemption tracking — before it can be built.
+
+
 ## Cross-Place
 
 - ✅ Save schema v1 shared + deployed to both Places

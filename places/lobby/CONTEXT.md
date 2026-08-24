@@ -1,14 +1,13 @@
 # CONTEXT — Lobby place (LIVE, booted 2026-07-17)
-<!-- owner: lobby | scope: lobby | last-verified: 2026-08-21 (B36) -->
+<!-- owner: lobby | scope: lobby | last-verified: 2026-08-21 (B37) -->
 
 The social/meta Place: players land here, view their collection, roll banners, pick a stage + difficulty, form parties, and teleport
 into the Game place.
 
 ## Current live state
 
-- **Shared canon: 27/27 PRESENT here (20 modules + 7 templates), hashes in `shared/manifest.json`.** `MetaMath` stays Lobby-only, so
-  the GAME reports 26/27 — expected, not drift. Every other entry matches (`ItemCatalog`'s real icon assetids included, since B23).
-  History: CHANGELOG.
+- **Shared canon: 35/35 PRESENT here (28 modules + 7 templates), hashes in `shared/manifest.json`.** `MetaMath` stays Lobby-only, so
+  the GAME reports 34/35 — expected, not drift. History: CHANGELOG.
 - **Trait rarity table (B12):** `RS.Configs.Traits.{TraitRegistry,TraitDefinitions}` are SHARED canon; API is
   `TraitRegistry.Roll(rng)`, there is no `RollTrait`.
 - **`UnitStatsCatalog`** = GENERATED cache of each tower's resolved base DMG/RNG/SPA at tier 1 / ML 1 / no trait / mid-roll / asc 0 —
@@ -24,8 +23,8 @@ into the Game place.
   treatment. **`GetCollection` is RETIRED; do not add a second read path.** Per owned uuid: `Uuid, TowerId, Name, Tier` (shared
   `ItemCatalog`), `Level, XP, Trait, Shiny, Ascension, Worthiness, Locked, Favorited, Equipped` (uuid in `Loadout`), raw `StatRolls`,
   `Grades = {DMG,RNG,SPA}` — plus `Loadout`, `Currencies`, `PlayerXP/PlayerLevel`, `MaxLoadout`, `Items {[itemId]=count}`. **No
-  resolved DMG/RNG/SPA, no XpPct, NO cost and NO element** (B24). Clients never read profiles. `RS.Remotes` holds **19** (B30
-  `ChooseBannerUnit`, B31 `SellUnits`). - Stage select + difficulty = the `RS.Configs.StageRegistry` mirror + `GetStages`; captures
+  resolved DMG/RNG/SPA, no XpPct, NO cost and NO element** (B24). Clients never read profiles. `RS.Remotes` holds **23**.
+  - Stage select + difficulty = the `RS.Configs.StageRegistry` mirror + `GetStages`; captures
   (StageId, DifficultyPercent). `StageSelectScreen` was DELETED at B19 — PlayGUI covers stage select, difficulty and launch;
   `GetStages` SURVIVES (ReturnScreen calls it). **`ClientEvents .OpenStageSelect` is PlayGUI's public open event** — fire it with an
   act id. The mirror carries `StageNumber`/`StageName`/`ActNumber`/`ActName` copied VERBATIM from the Game's StageConfigs.
@@ -57,36 +56,40 @@ into the Game place.
 
 ## UI kit + screens (AD-UI)
 
-**B36 — THE LOBBY SETTINGS SCREEN IS LIVE, AND THE WATCHDOG THAT WAS NEVER RUNNING IS FIXED.** The user copied `StarterGui.Settings`
-across, so B35's deployed-and-waiting code now builds here: **6 rows / 5 tabs** (the Game draws 11 from the SAME file).
-**`ScreenBootWatchdog` read `script.Source` at runtime — a LocalScript CANNOT (plugin capability) — so it threw at EVERY boot from B34
-and reported nothing. B34's "verified 19/19" ran the check inside `execute_luau`, WHICH HAS plugin capability: a re-implementation was
-tested, not the deployed script.** Now a PAIRED marker (`BootComplete=false` first executable line, `true` last) gives nil/false/true
-with no `Source` read. **The start marker goes AFTER `--!strict`** — the directive must stay on line 1 or Luau silently drops strict
-mode, and prepending it broke all 21 scripts at once. `SettingsUI` → **`7e5a736a`**. First real run: `21/21 finished after 15s`.
+**B37 — THE SERVER CAN NOW REVEAL A GRANT THE PLAYER NEVER ASKED FOR. FULL DOC: `docs/systems/rewards.md`.** Until now every reveal
+needed the CLIENT to invoke a remote and get views BACK; nothing the SERVER starts (daily, codes, quests, inbox) has an invocation to
+return from — which is why four HUD buttons could not be built. `RS.Remotes.PushRewards` (**22 → 23**) + `Server.Meta.RewardPush` +
+`StarterPlayerScripts.RewardPushReceiver`, all Lobby-local; **shared canon did NOT change.** **IT IS OPT-IN — `GrantService` NEVER
+pushes**, so a double reveal is impossible BY CONSTRUCTION rather than by discipline (verified: the harness was the only caller).
+**Rule: player's click → the RETURN VALUE; server decided → `RewardPush`.** `ObtainRewardsGUI` needed **zero** changes — the receiver
+is a pure adapter. Grant through `GrantService` FIRST, push the SAME views unchanged, never push a grant that refused. **GAP: a grant
+made while the player is AWAY is never revealed.** Harness `Server.Meta.DevRewardPush` (Studio only), attribute set **server-side**.
+
+
+**B36 — THE LOBBY SETTINGS SCREEN IS LIVE, AND THE WATCHDOG THAT NEVER RAN IS FIXED.** The user copied `StarterGui.Settings` across,
+so B35's code now builds here: **6 rows / 5 tabs** (the Game draws 11 from the SAME file). **`ScreenBootWatchdog` read
+`script.Source` at runtime — a LocalScript CANNOT — so it threw at EVERY boot from B34 and reported nothing; B34's "verified 19/19"
+ran the check inside `execute_luau`, WHICH HAS plugin capability, so a re-implementation was tested rather than the deployed
+script.** Paired markers now, and **the start marker goes AFTER `--!strict`** or Luau silently drops strict mode (prepending broke
+all 21 at once). `SettingsUI` → **`7e5a736a`**.
 
 
 **B35 — ONE SETTINGS SYSTEM FOR BOTH PLACES. FULL DOC: `docs/systems/settings.md`.** 4 shared entries at IDENTICAL paths in both
 Places (`SettingsConfig` `5f0dc44d`, `SettingsService` `8b3b1a72`, `ClientSettings` `a3a9d32f`, `SettingsUI` `7e5a736a`) — identical
-paths are why it cost ZERO consumer edits in the Game. Entries declare `Scope` + `Kind`, so **`SettingsUI` has no Place branch
-anywhere**. **`Sanitize` is Scope-BLIND ON PURPOSE** — one profile serves both Places, so dropping out-of-scope keys would permanently
-lose the other Place's prefs. Manifest **31 → 35**, `Remotes` **21 → 22**. Two real bugs fixed: the volume slider drove a `MasterSFX`
-group that never existed, and the join-time fetch could beat the profile load and cache DEFAULTS for the session.
-`StarterPlayerScripts.LobbySettingsActions` registers this Place's only action, `TeleportToSpawn`.
+paths are why it cost ZERO consumer edits. Entries declare `Scope` + `Kind`, so **`SettingsUI` has no Place branch anywhere**.
+**`Sanitize` is Scope-BLIND ON PURPOSE** — one profile serves both Places, so dropping out-of-scope keys would permanently lose the
+other Place's prefs. Manifest **31 → 35**. Two bugs fixed: the volume slider drove a `MasterSFX` group that never existed, and the
+join-time fetch could beat the profile load and cache DEFAULTS. `LobbySettingsActions` registers `TeleportToSpawn`.
 
 **B32-B34 — THE FEEDBACK LAYER + ITS LESSONS. FULL DOC: `docs/systems/ui-feedback.md` — read it before touching any button, sound,
-confirm or toast.** The user REBUILT `HUD.Left.Buttons`, renaming every screen's entry point to **`UnitsButton`/`SummonButton`/
-`PlayButton`/`InventoryButton`/`QuestsButton`/`ProfileButton`** (`Play` had vanished; `ShopButton` became it). All six are tagged
-`UIKitButton` and **panel-style**, which `UIKit.Button` DETECTS. **Audio = paste a SoundId onto a real `Sound` under `SoundService`.**
-ONE of each, do not add a second: `UIKit.Confirm` (confirm dialog), `UIKit.Notify` `5e2b09d4` (toasts), `UIKit.UnitCard` `bd2421c5`
-(card viewport + tier paint for all four card screens), `Server.Meta.UnitFlagsService` (`Favorited`/`Locked`).
-**The 0.05 `UIHoverStroke.Thickness` is the user's deliberate choice (B35) — do not "fix" it.**
-**LESSON (B33):** a retired `SellConfirm` was deleted while six bare `WaitForChild` calls still pointed at it; **a bare
-`WaitForChild` NEVER times out**, so the controller stopped at its first declaration and the screen SILENTLY never booted. Authored
-lookups now use `need()`; the 334 bare calls were deliberately NOT swept — the watchdog names hangs instead.
-**RULE (B33): TOAST EVENTS, LABEL STATE** — toasts self-erase, so a still-true condition stays on a label. `CurrencyChanged` carries
-no payload; `Configs.Meta.PlayerLevelConfig` is the ONE XP curve and drives `ExpBar`. **`StarterGui.Summon` is the user's UNFINISHED
-replacement for `SummonScreen` — do not touch it.**
+confirm or toast.** The user REBUILT `HUD.Left.Buttons`, renaming every entry point to **`UnitsButton`/`SummonButton`/`PlayButton`/
+`InventoryButton`/`QuestsButton`/`ProfileButton`**; all six are tagged `UIKitButton` and **panel-style**, which `UIKit.Button`
+DETECTS. **Audio = paste a SoundId onto a real `Sound` under `SoundService`.** ONE of each, do not add a second: `UIKit.Confirm`,
+`UIKit.Notify`, `UIKit.UnitCard`, `Server.Meta.UnitFlagsService`. **The 0.05 `UIHoverStroke.Thickness` is the user's deliberate
+choice (B35) — do not "fix" it.** **LESSON (B33):** a bare `WaitForChild` NEVER times out, so a deleted authored instance made a
+whole screen silently never boot; authored lookups use `need()` and the 334 bare calls were NOT swept — the watchdog names hangs.
+**RULE (B33): TOAST EVENTS, LABEL STATE.** **`StarterGui.Summon` is the user's UNFINISHED `SummonScreen` replacement — do not
+touch it.**
 
 Four docs: **`ui-kit.md`** = the Place-neutral kit (9 controllers in `RS.Shared.UIKit` + 7 templates, drift-controlled).
 **`ui-feedback.md`** = buttons/sound/confirm/toasts. **`settings.md`** = the cross-Place settings system. **`lobby-ui.md`** = this
@@ -95,18 +98,16 @@ Place's SCREENS; **`play-menu.md`** = PlayGUI + LoadingScreen. All `DevAutoOpen`
 
 **`ObtainRewardsGUI` — the reward-reveal surface (detail in `lobby-ui.md`). Fire it, never rebuild:**
 `ClientEvents.ShowRewards:Fire({{Id="Archer",Level=12},{Id="Gold",Qty=250}})`. Grants QUEUE; click 1 = SKIP, 2 = CLOSE. Its pop
-`UIScale` is on runtime CLONES only — **never add one to hashed canon.**
+`UIScale` is on runtime CLONES only — **never add one to hashed canon.** B37's push path feeds this same event (see below).
 
-**`PlayGUI` + `LoadingScreen` — the Play menu, **P1–P7 COMPLETE** (B14–B23). FULL DOC: `docs/systems/play-menu.md` — read it FIRST;
-law: `blueprints/playgui.md`.** Entry is **`HUD.Left.Buttons.PlayButton`** (renamed from `Play` at B32) → veil → other ScreenGuis
-hidden → `Main.MainMenu`. Five things not to re-derive: the three frames are **CanvasGroups** and the menu camera is Scriptable
-(**read `Workspace.PlayGUICamera.CFrame`, never write it**); **`PlayGUI.DifficultyScale` is THE ONE ADR-0011 conversion** — never
-write a second; selection travels as ATTRIBUTES on `StoryModeFrame.SelectedAct`, edge-triggered on **`SelectionSerial`**; every
-lookup is NON-RECURSIVE on purpose (duplicate names under both frames); labels with no data source are HIDDEN, not zeroed, except
-the **live B21 reward preview**, mirrored into `LobbyFrame` from ONE `GoldBand` computation. `LoadingScreen` is Lobby-local, NOT
-drift-controlled (§4). **P7 (the global queue, §11) SHIPPED at B23 on teleport v4.** `FindMatchButton` — under **StoryModeFrame**,
-not MainMenu — is LIVE: `PlayGUIController` no longer disables it and the new `MatchmakingController` (the FIFTH PlayGUI script)
-owns it; its `InactiveOverlay` stays authored but hidden. **MemoryStore works from Studio; `ReserveServer` is 403 here**, so the cross-server handoff needs a live two-client run.
+**`PlayGUI` + `LoadingScreen` — the Play menu, P1–P7 COMPLETE (B14–B23). FULL DOC: `docs/systems/play-menu.md` — read it FIRST; law:
+`blueprints/playgui.md`.** Entry is **`HUD.Left.Buttons.PlayButton`** → veil → other ScreenGuis hidden → `Main.MainMenu`. Not to
+re-derive: the three frames are **CanvasGroups** and the menu camera is Scriptable (**read `Workspace.PlayGUICamera.CFrame`, never
+write it**); **`PlayGUI.DifficultyScale` is THE ONE ADR-0011 conversion**; selection travels as ATTRIBUTES on
+`StoryModeFrame.SelectedAct`, edge-triggered on **`SelectionSerial`**; every lookup is NON-RECURSIVE on purpose (duplicate names
+under both frames); labels with no data source are HIDDEN, not zeroed, except the live B21 reward preview. `LoadingScreen` is
+Lobby-local, NOT drift-controlled. **P7 SHIPPED at B23 on teleport v4**; `FindMatchButton` (under **StoryModeFrame**) is LIVE and
+`MatchmakingController` owns it. **`ReserveServer` is 403 in Studio**, so the cross-server handoff needs a live two-client run.
 
 ## Gacha — banner ENGINE built (B3, 2026-08-09). **Full doc: `docs/systems/gacha.md` — read it**
 
@@ -116,16 +117,15 @@ owns it; its `InactiveOverlay` stays authored but hidden. **MemoryStore works fr
 - **`GrantService` is THE one grant path** (invariant 1) — never grant or write `Currencies` inline; its unit record stays
   byte-compatible with `StarterChoiceService` + the Game's `GrantUnit`.
 - **`RS.Shared.MetaMath` is SHARED canon** (`6badac1d`), **not deployed to the Game** — MISSING there is EXPECTED, not drift.
-- **Reveal = the remote's RETURN VALUE**; no push remote. Pity uses `Data.Pity[ref]` (no schema bump); pulls count on
-  `Counters.Global.GachaPulls`, NOT `Summons` (ADR-0008).
+- **Reveal = the remote's RETURN VALUE** for anything the player CLICKED. B37 added `RewardPush` for server-initiated grants only —
+  summon must NOT use it. Pity uses `Data.Pity[ref]`; pulls count on `Counters.Global.GachaPulls`, NOT `Summons` (ADR-0008).
 - **SELECTION banners LIVE at B30 (blueprint B4 COMPLETE) — FULL DOC: `docs/systems/gacha-selection.md`, read it first.**
   `SSS.Server.Meta.BannerChoiceService` + `Remotes.ChooseBannerUnit` are **the ONE writer of `Data.BannerChoices`**; **`ChosenAtDay`
   is a `MetaMath.Slot` DAY NUMBER, not a timestamp.**
 - **SELL DUPES LIVE at B31 (blueprint C3 COMPLETE) — doc: `docs/systems/ascension.md`.** **`UnitConsumeRules` = THE ONE "may this unit
-  be destroyed" rule** (Locked/Favorited/equipped/spirit), shared with ascension's `PickDupe`; **`GrantService.SellUnits` is the ONLY
-  `Data.Units` delete** and it CREDITS BEFORE DESTROYING. Prices are shared `TierConfig.GetSellValue` (0 for an unknown tier, so it
-  can never mint Silver). UI = multi-select in Units; the confirm goes through `UIKit.Confirm`, messages through toasts (B32/B33).
-  Harness `UnitsGUI.DevSell`.
+  be destroyed" rule**, shared with ascension's `PickDupe`; **`GrantService.SellUnits` is the ONLY `Data.Units` delete** and it
+  CREDITS BEFORE DESTROYING. Prices are shared `TierConfig.GetSellValue` (0 for an unknown tier, so it can never mint Silver).
+  UI = multi-select in Units. Harness `UnitsGUI.DevSell`.
 
 ## Open PENDINGs (see STATE.md — this is the Lobby-relevant subset)
 

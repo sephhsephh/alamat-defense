@@ -1,5 +1,112 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-21 [lobby] B37 — AD-Gacha: **the push-reveal path.** The server could grant a player anything and had no way to show them. Four buttons were blocked on that one missing direction.
+
+**Place asserted before every write.** Drift green **35/35** at session start and end. Everything
+added is **Lobby-local** — shared canon did not change, nothing was re-hashed, the Game is not stale.
+`RS.Remotes` **22 → 23**. Save schema unchanged at v3.
+
+### The gap, stated precisely
+
+Every reveal in the game worked the same way, and it was easy to miss why that was a limitation: the
+**client** invoked a remote, the remote **returned** reward views, and the client fired
+`ClientEvents.ShowRewards` with them. Summon, sell and ascension all do exactly this, and it is a
+good design for a grant the player *asked for*.
+
+It cannot serve anything the **server** starts. A daily reward, a redeemed code, a completed quest, a
+gift in an inbox — none of them have an invocation to return from. There was no push remote and no
+server-side reveal path of any kind. That is why `RedeemCodes`, `Inbox`, `DailyRewards` and `Quests`
+were all sitting in the HUD unwired: not four separate missing features, **one missing direction**.
+
+### Three small pieces
+
+| piece | what it is |
+|---|---|
+| `RS.Remotes.PushRewards` | RemoteEvent, server → client |
+| `Server.Meta.RewardPush` | `RewardPush.To(player \| userId, views, reason?) -> ok, why?` |
+| `StarterPlayerScripts.RewardPushReceiver` | listens, fires `ClientEvents.ShowRewards`, nothing else |
+
+### ⚠ Opt-in, and why that was the important decision
+
+The tempting design is to have `GrantService` reveal every grant automatically — one line, every
+caller gets it free. It was put to the user and rejected, and the reasoning is worth keeping:
+**summon and sell would then reveal twice**, once from the return value they already use and once
+from the push. Fixing that needs a suppression flag on every existing caller, and *a suppression flag
+someone forgets is a double popup in front of a player*.
+
+Opt-in makes the double reveal **impossible by construction rather than by discipline**. That
+distinction is the whole point — a rule enforced by structure survives people forgetting it, and a
+rule enforced by remembering does not.
+
+It was then **verified by enumeration rather than asserted**: the only live reference to
+`RewardPush.To` in the entire server tree was the test harness, with `SummonService` still revealing
+through `Rewards = views` exactly as before. That is a claim the next session can re-check in one
+grep, which matters more than my saying it holds.
+
+**The rule, and it greps:** if the player's own click caused the grant, the **return value** reveals
+it. If the server decided, call **`RewardPush`**.
+
+### `ObtainRewardsGUI` did not change at all, and that was the goal
+
+A server-initiated reward is not a new *kind* of reveal — it is the same reveal with a different
+origin. So the correct amount of new code inside the reveal surface is **zero**. The receiver is a
+pure adapter: remote in, BindableEvent out. The surface keeps its B4 contract ("fire it, never
+rebuild it") and has no idea a network exists.
+
+It also already **queued** batches, so a push arriving mid-reveal was safe for free — a case I would
+otherwise have written handling for and probably got subtly wrong.
+
+### Rules `RewardPush` enforces
+
+- **Grant first, push second**, and callers hand over the **same `views` array `Grant` returned**,
+  unchanged. One view shape, one producer. `RewardPush` builds no reward rows and must not start.
+- **Never reveal a grant that failed** — demonstrated rather than assumed (below).
+- **Oversized lists are split, never truncated** (`MaxPerMessage = 25`). Silently dropping rewards a
+  player has already been granted would leave them permanently unaware of something they own.
+- **Malformed rows are dropped loudly**, naming the caller's `reason`: a row needs a string `Id` and
+  `Kind`, or the popup opens on a blank cell — a bug that reads as the game's fault, not the caller's.
+
+### The harness, and why it had to exist
+
+There is no daily reward or code system yet, so there was **no real caller to test with**. The lazy
+option is to call `RewardPush` from tooling — and that is precisely the mistake that cost B34 a
+watchdog which never ran and two sessions of false confidence, because `execute_luau` is a separate,
+more privileged VM. Testing a fresh copy of a module in a different VM is not testing the deployed
+one.
+
+So `Server.Meta.DevRewardPush` (Studio-gated) performs the real flow from inside the real server:
+grant through `GrantService`, then push the returned views. What gets exercised is the actual module,
+the actual remote and the actual receiver.
+
+**It earned its keep on the first run** by catching my own wrong assumption. I had read `Grant`'s
+*internals* (`p.id`, `p.kind`, `p.qty`) and built the harness against those. The public contract,
+documented in the comment directly above the function, is `{ Id = "Gold", Qty = 250 }` — capitalised,
+with `kind` derived from `ItemCatalog` and never passed. `Grant` returned `bad_grant_id_1` and
+**nothing was pushed**, which incidentally proved the refusal path works: a reveal for a grant that
+did not happen is a lie to the player.
+
+One more thing worth writing down because it wasted a cycle: an attribute a **client** writes on
+`ReplicatedStorage` does not replicate to the server. The first harness trigger looked completely
+inert for exactly that reason.
+
+### Verified live
+
+A server-initiated grant moved **Gold 15 → 265** and **Silver 0 → 100** on the real profile, and the
+reveal opened showing `Gold x250` and `Silver x100`, with the CurrencyBar updating off B33's
+`CurrencyChanged` ping at the same time.
+
+- **Contract impact:** `RS.Remotes` **22 → 23** (`PushRewards`). Shared canon **unchanged** at 35
+  entries — everything here is Lobby-local. Save schema unchanged at **v3**.
+- **Known gap, deliberately not built:** a grant made while the player is **away** is never revealed.
+  `RewardPush` returns `player_not_in_server`; the grant is already safe on the profile and they will
+  see the balance next time they look. Persisting unseen reveals needs a queue on the profile (a
+  schema change) plus an overflow rule, and must not be improvised inside `RewardPush`, which is
+  presentation transport and owns no storage.
+- **Now unblocked but unbuilt:** DailyRewards, RedeemCodes, Inbox, Quests — each still needs its own
+  data (a reward table, a code registry, per-player redemption tracking).
+- **Open threads (`STATE.md`):** AD-Game's three settings actions still render disabled · 10 of 13
+  sound ids empty · C4 feeding blocked on data · `StarterGui.Summon` untouched, as asked.
+
 ## 2026-08-21 [lobby+game] B36 — AD-Gacha: **B35 proven in the Lobby, and a correction that matters more than the fix.** The watchdog built at B34 had never run once, and the reason it went unnoticed was a bad verification, not a subtle bug.
 
 **Places asserted before every write.** Drift green **35/35** at session start. `SettingsUI` re-hashed
