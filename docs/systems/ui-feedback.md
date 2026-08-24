@@ -1,7 +1,7 @@
 # SYSTEM — UI feedback: button motion, audio, and the confirmation dialog
 
 <!-- owner: AD-UI | home Place: BOTH | scope: shared -->
-<!-- last-verified: 2026-08-20 (B34: UIKit.Notify + UIKit.UnitCard promoted, watchdog proven live) -->
+<!-- last-verified: 2026-08-21 (B36: watchdog CORRECTED and proven by the real script) -->
 <!-- split out of ui-kit.md at B32: that file was at 295/300 and this is three new subsystems -->
 
 How the UI answers the player: what a button does when you touch it, what you hear, and how an
@@ -247,8 +247,36 @@ output. So instead of changing 100 lookups:
 - Roblox's own injected `LocalScript`s (`FreecamScript`, `PlayerScriptsLoader`, `RbxCharacterSounds`)
   are filtered by name — **a watchdog that cries wolf every boot is one everybody learns to ignore.**
 
-Verified live: clean baseline (19/19, zero false positives), and clearing one script's marker to
-simulate a hang produced exactly one named STUCK report.
+### ⚠ B36 correction — the B34 watchdog never actually worked
+
+The version above classified scripts by reading `script.Source`. **A LocalScript cannot read `Source`
+at runtime** — that needs plugin/Open Cloud capability — so the watchdog threw on that line at *every
+boot* from B34 until B36 and reported nothing at all:
+
+```
+The current thread cannot read 'Source' (lacking capability PluginOrOpenCloud)
+Script 'Players.<name>.PlayerScripts.ScreenBootWatchdog', Line 59
+```
+
+**The B34 "verified live, 19/19 clean" was worthless, and the reason is worth keeping.** That check
+was run inside an `execute_luau` VM — *which has plugin capability*. A re-implementation of the logic
+was tested, in a more privileged context, rather than the deployed script. **Testing a copy of the
+code somewhere more privileged is not testing the code.** The console line that exposed it had been
+printing the whole time.
+
+The fix removes the `Source` read entirely, using **two markers instead of one**:
+
+- `script:SetAttribute("BootComplete", false)` as the first executable line, and `true` at the end.
+- The watchdog then reads a tri-state: **nil** = never instrumented · **false** = started and hung ·
+  **true** = finished. Strictly *more* precise than the old scan, because `false` proves the script
+  actually began executing.
+
+**The start marker goes immediately AFTER `--!strict`, never before it.** The mode directive must
+stay on line 1 or Luau silently drops strict mode — prepending the block broke all 21 instrumented
+scripts at once before it was caught by checking rather than assuming.
+
+Verified live at B36 by the real script, in the real client: `ScreenBootWatchdog: 21/21 boot
+script(s) finished after 15s` — a line that had never once appeared before.
 
 **This is diagnosability chosen over prevention, deliberately.** A screen can still hang. It can no
 longer hang *quietly*, and it catches hangs from causes a timeout sweep never would — a remote that

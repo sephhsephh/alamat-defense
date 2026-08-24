@@ -403,14 +403,14 @@
     },
     "SettingsUI": {
       "file": "shared/src/SettingsUI.luau",
-      "hash": "8e899dab",
+      "hash": "7e5a736a",
       "owner": "ui",
       "deployPath": "StarterPlayer.StarterPlayerScripts.Client.UI.SettingsUI",
       "deployed": {
-        "Game": "8e899dab",
-        "Lobby": "8e899dab"
+        "Game": "7e5a736a",
+        "Lobby": "7e5a736a"
       },
-      "comment": "PROMOTED TO SHARED CANON B35 2026-08-20 (owner AD-UI). LocalScript, hashed as source -- same precedent as UIKitBootstrap. ONE screen builder for both Places: it asks SettingsConfig what is in scope and draws exactly that, so there is NO Place-specific branch anywhere in the file (Game renders 11 rows / 5 tabs, Lobby renders 6 rows -- verified live at B35). Rows are cloned from the authored templates, so adding a setting stays a config edit. THE GUI IS PER-PLACE AUTHORED ART: StarterGui.Settings is NOT canon, because copying a ScreenGui between Places is a USER action (B26) -- so this script degrades to one clear warning and stands down when the art is not there yet, which is exactly the Lobby's state until the user copies it across. Action buttons repaint on every OPEN, not just at build: handlers are registered by separate scripts and LocalScript run order is not guaranteed, so a build-time-only paint would show N/A forever whenever the registrar happened to run second. Two syntax lessons are baked into the file's comments after they took it down on first deploy: a statement beginning with `(` parses as a call to the previous line (Luau: 'ambiguous syntax'), and a leading `;` is not a legal way to start a block in Luau at all -- both are avoided by binding typed locals once.",
+      "comment": "PROMOTED TO SHARED CANON B35 2026-08-20 (owner AD-UI). LocalScript, hashed as source -- same precedent as UIKitBootstrap. ONE screen builder for both Places: it asks SettingsConfig what is in scope and draws exactly that, so there is NO Place-specific branch anywhere in the file (Game renders 11 rows / 5 tabs, Lobby renders 6 rows -- verified live at B35). Rows are cloned from the authored templates, so adding a setting stays a config edit. THE GUI IS PER-PLACE AUTHORED ART: StarterGui.Settings is NOT canon, because copying a ScreenGui between Places is a USER action (B26) -- so this script degrades to one clear warning and stands down when the art is not there yet, which is exactly the Lobby's state until the user copies it across. Action buttons repaint on every OPEN, not just at build: handlers are registered by separate scripts and LocalScript run order is not guaranteed, so a build-time-only paint would show N/A forever whenever the registrar happened to run second. Two syntax lessons are baked into the file's comments after they took it down on first deploy: a statement beginning with `(` parses as a call to the previous line (Luau: 'ambiguous syntax'), and a leading `;` is not a legal way to start a block in Luau at all -- both are avoided by binding typed locals once. B36: gained the paired BOOT MARKER (start) line -- `script:SetAttribute(\"BootComplete\", false)` immediately AFTER the `--!strict` directive, never before it (the mode directive must stay on line 1 or Luau silently drops strict mode; getting that wrong broke all 21 instrumented scripts at once before it was caught). Paired with the `true` at the bottom, it gives ScreenBootWatchdog a tri-state -- nil = never instrumented, false = started and hung, true = finished -- which needs no `script.Source` read. That matters because a LocalScript CANNOT read Source at runtime (plugin/Open Cloud capability), which is why the B34 watchdog threw on every boot and reported nothing.",
       "kind": "module"
     }
   },

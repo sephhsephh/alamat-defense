@@ -1,5 +1,100 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-21 [lobby+game] B36 — AD-Gacha: **B35 proven in the Lobby, and a correction that matters more than the fix.** The watchdog built at B34 had never run once, and the reason it went unnoticed was a bad verification, not a subtle bug.
+
+**Places asserted before every write.** Drift green **35/35** at session start. `SettingsUI` re-hashed
+(shared canon), manifest stays at 35, `TOOLVERSION B35-1 → B36-1`, both Places byte-identical.
+
+### The Lobby settings screen came alive
+
+The user copied `StarterGui.Settings` into the Lobby — the one thing B35 could not do, because
+copying a ScreenGui between Places is a user action (B26). Everything else had been deployed and
+waiting, so nothing needed writing to make it work. It built on the next boot:
+
+```
+[SettingsService] Ready (profile-backed, Lobby place, 6 preference(s) in scope).
+[LobbySettingsActions] Ready (1 action registered: TeleportToSpawn).
+[SettingsUI] HUD SettingsButton wired.
+[SettingsUI] Initialized (Lobby place, 6 row(s), 5 categor(ies)).
+```
+
+**6 rows here against the Game's 11, from the same file**, with no Place-specific branch anywhere —
+which was the whole design claim, now observed rather than argued. `TeleportToSpawn` rendered
+**enabled**, which also proves the repaint-on-open fix: the registrar is a *separate* script, so a
+build-time-only paint would have left it reading "N/A". And `MusicVolume` showed **25%** — the value
+set in the **Game** last session. The cross-Place round trip works in both directions.
+
+### The correction: a watchdog that never ran, and a verification that never tested it
+
+The console carried a line that had been there since B34:
+
+```
+The current thread cannot read 'Source' (lacking capability PluginOrOpenCloud)
+Script 'Players.<name>.PlayerScripts.ScreenBootWatchdog', Line 59
+```
+
+`ScreenBootWatchdog` classified scripts by reading `script.Source`. **A LocalScript cannot read
+`Source` at runtime** — it needs plugin/Open Cloud capability. So the script threw on that line at
+*every boot* from B34 until now, and reported nothing at all. The mechanism built specifically to
+make silent failures loud was itself failing silently.
+
+**The B34 changelog claims "Verified live: clean baseline at 19/19 with zero false positives, and
+clearing one script's marker to simulate a hang produced exactly one named STUCK report." That was
+true, and it was worthless.** The check ran inside an `execute_luau` VM — *which has plugin
+capability*. What got verified was a **re-implementation of the logic in a more privileged context**,
+not the deployed script. The deployed script was never executed successfully even once.
+
+**Testing a copy of the code somewhere more privileged is not testing the code.** That is the durable
+lesson, and it generalises past this project: any verification that re-implements the thing under
+test is measuring the re-implementation. The tell was available the whole time — a warning in the
+console on every single boot, in the same output that was read repeatedly across three sessions.
+
+### The fix is smaller and better than what it replaces
+
+Two markers instead of one, and no `Source` read anywhere:
+
+- `script:SetAttribute("BootComplete", false)` as the **first executable line**.
+- `script:SetAttribute("BootComplete", true)` as the **last**.
+
+The watchdog then reads a tri-state that a LocalScript is always allowed to read: **nil** = never
+instrumented · **false** = started and hung · **true** = finished. That is strictly *more* precise
+than the old marker-scan, because `false` is positive evidence the script actually began executing,
+where "carries the marker in its source" only ever proved it had been edited.
+
+### The second trap, caught by checking instead of assuming
+
+The first sweep prepended the marker block to all 21 scripts — **above `--!strict`**. The mode
+directive must stay on line 1 or Luau silently drops strict mode across the whole file. Nothing
+errors; the file just quietly stops being strict.
+
+It was caught by verifying the edit rather than trusting it — counting how many instrumented scripts
+still had the directive on line 1, and getting **0 of 21**. Reverted and re-inserted *after* the
+directive, then re-verified: 21 of 21 correct. Worth stating plainly because it is the same class of
+mistake as the watchdog itself — an edit that appears to succeed while silently removing a guarantee.
+
+`SettingsUI` is shared canon, so its start marker re-hashed it `8e899dab` → `7e5a736a`; applied to
+the repo and both Places and confirmed byte-identical, with the deployed drift tool re-run in each.
+
+### Result
+
+```
+[DIAG] ScreenBootWatchdog: 21/21 boot script(s) finished after 15s.
+```
+
+First time that line has ever appeared. Zero false positives — Roblox's own injected LocalScripts
+(`FreecamScript`, `PlayerScriptsLoader`, `RbxCharacterSounds`) are correctly ignored, and the three
+"uninstrumented" and "stuck" buckets are both empty.
+
+- **Contract impact:** none. Manifest stays at **35**; `SettingsUI` `8e899dab` → `7e5a736a` in both
+  Places, `TOOLVERSION B36-1`. Save schema unchanged at v3, `RS.Remotes` unchanged at 22.
+- **Resolved:** B35's "copy `StarterGui.Settings` into the Lobby" (the user did it) and the B34
+  watchdog defect.
+- **Open threads (`STATE.md`):** AD-Game still needs to register the Game's three settings actions
+  (`RestartMatch` / `ReturnToLobby` / `TeleportToSpawn` render disabled there; `ReturnToLobby` must
+  respect teleport v4) · 10 of 13 sound ids still empty · C4 feeding blocked on data ·
+  `HUD.Right`'s six unwired buttons · `StarterGui.Summon` remains the user's unfinished work,
+  untouched.
+
 ## 2026-08-20 [lobby+game] B35 — AD-Gacha: **one settings system for both Places.** A proposal that had been open since B6 turns out to have been cheap all along — and building it surfaced two bugs that had been quietly live the whole time.
 
 **Places asserted before every write.** Shared canon changed: `shared/manifest.json` **31 → 35**,

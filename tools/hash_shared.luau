@@ -1,5 +1,5 @@
 -- tools/hash_shared.luau
--- TOOLVERSION: B35-1
+-- TOOLVERSION: B36-1
 -- DRIFT CHECK: run via execute_luau (Edit datamodel) in ANY Place at bootstrap.
 -- Prints fnv1a32 hashes of the deployed shared canon; compare against shared/manifest.json.
 -- Anything absent in this Place returns "MISSING" (expected before its first deploy).

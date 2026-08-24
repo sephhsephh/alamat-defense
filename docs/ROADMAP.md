@@ -275,6 +275,31 @@ everything untradeable at launch).
   which is exactly why AD-Gacha did not invent it.
 
 
+- ✅ **B36 (AD-Gacha, BOTH Places, 2026-08-21) — B35 PROVEN IN THE LOBBY, AND THE B34 WATCHDOG
+  CORRECTED AFTER IT TURNED OUT NEVER TO HAVE RUN.** The user copied `StarterGui.Settings` across, so
+  B35's deployed-and-waiting code finally built in the Lobby: **6 rows / 5 tabs**, against the Game's
+  11 from the *same file*, with `TeleportToSpawn` enabled (proving the separate registrar script is
+  picked up) and `MusicVolume` set in the **Game** showing 25% here. The cross-Place settings claim is
+  now demonstrated in both directions rather than argued.
+  ⚠ **`ScreenBootWatchdog` read `script.Source` at runtime. A LocalScript cannot** — that needs
+  plugin/Open Cloud capability — **so it threw on that line at every boot from B34 until B36 and
+  reported nothing at all.** The B34 entry's "verified live, 19/19 clean, simulated hang caught" was
+  worthless: that check ran inside an `execute_luau` VM, **which has plugin capability**, so a
+  re-implementation of the logic was tested rather than the deployed script. **Testing a copy of the
+  code in a more privileged context is not testing the code** — and the console line that exposed it
+  had been printing the whole time.
+  The fix removes the `Source` read entirely, using **two markers instead of one**:
+  `BootComplete = false` as the first executable line and `true` as the last, giving a tri-state —
+  nil (never instrumented) / false (started and hung) / true (finished) — that is strictly *more*
+  precise than the old scan, because `false` proves the script actually began executing.
+  A second trap caught by checking rather than assuming: **the start marker must go AFTER
+  `--!strict`.** The mode directive has to stay on line 1 or Luau silently drops strict mode;
+  prepending the block broke all 21 instrumented scripts at once. `SettingsUI` is shared canon so it
+  re-hashed `8e899dab` → **`7e5a736a`** in both Places; manifest stays at 35, `TOOLVERSION B36-1`.
+  First run of the real script, in the real client: `ScreenBootWatchdog: 21/21 boot script(s)
+  finished after 15s` — a line that had never once appeared.
+
+
 ## Cross-Place
 
 - ✅ Save schema v1 shared + deployed to both Places

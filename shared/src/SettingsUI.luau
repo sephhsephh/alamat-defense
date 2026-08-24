@@ -1,4 +1,11 @@
 --!strict
+-- B34/B36 BOOT MARKER (start). Paired with the `true` at the bottom -- see ScreenBootWatchdog.
+-- Two markers, not one, because the watchdog CANNOT read `script.Source` at runtime (that needs
+-- plugin/Open Cloud capability, and trying threw on every boot from B34 until B36). The tri-state
+-- nil / false / true tells `never instrumented` from `started and hung` from `finished` using only
+-- attributes, which a LocalScript can always read.
+script:SetAttribute("BootComplete", false)
+
 -- SettingsUI.client.lua (SHARED CANON, LocalScript -- deploy path
 -- StarterPlayer.StarterPlayerScripts.Client.UI.SettingsUI)
 --

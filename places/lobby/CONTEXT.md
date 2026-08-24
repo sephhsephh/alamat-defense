@@ -1,5 +1,5 @@
 # CONTEXT — Lobby place (LIVE, booted 2026-07-17)
-<!-- owner: lobby | scope: lobby | last-verified: 2026-08-20 (B35) -->
+<!-- owner: lobby | scope: lobby | last-verified: 2026-08-21 (B36) -->
 
 The social/meta Place: players land here, view their collection, roll banners, pick a stage + difficulty, form parties, and teleport
 into the Game place.
@@ -57,36 +57,36 @@ into the Game place.
 
 ## UI kit + screens (AD-UI)
 
-**B35 — ONE SETTINGS SYSTEM FOR BOTH PLACES. FULL DOC: `docs/systems/settings.md`.** 4 new shared entries at IDENTICAL paths in both
-Places (`SettingsConfig` `5f0dc44d`, `SettingsService` `8b3b1a72`, `ClientSettings` `a3a9d32f`, `SettingsUI` `8e899dab`) -- identical
+**B36 — THE LOBBY SETTINGS SCREEN IS LIVE, AND THE WATCHDOG THAT WAS NEVER RUNNING IS FIXED.** The user copied `StarterGui.Settings`
+across, so B35's deployed-and-waiting code now builds here: **6 rows / 5 tabs** (the Game draws 11 from the SAME file).
+**`ScreenBootWatchdog` read `script.Source` at runtime — a LocalScript CANNOT (plugin capability) — so it threw at EVERY boot from B34
+and reported nothing. B34's "verified 19/19" ran the check inside `execute_luau`, WHICH HAS plugin capability: a re-implementation was
+tested, not the deployed script.** Now a PAIRED marker (`BootComplete=false` first executable line, `true` last) gives nil/false/true
+with no `Source` read. **The start marker goes AFTER `--!strict`** — the directive must stay on line 1 or Luau silently drops strict
+mode, and prepending it broke all 21 scripts at once. `SettingsUI` → **`7e5a736a`**. First real run: `21/21 finished after 15s`.
+
+
+**B35 — ONE SETTINGS SYSTEM FOR BOTH PLACES. FULL DOC: `docs/systems/settings.md`.** 4 shared entries at IDENTICAL paths in both
+Places (`SettingsConfig` `5f0dc44d`, `SettingsService` `8b3b1a72`, `ClientSettings` `a3a9d32f`, `SettingsUI` `7e5a736a`) — identical
 paths are why it cost ZERO consumer edits in the Game. Entries declare `Scope` + `Kind`, so **`SettingsUI` has no Place branch
-anywhere**: Game 11 rows, Lobby 6. **`Sanitize` is Scope-BLIND ON PURPOSE** -- one profile serves both Places, so dropping
-out-of-scope keys would permanently lose the other Place's prefs. Manifest **31 -> 35**, `TOOLVERSION B35-1`, `Remotes` **21 -> 22**.
-Two real bugs fixed: the volume slider drove a `MasterSFX` group that never existed, and the join-time fetch could beat the profile
-load and cache DEFAULTS for the whole session. **`StarterGui.Settings` is per-Place ART and is NOT here yet** -- until the user copies
-it, `SettingsUI` warns once and stands down. `StarterPlayerScripts.LobbySettingsActions` registers `TeleportToSpawn`.
+anywhere**. **`Sanitize` is Scope-BLIND ON PURPOSE** — one profile serves both Places, so dropping out-of-scope keys would permanently
+lose the other Place's prefs. Manifest **31 → 35**, `Remotes` **21 → 22**. Two real bugs fixed: the volume slider drove a `MasterSFX`
+group that never existed, and the join-time fetch could beat the profile load and cache DEFAULTS for the session.
+`StarterPlayerScripts.LobbySettingsActions` registers this Place's only action, `TeleportToSpawn`.
 
-**B34 — TWO KIT MODULES PROMOTED, AND A WATCHDOG INSTEAD OF A SWEEP.** `UIKit.Notify` (`5e2b09d4`) ends B33's toast FORK (two copies,
-two paths, neither manifest -- both retired `*_RETIRED_2026-08-20`, five consumers repointed one line each); `UIKit.UnitCard`
-(`bd2421c5`) ends the FOUR-copy `setViewportModel`/`paintTier` duplication, measured before extracting. **The 334 bare `WaitForChild`
-were NOT swept** (~100 lookups across 14 working files = a bigger risk than the bug); instead every boot script sets `BootComplete`
-and `StarterPlayerScripts.ScreenBootWatchdog` NAMES whatever never finished -- B33's real defect was SILENCE, not a missing timeout.
-C4 feeding is scoped and BLOCKED ON DATA: `docs/proposals/2026-08-20-c4-feeding.md`.
-
-**B33 — THE UNITS SCREEN DIED AND THE FIX IS A RULE.** A retired `SellConfirm` was deleted while six bare `WaitForChild` calls still
-pointed at it; **a bare `WaitForChild` NEVER times out**, so the controller stopped at its first declaration and the whole screen
-silently never booted. Authored lookups now use `need()` (bounded + detached stand-in + one warn per missing path) and the feature
-refuses to arm rather than half-work. Also B33: toasts adopted Lobby-wide under **TOAST EVENTS, LABEL STATE**; `CurrencyChanged` (no
-payload — `GetUnitViews` stays the one read path) fired debounced by `GrantService`; `Configs.Meta.PlayerLevelConfig` is the ONE
-XP-per-level curve (Lobby-local on purpose) and drives `ExpBar`. **`StarterGui.Summon` is the user's UNFINISHED replacement for
-`SummonScreen` — do not touch it.** Detail: `docs/systems/ui-feedback.md`.
-
-**B32 — THE SHARED FEEDBACK LAYER. FULL DOC: `docs/systems/ui-feedback.md` — read it before touching any button, sound or confirm.**
-The user REBUILT `HUD.Left.Buttons`, so every screen's entry point renamed to
-**`UnitsButton`/`SummonButton`/`PlayButton`/`InventoryButton`/`QuestsButton`/`ProfileButton`** (`Play` had vanished; `ShopButton`
-became it). All six are tagged `UIKitButton` and are **panel-style**, which `UIKit.Button` DETECTS. **Audio = paste a SoundId onto a
-real `Sound` under `SoundService`.** `UIKit.Confirm` = the ONE confirm dialog; `Server.Meta.UnitFlagsService` = the ONE
-`Favorited`/`Locked` writer.
+**B32-B34 — THE FEEDBACK LAYER + ITS LESSONS. FULL DOC: `docs/systems/ui-feedback.md` — read it before touching any button, sound,
+confirm or toast.** The user REBUILT `HUD.Left.Buttons`, renaming every screen's entry point to **`UnitsButton`/`SummonButton`/
+`PlayButton`/`InventoryButton`/`QuestsButton`/`ProfileButton`** (`Play` had vanished; `ShopButton` became it). All six are tagged
+`UIKitButton` and **panel-style**, which `UIKit.Button` DETECTS. **Audio = paste a SoundId onto a real `Sound` under `SoundService`.**
+ONE of each, do not add a second: `UIKit.Confirm` (confirm dialog), `UIKit.Notify` `5e2b09d4` (toasts), `UIKit.UnitCard` `bd2421c5`
+(card viewport + tier paint for all four card screens), `Server.Meta.UnitFlagsService` (`Favorited`/`Locked`).
+**The 0.05 `UIHoverStroke.Thickness` is the user's deliberate choice (B35) — do not "fix" it.**
+**LESSON (B33):** a retired `SellConfirm` was deleted while six bare `WaitForChild` calls still pointed at it; **a bare
+`WaitForChild` NEVER times out**, so the controller stopped at its first declaration and the screen SILENTLY never booted. Authored
+lookups now use `need()`; the 334 bare calls were deliberately NOT swept — the watchdog names hangs instead.
+**RULE (B33): TOAST EVENTS, LABEL STATE** — toasts self-erase, so a still-true condition stays on a label. `CurrencyChanged` carries
+no payload; `Configs.Meta.PlayerLevelConfig` is the ONE XP curve and drives `ExpBar`. **`StarterGui.Summon` is the user's UNFINISHED
+replacement for `SummonScreen` — do not touch it.**
 
 Four docs: **`ui-kit.md`** = the Place-neutral kit (9 controllers in `RS.Shared.UIKit` + 7 templates, drift-controlled).
 **`ui-feedback.md`** = buttons/sound/confirm/toasts. **`settings.md`** = the cross-Place settings system. **`lobby-ui.md`** = this
