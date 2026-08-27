@@ -66,3 +66,16 @@ Nothing breaks silently — every lookup is bounded and prints the exact missing
 
 `HUD.Right.UpperRight.RedeemCodes` — already tagged `UIKitButton`, currently unwired. I wire it to
 open this screen once the tree exists.
+
+---
+
+## ⚠ STATUS (B40): this screen was BUILT AS BLOCKOUT, not left waiting
+
+The user's call at B40 reversed the earlier "you author it, I wire it": both servers were finished
+and only art was blocking them, so B40 **scripted a plain version of this tree and wired it**, and it
+is live now.
+
+**This spec is still the contract.** The scripted tree uses these exact names and flags, and the
+controller reads nothing else. So authoring your own version is a **replace, not a rewrite**: build
+it however you like, keep the names, delete the scripted ScreenGui, and the controller needs **zero**
+edits. If you add a part you want driven, add it here first.

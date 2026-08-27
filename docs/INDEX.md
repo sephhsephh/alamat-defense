@@ -55,6 +55,14 @@
   `CodeService` (**THE one writer of `Data.RedeemedCodes`**). Read the two warnings before touching
   it: every code in the registry is **PUBLIC** because the module replicates, and the rate limit is
   **security, not UX** — without it the remote is a code-space enumerator.
+- `shop.md` — **AD-Gacha canon, LOBBY**: the daily shop (B40), and **the game's first and only Silver
+  sink** — B31 minted Silver and nothing ever spent it. Read it for the derived-not-stored stock
+  (`MetaMath.RngForSlot`), and for the PRE-CHECK → SPEND → GRANT → MARK ordering with a refund on the
+  unreachable failure. The client sends a slot INDEX and never a price.
+- `quests.md` — **AD-Gacha canon, LOBBY**: daily quests (B40). Read it for **why progress is a DELTA
+  against a baseline** taken at assignment (a lifetime counter read would finish every quest instantly
+  for an established player) and for the rule that a quest naming a counter nothing writes is
+  **refused and named at boot** rather than left sitting at 0.
 - `daily-rewards.md` — **AD-Gacha canon, LOBBY**: the login streak (B38). The pure `DailyRewardConfig`
   (7-day table, `MetaMath` day number, miss-a-day-resets-to-1), `DailyRewardService` as **THE one
   writer of `Data.LoginStreak`**, the HUD button, and the `DevDailyRewind` harness. Read it for the

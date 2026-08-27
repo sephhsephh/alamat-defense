@@ -86,3 +86,16 @@ because a bare `WaitForChild` never times out. A missing part costs that part, n
 Right now (B38) `HUD.Right.Buttons.DailyRewardsButton` **claims directly** on click. Once this screen
 exists that button will instead **open this screen**, and claiming moves to `ClaimButton`. The HUD
 button's own `ResetTime` label keeps its countdown either way.
+
+---
+
+## ⚠ STATUS (B40): this screen was BUILT AS BLOCKOUT, not left waiting
+
+The user's call at B40 reversed the earlier "you author it, I wire it": both servers were finished
+and only art was blocking them, so B40 **scripted a plain version of this tree and wired it**, and it
+is live now.
+
+**This spec is still the contract.** The scripted tree uses these exact names and flags, and the
+controller reads nothing else. So authoring your own version is a **replace, not a rewrite**: build
+it however you like, keep the names, delete the scripted ScreenGui, and the controller needs **zero**
+edits. If you add a part you want driven, add it here first.

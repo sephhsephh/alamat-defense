@@ -166,3 +166,30 @@ So a second event later starts its own ladder rather than inheriting a finished 
 | missed days / corrupt streak | both reset to 1 |
 
 `Rewards` and the `HarvestMoon` window are **PLACEHOLDER CONTENT**, labelled as such in the file.
+
+---
+
+## B40 — the screen exists
+
+`StarterGui.DailyRewards` + `DailyRewards.DailyRewardsScreenController`. The user's call at B40
+reversed "you author it, I wire it": both servers were finished and only art was blocking, so B40
+**scripted a blockout tree to the published spec** and wired it. `docs/specs/` is still the contract —
+the controller reads only spec'd names, so replacing the art costs zero code changes.
+
+Two tabs (DAILY / EVENT), a card per rung with tier border, tick on claimed rungs, glow on the
+claimable one, a dimmed-not-hidden claim button, and the live countdown.
+
+**`HUD.Right.Buttons.DailyRewardsButton` no longer claims — it OPENS the screen.** At B38 there was no
+screen so click-to-claim was the whole feature; two ways to claim one reward from one button would be
+a coin-flip about which fires. The claim **moved** (identical `ClaimDaily` → `ShowRewards` sequence);
+the HUD script keeps only the label, because a countdown you must open something to read is useless.
+They talk through `ClientEvents.OpenDailyRewards`, resolved **lazily at click time** — the two
+controllers boot in an unspecified order and the screen is the one that creates the event, so looking
+it up at click removes the race instead of guessing the winner.
+
+`OpenDailyRewards:Fire(tab?)` takes an optional `"Normal"`/`"Event"` to deep-link a tab (the HUD's
+`EventButton` is the obvious future caller).
+
+**Verified live:** DAILY renders 7 rungs `100/150/1/300/1/500/3` with rungs 1–3 ticked and the button
+dimmed (already claimed today); EVENT renders `Harvest Moon`, 5 rungs, `Ends in 89d`; tabs switch and
+the header shows/hides; 25/25 boot scripts.

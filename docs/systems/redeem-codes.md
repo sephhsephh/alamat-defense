@@ -96,3 +96,26 @@ deliberately dead so the expiry path has something to exercise that is not a typ
 The **screen**. `HUD.Right.UpperRight.RedeemCodes` is still unwired and there is no `TextBox` for a
 code anywhere in `StarterGui`. The server side is complete and tested; the UI needs authored art
 (B26 — art cannot be scripted across), spec in `docs/specs/`.
+
+---
+
+## B40 — the screen exists
+
+`StarterGui.RedeemCodes` + its controller, scripted to the published spec and wired to
+**`HUD.Right.UpperRight.RedeemCodesButton`**.
+
+⚠ **That button's name ends in `Button`.** `places/lobby/CONTEXT.md` listed these five abbreviated
+(`RedeemCodes`/`LeaderBoards`/…), and B40 lost a live run looking up `RedeemCodes` and finding
+nothing. The doc is corrected.
+
+The label is the state: every reason code lands on `StatusLabel` and stays. `CodeBox` has
+`ClearTextOnFocus = false` because pasting is how most codes are entered. Enter submits as well as the
+button. The client deliberately does **not** pre-validate against `CodeRegistry` even though it can
+read it — the server must check anyway, and a client-side "that code doesn't exist" would leak which
+strings are real faster than the rate limit can slow it down.
+
+**Verified live:** the screen opens and closes, the box starts empty with its placeholder, and the
+server path answers `unknown_code` / `already_redeemed` correctly. The button *click handler itself*
+was not simulated — `MouseButton1Click` cannot be fired from a script and `VirtualInputManager` needs
+a capability this tooling lacks — so what was exercised is the call the handler makes, which is the
+half that can actually be wrong.

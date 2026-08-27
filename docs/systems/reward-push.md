@@ -187,3 +187,90 @@ Harness: `Server.Meta.DevPendingReveals` (Studio only) —
 `ReplicatedStorage:SetAttribute("DevPendingReveals", "queue:Gold:250" | "peek" | "flood" | "clear")`,
 **server-side**. It has to be a real Script for the same reason `DevDailyRewind` does: `execute_luau`
 runs in a separate VM whose `PlayerDataService` copy holds no profiles.
+
+---
+
+## B40 — mail: delivery to a player who is in NO server, which finally closes the gap
+
+| piece | what it is |
+|---|---|
+| `SSS.Server.Meta.MailService` | `Send(userId, grants, reason?)`, plus the `MessageHandler` half |
+| `SSS.Server.Meta.MailDeliveryService` | the one Script that turns receiving on |
+| `SSS.Server.Meta.DevMail` | Studio harness |
+
+**No new remote and no schema field.** Delivery rides ProfileStore's global-update channel.
+
+### It needed a different mechanism, not a bigger queue
+
+B39 established that a grant to a genuinely offline player **cannot happen** — their profile is not
+loaded, so `Grant` has nothing to write to. So this was never a *reveal* problem; it is a
+**grant-later** problem, and needed a grant-later mechanism.
+
+`ProfileStore:MessageAsync(key, message)` writes a message onto the profile **key** — no session
+required, the recipient may be offline or on another server — and it is handed to a `MessageHandler`
+the next time that profile loads. **The grant runs then.**
+
+### ⚠ Why at-least-once delivery does not double-grant here
+
+Messages are re-delivered until a handler calls `processed()`. That is normally where double-grant
+bugs live. It is safe for a specific, checkable reason: **`processed()` marks the update locked, and
+ProfileStore persists the profile's DATA and that lock in the SAME save.** Grant and acknowledgement
+land together or not at all — a crash between them loses both and the message is redelivered and
+granted once.
+
+**Therefore: GRANT FIRST, THEN `processed()`.** Acknowledging first would drop mail on the floor if
+the grant then failed. A *validation* failure (an uncatalogued `Id`) is acknowledged and discarded
+loudly instead of retried, because retrying a config bug every load would warn forever and never
+succeed.
+
+### ⚠ It touches NO shared canon
+
+`PlayerDataService` is drift-controlled, so `MailService` deliberately does **not** edit it to expose
+its store. Sending uses its own `ProfileStore.New` handle (`MessageAsync` needs no session), and
+handlers attach through the **already-public** `PlayerDataService.ProfileLoaded` signal. Zero re-hash,
+zero cross-Place deploy.
+
+Module + boot-Script split (same as `RewardPush`/`RevealDrainService`): the module holds the logic so
+anything can require it to **send**, and `MailDeliveryService` is the one thing that turns
+**receiving** on. Registering handlers on require would mean every sender quietly added another.
+
+### A wrong assumption the live run corrected
+
+The first version enqueued the reveal directly into `PendingReveals`, assuming mail always arrives
+mid-join with the client not yet listening. **That is false:** ProfileStore hands over a global update
+shortly after the profile loads, which for a player who was already online is a live, fully-booted
+client. The grant landed and the reveal sat in the queue until their *next* join.
+
+It now uses **`RewardPush.ToOrQueue`** — push if they can receive it, persist if they cannot. Both
+cases are real, which is why neither half alone was correct. `ToOrQueue` already existed for exactly
+this shape.
+
+### A B39 bug the same run exposed: the drain gave up too easily
+
+`RevealDrainService` shipped as "client announces → wait up to 20s for the profile", which quietly
+assumed the profile always wins that race. A slow DataStore proved otherwise: the wait expired, the
+drain gave up, and an owed reveal sat in the queue until the *next* join even though the profile
+loaded seconds later.
+
+It now records **both** facts — announced, and profile-loaded — and drains when the **second** one
+lands, whichever it is. **No timeout to tune and no ordering assumption to be wrong about.** It also
+seeds `loaded` from players already present, because a profile that loaded before the script booted
+would never fire `ProfileLoaded` for it.
+
+### What is NOT built
+
+**No inbox screen and no stored message history.** A history needs another profile field and schema
+v4 is **published**, so that is a v5 decision rather than something to smuggle in. Mail delivers
+itself: the player joins, the grant runs, and the reveal follows.
+
+### Verified live
+
+| case | result |
+|---|---|
+| mail sent, recipient online but profile still loading | `Mail SENT` → `Mail DELIVERED`, Gold +500 / BannerTicket +2, reveal **queued** |
+| next join | `RevealDrain: received 2 reveal(s) owed from a previous session` → `ObtainRewards SHOW` |
+| mail to an online, fully-booted player | `RewardPush -> (reason=mail:dev_harness)` → revealed **immediately**, Silver 1050 → 1450, queue `0 queued, 0 dropped` |
+| drain path still cannot grant | re-enumerated after the edits: **0** non-comment `GrantService` refs |
+
+Harness: `ReplicatedStorage:SetAttribute("DevMail", "Gold:500,BannerTicket:2")` or
+`"<userId>|Gold:500"`, **server-side**.

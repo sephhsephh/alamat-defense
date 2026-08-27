@@ -1,5 +1,174 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-27 [lobby] B40 — AD-Gacha: **the two screens, mail, the shop, and quests** — four systems, no schema bump, because three of the fields were already there.
+
+`RS.Remotes` **27 → 31**. Schema stays **v4** (published by the user this session). Shared canon
+untouched at 35, verified field-by-field at session start and end.
+
+### No schema bump, for the third time, and it is now a rule
+
+`ShopStock` and `Quests` were **both** in the template since v2 with no writer — exactly like
+`LoginStreak` before B38. Checking the schema before designing has now saved three bumps. It is
+recorded in `STATE.md` as the pattern to follow, along with what is still unwritten (`Titles`,
+`Battlepass`).
+
+That matters more now than it did: **v4 is shipped, so the next new field costs a v5.**
+
+## The two screens
+
+The user reversed the earlier "you author it, I wire it": both servers were finished and only art was
+blocking them, so B40 **scripted blockout versions** of `StarterGui.DailyRewards` (two tabs) and
+`StarterGui.RedeemCodes` and wired both.
+
+**The published specs are still the contract.** The scripted trees use exactly the names and flags in
+`docs/specs/2026-08-27-*.md` and the controllers read nothing else, so authoring real art later is a
+**replace, not a rewrite** — keep the names and the controllers need zero edits. Both spec files now
+say so at the top.
+
+### `DailyRewardsButton` no longer claims — it opens the screen
+
+At B38 there was no screen, so click-to-claim was the whole feature. With a screen that owns both
+tracks, two ways to claim one reward from one button is a coin-flip about which fires. The claim
+**moved** rather than being deleted — the screen runs the identical `ClaimDaily` → `ShowRewards`
+sequence — and the HUD script keeps only the countdown label, because a countdown you have to open
+something to read is useless.
+
+They talk through `ClientEvents.OpenDailyRewards`, resolved **lazily at click time**: the two
+controllers boot in an unspecified order and the screen is the one that creates the event, so looking
+it up at click removes the race instead of guessing who wins. The event takes an optional tab, so the
+HUD's `EventButton` can later deep-link to the event ladder.
+
+### ⚠ A name I got wrong, and the doc that misled me
+
+The HUD button is **`RedeemCodesButton`**. `places/lobby/CONTEXT.md` listed those five abbreviated
+(`RedeemCodes`/`LeaderBoards`/…), I looked up the abbreviation, and the first live run said
+`no HUD RedeemCodes button found`. The bounded lookup did its job — named the miss and stood down
+instead of hanging — and the doc is corrected with a note that **every HUD button name ends in
+`Button`**.
+
+### A run where half the screens vanished, and why it was not a defect
+
+One play session reported `6/7 boot script(s) finished`, `StarterGui.Settings is not in this Place`,
+and `AscensionController STARTED BUT NEVER FINISHED`. All of it was a transient replication miss
+after a fast stop→start: the Edit datamodel still held all 19 ScreenGuis, and a re-run with the same
+code came back clean at **25/25**. Worth recording because the failure looked catastrophic and was
+not, and because the bounded-lookup machinery from B33/B34 is exactly what made it legible.
+
+## Mail — offline delivery, which finally closes B37's gap for real
+
+`MailService` (module) + `MailDeliveryService` (boot Script) + `DevMail` (harness). No new remote, no
+schema field, **and no shared-canon edit**.
+
+B39 established that a grant to a genuinely offline player *cannot happen* — no loaded profile, so
+`Grant` has nothing to write to. So this was never a reveal problem; it is a **grant-later** problem.
+ProfileStore's `MessageAsync` writes onto the profile **key** (no session needed) and a
+`MessageHandler` gets it on the next load — **the grant runs then.**
+
+### ⚠ Why at-least-once does not double-grant
+
+Messages redeliver until `processed()`. That is safe here for one checkable reason: **`processed()`
+marks the update locked and ProfileStore persists the profile's data and that lock in the same save.**
+Grant and acknowledgement land together or not at all. **So: grant first, then `processed()`** — the
+reverse drops mail on the floor when a grant fails. A *validation* failure is acknowledged and
+discarded loudly instead, because retrying a config bug every load would warn forever.
+
+`PlayerDataService` is drift-controlled, so this deliberately does not edit it: sending uses its own
+`ProfileStore.New` handle, and handlers attach through the already-public `ProfileLoaded` signal.
+
+### Two things the live run corrected
+
+**I assumed mail always arrives mid-join with the client not yet listening. It does not.** ProfileStore
+hands over a global update shortly after the profile loads, which for a player who was already online
+is a live, fully-booted client — so enqueueing the reveal meant the grant landed and the reveal sat in
+the queue until their *next* join. It now uses **`RewardPush.ToOrQueue`**: push if they can receive it,
+persist if they cannot. Both cases are real, which is why neither half alone was right. `ToOrQueue`
+already existed for exactly this shape.
+
+**And it exposed a B39 bug of mine.** `RevealDrainService` shipped as "client announces → wait 20s for
+the profile", quietly assuming the profile always wins that race. A slow DataStore proved otherwise:
+the wait expired, the drain gave up, and an owed reveal sat until the next join even though the
+profile loaded seconds later. It now records **both** facts and drains when the **second** lands,
+whichever it is — no timeout to tune, no ordering assumption to be wrong about.
+
+## The shop — and the economy hole it closes
+
+`ShopConfig` (pure) + `ShopService` (**the one writer of `Data.ShopStock`**), `Remotes` +2.
+
+**Nothing in this game has ever spent Silver.** That was checked, not assumed: every banner costs Gold
+(`CostPerPull = 100`), and `GrantService.Spend` — the one debit path — was never called with
+`"Silver"` anywhere in the server tree, while B31's dupe-selling **mints** it. A currency with a
+faucet and no drain only inflates, and a reward that buys nothing is not a reward.
+
+Stock is **derived, not stored**: `MetaMath.RngForSlot(day, "Shop:"..userId)`, so every server agrees
+with no stored roll — the use MetaMath's own header names. Only `Bought` persists, and it **resets**
+on rollover rather than merging, because slot 2 yesterday and slot 2 today are different items.
+
+Ordering is four steps and each earns its place: **pre-check the id against `ItemCatalog`** (finding a
+typo *after* the debit would charge for nothing), **spend**, **grant**, **then mark bought** — with a
+refund through `GrantService` and a loud warning on the unreachable failure, because a silent refund
+looks like theft. **The client sends a slot index and nothing else**; the price comes from the
+server's own re-roll.
+
+## Quests — built on the two counters that actually exist
+
+`QuestRegistry` (pure) + `QuestService` (**the one writer of `Data.Quests`**), `Remotes` +2.
+
+**Progress is a delta against a baseline**, not a counter read. `Counters.Global.*` are *lifetime*
+totals, so a daily quest reading one directly would be instantly complete for any established player,
+forever. Assignment records the counter's value as a `Baseline`; progress is `current - baseline`.
+That is what makes quests work **today against counters nobody wrote for quests**, with no change to
+any service that owns one and nothing added to a hot path. Baselines are written **once per quest per
+day** — re-baselining on read would reset progress every time the screen opened, and stay invisible
+until someone reported it.
+
+⚠ **Only `GachaPulls` and `Ascensions` exist.** Everything match-shaped is the Game place's to write.
+A quest naming a counter with no writer would sit at 0 forever and read as a bug in the quest system,
+so `QuestService` **refuses to assign it and names it at boot**, and the two obvious match quests sit
+commented out in the registry rather than shipped broken.
+
+## The Game place is now the biggest single blocker
+
+Player XP, every match-shaped quest counter, and the Game's three settings actions all wait on
+AD-Game. The Lobby's meta layer has run ahead of what the match feeds it. Recorded in `STATE.md`'s
+Next up rather than left implicit.
+
+## Verified live
+
+| system | evidence |
+|---|---|
+| screens | 25/25 boot scripts; DAILY renders 7 rungs `100/150/1/300/1/500/3` with 1–3 ticked and the button dimmed; EVENT renders `Harvest Moon`, 5 rungs, `Ends in 89d`; tabs switch; `RedeemCodes wired to ...RedeemCodesButton` |
+| mail, recipient mid-load | `Mail SENT` → `Mail DELIVERED`, Gold +500 / BannerTicket +2, reveal queued |
+| the drain fix | next join: `received 2 reveal(s) owed from a previous session` → `ObtainRewards SHOW` |
+| mail, recipient online | pushed immediately, Silver 1050 → 1450, queue `0 queued, 0 dropped` |
+| shop | Silver **1450 → 1150**, Gold +250; `already_bought`; `no_such_slot`; `bad_slot`; **insufficient funds left the balance untouched** |
+| shop determinism | same user+day identical, other user differs, next day differs, slots distinct |
+| quests | established profile starts **0/N**; one real summon advanced all three by exactly 1; claim paid Silver x120; `already_claimed` / `not_assigned_today` / `bad_quest_id` all refused |
+| drain path still cannot grant | re-enumerated after every edit: **0** non-comment `GrantService` refs |
+
+## Placeholders, stated plainly
+
+Shop prices and catalogue, quest content and rewards, the three codes, the `HarvestMoon` event, and
+B38's 7-day table. All labelled in their files. None is a considered economy decision, and shop
+prices in particular should eventually be set against `TierConfig.GetSellValue`, which is what pays
+Silver in.
+
+## Standing instructions recorded this session
+
+- **The empty SoundIds are DELIBERATE and are no longer a pending** (user, B40): all 13 get filled at
+  **release**. Silence in development is expected. Same standing class as the 0.05
+  `UIHoverStroke.Thickness` — do not re-raise either.
+- **Schema v4 is published to both Places** (user, B40).
+
+## Still outstanding
+
+- **AD-Game:** player XP, match quest counters, the three settings actions, the Game's audio owner.
+- Shop and Quests have **no UI**; `BattlePass`/`Event`/`LeaderBoards`/`InviteFriends`/`Inbox` unwired.
+  An Inbox **screen** needs a stored message history, which is a **v5** field — mail itself does not.
+- C4 feeding still blocked on data.
+- `StarterGui.Summon` is the user's unfinished work — **do not touch**.
+- `SellButtons.CancelButton` overlaps `QuickSellButton`; `PlayButton` wears the Shop logo.
+- The dev profile still carries a dead `BannerChoices["B29ProbeBanner"]`.
+
 ## 2026-08-27 [both] B39 — AD-Gacha: **event dailies, redeem codes, and the pending-reveal queue** — on one schema bump, after repairing a drift two of my own sessions walked past.
 
 Four things the user picked in one go. Everything below is Lobby-local except the schema, which is

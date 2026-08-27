@@ -392,6 +392,36 @@ everything untradeable at launch).
   🔲 **Still unbuilt:** Inbox, Quests, BattlePass, Event; offline delivery via `MessageAsync`.
 
 
+- ✅ **B40 (AD-Gacha, Lobby, 2026-08-27) — THE TWO SCREENS, MAIL, THE SHOP, AND QUESTS.** Docs:
+  `shop.md`, `quests.md`, `reward-push.md`, `daily-rewards.md`. `RS.Remotes` **27 → 31**, schema
+  stays v4.
+  ⚠ **No schema bump for the third time, and it is now a recorded rule.** `ShopStock` and `Quests`
+  were both in the template since v2 with no writer, like `LoginStreak` before B38. **Check the
+  schema before designing.** Still unwritten: `Titles`, `Battlepass`. **v4 is published, so the next
+  new field costs a v5.**
+  **SCREENS:** the user reversed "you author it" — B40 scripted BLOCKOUT versions of
+  `StarterGui.DailyRewards` (two tabs) and `StarterGui.RedeemCodes` to the published specs and wired
+  them. **The specs stay the contract**, so real art later is a replace, not a rewrite.
+  **`DailyRewardsButton` now OPENS the screen rather than claiming** — the claim MOVED to the screen;
+  the HUD keeps the countdown. Resolved lazily at click time because the controllers boot in an
+  unspecified order.
+  **MAIL** closes B37's gap for real via ProfileStore `MessageAsync`: the grant runs on the next
+  profile load. **GRANT FIRST, THEN `processed()`** — both persist in the same save, which is what
+  makes an at-least-once channel deliver exactly once. No shared-canon edit.
+  ⚠ **Two live-run corrections.** Mail often reaches a player who IS online, so the reveal goes
+  through `ToOrQueue`, not a bare Enqueue. And B39's drain assumed the profile always won its race
+  with the client's announcement — it now drains when BOTH have landed, either order.
+  **SHOP** is the game's **first Silver sink** — verified that nothing spent Silver while B31 mints
+  it. Stock DERIVED from `MetaMath.RngForSlot`, never stored. **PRE-CHECK → SPEND → GRANT → MARK**,
+  refund on the unreachable failure. **The client sends a slot INDEX, never a price.**
+  **QUESTS** measure a **DELTA against a baseline** taken at assignment (a lifetime counter read
+  would finish every quest instantly for an established player), written once per quest per day.
+  🔲 **AD-Game is now the biggest single blocker:** player XP, every match-shaped quest counter, and
+  the three settings actions. Match quests are REFUSED and named at boot until those counters exist.
+  🔲 **Still unbuilt:** Shop and Quests UI; BattlePass, Event, LeaderBoards, InviteFriends; an Inbox
+  SCREEN (needs a v5 field for message history — mail itself does not).
+
+
 ## Cross-Place
 
 - ✅ Save schema v1 shared + deployed to both Places
