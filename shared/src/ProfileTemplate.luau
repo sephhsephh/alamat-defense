@@ -16,7 +16,7 @@
 
 local ProfileTemplate = {}
 
-ProfileTemplate.SCHEMA_VERSION = 3
+ProfileTemplate.SCHEMA_VERSION = 4
 ProfileTemplate.STORE_NAME = "Beta1_PlayerData" -- one store for the whole Experience (production)
 
 -- Live store name. In Studio ALL data goes to a separate dev store, so playtests and
@@ -58,6 +58,16 @@ export type BannerChoice = {
 	ChosenAtDay: number,
 }
 
+-- A per-EVENT daily-reward streak (schema v4, B39). Same two fields as the base `LoginStreak` and
+-- the same rules from `DailyRewardConfig`, kept in a SEPARATE top-level key rather than nested
+-- inside `LoginStreak` for one reason: a top-level additive key is unambiguously covered by
+-- `Reconcile()`, which is what makes the v3 -> v4 migration a no-op. `LastClaimDayNumber` is a
+-- `MetaMath.Slot` DAY NUMBER, never a timestamp (cross-phase invariant 3).
+export type EventStreak = {
+	Day: number,
+	LastClaimDayNumber: number,
+}
+
 export type ProfileData = {
 	SchemaVersion: number,
 	PlayerXP: number,
@@ -71,6 +81,18 @@ export type ProfileData = {
 	Counters: { Global: { [string]: any }, PerUnit: { [string]: { [string]: number } } },
 	Quests: { Progress: { [string]: any }, Claimed: { [string]: any }, PinnedQuestId: string? },
 	LoginStreak: { Day: number, LastClaimDayNumber: number },
+	-- v4 (B39), keyed by eventId. The base LoginStreak above is the NON-event 7-day track.
+	EventLoginStreaks: { [string]: EventStreak },
+	-- v4 (B39): redeemed promo codes, keyed by the UPPERCASED code, value = the MetaMath DAY NUMBER
+	-- it was redeemed on. A DAY NUMBER and not a timestamp so "one per day" style codes agree across
+	-- servers with no stored clock, exactly like BannerChoice.ChosenAtDay.
+	RedeemedCodes: { [string]: number },
+	-- v4 (B39): rewards granted while the player was NOT in a server, waiting to be REVEALED on
+	-- their next join. The grant itself already happened and is already reflected in the balances
+	-- above -- this queue is PRESENTATION ONLY, and draining it must never grant anything.
+	-- `Dropped` counts rows the cap refused, so the drain can say "+N more" instead of lying by
+	-- omission. See docs/systems/rewards.md.
+	PendingReveals: { Queue: { any }, Dropped: number },
 	ShopStock: { DayNumber: number, Bought: { [string]: any } },
 	Titles: { Owned: { [string]: any }, Equipped: string? },
 	Spirits: { [string]: { SpiritId: string, ObtainedAt: number } },
@@ -94,6 +116,9 @@ ProfileTemplate.Template = {
 	Counters = { Global = {}, PerUnit = {} },
 	Quests = { Progress = {}, Claimed = {}, PinnedQuestId = nil },
 	LoginStreak = { Day = 0, LastClaimDayNumber = 0 },
+	EventLoginStreaks = {},
+	RedeemedCodes = {},
+	PendingReveals = { Queue = {}, Dropped = 0 },
 	ShopStock = { DayNumber = 0, Bought = {} },
 	Titles = { Owned = {}, Equipped = nil },
 	Spirits = {},
@@ -152,6 +177,22 @@ end
 -- it, and do not "fill it in" later: a new shape change gets its OWN step (rule 3 above -- never
 -- remove or repurpose an existing migration).
 ProfileTemplate.Migrations[2] = function(_data)
+	-- intentionally empty; see above
+end
+
+-- v3 -> v4: add `EventLoginStreaks`, `RedeemedCodes` and `PendingReveals` (B39).
+-- *** ALSO A DELIBERATE NO-OP, FOR THE SAME REASON AS v2 -> v3. ***
+-- All three are ADDITIVE-OPTIONAL top-level keys, and `Reconcile()` runs BEFORE `Migrate()`, so by
+-- the time this executes each one is already present with its template default. There is nothing to
+-- convert. The step exists because `Migrate()` WARNS AND STOPS at a missing step, so a gap here
+-- would strand every migration added after it.
+--
+-- ONE BUMP, THREE SYSTEMS, ON PURPOSE. Event daily rewards, promo codes and the offline reveal queue
+-- each needed a profile field. Three separate bumps would have meant three migration steps and three
+-- both-Places publishes for changes that are individually free -- the cost of a schema bump is the
+-- PUBLISH, not the field. If a fourth system needs a field before v4 ships, add it HERE rather than
+-- opening v5.
+ProfileTemplate.Migrations[3] = function(_data)
 	-- intentionally empty; see above
 end
 

@@ -1,4 +1,11 @@
 --!strict
+-- B34/B36 BOOT MARKER (start). Paired with the `true` at the bottom -- see ScreenBootWatchdog.
+-- Two markers, not one, because the watchdog CANNOT read `script.Source` at runtime (that needs
+-- plugin/Open Cloud capability, and trying threw on every boot from B34 until B36). The tri-state
+-- nil / false / true tells `never instrumented` from `started and hung` from `finished` using only
+-- attributes, which a LocalScript can always read.
+script:SetAttribute("BootComplete", false)
+
 -- UIKitBootstrap - one script that gives EVERY tagged button the kit's animations.
 --
 -- HOW TO ADD A BUTTON: tag any GuiButton with the CollectionService tag "UIKitButton"
@@ -35,3 +42,13 @@ CollectionService:GetInstanceRemovedSignal(TAG):Connect(function(inst)
 end)
 
 print(string.format("[DIAG] UIKitBootstrap: %d '%s' button(s) at start", #CollectionService:GetTagged(TAG), TAG))
+
+
+-- ===== B34 BOOT MARKER =====
+-- Read by StarterPlayerScripts.ScreenBootWatchdog. Reaching this line means this script finished
+-- its top-level boot; NOT reaching it means it is still stuck somewhere above -- almost always a
+-- bare `WaitForChild` on an instance a designer renamed or deleted, which NEVER times out.
+-- That is how the whole Units screen died silently at B33: no error, no stack, just a screen that
+-- never appeared. The marker is what lets the watchdog NAME the stuck script instead of leaving a
+-- single 'Infinite yield possible' line to be spotted in a wall of healthy boot output.
+script:SetAttribute("BootComplete", true)

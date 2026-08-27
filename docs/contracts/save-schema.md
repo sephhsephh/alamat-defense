@@ -1,5 +1,5 @@
 # Contract: Save Schema
-<!-- owner: game | scope: global | version: 3 | last-verified: 2026-08-17 (B29) -->
+<!-- owner: game | scope: global | version: 4 | last-verified: 2026-08-27 (B39) -->
 
 Canonical implementation: `shared/src/ProfileTemplate.luau` (deployed to
 `ReplicatedStorage.Shared.ProfileTemplate` in every Place). This doc explains it; the
@@ -13,7 +13,7 @@ whole Experience.
 > exact store 2026-08-01** (drift check during the v2 work) — no split-brain. Store target only,
 > unrelated to the schema version.
 
-## v3 shape (current)
+## v4 shape (current)
 
 ```luau
 {
@@ -40,6 +40,9 @@ whole Experience.
 	} },
 	Loadout: { string },              -- up to 6 unit uuids (slot gating by PlayerLevel later)
 	Pity: { [string]: { Legendary: number, Mythic: number, Secret: number } },
+	EventLoginStreaks: { [string]: { Day: number, LastClaimDayNumber: number } },  -- v4: eventId -> streak
+	RedeemedCodes: { [string]: number },   -- v4: UPPERCASED code -> the DAY NUMBER it was redeemed on
+	PendingReveals: { Queue: { any }, Dropped: number },  -- v4: reveals owed to an ABSENT player
 	BannerChoices: { [string]: {     -- v3: bannerId -> this player's Selection-banner pick
 		TowerId: string,
 		ChosenAtDay: number,          -- a MetaMath.Slot DAY NUMBER, *not* a timestamp (see below)
@@ -81,6 +84,36 @@ per-player stored pick, which blueprint task B4 needs and B7 shipped the Event h
   real DataStore (`DataStoreState=Access`); and a written `BannerChoices` entry **survived a
   stop/start round trip**.
 
+**Migration 3→4** (`Migrations[3]`, B39 2026-08-27): adds `EventLoginStreaks`, `RedeemedCodes` and
+`PendingReveals` — the profile fields behind event daily rewards, promo codes and the offline reveal
+queue respectively.
+
+- **ONE BUMP FOR THREE SYSTEMS, ON PURPOSE.** Each field is individually free; what a schema bump
+  actually costs is the **both-Places publish**. Three bumps would have meant three migration steps
+  and three publishes for three changes that could ship together. If a fourth system needs a field
+  before v4 ships, **add it to v4** rather than opening v5.
+- **The step is a DELIBERATE NO-OP**, for exactly the reason `Migrations[2]` is: all three are
+  additive-optional top-level keys and `Reconcile()` runs *before* `Migrate()`, so each is already
+  present with its default when the step executes. It exists because `Migrate()` warns and **STOPS**
+  at a missing step.
+- **`EventLoginStreaks` is a separate TOP-LEVEL key, not nested inside `LoginStreak`.** A top-level
+  additive key is unambiguously covered by `Reconcile()`, which is what keeps the migration a no-op.
+  `LastClaimDayNumber` is a **`MetaMath.Slot` day number**, never a timestamp (invariant 3).
+- **`RedeemedCodes` values are DAY NUMBERS too**, and keys are the **uppercased** code, so casing
+  cannot let one code be redeemed twice.
+- **`PendingReveals` is PRESENTATION ONLY.** The grant it describes has *already happened* and is
+  already reflected in the balances; **draining the queue must never grant anything**. `Dropped`
+  counts rows the cap refused so the drain can say "+N more" rather than lying by omission.
+- **Forward-tolerant, same as v3.** `Reconcile()` never prunes and `Migrate()`'s loop does not run
+  when `data.SchemaVersion` already exceeds a Place's `SCHEMA_VERSION`, so a v3 server reading a v4
+  profile leaves the new keys intact. **Both Places must still be republished together** — the
+  tolerance is a safety net, not a licence to split.
+- Verified on a **fresh clone** of the module, because `execute_luau` caches requires and returns the
+  pre-edit copy (it did exactly that on the first attempt, reporting `SCHEMA_VERSION=3` against a
+  source that already said 4). Results: all three keys present with correct types,
+  `Migrations[1..3]` all present, a reconciled v3 profile walks **1 step** to v4, and a v1 profile
+  still walks the **full 3-step** chain with `Currencies.Gold = 500` and its migrated unit intact.
+
 The *flow* on top — the `ChooseBannerUnit` remote, a per-player `BannerRegistry.FeaturedFor`, and
 adding `Selection` to `SUPPORTED_TYPES` — is AD-Gacha's work and is NOT part of this bump. Until it
 lands, Selection banners stay validated-but-refused (`banner_type_not_supported_yet`).
@@ -101,6 +134,11 @@ Bump `SCHEMA_VERSION` by 1 + add `Migrations[old]` step + update this doc's vers
 PENDING for other Places in `STATE.md`. Never edit or remove an existing migration.
 
 ## Version history
+
+- **v4** (2026-08-27, B39): `EventLoginStreaks` + `RedeemedCodes` + `PendingReveals` in one bump.
+  `Migrations[3]` is a deliberate no-op. ProfileTemplate hash `72d3944f → 8e4224b9`, deployed and
+  hash-matched in **both** Places the same session (invariant 5). **Both Places must be republished
+  together.**
 
 - **v1** (2026-07-17): initial adoption. Prior in-memory shape ported 1:1; no live players
   existed, so no migration from pre-ProfileStore data.

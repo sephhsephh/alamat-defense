@@ -118,14 +118,14 @@
     },
     "ProfileTemplate": {
       "file": "shared/src/ProfileTemplate.luau",
-      "hash": "72d3944f",
+      "hash": "8e4224b9",
       "owner": "game",
       "deployPath": "ReplicatedStorage.Shared.ProfileTemplate",
       "deployed": {
-        "Game": "72d3944f",
-        "Lobby": "72d3944f"
+        "Game": "8e4224b9",
+        "Lobby": "8e4224b9"
       },
-      "comment": "SCHEMA_VERSION=2 (A1, 2026-08-01): Towers(towerId) -> Units(uuid) instances, Currency -> Currencies map, +PlayerLevel/Loadout/Pity/Counters/Quests/LoginStreak/ShopStock/Titles/Spirits/Battlepass; Migrations[1] converts v1->v2. STORE_NAME stays Beta1_PlayerData(Dev1). Deployed byte-identical (63a0c98a) in GAME (A1) and LOBBY (A2, 2026-08-01) -- drift-green in both Places. Prior hashes: 184cdfad = beta store rename (v1), 8ac5d3e9 = starter-seed removal (v1), 376e717d = original v1. ** SCHEMA v2 -> v3 AT B29 (2026-08-17): adds `BannerChoices`, the Selection banner's per-player stored pick. ** Unblocks blueprint B4's Selection half, which B7 shipped without. Shape is the blueprint's, unchanged: BannerChoices[bannerId] = { TowerId, ChosenAtDay }. ChosenAtDay is a MetaMath.Slot(86400, ResetOffsetSec) DAY NUMBER, NOT a timestamp -- that is what makes Featured.ChoiceCooldown agree across servers with no stored clock (cross-phase invariant 3); the test is currentDay - ChosenAtDay >= cooldownDays. Migrations[2] is a DELIBERATE NO-OP: the key is additive-optional and Reconcile() runs BEFORE Migrate(), so it is already an empty table by then -- but the step must exist because Migrate() WARNS AND STOPS at a missing step, which would strand every later migration. Proven live from a real server Script: a v1 table walks 2 steps to v3, a v2 table walks 1 non-destructively, the live dev profile logged 'Migrated ... forward 1 step(s) to v3' on a real DataStore (DataStoreState=Access), and a written BannerChoices entry SURVIVED a stop/start round trip (8 PASS / 0 FAIL). Deployed to BOTH Places in ONE session per cross-phase invariant 5. NOTE this bump is FORWARD-TOLERANT unlike teleport v4: Reconcile only fills missing keys and never prunes, and Migrate's loop does not run when data.SchemaVersion exceeds a Place's SCHEMA_VERSION -- so a v2 server reading a v3 profile leaves BannerChoices intact rather than destroying it. Publish both anyway. The FLOW (ChooseBannerUnit remote, per-player FeaturedFor, adding Selection to SUPPORTED_TYPES) is AD-Gacha's next session, not this one.",
+      "comment": "SCHEMA_VERSION=2 (A1, 2026-08-01): Towers(towerId) -> Units(uuid) instances, Currency -> Currencies map, +PlayerLevel/Loadout/Pity/Counters/Quests/LoginStreak/ShopStock/Titles/Spirits/Battlepass; Migrations[1] converts v1->v2. STORE_NAME stays Beta1_PlayerData(Dev1). Deployed byte-identical (63a0c98a) in GAME (A1) and LOBBY (A2, 2026-08-01) -- drift-green in both Places. Prior hashes: 184cdfad = beta store rename (v1), 8ac5d3e9 = starter-seed removal (v1), 376e717d = original v1. ** SCHEMA v2 -> v3 AT B29 (2026-08-17): adds `BannerChoices`, the Selection banner's per-player stored pick. ** Unblocks blueprint B4's Selection half, which B7 shipped without. Shape is the blueprint's, unchanged: BannerChoices[bannerId] = { TowerId, ChosenAtDay }. ChosenAtDay is a MetaMath.Slot(86400, ResetOffsetSec) DAY NUMBER, NOT a timestamp -- that is what makes Featured.ChoiceCooldown agree across servers with no stored clock (cross-phase invariant 3); the test is currentDay - ChosenAtDay >= cooldownDays. Migrations[2] is a DELIBERATE NO-OP: the key is additive-optional and Reconcile() runs BEFORE Migrate(), so it is already an empty table by then -- but the step must exist because Migrate() WARNS AND STOPS at a missing step, which would strand every later migration. Proven live from a real server Script: a v1 table walks 2 steps to v3, a v2 table walks 1 non-destructively, the live dev profile logged 'Migrated ... forward 1 step(s) to v3' on a real DataStore (DataStoreState=Access), and a written BannerChoices entry SURVIVED a stop/start round trip (8 PASS / 0 FAIL). Deployed to BOTH Places in ONE session per cross-phase invariant 5. NOTE this bump is FORWARD-TOLERANT unlike teleport v4: Reconcile only fills missing keys and never prunes, and Migrate's loop does not run when data.SchemaVersion exceeds a Place's SCHEMA_VERSION -- so a v2 server reading a v3 profile leaves BannerChoices intact rather than destroying it. Publish both anyway. The FLOW (ChooseBannerUnit remote, per-player FeaturedFor, adding Selection to SUPPORTED_TYPES) is AD-Gacha's next session, not this one. 72d3944f -> 8e4224b9 at B39 2026-08-27: *** SCHEMA v3 -> v4. *** Three additive-optional top-level keys in ONE bump: EventLoginStreaks (per-event daily streaks), RedeemedCodes (promo codes, keyed by UPPERCASED code -> MetaMath DAY NUMBER) and PendingReveals { Queue, Dropped } (rewards granted while the player was away, PRESENTATION ONLY -- draining it must never grant). Migrations[3] is a DELIBERATE NO-OP for the same reason Migrations[2] is: Reconcile() runs BEFORE Migrate(), so the keys already exist by the time the step runs. ONE bump for three systems on purpose -- the cost of a bump is the both-Places PUBLISH, not the field. Verified on a fresh clone (execute_luau's require cache returns the pre-edit module): v3 -> v4 in one step, and a v1 profile still walks v1->v2->v3->v4 with Gold and unit conversion intact.",
       "kind": "module"
     },
     "Signal": {
@@ -190,14 +190,14 @@
     },
     "UIKitBootstrap": {
       "file": "shared/src/UIKitBootstrap.luau",
-      "hash": "f930ff7b",
+      "hash": "9c9539c0",
       "owner": "ui",
       "deployPath": "StarterPlayer.StarterPlayerScripts.UIKitBootstrap",
       "deployed": {
-        "Game": "f930ff7b",
-        "Lobby": "f930ff7b"
+        "Game": "9c9539c0",
+        "Lobby": "9c9539c0"
       },
-      "comment": "Kit CONTROLLER (LocalScript, not a ModuleScript -- still hashed as source). Attaches UIKit.Button to every instance tagged 'UIKitButton', including clones added later. Without this in a Place, tagged buttons are inert. Promoted 2026-08-06.",
+      "comment": "Kit CONTROLLER (LocalScript, not a ModuleScript -- still hashed as source). Attaches UIKit.Button to every instance tagged 'UIKitButton', including clones added later. Without this in a Place, tagged buttons are inert. Promoted 2026-08-06. f930ff7b -> 9c9539c0 at B39 2026-08-27: DRIFT REPAIR, not a feature change. B36 added the paired BootComplete marker block to the LOBBY's 21 boot scripts; UIKitBootstrap is one of those 21 AND is shared canon, so the Lobby's copy re-hashed and B36 neither mirrored it into the Game nor updated this file -- then B36 and B37 both closed reporting 'drift green 35/35'. B39 mirrored the identical block into the Game and both Places now hash 9c9539c0 byte-for-byte. The marker is inert where no watchdog reads it: it only sets an attribute.",
       "kind": "module"
     },
     "UIKitButton": {
