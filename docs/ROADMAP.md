@@ -332,6 +332,38 @@ everything untradeable at launch).
   own data — a reward table, a code registry, per-player redemption tracking — before it can be built.
 
 
+- ✅ **B38 (AD-Gacha, Lobby, 2026-08-27) — DAILY REWARDS. The first of those four buttons to ship,
+  and the worked example of when NOT to use B37's push path.** Full doc:
+  `docs/systems/daily-rewards.md`. Four Lobby-local pieces: **`RS.Configs.Meta.DailyRewardConfig`**
+  (pure rules), **`SSS.Server.Meta.DailyRewardService`** (**THE one writer of `Data.LoginStreak`**),
+  **`StarterGui.HUD.DailyRewardsController`**, and the Studio harness **`Server.Meta.DevDailyRewind`**.
+  `RS.Remotes` **23 → 25** (`GetDailyState`, `ClaimDaily`). **Shared canon unchanged at 35.**
+  ⚠ **No schema bump, and that was found by reading rather than assumed.** `ProfileTemplate` has
+  carried `LoginStreak = { Day, LastClaimDayNumber }` **since v2 with no writer at all**. Designing
+  first would have produced a pointless v3 → v4 migration and a both-Places publish for a field that
+  was already there. Schema stays **v3**.
+  ⚠ **It deliberately does NOT use `RewardPush`.** B38 was pitched partly as that path's first real
+  caller. The user chose **click-to-claim**, and B37's own rule then decides it: a claim is a *click*,
+  so `ClaimDaily` returns `Rewards = views` and the client fires `ShowRewards`, exactly like summon
+  and sell. **The push path therefore still has no production caller** — a login grant, an inbox gift
+  or a redeemed code will be its first.
+  Rules (user's calls): **7-day cycle**, **miss a day → reset to day 1**, day number from
+  `MetaMath.Slot` so the client never computes it. **`GRANT FIRST, MARK SECOND`** — `Grant` validates
+  and can refuse, the mark cannot, so marking first would let a refused grant burn the player's day.
+  **The reward table is PLACEHOLDER BALANCE** and is labelled as such in the file; the user accepted
+  it to unblock the build and will retune it.
+  Verified live through the real server: first claim (day 1, Gold x100, 265 → 365, reveal ran),
+  **double claim refused** (`already_claimed`), **streak advance** (day 1 → 2, Silver x150), and
+  **a missed day resetting a streak of 2 back to day 1**. The deployed label read `Ready to claim!`
+  on a claimable join and counted down `11:30:18` → `11:30:15` when claimed.
+  🐛 **A bug the verification found:** `stateFor` returned `NextDay(...)` unconditionally, which
+  reports **1** for a player who already claimed today whatever day they took — a 7-day track screen
+  would have lit day 1 for someone who had just claimed day 5. `NextDay` is correct and answering a
+  different question. Invisible to reading; it showed up only as a live
+  `{Streak: 2, ClaimedToday: true, Day: 1}`.
+  🔲 **Still unblocked but unbuilt:** RedeemCodes, Inbox, Quests, BattlePass, Event.
+
+
 ## Cross-Place
 
 - ✅ Save schema v1 shared + deployed to both Places

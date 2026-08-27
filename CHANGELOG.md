@@ -1,5 +1,158 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-27 [lobby] B38 — AD-Gacha: **daily rewards.** The first of B37's four unblocked buttons to ship — and the worked example of when *not* to use B37's push path.
+
+**Place asserted before every write.** Everything added is **Lobby-local** — B38 touched no shared
+canon path, nothing was re-hashed. `RS.Remotes` **23 → 25**. Save schema unchanged at **v3**.
+⚠ The end-of-session drift check came back **34/35, not 35/35** — see *Drift found* below. It is not
+B38's doing and it is not the user's.
+
+### ⚠ Drift found at the end-of-session check: `UIKitBootstrap`
+
+The Lobby's copy hashes **`9c9539c0`**; the Game's copy and the manifest both say **`f930ff7b`**.
+Diffing the two, the delta is **exactly B36's paired boot-marker block**.
+
+So: B36 instrumented the Lobby's 21 boot scripts with `BootComplete` markers. **One of those 21 is
+shared canon** — `UIKitBootstrap` — and B36 neither mirrored the change into the Game nor re-hashed
+the manifest. B36's own entry says "manifest stays at 35; one shared file re-hashed, `SettingsUI`".
+That was wrong: **two** shared files were re-hashed and only one was noticed.
+
+Recording it rather than fixing it here, for two reasons. `UIKitBootstrap` is **AD-UI's** module, and
+a Lobby session must not deploy into the Game unilaterally (the same rule that stopped B22 from
+pushing `ItemCatalog` across). The fix is mechanical — mirror the marker block into the Game's copy,
+confirm both hash `9c9539c0`, then update the manifest's `hash` and both `deployed` entries — and it
+belongs to AD-UI or an Integration session. Logged in `STATE.md`.
+
+Worth stating plainly: **this is a bug two of my own sessions walked past.** B36 and B37 both recorded
+"drift green 35/35" at their close. The check that caught it is the same one they ran; what changed is
+that this time it was diffed against the manifest field by field instead of eyeballed.
+
+### Four pieces
+
+| piece | what it is |
+|---|---|
+| `RS.Configs.Meta.DailyRewardConfig` | PURE rules: the 7-day table, the day number, the streak arithmetic |
+| `SSS.Server.Meta.DailyRewardService` | **THE one writer of `Data.LoginStreak`**; owns `GetDailyState` + `ClaimDaily` |
+| `StarterGui.HUD.DailyRewardsController` | the button: live countdown, click to claim, reveal |
+| `SSS.Server.Meta.DevDailyRewind` | Studio-gated harness; rewinds `LastClaimDayNumber` and nothing else |
+
+### Reading the schema first deleted the biggest piece of work
+
+The obvious plan was a `LoginStreak` field, a v3 → v4 migration, a `Migrations` step and a
+publish of **both** Places. None of that was needed. `ProfileTemplate` has carried
+`LoginStreak = { Day = 0, LastClaimDayNumber = 0 }` **since v2, with no writer at all** — the field
+was added and then never used.
+
+So B38 is a Lobby-local feature on an unchanged schema. The general lesson is not "check the
+template"; it is that **designing before reading invents work that the codebase has already done**,
+and a schema bump is expensive enough to be worth ten minutes of reading to avoid.
+
+### ⚠ It deliberately does NOT use `RewardPush`
+
+I pitched this session partly as *finally giving B37's push path a real caller*. It is not one, and
+the honest thing was to say so rather than bend the design to justify last session's work.
+
+The user chose **claim from the button**. B37's own rule then decides it: *player's own click → the
+**return value**; server decided → **`RewardPush`***. A claim is a click. So `ClaimDaily` returns
+`Rewards = views` and the **client** fires `ShowRewards` — the same path summon and sell already use.
+Pushing here would reveal the same rewards twice the day anything else starts pushing.
+
+**Consequence, recorded plainly: the push path still has no production caller.** Its first real one
+will be something the player did not initiate — a login grant, an inbox gift, a redeemed code.
+
+### The rules live in the config, not the service
+
+`DailyRewardConfig` is pure and total, so the service, the HUD countdown and a future 7-day track
+screen cannot disagree about which day a player is on.
+
+- **The day number is `MetaMath.Slot(Daily, ResetOffsetSec)`** — cross-phase invariant 3, the same
+  call `BannerRegistry.CurrentDay()` makes. The client never computes it: a client that disagreed
+  would show "ready" against a server saying "already claimed".
+- **Miss a day and the streak resets to 1** (the user's call). `NextDay` returns `(day % 7) + 1` only
+  when `last == today - 1`. Every other case returns 1 — which also covers a first claim *and* a
+  corrupt stored streak, because a bad value must not be able to hand out day 7 forever.
+- **The reward table is PLACEHOLDER BALANCE**, marked as such in the file. The user accepted it to
+  unblock the build and will retune it. It is not a considered economy decision and should not be
+  quoted as one.
+
+### GRANT FIRST, MARK SECOND
+
+`Grant` validates and can refuse; the mark cannot. Marking first would let a refused grant still burn
+the player's day. Same ordering rule as `GrantService.SellUnits` (credit before destroy): **do the
+fallible thing first.** An `inFlight` guard is belt-and-braces — `Grant` is documented non-yielding,
+so the check → grant → write window cannot interleave today; the guard exists so that if a yield is
+ever introduced there, a double-click becomes a *refusal* rather than a double grant.
+
+### A bug the verification found, which reading would not have
+
+`stateFor` returned `NextDay(...)` unconditionally. For a player who has **already claimed today**
+that reports **1**, whatever day they actually took.
+
+`NextDay` is not wrong — it is answering a different question. Its `last == today - 1` test cannot
+hold when `last == today`, so a same-day call legitimately falls through to "start the cycle over".
+That is the right answer to *what comes next* and the wrong answer to *which day am I on*. A 7-day
+track screen reading it would have lit day 1 for a player who had just claimed day 5.
+
+`Day` now means **the day the track should highlight**. It was invisible in the source and showed up
+only as a live `{Streak: 2, ClaimedToday: true, Day: 1}`.
+
+### The harness had to be a real server Script
+
+`DevDailyRewind` rewinds `LastClaimDayNumber` **only** — never `Day`, never a grant, never a claim
+mark — so every rule under test still comes from the config and the service.
+
+It could not be done from `execute_luau`. That runs in a separate Lua VM with its **own require
+cache**, so requiring `PlayerDataService` there returns a second, empty copy holding no profiles —
+`GetData` sat at `nil` for twenty seconds before I recognised it. Rewinding that copy would have been
+testing a re-implementation: the B36 mistake exactly, one session later, in a new disguise.
+
+The same VM boundary explains the session's first scare. The initial `DailyRewardService` probe
+reported `parse-clean=false`, which looked like a syntax error in a freshly written 122-line file. It
+was not: the probe required the source as a **ModuleScript**, and `OnServerInvoke` cannot be assigned
+outside a real server. Re-probing with the source wrapped in `return function() ... end` **compiles
+without running** — that separates a parse error from a runtime one, and it came back clean.
+
+### Verified live, through the real server
+
+| case | result |
+|---|---|
+| first claim | day 1, Gold x100, Gold 265 → 365, reveal ran |
+| double claim | `{ok=false, reason="already_claimed"}` |
+| streak advance (claimed yesterday) | day 1 → **day 2**, Silver x150, `Streak` 2 |
+| **missed a day** (streak was 2) | resets to **day 1**, Gold x100 |
+| `Day` after the fix | `{Streak: 2, ClaimedToday: true, Day: 2}` |
+| deployed label | `"Ready to claim!"` on a claimable join; `"Resets in 11:30:18"` → `11:30:15` 3s later |
+| watchdog | `23/23 boot script(s) finished` — the new controller is instrumented and counted |
+
+The **day-7 → day-1 wrap** is verified at the config layer only (`NextDay(7, today-1, today) = 1`).
+Walking a live profile through seven consecutive days was not worth the round trips and the service
+passes `streak.Day` straight through — recorded here rather than left to look like full coverage.
+
+### RESOLVED (user, B38): the live two-client v4 queue run
+
+Open since **B23** — the longest-standing unknown in the project. `ReserveServer` is 403 in Studio,
+so the cross-server handoff could never be proven from here. The user confirms it is verified. The
+pending is deleted from `STATE.md` and from `Next up`.
+
+### Still outstanding
+
+- **10 of 13 SoundIds are still empty** (`UI.Hover`/`Click`/`Open` assigned; the rest and all five
+  BGM slots empty) — the game is silent.
+- **AD-Game must register the Game's three settings actions** (`RestartMatch`/`ReturnToLobby`/
+  `TeleportToSpawn` render disabled; `ReturnToLobby` must respect teleport contract v4).
+- C4 feeding is blocked on data (`docs/proposals/2026-08-20-c4-feeding.md`).
+- `HUD.Right` still unwired: `BattlePass`, `Event`; and `RedeemCodes`, `LeaderBoards`,
+  `InviteFriends`, `Inbox` under `UpperRight`.
+- `StarterGui.Summon` is the user's unfinished work — **do not touch**.
+- `SellButtons.CancelButton` overlaps `QuickSellButton`; `PlayButton` still wears the Shop logo.
+- The dev profile still carries a dead `BannerChoices["B29ProbeBanner"]`.
+
+### Docs
+
+`docs/systems/daily-rewards.md` is **new** — split out of `rewards.md`, which was on its 300-line
+cap and is AD-Game's match-end payout doc anyway (the same split `gacha.md` took at B30).
+`INDEX.md`, `STATE.md`, `ROADMAP.md` and `places/lobby/CONTEXT.md` updated; all four back within cap.
+
 ## 2026-08-21 [lobby] B37 — AD-Gacha: **the push-reveal path.** The server could grant a player anything and had no way to show them. Four buttons were blocked on that one missing direction.
 
 **Place asserted before every write.** Drift green **35/35** at session start and end. Everything

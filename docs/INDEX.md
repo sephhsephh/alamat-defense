@@ -45,6 +45,11 @@
   NUMBER and not a timestamp, the pure `BannerRegistry` choice API, `BannerChoiceService` as the ONE
   writer + `ChooseBannerUnit`'s two modes and refusal codes, and the `ChoiceOverlay` UI. Split out
   of `gacha.md` at B30 on its 300-line cap.
+- `daily-rewards.md` — **AD-Gacha canon, LOBBY**: the login streak (B38). The pure `DailyRewardConfig`
+  (7-day table, `MetaMath` day number, miss-a-day-resets-to-1), `DailyRewardService` as **THE one
+  writer of `Data.LoginStreak`**, the HUD button, and the `DevDailyRewind` harness. Read it for the
+  worked example of **why a click-to-claim reward must NOT use `RewardPush`**, and for `Day` vs
+  `NextDay` — a bug that was invisible to reading. Split out of `rewards.md` at B38 on its cap.
 - `lobby-ui.md` — the LOBBY's screens only (Units, Items, Collection, Hotbar, CurrencyBar, HUD
   buttons, the legacy script-built four) + the `DevAutoOpen` Studio harness. Split out of
   `places/lobby/CONTEXT.md` at A5 when that file passed its 150-line cap.

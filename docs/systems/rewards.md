@@ -221,3 +221,10 @@ replicate to the server, which is worth knowing before debugging a harness that 
 It also earned its keep immediately by catching a wrong assumption: `Grant`'s public contract is
 `{ Id = "Gold", Qty = 250 }` — **capitalised**, with `kind` derived from `ItemCatalog` and never
 passed. The lowercase `id`/`kind`/`qty` visible inside `Grant` are its post-validation internals.
+
+## Daily rewards live in their own doc
+
+`docs/systems/daily-rewards.md` (B38). This file was on its 300-line cap and daily rewards are a
+**Lobby** meta system, not a match-end payout — same split `gacha.md` took at B30. It is the first
+system built on the reveal machinery above, and it is the worked example of **why it does NOT use
+`RewardPush`**.
