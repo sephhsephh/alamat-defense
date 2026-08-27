@@ -1,6 +1,6 @@
 # ROADMAP — feature status for the whole Experience
 <!-- owner: all (any chat updates its own system's rows at landing) | scope: global -->
-<!-- last-verified: 2026-08-16 (B25) -->
+<!-- last-verified: 2026-08-27 (B41) -->
 
 Status legend: ✅ done · 🟡 partial/placeholder · 🔲 planned · 💭 idea (not committed)
 Meta-systems detail + rationale: `docs/proposals/2026-07-18-meta-systems-design.md`
@@ -18,6 +18,23 @@ everything untradeable at launch).
 - ✅ Towers: placement, per-tier attacks, 9 targeting modes, traits, meta-level scaling,
   auto-upgrade + Unit Manager, sell/upgrade UI
 - ✅ Abilities: passives, actives + Q/C UI, summons · ✅ status effects + elements
+- ✅ **Account levelling (B41).** `AddPlayerXP` applies `PlayerLevelConfig.ApplyXP` and writes BOTH
+  `PlayerXP` and `PlayerLevel` — the ONE account-XP path. `PlayerLevelConfig` promoted to shared canon
+  (manifest **35 → 36**, `2e99d041`, `TOOLVERSION B41-1`). Broken since B33: the rollover was
+  Lobby-only, so `PlayerLevel` was frozen at 1 and `LoadoutConfig`'s level-gated slots (5 at Lv20,
+  6 at Lv50) could never unlock. **No migration, no v5** — `ApplyXP` is self-healing on the next grant.
+  🟡 **BALANCE, USER'S CALL:** L50 costs **627,540** XP while slot 6 unlocks there.
+- ✅ **Match quest counters (B41).** `InsaneVictories` added (Victory AND Insane). `Clears` already
+  **was** "acts cleared" — a `StageConfig` IS an act — so no duplicate key was written.
+- ✅ **The three settings actions (B41, open since B35)** — `GameSettingsActions` registers
+  `RestartMatch`/`ReturnToLobby`/`TeleportToSpawn`; no edit to shared-canon `SettingsUI`. Both match
+  actions go through `RequestMatchAction` so the SERVER keeps the teleport-v4 stamp.
+- ✅ **`MatchDirector.AbortMatch` (B41)** — an abort **pays nothing** (user's call): `MatchEnded` is
+  never fired, so no XP/gold/drops/counters, and deliberately not a Defeat (whose consolation would
+  make restart farmable). Restarting a live match aborts it first. `MatchStateChanged` gains `StageId`.
+- ✅ **The Game has an audio owner (B41, open since B32)** — `GameAudio` plays per-act BGM off
+  `MatchStateChanged.StageId`, falling back to `BGM.Default`. All 13 SoundIds stay empty until
+  release by standing user decision; the caller exists so pasting an id is the only remaining step.
 - ✅ Game speed 1×/2×/3× virtual clock (3× behind gamepass flag)
 - ✅ Match end: stats/MVP, rewards commit, tower XP screen, Next Act validation
 - ✅ Persistence: ProfileStore schema v1, session-locked, dev store in Studio
@@ -416,8 +433,9 @@ everything untradeable at launch).
   refund on the unreachable failure. **The client sends a slot INDEX, never a price.**
   **QUESTS** measure a **DELTA against a baseline** taken at assignment (a lifetime counter read
   would finish every quest instantly for an established player), written once per quest per day.
-  🔲 **AD-Game is now the biggest single blocker:** player XP, every match-shaped quest counter, and
-  the three settings actions. Match quests are REFUSED and named at boot until those counters exist.
+  ✅ **AD-Game cleared that blocker at B41** — see the Game-place rows. The two match quests now need
+  only a one-line Lobby edit: add `Clears` + `InsaneVictories` to `QuestRegistry.LiveCounters` and
+  uncomment them. **`ClearThree` reads `Clears`, NOT a new `ActsCleared`** (user's call, B41).
   🔲 **Still unbuilt:** Shop and Quests UI; BattlePass, Event, LeaderBoards, InviteFriends; an Inbox
   SCREEN (needs a v5 field for message history — mail itself does not).
 

@@ -64,6 +64,23 @@ that visibly cannot be pressed.
 Scoping, confirmed with the user at B35: the **Game** shows `Restart Match`, `Return to Lobby` and
 `Teleport to Spawn`; the **Lobby** shows only `Teleport to Spawn`.
 
+**All three Game actions are WIRED as of B41** (`StarterPlayerScripts.GameSettingsActions`, the
+sibling of the Lobby's `LobbySettingsActions`). They rendered disabled from B35 purely because
+nothing registered them. Registering a handler needs **no edit to `SettingsUI`**, which is shared
+canon at `7e5a736a` — that zero-cost integration is the entire point of `Kind = "Action"`.
+
+**⚠ `ReturnToLobby` and `RestartMatch` go through the SERVER, not `TeleportService` on the client.**
+The teleport contract (v4) is a server concern: `MatchActionHandler` builds the `MatchReturn`
+payload, stamps `GameConfig.TeleportPayloadVersion` and calls `TeleportAsync`. A client-side teleport
+here would ship an unversioned payload and bypass the contract entirely. So both actions fire the
+existing `Remotes.Match.RequestMatchAction` and let the server decide — the same path the match-end
+screen's buttons already use. **One teleport path, one place the version is stamped.** Both ask
+`UIKit.Confirm` first, because both are destructive mid-match.
+
+`RestartMatch` deliberately sends **no payload**: the client does not get to name a stage. The server
+resolves the act from the live match (or the one just played), which is what stops a client
+restarting into an act it never played.
+
 Action buttons repaint on every **open**, not just at build. Handlers are registered by separate
 scripts and LocalScript run order is not guaranteed, so a build-time-only paint would show "N/A"
 forever whenever the registrar happened to run second.

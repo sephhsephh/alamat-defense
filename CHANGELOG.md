@@ -1,5 +1,128 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-27 [game] B41 — AD-Game: **the levelling loop, the match quest counters, the three settings actions and an audio owner** — and the pending that had been steering work since B33 was, again, not what it said.
+
+`PlayerLevelConfig` promoted to shared canon (manifest **35 → 36**, `TOOLVERSION B36-1 → B41-1`).
+Verified **36/36, 0 issues, both Places**, comparing each live hash to BOTH `hash` and
+`deployed.<Place>` in code. Two harnesses, both REAL `Script`s: **17/17** and **10/10**.
+
+### The headline: `PlayerLevel` was frozen at 1, and the fix needed no schema bump
+
+B40 had already corrected the claim that "nothing grants `Data.PlayerXP`" — the Game grants it fine.
+The real break was that `AddPlayerXP` was three lines (`data.PlayerXP += xp`) and **never touched
+`PlayerLevel`**, because the rollover — `PlayerLevelConfig.ApplyXP` — lived in a **Lobby-only**
+module the Game could not require. Every account sat at level 1 forever, and `LoadoutConfig`'s
+level-gated hotbar slots (5 at Lv20, **6 at Lv50**) were unreachable by construction.
+
+So: `PlayerLevelConfig` is now shared canon at `2e99d041`, deployed to **identical paths** in both
+Places and hash-matched byte-for-byte across repo / Lobby / Game (4721 bytes each). Identical paths
+are why this, like B35's settings promotion, cost **zero consumer edits**. The promotion rewrote the
+header that argued for it being Lobby-local, which is the whole reason the hash moved off `3d321740`;
+the body is byte-unchanged.
+
+`AddPlayerXP` now routes through `ApplyXP` and writes both fields. It remains the **one** place
+account XP is applied — the same rule as `GrantService` in the Lobby.
+
+**⚠ THE CONTRACT, restated because two stored fields can otherwise disagree:** `PlayerLevel` is
+authoritative; `PlayerXP` is **progress within the current level**, never a lifetime total.
+
+### Old profiles need no migration, which is why v4 survived
+
+`v4` is published, so a new field would have cost a **v5** plus a both-Places publish. It did not
+come to that. `ApplyXP` re-reads the stored pair on every call, so a profile that banked a backlog
+while the rollover was unreachable **drains it on its next grant** and lands where it always should
+have been; a consistent profile is untouched. Proven in the harness: a synthetic `L1 / 5000xp`
+profile resolved to `L16 / 240xp` conserving XP exactly (`4760 spent + 240 = 5000`), while
+`L1 / 30xp` — the dev profile's shape — did not move. **Nothing was run over live profiles.**
+
+### The quest counters: one of the two already existed under another name
+
+`docs/systems/quests.md` said everything match-shaped "is the GAME place's to write, and none of it
+exists". That was **wrong when written**. `RewardCalculator` has incremented `Clears`,
+`ClearsByStage` and `Waves` since A8, and `SummonManager` increments `Summons` live.
+
+And a `StageConfig` **is** an act — `Stage1_Act1..3`, chained by `NextActId` — so `Clears` already
+**is** "acts cleared". The Lobby's commented-out `ClearThree` wants a counter named `ActsCleared`;
+the user's call was that it should **read `Clears`** rather than have the Game write a second key for
+an event already counted. Two stored numbers for one event is exactly the drift the one-writer rule
+exists to prevent. Only `InsaneVictories` genuinely had to be built (Victory **and** Insane — losing
+on Insane is not a win, winning on Normal is not an Insane win).
+
+Shipping both quests is now a one-line Lobby edit. **Counter names are a cross-Place contract:** a
+baseline delta needs a lifetime, monotonic counter, and renaming one strands every baseline already
+written against the old key — which is why `Clears` was not renamed to match the quest's wording.
+
+### The three settings actions, and why they go through the server
+
+Open since B35, rendering disabled because nothing registered them. `GameSettingsActions` now
+registers all three — **no edit to `SettingsUI`**, which is shared canon at `7e5a736a`. That
+zero-cost integration is the entire point of `Kind = "Action"`.
+
+`ReturnToLobby` and `RestartMatch` fire the existing `RequestMatchAction` remote rather than calling
+`TeleportService` on the client. The teleport contract is a **server** concern: `MatchActionHandler`
+builds the `MatchReturn` payload and stamps `GameConfig.TeleportPayloadVersion`. A client-side
+teleport would ship an unversioned payload and bypass v4 entirely. One teleport path, one stamp.
+
+Verified from the **rendered UI**, not from a probe: all three rows now read `RUN` with
+`Active = true`. (A probe that required `ClientSettings` inside `execute_luau` reported
+`hasHandler = false` — a second, empty copy from that VM's own require cache. Exactly the trap the
+brief warns about, and worth recording because it looked like a real failure for a moment.)
+
+### `AbortMatch`: an abort pays NOTHING (user's decision)
+
+`Restart` mid-match used to fall through to `startStage(player, nil)` and die on "Unknown stage:
+nil" — a button that looked wired and did nothing. Restarting a live match must tear it down first,
+because `StartMatch` refuses while `isRunning`.
+
+**The user chose: an aborted run grants nothing at all.** `MatchDirector.AbortMatch` never fires
+`MatchEnded`, so `RewardCalculator` is never reached — no XP, gold, drops or counters — and no result
+is recorded, so an aborted act cannot then be replayed or continued from. Deliberately **not** a
+Defeat: a Defeat pays a consolation, and a restart button that pays a consolation is farmable.
+
+The flag is **consumed by the match loop**, never by the caller's thread: the lifecycle owns every
+`Stop`/`ClearAll` and the `isRunning` flag, and two threads racing that teardown is how a wave of
+enemies leaks into the next match. Verified live, 10/10: `MatchEnded` never fired, XP/level/gold/
+counters all unmoved across the abort, the abort flag did not leak, and a fresh match started
+cleanly afterwards.
+
+### The Game finally has an audio owner (open since B32)
+
+`UIKit.Sound` and the whole `SoundService` tree were deployed here and **nothing ever called
+`playBGM`**. `GameAudio` is the sibling of `LobbyAudio` and deliberately the same shape: the shared
+kit is the machinery, the script only says what this Place plays and when.
+
+Per-act music needs the act id on the client, which was not on the wire, so `MatchStateChanged`
+gained **`StageId`** (added to both the snapshot table and `Reset()`). `GameAudio` dedupes on it, so
+the many pushes a match produces cost one `playBGM` call per act change — verified in the log:
+`Default` at join, `Stage1_Act1` when the match started, back to `Default` on cleanup, once each.
+
+**All 13 SoundIds are still empty, and that is a standing user decision, not a gap** — they are
+filled at release. The caller now exists so pasting an id is the only remaining step.
+
+### Two stale comments, one fixed and one deliberately not
+
+`RewardCalculator` claimed the teleport payload "(v2) has NO mode field, so in production this is
+always Normal and this branch does not fire". Untrue since **v3** (B20, verified live end-to-end),
+and it directly contradicted the `InsaneVictories` counter added a few lines below it. That file is
+not shared canon, so the fix cost no hash and no redeploy. The **`RewardScalingConfig`** header
+carries the same stale claim and remains open — it *is* canon at `1d789978`, so correcting it
+re-hashes and needs a both-Place redeploy.
+
+### The lesson, again, and it is the same one
+
+B40's was "a pending is a claim, and claims go stale". B41 found two more: `quests.md` said counters
+did not exist when three did, and `CONTEXT.md` still described the schema as v3. Both were a minute
+to check. The corrected pendings are DELETED from `STATE.md` per ADR-0006, not struck through.
+
+### Landing
+
+`shared/manifest.json` (36), `tools/hash_shared.luau` (`B41-1`), `HashShared` re-deployed in BOTH
+Places — note it is a **compacted transcription** of the repo tool, not a byte copy, so it was
+patched in place rather than overwritten with the repo file. Docs: `STATE.md` (120/120),
+`places/game/CONTEXT.md` (150/150), `rewards.md`, `settings.md`, `quests.md`, `ROADMAP`.
+**Republish BOTH Places — promoting a shared module is a canon change.**
+
+
 ## 2026-08-27 [lobby] B40 — AD-Gacha: **the two screens, mail, the shop, and quests** — four systems, no schema bump, because three of the fields were already there.
 
 `RS.Remotes` **27 → 31**. Schema stays **v4** (published by the user this session). Shared canon

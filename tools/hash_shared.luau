@@ -1,5 +1,5 @@
 -- tools/hash_shared.luau
--- TOOLVERSION: B36-1
+-- TOOLVERSION: B41-1
 -- DRIFT CHECK: run via execute_luau (Edit datamodel) in ANY Place at bootstrap.
 -- Prints fnv1a32 hashes of the deployed shared canon; compare against shared/manifest.json.
 -- Anything absent in this Place returns "MISSING" (expected before its first deploy).
@@ -261,6 +261,12 @@ local MODULES = {
 	-- TraitDefinitions via script.Parent, so deploying one without the other breaks the require.
 	TraitDefinitions = "ReplicatedStorage.Configs.Traits.TraitDefinitions",
 	TraitRegistry = "ReplicatedStorage.Configs.Traits.TraitRegistry",
+	-- Promoted B41 2026-08-27 (owner AD-Game): the account-level XP curve and THE ONE rollover rule.
+	-- Lobby-local since B33 on the reasoning that a config with one consumer should not buy a drift
+	-- obligation -- which expired when the GAME turned out to grant player XP all along while the
+	-- rollover sat in a module it could not see, freezing PlayerLevel at 1 and making every
+	-- level-gated LoadoutConfig slot unreachable. Game applies the curve, Lobby draws the ExpBar.
+	PlayerLevelConfig = "ReplicatedStorage.Configs.Meta.PlayerLevelConfig",
 }
 
 -- GuiObject subtrees. Promoted by AD-UI 2026-08-06; a Place that has not received the kit

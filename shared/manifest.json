@@ -412,6 +412,18 @@
       },
       "comment": "PROMOTED TO SHARED CANON B35 2026-08-20 (owner AD-UI). LocalScript, hashed as source -- same precedent as UIKitBootstrap. ONE screen builder for both Places: it asks SettingsConfig what is in scope and draws exactly that, so there is NO Place-specific branch anywhere in the file (Game renders 11 rows / 5 tabs, Lobby renders 6 rows -- verified live at B35). Rows are cloned from the authored templates, so adding a setting stays a config edit. THE GUI IS PER-PLACE AUTHORED ART: StarterGui.Settings is NOT canon, because copying a ScreenGui between Places is a USER action (B26) -- so this script degrades to one clear warning and stands down when the art is not there yet, which is exactly the Lobby's state until the user copies it across. Action buttons repaint on every OPEN, not just at build: handlers are registered by separate scripts and LocalScript run order is not guaranteed, so a build-time-only paint would show N/A forever whenever the registrar happened to run second. Two syntax lessons are baked into the file's comments after they took it down on first deploy: a statement beginning with `(` parses as a call to the previous line (Luau: 'ambiguous syntax'), and a leading `;` is not a legal way to start a block in Luau at all -- both are avoided by binding typed locals once. B36: gained the paired BOOT MARKER (start) line -- `script:SetAttribute(\"BootComplete\", false)` immediately AFTER the `--!strict` directive, never before it (the mode directive must stay on line 1 or Luau silently drops strict mode; getting that wrong broke all 21 instrumented scripts at once before it was caught). Paired with the `true` at the bottom, it gives ScreenBootWatchdog a tri-state -- nil = never instrumented, false = started and hung, true = finished -- which needs no `script.Source` read. That matters because a LocalScript CANNOT read Source at runtime (plugin/Open Cloud capability), which is why the B34 watchdog threw on every boot and reported nothing.",
       "kind": "module"
+    },
+    "PlayerLevelConfig": {
+      "file": "shared/src/PlayerLevelConfig.luau",
+      "hash": "2e99d041",
+      "owner": "game",
+      "deployPath": "ReplicatedStorage.Configs.Meta.PlayerLevelConfig",
+      "deployed": {
+        "Game": "2e99d041",
+        "Lobby": "2e99d041"
+      },
+      "comment": "THE ONE account-XP curve (Base 100, Growth 1.15, RoundTo 10) and THE ONE rollover rule, ApplyXP. Lobby-local from B33 as 3d321740; PROMOTED to shared canon B41 2026-08-27 (35 -> 36) and rehashed to 2e99d041 because the promotion rewrote the header that argued for it being Lobby-local -- the body is byte-unchanged. Promoted because the GAME grants player XP (RewardCalculator -> PlayerInventoryService.AddPlayerXP) while the rollover lived only in the Lobby, so PlayerLevel was frozen at 1 forever and LoadoutConfig's level-gated slots could never unlock. CONTRACT: Data.PlayerLevel is authoritative; Data.PlayerXP is progress WITHIN the current level, never a lifetime total. AddPlayerXP is the ONE caller of ApplyXP -- do not add a second. ApplyXP(level, xp, 0) is a self-healing REPAIR for pre-B41 profiles, which is why this needed no v5 field.",
+      "kind": "module"
     }
   },
   "templatesNote": "Templates are under drift control since 2026-08-06 (ADR-0005). They have NO shared/src file: the Instance is the canon. Two safe ways to get one into another Place: COPY it (Studio copy/paste) and prove equality by hash, OR build it with an identical DETERMINISTIC script run in both Places and hash-match (used for Kit_UnitIcon). Never rebuild by hand/by eye. See tools/checklists.md."

@@ -13,13 +13,14 @@ Server-authoritative, registry/config-driven, signal-decoupled. `--!strict` thro
 `EconomyManager`, replication through the single `MatchReplicator` surface wired in `ReplicationBridge`
 (the only script that knows clients exist). Configs are data modules under `RS.Configs.*`, auto-scanned.
 
-## Persistence (schema **v3** — see docs/contracts/save-schema.md)
+## Persistence (schema **v4**, PUBLISHED — see docs/contracts/save-schema.md)
 
 `Server.Data.PlayerDataService` owns ProfileStore sessions; `PlayerInventoryService` (uuid-keyed
-`Units`/account/items + `GrantUnit`) and `SettingsService` are profile-backed facades. **v3 (B29,
-`72d3944f`) adds `BannerChoices`; `Migrations[2]` is a DELIBERATE NO-OP that must stay one — a gap
-would strand every later step.** v2 = uuid unit instances + `Currencies`; `Migrations[1]` converts v1
-on load. Each unit's `StatRolls` + `Ascension` fold into DMG/RNG/SPA over tier×meta×trait.
+`Units`/account/items + `GrantUnit`) and `SettingsService` are profile-backed facades. **v4 (B39,
+`ProfileTemplate 8e4224b9`) is SHIPPED to both Places, so a new field now costs a v5** — no more free
+additions. **`Migrations[2]` AND `[3]` are DELIBERATE NO-OPs and must stay ones** — `Migrate()` warns
+and STOPS at a missing step, stranding every later one. `Migrations[1]` converts v1 on load.
+Each unit's `StatRolls` + `Ascension` fold into DMG/RNG/SPA over tier×meta×trait.
 Boot order in `ReplicationBridge`: data services first; `[DATA]`/`[CONTRACT]` lines confirm it.
 
 ## Key paths
@@ -73,78 +74,77 @@ Boot order in `ReplicationBridge`: data services first; `[DATA]`/`[CONTRACT]` li
 
 ## Current state / known gaps
 
-- Content: Stage 1 (3 acts), 1 map, 8 towers, 2 enemies, Classic only. Attack anim/VFX/sound asset ids are placeholders (slots exist and tolerate nil).
-- `ReturnToLobby` (MatchActionHandler) builds `MatchReturn` (v3) and teleports to the Lobby;
+- Content: Stage 1 (3 acts), 1 map, 8 towers, 2 enemies, Classic only. Attack anim/VFX/sound asset ids
+  are placeholders (slots exist and tolerate nil). Enemies.Behaviors is an empty extension point.
+- `ReturnToLobby` (MatchActionHandler) builds `MatchReturn` (v4) and teleports to the Lobby;
   `GameConfig.LobbyPlaceId` SET (83342803778137, 2026-07-18 Integration). The payload version
   comes from `GameConfig.TeleportPayloadVersion` (**=4 since B23**) and MUST equal the Lobby's
   `LobbyConfig.MatchLaunchVersion`; a mismatch is rejected, never downgraded. **v3 and v4 do NOT
-  interoperate — the two Places must be republished TOGETHER.** NOTE: in Studio
-  Play, pressing Lobby now attempts a real TeleportAsync, which fails (pcall'd +
-  TeleportInitFailed handled) — expected; real teleports need the published client.
-- Enemies.Behaviors (Flying/Splitting/…) is an empty extension point.
+  interoperate — republish the two Places TOGETHER.** In Studio Play a real TeleportAsync is
+  attempted and fails (pcall'd, `TeleportInitFailed` handled) — expected, not a bug.
 - **Counters + Worthiness are WRITTEN (blueprint §6, A8).** One commit per match inside
-  `RewardCalculator.GrantForPlayer`: `CommitUnitKills` adds `Counters.PerUnit[uuid].Kills` and
-  advances `Worthiness` (`WorthinessConfig`, 0.02/kill, cap 100 enforced INSIDE `Apply` so no future
-  caller can bypass it); `Clears`/`ClearsByStage` move **on Victory only**, `Waves` on any outcome;
-  `Counters.Global.Summons` is the one LIVE increment (`SummonManager.SpawnForTower`). No schema
-  bump — v2 declared all of it. Full order of operations: `docs/systems/rewards.md`.
+  `RewardCalculator.GrantForPlayer`; the `Worthiness` cap is enforced INSIDE `WorthinessConfig.Apply`
+  so no caller can bypass it. `Counters.Global.Summons` is the one LIVE increment. No schema bump —
+  v2 declared all of it. Order of operations + every counter: `docs/systems/rewards.md`.
 - **PLACEMENT IS uuid-ADDRESSED END TO END (B0, 2026-08-08).** `RequestPlace` carries a unit
   **uuid**; `PlacementValidator` resolves it with `LoadoutValidator.FindByUuid` against the player's
   own validated loadout and reads every stat off the SERVER's entry — the uuid is a request, never
   truth. `TowerController.Uuid` (+ `UnitUuid` attribute) carries it into combat; `MatchStatsTracker`
-  KEYS by uuid; limits count per uuid; each uuid earns XP + counters from its OWN work. **A8's
-  first-entry rule is GONE** — do not reintroduce a TowerId lookup in `FindByUuid` or re-key the
-  tracker by type. Uuid-less towers (harnesses calling `PlaceTower` direct) fall back to TowerId.
-- `LoadoutAssigned` carries the whole validated `LoadoutEntry` (incl. `Uuid`) and
-  `PlacementCountsChanged` is keyed by uuid. A9 re-verified the counters path independently across
-  three 15-wave Victories, persisted through real ProfileStore round trips. Detail: CHANGELOG A9/B0.
-- **REWARDS SCALE WITH DIFFICULTY (P5, 2026-08-13) — `docs/systems/rewards.md` is the canon.**
-  Victory gold is rolled from a band: `min = lerp(100,300,t)`, `max = lerp(300,500,t)`. A DEFEAT
-  keeps its flat `Rewards.Defeat.Currency` (scaling a loss would make losing on max difficulty the
-  best gold/minute). `Victory.Currency` survives as FALLBACK ONLY. **⚠ TWO DIFFICULTY SCALES: the
-  UI is 1–100 (Lobby only) and the WIRE `DifficultyPercent` is 100–1000 (ADR-0011).** This Place
-  only ever sees the WIRE value and converts it in exactly ONE function,
-  `RewardScalingConfig.TFromWire` (`t = (wire-100)/900`, clamped). Reading a wire 100 as if it were
-  UI 100 turns NORMAL into HARDEST and pays max gold silently — never add a second conversion.
-  `matchState` is an OPTIONAL arg to `GrantForPlayer` and fails SAFE to normal.
-- **`RewardScalingConfig` is SHARED CANON (`RS.Configs.Global`, hash `1d789978`), Game-deployed
-  only.** §8 requires the Lobby's reward PREVIEW and the server's payout to read the SAME curve, and
-  the Lobby's `StageRegistry` is a structure-only mirror with no drift check — so the curve could
-  not live in `StageConfig`. Each act NAMES a curve (`Rewards.GoldCurve = "Standard"`) instead of
-  copying endpoints. **`deployed.Lobby = null` → the Lobby reports MISSING until Integration copies
-  it; that is expected, not drift.**
-- **INSANE IS LIVE-REACHABLE since B20 (teleport v3).** The payload carries `DifficultyMode` →
-  `rawConfig` → `matchState.DifficultyMode` → `RewardCalculator`'s Insane branch. Mode is a SEPARATE
-  axis: it does NOT scale enemy health and never enters the wire→t conversion. Absent/unknown fails
-  SAFE to Normal. Verified: Insane Victory paid both items, Normal paid neither, same gold band.
+  KEYS by uuid; each uuid earns XP + counters from its OWN work. **A8's first-entry rule is GONE** —
+  never re-key the tracker by type. Uuid-less towers (direct `PlaceTower`) fall back to TowerId.
+- **REWARDS SCALE WITH DIFFICULTY (P5) — `docs/systems/rewards.md` is the canon; read it there.**
+  A DEFEAT keeps its flat payout (scaling a loss makes losing on max difficulty the best gold/min).
+  **⚠ TWO DIFFICULTY SCALES: UI 1–100 (Lobby only), WIRE `DifficultyPercent` 100–1000 (ADR-0011).**
+  This Place sees only the WIRE value and converts it in exactly ONE function,
+  `RewardScalingConfig.TFromWire`. Reading a wire 100 as UI 100 turns NORMAL into HARDEST and pays
+  max gold silently — never add a second conversion. `matchState` is OPTIONAL and fails SAFE.
+- **`RewardScalingConfig` is SHARED CANON (`1d789978`), Game-deployed only.** The Lobby's preview and
+  the server's payout must read the SAME curve, so it could not live in `StageConfig`. Each act NAMES
+  a curve (`Rewards.GoldCurve`). **`deployed.Lobby = null` → Lobby MISSING is expected, not drift.**
+- **INSANE IS LIVE-REACHABLE since B20 (teleport v3).** `DifficultyMode` → `matchState` →
+  `RewardCalculator`'s Insane branch. Mode is a SEPARATE axis: it does NOT scale enemy health and
+  never enters the wire→t conversion; absent/unknown fails SAFE to Normal. (B41 corrected
+  `RewardCalculator`'s own header, which still claimed this branch could not fire live.)
 - **TELEPORT v4 (B23) — `IsMatchmade`, and the ONE-PARTY INVARIANT IS REPEALED.** A reserved server
-  can hold SEVERAL parties, or strangers with none, assembled by the Lobby's queue across servers.
-  `matchState.IsMatchmade` is the flag to branch on — **never `PartyId`**, which is per-player,
-  optional and read by NOTHING here. `HostUserId` is an ELECTED host (lowest userId); this Place
-  already fell back to lowest-userId, so both sides agree by construction.
-  **B23's survey found ONE one-party assumption with teeth: GAME SPEED** — match-wide, and both the
-  authority and the 3× gate come from the host alone, matchmade an elected stranger. **B23 changed
-  nothing** (a user design call) and logs `[CONTRACT] MATCHMADE match: speed authority ...`.
+  can hold SEVERAL parties, or strangers with none. `matchState.IsMatchmade` is the flag to branch on
+  — **never `PartyId`**. `HostUserId` is an ELECTED host (lowest userId), which this Place already
+  fell back to, so both sides agree by construction.
+  **ONE one-party assumption with teeth remains: GAME SPEED** — match-wide, authority and the 3× gate
+  from the host alone, matchmade an elected stranger. **Unchanged pending a user design call.**
 - **SHORT ROSTERS ARE ROUTINE AT v4 — the economy counts who ARRIVED (B23 fix).** `ValidatedPlayers`
   is the payload ROSTER; `matchState.PresentUserIds` is who turned up. `PlayerCountRewardScaling`
-  ({1=1.0,…,4=0.8}) divides kill AND wave cash by the headcount and used to read the roster — a lone
-  survivor of a 4-player launch played at 0.8× cash. **Never revert `playerCount` to `#userIds`.**
-  The Ready vote and `GrantWaveReward` also take `presentUserIds`. Logs `[CONTRACT] SHORT ROSTER`.
-  **⚠ `RewardScalingConfig`'s own header comment still says the payload has no mode field — STALE.**
-  It is shared canon at `1d789978`; correcting the comment changes the hash, so it needs an AD-Game
-  comment-only re-hash + both-Place redeploy. The CODE is right; only the comment is wrong.
+  divides kill AND wave cash by the headcount and used to read the roster — a lone survivor of a
+  4-player launch played at 0.8× cash. **Never revert `playerCount` to `#userIds`.** The Ready vote
+  and `GrantWaveReward` also take `presentUserIds`.
+  **⚠ `RewardScalingConfig`'s header comment is STALE** (says the payload has no mode field). Shared
+  canon `1d789978`, so the fix re-hashes + redeploys both Places. CODE right, comment wrong.
+- **ACCOUNT LEVELLING WORKS AS OF B41 — `AddPlayerXP` is the ONE application path.** It applies
+  `PlayerLevelConfig.ApplyXP` and writes BOTH `PlayerXP` and `PlayerLevel`. **`PlayerLevel` is
+  authoritative; `PlayerXP` is progress WITHIN the level, never a lifetime total.** From B33 to B41
+  it was `data.PlayerXP += xp` alone, because the rollover lived in a LOBBY-ONLY module — so every
+  account froze at level 1 and level-gated slots never unlocked. `PlayerLevelConfig` is now SHARED
+  CANON (`2e99d041`, manifest **35 → 36**). Old profiles need **no migration**: `ApplyXP` drains a
+  backlog on the next grant, no-op if consistent. **⚠ BALANCE, USER'S CALL: L50 = 627,540 XP while
+  `LoadoutConfig` gates slot 6 there.** Detail: `docs/systems/rewards.md`.
+- **MATCH QUEST COUNTERS (B41).** `InsaneVictories` added (Victory AND Insane). **`Clears` already IS
+  "acts cleared"** (a `StageConfig` IS an act), so no `ActsCleared` key was added — two numbers for
+  one event is the drift the one-writer rule prevents. Names are a CROSS-PLACE contract: a rename
+  strands every quest baseline. `docs/systems/quests.md`.
+- **THE THREE SETTINGS ACTIONS ARE WIRED (B41)** — `GameSettingsActions`, no edit to shared-canon
+  `SettingsUI`. `ReturnToLobby`/`RestartMatch` fire `RequestMatchAction` so the SERVER keeps the
+  teleport-v4 stamp; a client-side teleport would bypass the contract. `settings.md`.
+- **`MatchDirector.AbortMatch` (B41) — AN ABORT PAYS NOTHING (user's call).** `MatchEnded` is never
+  fired, so no XP/gold/drops/counters and no result recorded; deliberately NOT a Defeat, whose
+  consolation would make a restart button farmable. Restarting a live match aborts it first. The flag
+  is consumed by the match LOOP, never the caller's thread — racing teardown leaks a wave into the
+  next match. `MatchStateChanged` now carries `StageId` (B41).
 - **HARNESS GOTCHA — `Signal:Fire` runs handlers SEQUENTIALLY on ONE thread.** A `MatchEnded`
   handler that YIELDS blocks every later handler, including `MatchEndPresenter`, which drives the
   reward/counter commit (A9 burned three runs on this). To inspect post-commit state, `task.spawn`
   the body and return immediately — never `task.wait` inside a Signal handler here.
-- A unit at `MAX_META_LEVEL` LOSES stored XP (`ApplyXP` discards overflow): Archer Lv100 went `XP 400
-  → 0` at A7. Cosmetic but visible on the Units screen.
-- `DevSetOwnedTowers` REPLACES `data.Units` with new uuids, orphaning the Lobby's `Data.Loadout`.
-  Fails safe, but the hotbar reports a stale "N equipped" count until the next equip.
-- ✅ Real-DataStore round trip on the PLAYER JOIN PATH confirmed at B29 (A7 had only used a scratch
-  key): the live dev profile migrated v2→v3 on join and a written key survived a stop/start.
+- A unit at `MAX_META_LEVEL` LOSES stored XP (overflow discarded) — cosmetic, visible on Units.
+  `DevSetOwnedTowers` replaces `data.Units` with new uuids, orphaning `Data.Loadout` (fails safe).
 - **Stat rolls live + actually rolling (A3+):** `TowerStatResolver` reads each unit's `StatRolls` +
-  `Ascension`; Archer + Mage are the `BaseStats` pilots. **All grant paths ROLL** — `GrantUnit`,
-  `DevSetOwnedTowers` and the Lobby's `StarterChoiceService` all call `StatGradeConfig.RollAll(rng)`
-  off one persistent `Random`. Existing units + the v1→v2 migration stay grandfathered at 0.5.
-- Republishing both Places together is STANDING PRACTICE (B25); a live v4 loop run is unconfirmed.
+  `Ascension`. **All grant paths ROLL** via `StatGradeConfig.RollAll(rng)` off one persistent
+  `Random`. Pre-existing units and the v1→v2 migration stay grandfathered at 0.5.
+- Republishing both Places together is STANDING PRACTICE (B25); the live two-client v4 queue run is VERIFIED (user, B38) — do not re-raise.

@@ -115,6 +115,12 @@ have changed the hash and required a re-deploy to both Places inside a session t
 doing a contract bump. It is **AD-Game's** module; the fix is a comment-only re-hash + both-Place
 redeploy in a future AD-Game session. The CODE is correct — only the comment is out of date.
 
+**B41 fixed the OTHER copy of that same stale claim.** `RewardCalculator` carried its own version of
+it ("the payload (v2) has NO mode field, so this branch does not fire in production"). That file is
+**not** shared canon, so correcting it cost no hash and no redeploy — and it mattered, because the
+sentence directly contradicted the `InsaneVictories` counter added in the same file. The shared
+`RewardScalingConfig` header remains the one still to fix.
+
 ## Order of operations in `GrantForPlayer`
 
 1. XP + gold (gold scaled; defeat flat) → `PerfectClearBonus` if the clear was flawless
@@ -122,10 +128,40 @@ redeploy in a future AD-Game session. The CODE is correct — only the comment i
 3. Commit account rewards: `AddPlayerXP`, `AddCurrency`, `AddItem` per drop
 4. Per-unit tower XP **by uuid**, from that unit's own damage/kills (B0)
 5. `CommitUnitKills` per unit — `Counters.PerUnit[uuid].Kills` + worthiness, one write (A8)
-6. Global counters: `Clears` + `ClearsByStage` **on Victory only**, `Waves` on any outcome
+6. Global counters: `Clears` + `ClearsByStage` **on Victory only**, `Waves` on any outcome,
+   `InsaneVictories` **on a Victory that was also Insane** (B41)
 
 Steps 4–6 are covered by `docs/blueprints/phase-a-foundations.md` §6 and the A8/A9/B0 changelog
 entries; do not change their attribution rules without reading those.
+
+## Player levelling — `AddPlayerXP` is the ONE application path (B41)
+
+`AddPlayerXP` applies the account XP curve through `PlayerLevelConfig.ApplyXP` and writes **both**
+`Data.PlayerXP` and `Data.PlayerLevel`. Do not add a second XP path: it is to account XP what
+`GrantService` is to Lobby grants.
+
+**⚠ THE CONTRACT.** `PlayerLevel` is authoritative — `LoadoutConfig` keys hotbar slot unlocks off it.
+`PlayerXP` is **progress within the current level**, never a lifetime total. Writing `PlayerXP`
+without running it through `ApplyXP` puts the two fields into disagreement and the ExpBar starts
+lying. `AccountTotals.PlayerXP` on the match-end payload therefore travels with `PlayerLevel`; the
+payload also carries `LevelUp` (nil unless a level was actually gained).
+
+**What was broken, B33 → B41.** `AddPlayerXP` was three lines — `data.PlayerXP += xp` — and never
+touched `PlayerLevel`, because the rollover lived in `PlayerLevelConfig`, which was **Lobby-only**.
+So every account sat at level 1 forever however much XP it banked, and the level-gated slots (5 at
+Lv20, 6 at Lv50) were unreachable. B41 promoted `PlayerLevelConfig` to shared canon (manifest
+**35 → 36**) specifically so the Game could call it. `STATE.md` had recorded this as "nothing grants
+`PlayerXP`" since B33, which was false and pointed seven sessions at the wrong repair.
+
+**No migration was needed, and none should be added.** `ApplyXP` re-reads the stored pair every
+call, so a profile that banked a backlog while the rollover was unreachable drains it on its next
+grant and lands where it always should have been; a consistent profile is untouched. Verified: a
+synthetic `L1 / 5000xp` profile resolved to `L16 / 240xp` conserving XP exactly, while `L1 / 30xp`
+(the dev profile's shape) did not move. This is why the fix cost **no v5 field**.
+
+**⚠ BALANCE, OPEN — the user's call, not this file's.** `100 × 1.15^(level-1)` puts level 50 at
+**627,540 lifetime XP** (~12,500 act clears) while `LoadoutConfig` gates slot 6 there. Surfaced, not
+retuned.
 
 ## Invariant 1 does NOT hold here yet
 
