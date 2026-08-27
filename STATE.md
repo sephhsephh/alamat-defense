@@ -43,25 +43,26 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   (10s+stub). `Remotes`=**31** (B40). `CurrencyChanged` is a server→client PING with **no payload** (a balance on the wire = a second
   source of truth beside ADR-0004's `GetUnitViews`). **TOAST EVENTS, LABEL STATE.**
 - **NOT A PENDING — DO NOT RE-RAISE (USER, B40): the empty SoundIds are DELIBERATE** — the user fills all 13 slots **at release**;
-  silence in development is expected. Same standing class as the 0.05 `UIHoverStroke.Thickness`. **STILL PENDING (USER, B32): copy
-  `StarterGui.ConfirmationPopupUI` into the GAME** — till then `Confirm.ask` there auto-answers **NO**.
+  silence in development is expected. Same standing class as the 0.05 `UIHoverStroke.Thickness`. **LIKELY RESOLVED — ASK THE USER:
+  `ConfirmationPopupUI` IS in the GAME**, a complete 23-descendant tree with every part `UIKit.Confirm` needs. Confirm, then delete.
 - **PENDING (USER, B32, art):** `SellButtons.CancelButton` nearly overlaps `QuickSellButton`; `PlayButton` wears the **Shop** logo.
 - **PENDING (USER, B33): the new `StarterGui.Summon` is UNFINISHED — do NOT touch.**
-- **PENDING (USER, B33, NOT built): nothing grants `Data.PlayerXP`,** so the ExpBar reads 0 forever — not its bug. Owner = the GAME's
-  match-end path, and it MUST roll over via `PlayerLevelConfig.ApplyXP`. **Same owner as the missing quest counters.**
-- **PENDING (B33, balance): the XP curve may be too steep** — `100 × 1.15^(level-1)` → L50 = **627,540** while `LoadoutConfig` gates
-  slot 6 at L50. `PlayerLevelConfig` is LOBBY-LOCAL; promote it to shared the day the Game grants XP.
+- **PENDING (AD-Game) — CORRECTED AT B40; THE OLD WORDING WAS WRONG.** It is NOT true that "nothing grants `Data.PlayerXP`": the GAME
+  grants it (`RewardCalculator` → `PlayerInventoryService.AddPlayerXP`; the dev profile really holds 30 XP). The real break is that
+  **`AddPlayerXP` only does `data.PlayerXP += xp` and NEVER touches `PlayerLevel`**, because the rollover `PlayerLevelConfig.ApplyXP` is
+  **LOBBY-ONLY** (`3d321740`, not shared canon). **`PlayerLevel` is frozen at 1 forever, so level-gated loadout slots can NEVER unlock.**
+  Fix = promote `PlayerLevelConfig` to shared (manifest **35 → 36**) + call `ApplyXP` inside `AddPlayerXP`. **PENDING (B33, balance):**
+  the curve may be too steep — `100 × 1.15^(level-1)` → L50 = **627,540** while `LoadoutConfig` gates slot 6 at L50.
 - **NOT A PENDING — B34:** `UIKit.Notify` + `UIKit.UnitCard` are canon; the 334 bare `WaitForChild` were deliberately NOT swept.
 - **PENDING (AD-Integration / USER, B34): C4 FEEDING IS BLOCKED ON DATA, NOT CODE** — no `FeedValue`, no unit XP curve, no writer for
   `UnitInstance.XP`. `docs/proposals/2026-08-20-c4-feeding.md`.
-- **PENDING (AD-Game, B32): the GAME has no audio owner** — nothing calls `playBGM(actId)`. Copy `LobbyAudio`'s shape.
+- **PENDING (AD-Game, B32): the GAME has no audio owner** — nothing calls `playBGM(actId)`.
 - **NOT A PENDING — THE REVEAL LAYER (B37 push / B39 queue / B40 mail). FULL DOC: `reward-push.md`.** **OPT-IN — `GrantService` NEVER
   pushes.** **Click → RETURN VALUE; server decided → `RewardPush`.** **DRAINING MUST NEVER GRANT.** The drain fires when the client has
   announced AND the profile has loaded — **either may arrive first.**
 - **NOT A PENDING — REDEEM CODES (B39 server, B40 screen).** **Every code is PUBLIC** (the registry replicates) — a convenience, never
   a secret. **The rate limit is SECURITY**: without it the remote enumerates the code space. `redeem-codes.md`.
-- **NOT A PENDING — B39's EVENT TRACK: `EventDailyConfig` is a DATE WINDOW, not a banner** (ending a banner would delete a ladder
-  players are mid-way through). Extended **ADDITIVELY** so a deployed screen kept working.
+- **NOT A PENDING — B39's EVENT TRACK: `EventDailyConfig` is a DATE WINDOW, not a banner**; extended ADDITIVELY.
 - **NOT A PENDING — B40's FOUR SYSTEMS.** (a) **The two screens are BLOCKOUT ART I scripted** to the published specs (user reversed
   "you author it"); the specs stay the CONTRACT, so replacing the art costs ZERO code. **`DailyRewardsButton` OPENS the screen now —
   it no longer claims.** **HUD button names all END IN `Button`** (B40 lost a live run on that). (b) **MAIL closes B37's gap for real**
@@ -75,8 +76,7 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   `InviteFriends`/`Inbox` unwired. **Inbox as a SCREEN needs a v5 field** (message history); mail itself needs no screen.
 - **NOT A PENDING — DAILY REWARDS (B38 permanent, B39 event, B40 screen).** **7-day cycle, MISS A DAY = RESET TO 1**; event ladders do
   NOT wrap. **GRANT FIRST, MARK SECOND** — now the rule for daily, event, codes, shop AND quests. `daily-rewards.md`.
-- **PENDING (AD-Game, B24): `UnitIconV2` needs PLACEMENT COST + ELEMENT** (`Motion.SHOW_PLACEHOLDER_PRICES=false` reverts both Places).
-  **(AD-Traits)** `TraitDefinitions` has NO icon field.
+- **PENDING (AD-Game, B24): `UnitIconV2` needs PLACEMENT COST + ELEMENT**; **(AD-Traits)** `TraitDefinitions` has NO icon field.
 - **PENDING (USER, design — B23): GAME SPEED IN A MATCHMADE MATCH** — authority and the 3× gate come from an **elected stranger**.
 - **PENDING (USER, balance):** `StartingLives` **3 / 15 / 10** across Acts 1–3 — Act 1's `3` looks like a leftover test value.
 - **NOT A PENDING — B35's UNIFIED SETTINGS, BOTH PLACES HASH-MATCHED**, at IDENTICAL paths, which is why it cost ZERO consumer edits.
@@ -90,11 +90,11 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   "looking green". Do that, not a glance.
 - **PENDING (AD-Game, B35): the Game's three settings ACTIONS have no handler** (they render disabled) — wire via
   `ClientSettings.RegisterAction(id, fn)`; `ReturnToLobby` must respect teleport v4, which is why it was left.
-- **PENDING (AD-Meta at Phase D):** deploy `MetaMath` to the GAME + flip `deployed.Game`. **(AD-Integration):** invariant 1 is
-  **Lobby-only** — the Game still grants via `PlayerInventoryService`/`RewardCalculator`.
-- **PENDING (AD-UI, small):** `Kit_ItemHoverCard`'s master/clone split (hover race FIXED at B29a; awaiting a fast-sweep confirmation).
-- **PENDING (AD-Game, small):** `RewardScalingConfig`'s header comment is stale (a fix re-hashes it) · a unit at `MAX_META_LEVEL`
-  **loses stored XP** · promote `TowerProgressionConfig` to shared for per-unit XP.
+- **PENDING (AD-Meta at Phase D):** deploy `MetaMath` to the GAME + flip `deployed.Game`. **Invariant 1 is Lobby-only** — the Game
+  grants via `PlayerInventoryService`/`RewardCalculator`.
+- **PENDING (AD-UI, small):** `Kit_ItemHoverCard`'s master/clone split (hover race FIXED B29a; awaiting confirmation).
+- **PENDING (AD-Game, small):** `RewardScalingConfig`'s header comment is stale · a unit at `MAX_META_LEVEL` **loses stored XP** ·
+  promote `TowerProgressionConfig` to shared for per-unit XP.
 - **PENDING (Game):** the `ServerStorage.Documentation` → `docs/systems/` migration. `Data.Items`' only writer is an **INSANE Victory**.
 - **NOT A PENDING — B28: `PlayGUI` is EXCLUDED from the slide** (the veil fights it). **KNOWN REGRESSION (B26):** V2 has no `ShinyBadge`.
 - **NOT a bug:** Units stat NUMBERS are per-TOWER (ADR-0003) — two copies show equal numbers while GRADES differ. `Data.Loadout` is

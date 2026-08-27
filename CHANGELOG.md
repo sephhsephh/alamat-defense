@@ -152,6 +152,36 @@ B38's 7-day table. All labelled in their files. None is a considered economy dec
 prices in particular should eventually be set against `TierConfig.GetSellValue`, which is what pays
 Silver in.
 
+### Two stale pendings found by checking, at the very end of the session
+
+The user asked whether the Game place warranted its own session. Checking rather than answering from
+the docs turned up two things the docs had wrong:
+
+**1. "Nothing grants `Data.PlayerXP`" — carried since B33 — is FALSE.** The Game *does* grant it
+(`RewardCalculator:113` → `PlayerInventoryService.AddPlayerXP`), and the dev profile really holds 30
+XP. The actual break is sharper and worse: `AddPlayerXP` is three lines
+(`data.PlayerXP += xp; return data.PlayerXP`) and **never touches `PlayerLevel`**, because the
+rollover — `PlayerLevelConfig.ApplyXP` — lives in a module that is **Lobby-only** (`3d321740`, not
+shared canon) and is **absent from the Game**.
+
+So `PlayerLevel` is **frozen at 1 forever**, and `LoadoutConfig` gates loadout slot 6 at level 50 —
+level-gated slots can never unlock. That is a broken core progression loop that has been mis-filed as
+"not built" for seven sessions. The fix needs `PlayerLevelConfig` promoted to shared canon
+(manifest **35 → 36**), which is why it is a Game-place session and not a continuation here.
+
+**2. `StarterGui.ConfirmationPopupUI` is already in the Game** — a complete 23-descendant tree with
+every part `UIKit.Confirm` looks for. `STATE.md` still listed copying it as a user pending. Flagged
+for the user to confirm rather than silently resolved, per their standing rule.
+
+Both corrected in `STATE.md`. The lesson is the cheap one: **a pending is a claim, and claims go
+stale.** Neither was expensive to check.
+
+### Handoff
+
+`claude/B41-next-session-prompt-AD-GAME.md` (in the project). B41 is an **AD-GAME** session: the
+levelling fix, the match quest counters that unblock B40's quest system, the three settings actions
+open since B35, and the Game's missing audio owner.
+
 ## Standing instructions recorded this session
 
 - **The empty SoundIds are DELIBERATE and are no longer a pending** (user, B40): all 13 get filled at
