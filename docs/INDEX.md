@@ -45,6 +45,16 @@
   NUMBER and not a timestamp, the pure `BannerRegistry` choice API, `BannerChoiceService` as the ONE
   writer + `ChooseBannerUnit`'s two modes and refusal codes, and the `ChoiceOverlay` UI. Split out
   of `gacha.md` at B30 on its 300-line cap.
+- `reward-push.md` — **AD-Gacha canon, LOBBY**: how the SERVER reveals a grant nobody asked for
+  (B37) and what happens when it cannot reach the player (B39's `PendingReveals` queue). Read it for
+  the opt-in rule (`GrantService` never pushes), for why the drain is a **client-announced
+  handshake** rather than a `ProfileLoaded` hook, and for the correction to B37's "known gap" — a
+  grant to a genuinely OFFLINE player cannot happen at all. Split out of `rewards.md` at B39 on its
+  300-line cap.
+- `redeem-codes.md` — **AD-Gacha canon, LOBBY**: promo codes (B39). `CodeRegistry` (pure) +
+  `CodeService` (**THE one writer of `Data.RedeemedCodes`**). Read the two warnings before touching
+  it: every code in the registry is **PUBLIC** because the module replicates, and the rate limit is
+  **security, not UX** — without it the remote is a code-space enumerator.
 - `daily-rewards.md` — **AD-Gacha canon, LOBBY**: the login streak (B38). The pure `DailyRewardConfig`
   (7-day table, `MetaMath` day number, miss-a-day-resets-to-1), `DailyRewardService` as **THE one
   writer of `Data.LoginStreak`**, the HUD button, and the `DevDailyRewind` harness. Read it for the

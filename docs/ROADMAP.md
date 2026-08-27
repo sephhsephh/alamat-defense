@@ -364,6 +364,34 @@ everything untradeable at launch).
   🔲 **Still unblocked but unbuilt:** RedeemCodes, Inbox, Quests, BattlePass, Event.
 
 
+- ✅ **B39 (AD-Gacha, BOTH PLACES for the schema, 2026-08-27) — EVENT DAILIES + REDEEM CODES + THE
+  PENDING-REVEAL QUEUE, on ONE schema bump.** Docs: `daily-rewards.md`, `redeem-codes.md`,
+  `reward-push.md`. `RS.Remotes` **25 → 27**.
+  ⚠ **Drift repaired first, and it was mine.** `UIKitBootstrap` was `9c9539c0` in the Lobby but
+  `f930ff7b` in the Game and the manifest — exactly B36's boot-marker block, added to the Lobby's copy
+  of a SHARED module and never mirrored, after which B36 and B37 both closed reporting "35/35 green".
+  All three copies now hash `9c9539c0`. **What caught it was comparing each live hash to both `hash`
+  and `deployed.<Place>` in code instead of eyeballing the tool output.**
+  ⚠ **SCHEMA v3 → v4** (`72d3944f → 8e4224b9`, hash-matched both Places): `EventLoginStreaks` +
+  `RedeemedCodes` + `PendingReveals`. `Migrations[3]` is a deliberate no-op like `[2]`. **One bump for
+  three systems on purpose — the cost of a bump is the both-Places PUBLISH, not the field.**
+  ⚠ **B37's "known gap" was MIS-STATED and is corrected here.** A grant to a genuinely offline player
+  cannot happen: their profile is not loaded, so `Grant` has nothing to write to. B39 fixes the
+  leave-between-grant-and-push race, not offline delivery — which needs ProfileStore `MessageAsync`
+  and owns a grant path. **Draining must never grant** (enumerated: zero `GrantService` refs on the
+  drain path), and the drain is a **client-announced handshake** because `FireClient` does not queue
+  for a client that is not yet listening.
+  ⚠ **Codes: every code is PUBLIC** (the registry replicates) and **the rate limit is SECURITY, not
+  UX** — an unlimited redeem remote is a code-space enumerator. Success and `already_redeemed`
+  deliberately do not count as failures.
+  ⚠ **The event track is a DATE WINDOW, not a banner** — ending a banner would delete a ladder players
+  are part-way through. Event ladders **do not wrap** at the last rung. The service was extended
+  **additively** so the deployed B38 HUD controller kept working, verified live rather than assumed.
+  🔲 **Not built: the two SCREENS** (`StarterGui.DailyRewards`, `StarterGui.RedeemCodes`). Both
+  servers are complete and tested; both need authored art (B26). Specs in `docs/specs/`.
+  🔲 **Still unbuilt:** Inbox, Quests, BattlePass, Event; offline delivery via `MessageAsync`.
+
+
 ## Cross-Place
 
 - ✅ Save schema v1 shared + deployed to both Places

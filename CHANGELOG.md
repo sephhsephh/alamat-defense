@@ -1,5 +1,188 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-27 [both] B39 — AD-Gacha: **event dailies, redeem codes, and the pending-reveal queue** — on one schema bump, after repairing a drift two of my own sessions walked past.
+
+Four things the user picked in one go. Everything below is Lobby-local except the schema, which is
+shared canon and deployed to both Places. `RS.Remotes` **25 → 27** (`ReadyForReveals`, `RedeemCode`).
+The B39a commit (`dc0e0a5`) carries the drift repair and the bump; this entry covers the systems
+built on top.
+
+### The drift repair, first, because it was mine
+
+`UIKitBootstrap` hashed `9c9539c0` in the Lobby and `f930ff7b` in the Game **and the manifest**.
+Diffed, the delta was exactly **B36's paired `BootComplete` marker block**: B36 instrumented the
+Lobby's 21 boot scripts, **one of which is shared canon**, and neither mirrored it into the Game nor
+re-hashed the manifest. B36 and B37 then both closed reporting "drift green 35/35".
+
+Mirrored; all three copies (repo file, Lobby, Game) now hash `9c9539c0` byte-for-byte. The marker is
+inert in the Game — it has no `ScreenBootWatchdog` and the marker only sets an attribute — so this is
+a hash repair, not a behaviour change.
+
+**What actually caught it was changing how the check is read.** The same tool run had "looked green"
+for two sessions. This time each entry's live hash was compared to **both** `hash` and
+`deployed.<Place>`, field by field, in code. A drift check you eyeball is a drift check that passes.
+
+### One schema bump, three systems
+
+`EventLoginStreaks` + `RedeemedCodes` + `PendingReveals`, v3 → v4, `ProfileTemplate`
+`72d3944f → 8e4224b9`, hash-matched in both Places the same session. `Migrations[3]` is a deliberate
+no-op for the same reason `[2]` is: `Reconcile()` runs before `Migrate()`.
+
+Three separate bumps would have meant three migration steps and three both-Places publishes. **The
+cost of a schema bump is the publish, not the field.** If a fourth system needs a field before v4
+ships, it goes into v4 rather than opening v5.
+
+Verified on a **fresh clone** of the module, because `execute_luau` caches requires and returned the
+pre-edit copy on the first attempt — reporting `SCHEMA_VERSION=3` against a source that already said
+4. Then verified live: `Migrated ... forward 1 step(s) to v4`, `DataStoreState=Access`, the three keys
+at their defaults, and Gold 465 / Silver 400 / `LoginStreak Day 2` / 8 units untouched.
+
+## The pending-reveal queue — and a correction to B37
+
+`PendingReveals` (**the one writer of `Data.PendingReveals`**), `RewardPush.ToOrQueue` / `.Drain`,
+`RevealDrainService`, `Remotes.ReadyForReveals`. Doc: `docs/systems/reward-push.md`.
+
+### ⚠ B37's "known gap" was mis-stated, and correcting it changes what can be claimed
+
+B37 recorded it as *"a grant made while the player is AWAY is never revealed"*. Reading the data layer
+shows that cannot happen: `PlayerDataService.profiles` only ever holds players in **this** server, so
+`GetData(userId)` is nil for anyone else and **`GrantService.Grant` has nothing to write to**. There
+is no unrevealed offline grant to recover, because there is no offline grant.
+
+So B39 does not close that gap as worded. What it fixes is real but narrower: the player **leaves
+between the grant and the push**, the push fails for a transport reason, or the push is attempted
+before the client is listening. Delivering to a player in **no** server needs ProfileStore's
+**`MessageAsync`** channel — the grant itself would run on their next load. That is mail, it owns a
+grant path, and it is not built.
+
+I would rather record a smaller true claim than a larger one that reads well.
+
+### ⚠ Draining must never grant, and that is enumerated
+
+Every queued row describes a grant that already happened and is already in the player's balances. If
+the drain ever calls `GrantService`, rejoining pays twice. `PendingReveals`, `RewardPush`,
+`RevealDrainService` and `RewardPushReceiver` contain **zero** non-comment `GrantService` references;
+the only server modules that require it are `AscensionService`, `DailyRewardService`, `SellService`,
+`SummonService` and two Studio harnesses. One grep, re-checkable, worth more than the assertion.
+
+### ⚠ The drain is a client-announced handshake, not a `ProfileLoaded` hook
+
+The obvious implementation is wrong and silently so. `RewardPushReceiver` connects
+`PushRewards.OnClientEvent` during the client's boot, and **`FireClient` does not queue for a client
+that is not yet listening**. Draining on profile load would push into nothing, report success, clear
+the queue, and show the player nothing — the exact failure the feature exists to prevent,
+reintroduced at the last step. So the client fires `ReadyForReveals` **after** its connect, and only
+then does the server deliver. In the receiver that `FireServer()` sits below the connect on purpose.
+
+`RewardPush.To` is unchanged and still owns no storage, because B37 promised that and it is
+load-bearing. Overflow **refuses** new rows rather than evicting old ones (`MaxQueued = 100`), and
+`Dropped` records the refusals so the drain can say "+N more" instead of lying by omission. Drain
+pushes **first** and clears second, restoring the rows if the push fails.
+
+Verified live across a real session boundary: grant+queue moved the balances with **no reveal shown**;
+a flood offered 115, stored 98, refused 17; the rejoin produced
+`RewardPush -> ... (reason=pending_reveals)` → `ObtainRewards SHOW n=2` → `REVEALED`; the queue then
+read `0 queued, 0 dropped`.
+
+## Redeem codes (server side)
+
+`CodeRegistry` (pure) + `CodeService` (**the one writer of `Data.RedeemedCodes`**) +
+`Remotes.RedeemCode`. Doc: `docs/systems/redeem-codes.md`.
+
+### ⚠ Every code is public, and that is a design constraint rather than a bug
+
+`CodeRegistry` replicates, so any client can read the codes, rewards and windows. A code is a
+**convenience, never a secret** — it is the same string for everyone and gets posted publicly the day
+it ships; its only real protection is the per-player "redeemed once" record. If a reward must not be
+obtainable by everyone who reads the client, it does not belong in a code. Moving the module server
+side would hide the strings, change nothing about that, and cost the client the ability to grey out an
+expired code without a round trip.
+
+### ⚠ The rate limit is security, not UX
+
+A redeem box is a remote that takes an arbitrary string and pays out on a match — an unlimited one is
+a code-space enumerator answering thousands of guesses a second. **1.5s between attempts** makes
+guessing cost wall-clock time; **20 failures per session** caps what patience buys. A *successful*
+redeem does not count (ten valid codes must all be enterable), and neither does `already_redeemed` —
+re-pasting a used code is the most common thing that will ever happen to this remote, not a guess.
+
+`Normalize` is the one place typing becomes a key: trimmed, uppercased, refused past 32 characters
+because **the result becomes a profile key** and without a bound a client could grow a player's own
+save with junk. GRANT FIRST, MARK SECOND — marking first would consume the one redemption and pay
+nothing.
+
+Verified live: `"  alamat  "` normalised and granted; the same code again refused; **still refused
+after a server restart**; expired refused; unknown refused; a second code immediately hit `too_fast`
+and then succeeded after the gap.
+
+## The event daily track
+
+`EventDailyConfig` + `DailyRewardService` extended (now **also the one writer of
+`Data.EventLoginStreaks`**). Doc: `docs/systems/daily-rewards.md`.
+
+### ⚠ Additive on the wire, because a live screen was already reading it
+
+The B38 HUD controller is deployed and working. It reads `CanClaim` / `Day` / `SecondsUntilReset` at
+the **top level** and invokes `ClaimDaily` with **no arguments**. So every top-level field still means
+the permanent track, the event hangs off a new `Event` sub-table, and `ClaimDaily("Event")` is the
+opt-in. Reshaping into `{ Normal = ..., Event = ... }` would have been tidier and broken a live screen
+for no player-visible gain. Checked rather than assumed: with the event track live the deployed label
+still read `"Resets in 09:53:33"` and the top-level fields still described the permanent ladder.
+
+### A date window, not a banner (the user's call)
+
+Driving the event off the live gacha banner would mean an event ladder cannot exist without a banner,
+and that **ending a banner silently deletes a ladder players are part-way through**. Only one event
+may be live, and that is enforced: `ActiveEvent` sorts ids, returns the first live one and **warns by
+name** if another overlaps, because two ladders sharing one claim button have no defined answer to
+"which am I claiming". Sorted ids mean every server picks the same event with no coordination.
+
+**Event ladders do not wrap.** The permanent one repeats `(day % 7) + 1` forever; an event stops at
+its last rung, or a limited-time event pays its final row every day until it expires. Missing a day
+still resets to 1, kept identical to the permanent track so players do not learn the rule twice.
+
+Verified live: `active event = HarvestMoon (5 rungs, 89 day(s) left)`; claim → day 1/5, Silver x200;
+double-claim refused; **the permanent track unchanged at `Day=3 Streak=3`** — the ladders are
+independent; last rung stays put with `Complete=true`; missed days and a corrupt streak both reset.
+
+### A syntax error the pre-flight caught before it ran
+
+`;(readyForReveals :: RemoteEvent):FireServer()` as the **first** statement of an `if` block —
+"Expected identifier when parsing expression, got ';'". The same trap that took the B35 deploy down,
+caught this time by the parse-only probe (wrap the source in `return function() ... end`, which
+compiles without running) rather than by a broken client.
+
+## Placeholders, stated plainly
+
+The three codes, the `HarvestMoon` event and its rewards, and B38's 7-day table are all **placeholder
+content**, labelled as such in their files. None is a considered economy decision.
+
+## Not built: the two screens
+
+`StarterGui.DailyRewards` and `StarterGui.RedeemCodes`. Both servers are complete and tested; both
+screens need authored art (B26 — art cannot be scripted across). Specs written and handed over:
+`docs/specs/2026-08-27-daily-rewards-screen.md` and `docs/specs/2026-08-27-redeem-codes-screen.md`.
+Once `StarterGui.DailyRewards` exists, `HUD.Right.Buttons.DailyRewardsButton` changes from
+claim-on-click to open-the-screen, and claiming moves to its `ClaimButton`.
+
+## Docs
+
+`reward-push.md` and `redeem-codes.md` are **new**; `rewards.md` was over its 300-line cap again, so
+the B37+B39 push material moved out of it — that file is AD-Game's match-end payout contract and the
+push path is Lobby machinery. Same split `gacha.md` took at B30 and `daily-rewards.md` at B38.
+`INDEX.md`, `STATE.md`, `ROADMAP.md`, `save-schema.md` and `places/lobby/CONTEXT.md` updated; every
+capped file re-measured and back within cap.
+
+## Still outstanding
+
+- **10 of 13 SoundIds are still empty** — the game is silent.
+- **AD-Game must register the Game's three settings actions.**
+- C4 feeding is blocked on data.
+- `BattlePass` / `Event` / `LeaderBoards` / `InviteFriends` / `Inbox` unwired.
+- `StarterGui.Summon` is the user's unfinished work — **do not touch**.
+- `SellButtons.CancelButton` overlaps `QuickSellButton`; `PlayButton` wears the Shop logo.
+- The dev profile still carries a dead `BannerChoices["B29ProbeBanner"]`.
+
 ## 2026-08-27 [lobby] B38 — AD-Gacha: **daily rewards.** The first of B37's four unblocked buttons to ship — and the worked example of when *not* to use B37's push path.
 
 **Place asserted before every write.** Everything added is **Lobby-local** — B38 touched no shared

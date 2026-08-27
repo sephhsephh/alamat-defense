@@ -99,3 +99,70 @@ that copy would be testing a re-implementation — the B36 mistake exactly.
 The **day-7 → day-1 wrap** is verified at the CONFIG layer only (`NextDay(7, today-1, today) = 1`);
 walking a live profile through seven days was not worth the round trips, and the service passes
 `streak.Day` straight through.
+
+---
+
+## B39 — the EVENT track
+
+A second, time-boxed ladder beside the permanent one, on its own tab of `StarterGui.DailyRewards`.
+
+| piece | what it is |
+|---|---|
+| `RS.Configs.Meta.EventDailyConfig` | PURE rules: the event table, its date window, its streak arithmetic |
+| `DailyRewardService` (extended) | now **also THE one writer of `Data.EventLoginStreaks`** |
+
+### ⚠ Every addition is ADDITIVE ON THE WIRE, and that was the constraint
+
+The B38 `HUD.DailyRewardsController` is **deployed and working**. It reads `CanClaim` / `Day` /
+`SecondsUntilReset` at the **top level** of `GetDailyState` and invokes `ClaimDaily` with **no
+arguments**. So:
+
+- every top-level field still means exactly what it meant, describing the **permanent** track;
+- the event track hangs off a new `Event` sub-table the old controller never looks at;
+- `ClaimDaily(nil)` still claims the permanent track; `ClaimDaily("Event")` claims the event one.
+
+Reshaping the response into `{ Normal = ..., Event = ... }` would have been tidier and would have
+broken a live screen for no player-visible gain. **Verified rather than assumed:** with the event
+track live, the deployed HUD label was still counting down (`"Resets in 09:53:33"`) and the
+top-level fields still read `CanClaim=false Day=3 Streak=3 CycleLength=7`.
+
+### A date window, not a banner
+
+The rejected alternative was to drive the event track off whichever gacha banner is live. Coupling
+them means **an event daily track cannot exist without a banner**, and ending a banner would silently
+delete a ladder players are part-way through. A window is what actually defines an event, so the
+window lives in `EventDailyConfig`. (The user's call at B39.)
+
+- **Only one event may be live at a time, and that is ENFORCED, not assumed.** `ActiveEvent` sorts
+  ids and returns the first live one, **warning by name** if another overlaps — two ladders sharing
+  one claim button have no defined answer to "which am I claiming".
+- Ids are sorted so **every server picks the same event with no coordination**, the same reasoning
+  that makes the matchmaking host "lowest userId".
+- The cycle length is **however many rows `Rewards` has** — not fixed at 7. That is the point of a
+  separate config: a two-week event can run a 14-rung ladder.
+
+### The one rule that differs from the permanent track: it does NOT wrap
+
+`DailyRewardConfig.NextDay` wraps `(day % 7) + 1`, because the permanent ladder repeats forever.
+An event ladder **stops at its last rung**: `IsComplete` becomes true and `CanClaim` goes false, even
+on a new day. Without that, a limited-time event would pay its final row out every day until it
+expired. Missing a day still resets to 1, identical to the permanent track — kept the same
+deliberately, because two ladders on one screen behaving differently is a rule players must learn
+twice. Making an event forgiving instead is a **one-line change in the config**, not the service.
+
+### `Data.EventLoginStreaks` is keyed by eventId
+
+So a second event later starts its own ladder rather than inheriting a finished one's progress.
+
+### Verified live
+
+| case | result |
+|---|---|
+| boot | `active event = HarvestMoon (5 rungs, 89 day(s) left)` |
+| event claim | day **1/5**, Silver x200, `Track="Event"` |
+| event double-claim | `already_claimed` |
+| permanent track after an event claim | **unchanged** (`Day=3 Streak=3`) — the ladders are independent |
+| `NextDay` at the last rung | stays at 5, `Complete=true` — **no wrap** |
+| missed days / corrupt streak | both reset to 1 |
+
+`Rewards` and the `HarvestMoon` window are **PLACEHOLDER CONTENT**, labelled as such in the file.
