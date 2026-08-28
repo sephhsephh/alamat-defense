@@ -35,6 +35,19 @@ remote: a counter bump made `PullOne` **CanClaim=true**, `ClaimQuest` returned `
 mark-second. The button→`claim()`→`ShowRewards` line is parse-verified and identical to the shipped
 DailyRewards claim (a real click is not tool-fireable — the project's standing `Activated` limitation).
 
+### Two HUD buttons wired (no new backend)
+
+`HUD.Right.Buttons.EventButton` now **deep-links to the DailyRewards EVENT tab** — no event backend of
+its own: the DailyRewards screen (B40) already owns both tracks and its controller accepts
+`ClientEvents.OpenDailyRewards:Fire("Event")` (its own comment named this button as the intended
+source). `HUD.Right.UpperRight.InviteFriendsButton` opens the Roblox game-invite prompt
+(`SocialService:PromptGameInvite`, client-only, guarded — the prompt is limited in Studio, distinct
+from the in-lobby PARTY invite). Two small additive controllers (`EventButtonController`,
+`InviteFriendsController`), no shipped script touched. Verified: both boot, ScreenBootWatchdog **29/29
+green**, and `OpenDailyRewards("Event")` opens DailyRewards with the event tab active. The remaining
+three HUD buttons (`BattlePass`, `LeaderBoards`, `Inbox`) have **no backend** and are future sessions —
+Inbox needs a v5 mail-history field.
+
 ### The Shop screen (NPC-opened, BLOCKOUT)
 
 `StarterGui.ShopGUI` + `ShopController`, and a blockout `Workspace.Lobby.NPC_Shop` (Model +
