@@ -84,7 +84,12 @@ The player clicked, so `BuyShopItem` returns `Rewards = views` and the client fi
 Prices and the catalogue are **PLACEHOLDER**, labelled in the file. They should eventually be set
 against `TierConfig.GetSellValue`, which is what pays Silver in.
 
-## Not built
+## The screen (B42)
 
-The **screen**. `ShopService` is complete and tested; a shop UI (and the NPC the blueprint wants)
-needs authored art.
+Built as **BLOCKOUT** art scripted to `docs/specs/2026-08-28-shop-screen.md` — the same call as
+DailyRewards/Quests (server + spec finished, only art blocking). `StarterGui.ShopGUI` + `ShopController`,
+opened from a blockout **NPC** `Workspace.Lobby.NPC_Shop` (a `ProximityPrompt` firing
+`ClientEvents.OpenShop`) — the NPC entry was the user's call, the AscensionScreen/ADR-0010 shape, not a
+HUD button. Renders one `ShopSlotTemplate` per daily slot (icon · name · qty · price · Buy · SoldOutOverlay)
+with the Silver balance and a restock countdown; buy = `BuyShopItem(slot)` → `ShowRewards` (B37). The spec
+is the CONTRACT: replace the screen and the NPC keeping the names and the controller needs zero edits.

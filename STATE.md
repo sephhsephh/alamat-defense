@@ -75,11 +75,11 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   IS online. (c) **SHOP is the game's FIRST Silver sink** (verified: nothing spent it, B31 mints it). Stock DERIVED, never stored;
   **PRE-CHECK → SPEND → GRANT → MARK**; **the client sends a slot INDEX, never a price.** (d) **QUESTS measure a DELTA against a
   baseline** taken at assignment, written ONCE per quest per day. Docs: `reward-push.md`, `shop.md`, `quests.md`, `daily-rewards.md`.
-- **B42 (AD-GACHA/AD-UI): the QUESTS SCREEN is live** — `StarterGui.QuestsGUI` + `QuestsController`, BLOCKOUT to
-  `docs/specs/2026-08-28-quests-screen.md` (spec is the CONTRACT, re-author = zero code). The B41 one-line edit LANDED: `Clears` +
-  `InsaneVictories` in `QuestRegistry.LiveCounters`, `ClearThree` reads **`Clears`** (NOT `ActsCleared`), `WinInsane` shipped — 6 assignable,
-  0 orphans, claim verified live (PullOne → Silver x120). **PENDING (AD-UI): SHOP has no UI** (blueprint wants an NPC);
-  `BattlePass`/`Event`/`LeaderBoards`/`InviteFriends`/`Inbox` unwired. **Inbox as a SCREEN needs a v5 field.**
+- **B42 (AD-GACHA/AD-UI): the QUESTS and SHOP screens are live** — both BLOCKOUT to specs (`docs/specs/2026-08-28-quests-screen.md`,
+  `-shop-screen.md`; specs are the CONTRACT, re-author = zero code). QUESTS: the B41 one-line edit LANDED (`Clears` + `InsaneVictories` in
+  `QuestRegistry.LiveCounters`, `ClearThree` reads **`Clears`** NOT `ActsCleared`, `WinInsane`), 6/6 assignable, 0 orphans, claim verified live.
+  SHOP: **NPC-opened** — blockout `Workspace.Lobby.NPC_Shop` prompt → `ClientEvents.OpenShop` (user's call, ADR-0010 shape); buy verified live
+  (Silver 1400→1100, Gold +250). **PENDING (AD-UI):** `BattlePass`/`Event`/`LeaderBoards`/`InviteFriends`/`Inbox` HUD buttons unwired. **Inbox SCREEN needs a v5 field.**
 - **NOT A PENDING — DAILY REWARDS (B38/B39/B40).** **7-day cycle, MISS A DAY = RESET TO 1**; event ladders do NOT wrap. **GRANT FIRST,
   MARK SECOND** — the rule for daily, event, codes, shop AND quests. `daily-rewards.md`.
 - **PENDING (AD-Game, B24):** `UnitIconV2` needs PLACEMENT COST + ELEMENT; **(AD-Traits)** `TraitDefinitions` has NO icon field.
@@ -117,4 +117,4 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
    B11 moved ascension to an NPC screen (ADR-0010) — **C1/C2 copy that shape, selling deliberately did not.** **C1+C2 are AD-TRAITS' and
    unblocked since B12.** Row-by-row: `docs/ROADMAP.md`.
 3. **B41 CLEARED THE GAME-PLACE BLOCKER** (levelling, the counters, the settings actions, the audio owner). What the Lobby's meta layer
-   now waits on is **UI**, not the match: Shop has no screen (Quests shipped B42), and five HUD buttons are unwired. That is AD-UI's, not AD-Game's.
+   now waits on is **UI**, not the match: Shop and Quests now have screens (B42); five HUD buttons remain unwired. That is AD-UI's, not AD-Game's.

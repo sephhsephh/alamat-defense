@@ -1,6 +1,6 @@
 # CHANGELOG (append-only; newest first)
 
-## 2026-08-28 [lobby] B42 — AD-Gacha/AD-UI: **the Quests screen, and the two match quests unblocked** — the Lobby meta-UI blocker starts coming down.
+## 2026-08-28 [lobby] B42 — AD-Gacha/AD-UI: **the Quests and Shop screens, and the two match quests unblocked** — the Lobby meta-UI blocker comes down.
 
 No shared canon touched, so **no drift and no manifest change** (`TOOLVERSION B41-1`, 36/36, `MetaMath = MISSING` in the Game as expected). All Lobby-local; the user republishes.
 
@@ -34,6 +34,23 @@ remote: a counter bump made `PullOne` **CanClaim=true**, `ClaimQuest` returned `
 `Rewards=[Silver x120]` (Total 1280→1400), and the re-read showed **Claimed=true** — grant-first,
 mark-second. The button→`claim()`→`ShowRewards` line is parse-verified and identical to the shipped
 DailyRewards claim (a real click is not tool-fireable — the project's standing `Activated` limitation).
+
+### The Shop screen (NPC-opened, BLOCKOUT)
+
+`StarterGui.ShopGUI` + `ShopController`, and a blockout `Workspace.Lobby.NPC_Shop` (Model +
+Body/Halo/Root + a `ProximityPrompt`) — the **NPC entry point was the user's call** (the
+AscensionScreen/ADR-0010 shape, not a HUD button). The prompt fires `ClientEvents.OpenShop` and is
+found via `FindFirstChildWhichIsA("ProximityPrompt")`, so any model named `NPC_Shop` with a prompt
+works and a HUD button is a drop-in later. Spec: `docs/specs/2026-08-28-shop-screen.md`. The controller
+reads only spec'd names, `need()`-bounded, clones a `ShopSlotTemplate` per slot (icon · name · qty ·
+price · Buy · SoldOutOverlay), tier-paints the stroke, shows the Silver balance + a restock countdown,
+and reveals a buy through `ShowRewards`. `DisplayOrder = 9`.
+
+**Verified live:** `GetShopStock` rendered the 4 daily slots (Golden Seed, Trait Reroll Token, Gold
+x250, Gold x600) with the user's authored icons; the NPC prompt wired (`Shop NPC prompt wired
+(Shopkeeper)`); buying slot 3 debited **Silver 1400→1100** and granted **Gold +250** (`Rewards=[Gold
+x250]`, the HUD CurrencyBar updated live), the slot marked bought, and a re-buy refused
+`already_bought` — PRE-CHECK → SPEND → GRANT → MARK. ScreenBootWatchdog **27/27 green**.
 
 ## 2026-08-27 [game] B41 — AD-Game: **the levelling loop, the match quest counters, the three settings actions and an audio owner** — and the pending that had been steering work since B33 was, again, not what it said.
 
