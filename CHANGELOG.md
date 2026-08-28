@@ -1,5 +1,40 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-28 [lobby] B42 — AD-Gacha/AD-UI: **the Quests screen, and the two match quests unblocked** — the Lobby meta-UI blocker starts coming down.
+
+No shared canon touched, so **no drift and no manifest change** (`TOOLVERSION B41-1`, 36/36, `MetaMath = MISSING` in the Game as expected). All Lobby-local; the user republishes.
+
+### The Quests screen (BLOCKOUT, the DailyRewards deal)
+
+`StarterGui.QuestsGUI` + `QuestsController` were scripted as blockout art to a published spec
+(`docs/specs/2026-08-28-quests-screen.md`) — the same reversal the user made for DailyRewards at B40:
+the server (B40) and the spec were finished and only art was blocking, so the art is scripted and the
+spec stays the CONTRACT. Re-authoring the tree keeping the names costs **zero** controller edits.
+
+The controller reads only spec'd names, `need()`-bounds every lookup, clones a `QuestCardTemplate`
+per daily quest (name · progress bar · first reward icon+qty with `+N` · Claim · ClaimedTick), opens
+and closes on `UIKit.Motion`, toasts refusals via `UIKit.Notify`, and reveals a claim through
+`ClientEvents.ShowRewards` (return value, B37). `HUD.Left.Buttons.QuestsButton` fires
+`ClientEvents.OpenQuests`, self-wired the SummonController way. `DisplayOrder = 9`. Boot markers in;
+ScreenBootWatchdog **26/26 green**.
+
+### The two match quests, unblocked (the B41 one-line pending)
+
+`QuestRegistry.LiveCounters` gained `Clears` + `InsaneVictories`; `ClearThree` (Target 3) reads
+**`Clears`, NOT a new `ActsCleared`** (user's call, B41 — two stored numbers for one event is the
+drift the one-writer rule prevents), and `WinInsane` (Target 1) reads `InsaneVictories`. **6
+assignable of 6, 0 orphans** — the QuestService boot orphan-warning is now silent. Placeholder
+rewards/weights, labelled.
+
+### Verified live (Lobby Play)
+
+`GetQuests` renders 3 cards including the new **WinInsane**; the panel sits centred and enabled
+(`AbsPos 679,261` · `560×440` in 1919×1079). Claim end-to-end via a real Server Script + the client
+remote: a counter bump made `PullOne` **CanClaim=true**, `ClaimQuest` returned `ok` with
+`Rewards=[Silver x120]` (Total 1280→1400), and the re-read showed **Claimed=true** — grant-first,
+mark-second. The button→`claim()`→`ShowRewards` line is parse-verified and identical to the shipped
+DailyRewards claim (a real click is not tool-fireable — the project's standing `Activated` limitation).
+
 ## 2026-08-27 [game] B41 — AD-Game: **the levelling loop, the match quest counters, the three settings actions and an audio owner** — and the pending that had been steering work since B33 was, again, not what it said.
 
 `PlayerLevelConfig` promoted to shared canon (manifest **35 → 36**, `TOOLVERSION B36-1 → B41-1`).

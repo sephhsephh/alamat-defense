@@ -42,8 +42,9 @@ so:
 - `Assignable()` filters to those, and **orphans are never assigned**;
 - `QuestService` **names them at boot** in a warning.
 
-The two obvious match quests are left **commented out in the registry** rather than shipped broken.
-Adding them the day AD-Game adds the counter is a one-line change with no service edit.
+The two obvious match quests were left **commented out in the registry** rather than shipped broken.
+**SHIPPED at B42** now that the Game writes their counters (see the B41 section below): a one-line
+`LiveCounters` change plus the two entries, no service edit.
 
 ## ⚠ B41 (AD-Game): the match counters exist now — and one of them always did
 
@@ -63,9 +64,10 @@ Game deliberately did **not** add a second key for an event `Clears` already cou
 stored numbers for one event is exactly the drift the one-writer rule exists to prevent (user's
 call, B41). `WinInsane` was the only one genuinely blocked, and `InsaneVictories` now exists.
 
-To ship both: add `Clears` and `InsaneVictories` to `QuestRegistry.LiveCounters` and uncomment the
-two quests. **That is a Lobby-side change and belongs to AD-Gacha** — AD-Game supplies counters and
-does not edit the quest system.
+**SHIPPED at B42 (AD-Gacha, Lobby).** `Clears` + `InsaneVictories` were added to
+`QuestRegistry.LiveCounters`; `ClearThree` (Target 3) reads **`Clears`** and `WinInsane` (Target 1)
+reads `InsaneVictories`. **6 assignable of 6, 0 orphans**; claim verified live (PullOne → Silver x120).
+AD-Game supplied the counters and only the Lobby side of the quest system was edited, as intended.
 
 **⚠ Names are a cross-Place contract.** A counter read by a baseline delta must be lifetime and
 monotonic — never reset, never per-day. Renaming one silently strands every baseline already written
@@ -105,6 +107,11 @@ Same rule as daily rewards, codes and the shop. Reveal is the **return value** (
 
 Quest content and rewards are **PLACEHOLDER**, labelled in the file.
 
-## Not built
+## The screen (B42)
 
-The **screen**. `HUD.Left.Buttons.QuestsButton` is still unwired and needs authored art.
+Built as **BLOCKOUT** art scripted to `docs/specs/2026-08-28-quests-screen.md` — the same call as
+DailyRewards at B40 (server + spec finished, only art blocking). `StarterGui.QuestsGUI` +
+`QuestsController`; `HUD.Left.Buttons.QuestsButton` fires `ClientEvents.OpenQuests` (self-wired, the
+SummonController shape). Renders a card per daily quest — name, progress bar, first reward icon+qty
+(with `+N`), Claim → `ClaimQuest` → `ShowRewards` reveal (return value, B37). The spec is the
+CONTRACT: the user re-authors the tree keeping the names and the controller needs zero edits.
