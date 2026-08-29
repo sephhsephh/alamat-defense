@@ -95,3 +95,14 @@ that part, never the screen.
 The backend + this contract are finished and only art blocks, so B42 scripted a plain `BattlePassGUI`
 and wired it. The scripted tree uses these exact names and flags; authoring your own is a **replace,
 not a rewrite** — keep the names, delete the scripted ScreenGui, and the controller needs zero edits.
+
+## ⚠ RE-LAID-OUT B42 (user's UI reference)
+The screen was rebuilt to the user's reference art with **every panel/cell/button background an
+`ImageLabel`/`ImageButton`** (blank `Image` + dark blockout fill — set `.Image` to the art, nothing in
+the controller changes). Key names now: `Main` `Overlay` `CloseButton` `Title` `SeasonLabel`
+`Tabs.{BattlePassTab,MissionsTab}` `LevelBadge.LevelLabel` `XPStatusLabel` `XPBar.Fill` `XPLabel`
+`ClaimAllButton` `FreePassButton` `AlamatPassButton` `Track.TierCardTemplate{TierNumber,
+FreeSlot,PaidSlot}` — each slot an ImageButton with `Icon` `Qty` `ClaimedTick` `LockOverlay` (the CELL
+is the claim target, no separate CLAIM button). `PromoPanel{PromoTitle,PromoSubtitle,PromoBadge,
+Features,PurchaseButton}`. New behaviour: **CLAIM ALL** (all unlocked-unclaimed, one merged reveal),
+**Missions tab → OpenQuests**, and the **799 PurchaseButton is art-only** (toasts — monetization deferred).

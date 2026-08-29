@@ -1,5 +1,28 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-29 [lobby] B42+ — AD-UI: **Battlepass + Daily Rewards re-laid-out to the user's UI reference, Image-based frames**.
+
+The user supplied a reference mockup (Alamat Season 1) and asked for the two screens to match it, with
+every panel/cell/button background an `ImageLabel`/`ImageButton` (blank `Image` + dark blockout fill)
+so the authored art imports by setting `.Image` — no controller edits.
+
+**Battlepass** (`BattlePassGUI` rebuilt, `BattlePassController` rewritten): season header + `BATTLE
+PASS`/`MISSIONS` tabs + red close, a Level badge, XP bar + **CLAIM ALL**, `FREE PASS`/`ALAMAT PASS`
+row labels, a horizontal tier track whose Free (top) and Paid (bottom) reward **cells are the click
+targets** (ImageButtons) with check/lock overlays, and an **Alamat Pass promo panel** (features + a 799
+button). CLAIM ALL claims every unlocked-unclaimed tier in one merged reveal; **Missions → `OpenQuests`**;
+the **799 purchase is art-only** and toasts (monetization still deferred). Specs updated.
+
+**Daily Rewards** (`DailyRewards` GUI rebuilt, `DailyRewardsScreenController` edited in place — the
+Normal/Event contract kept): 7 day cards (now ImageButtons) with reward **name** + a **status** word
+(CLAIMED / CLAIM / TOMORROW / DAY N), the READY card claims on click (the hidden `ClaimButton` still
+works), plus a static **Daily Streak** panel. Two labels (`NameLabel`, `StatusLabel`) were added to the
+card and are filled by the controller; every other read-name is unchanged.
+
+Verified live: both boot clean and render (Battlepass at Level 7 with claimed ticks + promo; Daily with
+Day 5 READY glow, names + statuses), no missing-part warnings, ScreenBootWatchdog **30/30 green**. No
+shared canon, no schema bump; all Lobby-local, the user republishes.
+
 ## 2026-08-28 [lobby] B42 — AD-Gacha/AD-UI: **the Quests and Shop screens, and the two match quests unblocked** — the Lobby meta-UI blocker comes down.
 
 No shared canon touched, so **no drift and no manifest change** (`TOOLVERSION B41-1`, 36/36, `MetaMath = MISSING` in the Game as expected). All Lobby-local; the user republishes.

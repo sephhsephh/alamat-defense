@@ -117,4 +117,4 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
    B11 moved ascension to an NPC screen (ADR-0010) — **C1/C2 copy that shape, selling deliberately did not.** **C1+C2 are AD-TRAITS' and
    unblocked since B12.** Row-by-row: `docs/ROADMAP.md`.
 3. **B41 CLEARED THE GAME-PLACE BLOCKER** (levelling, the counters, the settings actions, the audio owner). What the Lobby's meta layer
-   now waits on is **UI**, not the match: Shop/Quests/BattlePass screens all shipped B42; LeaderBoards/Inbox still need backends, and BattlePass still needs its XP source + monetization. That is AD-UI's, not AD-Game's.
+   now waits on is **UI**, not the match: Shop/Quests/BattlePass screens all shipped B42 (BattlePass + Daily Rewards then re-laid-out to the user's UI reference, Image-based frames); LeaderBoards/Inbox still need backends; BattlePass still needs its XP source + monetization. That is AD-UI's, not AD-Game's.

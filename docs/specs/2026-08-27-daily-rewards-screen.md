@@ -99,3 +99,13 @@ is live now.
 controller reads nothing else. So authoring your own version is a **replace, not a rewrite**: build
 it however you like, keep the names, delete the scripted ScreenGui, and the controller needs **zero**
 edits. If you add a part you want driven, add it here first.
+
+## ⚠ RE-LAID-OUT B42 (user's UI reference)
+Rebuilt to the user's reference with **Image-based frames** (`ImageLabel`/`ImageButton`, blank `Image`
++ blockout fill). The controller's read-names are unchanged (`Main` `Overlay` `CloseButton`
+`Tabs.{NormalTab,EventTab}` `EventHeader` `NoEventFrame` `Track.DayCardTemplate` `ClaimButton`
+`ResetTime`) plus two ADDED per-card labels the controller now fills: **`NameLabel`** (reward name) and
+**`StatusLabel`** (CLAIMED / CLAIM / TOMORROW / DAY N). `DayCardTemplate` is now an **ImageButton** and
+the READY card is itself the claim target (`ClaimButton` is kept but hidden). A static **`DailyStreak`**
+side panel was added. The compact Normal/Event tab toggle is kept so the live event track stays
+reachable — remove it if the art doesn't want it.
