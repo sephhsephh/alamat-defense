@@ -30,13 +30,25 @@ Free always (once unlocked); **Paid requires `Owned`**. Validate tier/track → 
 Reason codes: `bad_tier` · `bad_track` · `no_such_tier` · `not_unlocked` · `not_owned` ·
 `already_claimed` · `nothing_to_claim` · `grant_failed` · `profile_not_loaded` · `busy`.
 
-## ⚠ TWO THINGS ARE DELIBERATELY NOT BUILT (open decisions)
-1. **THE XP SOURCE.** Blueprint: BP XP is committed **AT MATCH END**, `f(waves, outcome)` — a GAME
-   place change (`RewardCalculator`), a cross-Place contract (Game → MatchReturn → Lobby). Until it
-   lands, XP moves ONLY through `ServerStorage.BattlepassAddXP` (a **BindableFunction** so no client
-   can reach it — BP XP is earned, never requested). Nothing calls it yet: the same state Quests was
-   in before B41 wrote its counters. The service warns at boot.
-2. **MONETIZATION.** Blueprint: the Paid track unlocks via a **gamepass/dev product**, plus level-skip
+## ✅ THE XP SOURCE IS WIRED (B43, AD-Game)
+
+BP XP is committed **at match end**, `f(waves, outcome, difficulty)`, and travels
+**Game → `MatchReturn` → Lobby**:
+
+`RewardCalculator` (compute + accumulate) → `MatchReturn.BattlepassXP` → `MatchReturnService` →
+`ServerStorage.BattlepassAddXP` → `BattlepassService` (**still the one and only writer**).
+
+The rule lives in the **Game's** `Configs.Global.BattlepassXpConfig` — placeholder values, the shape
+is the user's call (B43): `50 base + 5/wave`, a Defeat pays 40% of what it earned, all scaled
+1.0→2.0 by wire difficulty. A 15-wave Victory on Normal is 125 XP, about 1.25 tiers here.
+An **Abandoned** run pays nothing, matching B41's rule that an aborted match grants nothing.
+
+**Nothing in this Place changed to receive it.** `BattlepassAddXP` was built at B42 for exactly this
+caller, and it is still a `BindableFunction` so no client can reach it — BP XP is earned, never
+requested. Full contract, both delivery guards and the known limit: `docs/contracts/teleport.md`.
+
+## ⚠ ONE THING IS STILL DELIBERATELY NOT BUILT (open decision)
+1. **MONETIZATION.** Blueprint: the Paid track unlocks via a **gamepass/dev product**, plus level-skip
    products (5/10/50). No purchase is built; `Owned` gates the paid track and nothing sets it. Wiring
    a Robux product is a business decision, deliberately left out.
 
@@ -64,5 +76,5 @@ tiers 5+ LOCKED; Free/Paid claims; not_unlocked; already_claimed). The spec is t
 keeping the names, zero controller edits.
 
 ## Still not built
-The two deferred decisions above: the **match-end XP source** (a GAME change) and **monetization**
-(the paid unlock + level-skips; `Owned` gates the paid track and nothing sets it).
+**Monetization** — the paid unlock + level-skips; `Owned` gates the paid track and nothing sets it.
+The match-end XP source, the other half of this pair, landed at B43.

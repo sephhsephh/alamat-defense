@@ -115,6 +115,13 @@ have changed the hash and required a re-deploy to both Places inside a session t
 doing a contract bump. It is **AD-Game's** module; the fix is a comment-only re-hash + both-Place
 redeploy in a future AD-Game session. The CODE is correct — only the comment is out of date.
 
+**⚠ RESOLVED AT B43 — the note above is now history, kept for the lesson.** `RewardScalingConfig`'s
+header was corrected (`1d789978` → **`5a4cf793`**, comment-only, 6870 → 7437 bytes, mirrored
+byte-identical to both Places with the manifest updated). It had been deferred three times because
+correcting a comment in shared canon costs a re-hash and a both-Place redeploy — and in the meantime
+two sessions read it and believed it. **The cost of leaving a wrong comment in canon is that it keeps
+being believed; the cost of fixing it is one deliberate deploy.**
+
 **B41 fixed the OTHER copy of that same stale claim.** `RewardCalculator` carried its own version of
 it ("the payload (v2) has NO mode field, so this branch does not fire in production"). That file is
 **not** shared canon, so correcting it cost no hash and no redeploy — and it mattered, because the
@@ -130,6 +137,7 @@ sentence directly contradicted the `InsaneVictories` counter added in the same f
 5. `CommitUnitKills` per unit — `Counters.PerUnit[uuid].Kills` + worthiness, one write (A8)
 6. Global counters: `Clears` + `ClearsByStage` **on Victory only**, `Waves` on any outcome,
    `InsaneVictories` **on a Victory that was also Insane** (B41)
+7. Battlepass XP: computed and **accumulated**, never granted here (B43 — see below)
 
 Steps 4–6 are covered by `docs/blueprints/phase-a-foundations.md` §6 and the A8/A9/B0 changelog
 entries; do not change their attribution rules without reading those.
@@ -162,6 +170,29 @@ synthetic `L1 / 5000xp` profile resolved to `L16 / 240xp` conserving XP exactly,
 **⚠ BALANCE, OPEN — the user's call, not this file's.** `100 × 1.15^(level-1)` puts level 50 at
 **627,540 lifetime XP** (~12,500 act clears) while `LoadoutConfig` gates slot 6 there. Surfaced, not
 retuned.
+
+## Battlepass XP is EARNED here and APPLIED in the Lobby (B43)
+
+The one match reward this Place cannot commit. `Data.Battlepass` is owned by the **Lobby's**
+`BattlepassService`, its single writer, so `RewardCalculator` computes a number and hands it to the
+return teleport instead of granting anything:
+
+`RewardCalculator` → `MatchReturn.BattlepassXP` → Lobby `MatchReturnService` →
+`ServerStorage.BattlepassAddXP` → `BattlepassService`.
+
+**The Game must never write `Data.Battlepass`.** Granting it here would be a second writer for one
+field — the same mistake the one-writer rule exists to prevent, and the harness asserts it explicitly.
+
+The rule is `Configs.Global.BattlepassXpConfig` (Game-local: the Game is the only Place that knows
+how a match went). **Placeholder numbers, the user's shape (B43):** `Base 50 + 5/wave`, a Defeat
+paying `0.4` of what it earned, scaled `1.0 → 2.0` by wire difficulty **through
+`RewardScalingConfig.TFromWire`** — the one wire→t conversion, never a second one. An `Abandoned`
+outcome pays 0, consistent with B41's rule that an aborted match grants nothing; any unrecognised
+outcome fails SAFE to 0, the same stance as an unknown mode failing safe to Normal.
+
+**Accumulated, not overwritten**, because chained acts return to the Lobby once — and cleared only
+after `TeleportAsync` succeeds, so a failed teleport does not destroy earned XP. Both delivery
+guards, and the known limit (XP never carried back is lost), are in `docs/contracts/teleport.md`.
 
 ## Invariant 1 does NOT hold here yet
 

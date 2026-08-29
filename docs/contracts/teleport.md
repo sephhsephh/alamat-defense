@@ -120,21 +120,72 @@ Maps to `MatchDirector.StartMatch` (which already expects exactly these semantic
 harness `MatchLifecycleSmokeTest` fakes this payload today). Party assembly travels **in the
 payload** (assembled at launch from `PartyService`); no MemoryStore handoff in v1.
 
-## Game → Lobby: `MatchReturn` (v2)
+## Game → Lobby: `MatchReturn`
 
-Shape unchanged from v1 — only the version integer moved (one version covers both directions).
+Shape unchanged from v1 except for B43's additive field — the version integer moves with
+`MatchLaunch` (one version covers both directions).
 
 ```luau
 {
-	PayloadVersion: number,     -- = 2
+	PayloadVersion: number,     -- tracks MatchLaunch; = 4 today
 	LastStageId: string,
 	Outcome: "Victory" | "Defeat" | "Abandoned",
 	SuggestNextActId: string?,  -- so the Lobby can pre-select "continue"
+	BattlepassXP: number?,      -- B43: ADDITIVE. Battlepass XP earned, for the LOBBY to apply.
 }
 ```
 
 Rewards are NOT in this payload — they were already committed to the profile by
 `RewardCalculator` before teleport (profile session-lock handles the save handoff).
+
+### ⚠ `BattlepassXP` is the ONE exception, and it is not a reward (B43)
+
+It is a **number to apply**, not something already granted. Every other match reward can be
+committed Game-side because the Game owns the field. `Data.Battlepass` is owned by the **Lobby's**
+`BattlepassService`, which is its **one writer** — so the Game computes the XP
+(`Configs.Global.BattlepassXpConfig`, a Game-local rule) and the Lobby applies it through the
+existing `ServerStorage.BattlepassAddXP` channel. Granting it Game-side would mean a second writer
+for one field, which is exactly what the one-writer rule prevents.
+
+**This is why `MatchReturnService` is no longer strictly display-only.** It applies this one thing
+and nothing else; it does not write `Data.Battlepass` itself.
+
+### Why this did NOT need a hard version bump, when v3 and v4 did
+
+v3 and v4 were hard bumps because a reader that ignored the new field would behave **wrongly** —
+silently paying Normal rewards for an Insane match, or treating a matchmade roster as one party.
+`BattlepassXP` has no such failure mode. It is additive and forward-tolerant in both directions:
+
+| situation | result |
+|---|---|
+| new Game → old Lobby | field ignored, no XP applied |
+| old Game → new Lobby | field absent, sanitizes to 0, no XP applied |
+
+Both degrade to **"no XP"**, never to wrong data — and both Places republish together anyway, so the
+window does not exist in practice. A field whose worst case is "the feature doesn't happen" is the
+kind that rides an existing version; a field whose worst case is "the wrong thing happens" is not.
+
+### Delivery guarantees, both ends
+
+The number is **accumulated per player across chained acts** (Act 1 → Next Act → Act 2 returns once)
+and travels on the single return.
+
+- **Game:** `RewardCalculator.PeekPendingBattlepassXP` builds the payload; the accumulator is cleared
+  only **after `TeleportAsync` succeeds**. A failed teleport leaves the player in the Game to retry
+  (§ Retry/failure) and the retry must carry the same XP, not nothing.
+- **Lobby:** applied **once per join**, guarded, because `onAdded` runs from both the startup loop
+  and `PlayerAdded` and a player joining between them would otherwise be credited twice. The channel
+  itself is *not* idempotent — verified — so the guard is load-bearing.
+- **Lobby:** applied only **after the profile loads** (`WaitForData`). `PlayerAdded` fires first, and
+  the first wiring of this was refused with `profile_not_loaded` on every return — found by running
+  it, not by reading it.
+- Sanitized like any wire value: absent, non-numeric, negative or NaN → 0, and clamped to a
+  blast-radius cap far above what the curve can pay.
+
+**KNOWN LIMIT, ACCEPTED:** XP that is never carried back is lost — a player who closes the game
+instead of returning to the Lobby drops what that session accumulated. Persisting it properly needs
+a stored field (a **v5** schema bump) or a second writer; neither is worth it for a placeholder
+economy. Stated here so it is a known limit rather than a surprise.
 
 ## Cross-server delivery (v4, matchmade launches only)
 

@@ -1,5 +1,120 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-29 [game] B43 — AD-Game: **the Battlepass becomes a real loop** — BP XP earned at match end, delivered by teleport, applied by the Lobby's one writer. Plus the shared-canon comment fix that had been deferred three times.
+
+Shared canon **36 entries**, `RewardScalingConfig` `1d789978` → **`5a4cf793`**, `TOOLVERSION B41-1`
+unchanged. Verified 36/36, 0 issues, both Places, before and after the re-hash. Two harnesses, both
+REAL `Script`s: **19/19** (Game) and **9/9** (Lobby).
+
+### The chain, and why it is split across two Places
+
+`RewardCalculator` (compute + accumulate) → `MatchReturn.BattlepassXP` → Lobby `MatchReturnService`
+→ `ServerStorage.BattlepassAddXP` → `BattlepassService`.
+
+Every other match reward is committed Game-side, because the Game owns the field. `Data.Battlepass`
+is owned by the **Lobby's** `BattlepassService`, which is its one writer — so the Game cannot grant
+BP XP without becoming a second writer for one field. It emits a **number**; the Lobby decides what
+that number does. The harness asserts the Game never touched `Data.Battlepass`, rather than trusting
+that it didn't.
+
+`BattlepassAddXP` was built at B42 for exactly this caller and needed no change. Nothing in the
+Lobby's meta systems was edited.
+
+### The rule (the user's shape, placeholder numbers)
+
+`Configs.Global.BattlepassXpConfig`, Game-local — the Game is the only Place that knows how a match
+went, so the rule lives where the inputs are. `Base 50 + 5/wave`, a Defeat paying `0.4` of what it
+earned, all scaled `1.0 → 2.0` by wire difficulty **through `RewardScalingConfig.TFromWire`** — the
+one wire→t conversion in this Place, never a second one (ADR-0011).
+
+A 15-wave Victory on Normal is **125 XP**, about 1.25 tiers against B42's placeholder ladder; the
+same run at max difficulty is **250**; a wave-7 Defeat is **34**. `Abandoned` pays **nothing**,
+consistent with B41's rule that an aborted match grants nothing — a restart that paid battlepass XP
+would be farmable in exactly the way that decision ruled out. Any unrecognised outcome fails SAFE
+to 0, the same stance as an unknown mode failing safe to Normal.
+
+### ⚠ Running it found a bug that reading it would not have
+
+The first wiring applied the XP from `onAdded`, which fires on `PlayerAdded` — **before the profile
+loads**. `BattlepassAddXP` correctly refused every single return with `profile_not_loaded`, and the
+XP was silently dropped on every match. It now waits for the profile (`WaitForData`), spawned so the
+return banner still appears immediately. The same class of race the reveal layer already solves by
+waiting for both the profile and the client's announcement.
+
+This is the second session running where the verification, not the code review, produced the finding.
+
+### A flaw I introduced and then had to fix
+
+As first written, building the payload **consumed** the accumulator. But `TeleportAsync` can fail,
+and the contract's own stance is that a failed teleport leaves the player in the Game to retry — so
+that version would have silently destroyed earned XP, and the retry would have carried 0. The build
+now **peeks**, and the accumulator is cleared only once the teleport is accepted.
+
+### Two guards, because a double-grant would be silent and permanent
+
+- **Game:** cleared only after `TeleportAsync` succeeds, so the same earnings cannot ride two
+  teleports.
+- **Lobby:** applied once per join. `onAdded` runs from both the startup loop and `PlayerAdded`, so a
+  player joining between them would otherwise be credited twice; the mark is set **before** the yield,
+  the same reasoning as `MatchDirector` claiming its slot before waiting on profiles.
+
+The harness proves the guard is load-bearing rather than decorative: a direct second invoke of the
+channel **does** move XP (900 → 940), so nothing downstream would catch a double delivery.
+
+Sanitized like any wire value — absent, non-numeric, negative or NaN all collapse to 0, and a
+blast-radius cap bounds what one forged payload can be worth.
+
+### The contract: additive, and why that was the right call
+
+`MatchReturn` gains `BattlepassXP` **without a version bump**, which is a departure from v3 and v4.
+Those were hard bumps because a reader ignoring the new field behaved *wrongly* — paying Normal
+rewards for an Insane match, or treating a matchmade roster as one party. This field's worst case in
+both directions is **"no XP"**, never wrong data. A field whose failure mode is "the feature doesn't
+happen" can ride an existing version; one whose failure mode is "the wrong thing happens" cannot.
+
+`MatchReturnService` was documented as strictly display-only — "nothing here may mutate player data".
+It now applies exactly one thing. That is a real change to a stated contract, so it is written into
+the file header and `docs/contracts/teleport.md` rather than left as a silent violation.
+
+**KNOWN LIMIT, ACCEPTED and documented:** XP never carried back is lost — closing the game instead of
+returning drops what that session accumulated. Persisting it needs a stored field (a **v5** bump) or
+a second writer; neither is worth it for a placeholder economy.
+
+### The shared-canon comment fix, done deliberately
+
+`RewardScalingConfig`'s header had claimed since P5 that the MatchLaunch payload "(v2) carries NO
+mode field" and that Insane could not fire in production. Untrue since **B20**'s v3 bump, verified
+live end to end at the time. It was deferred three times because correcting a comment in shared canon
+costs a re-hash plus a both-Place redeploy — and in the meantime two sessions read it and believed
+it, including one that wrote the same false claim into `RewardCalculator` (fixed at B41).
+
+Mirrored byte-identical repo/Game/Lobby (7437 bytes each), manifest updated, 36/36 re-verified in
+both Places. **The cost of leaving a wrong comment in canon is that it keeps being believed; the cost
+of fixing it is one deliberate deploy.**
+
+### The in-match hotbar draws real locks
+
+`LoadoutAssigned` now carries `PlayerLevel`, read from the server's profile — a client-supplied level
+would unlock slot 6 for free. `HotbarController` defaults to 1, which locks rather than unlocks if
+the field is ever absent. Verified live: slots 1–3 open, 4–6 showing `LockOverlay`, matching the
+Lobby's "3 slot(s) unlocked".
+
+Before B43 this Place passed `ALL_UNLOCKED` because it genuinely had no level to hand — and for most
+of that time the number would have been a lie anyway, since `PlayerLevel` was frozen at 1 until B41.
+
+**⚠ This surfaced an upstream bug, and it is not a regression here.** The Lobby's auto-loadout
+fallback (`PartyService.buildLoadout`, used when `Data.Loadout` is empty) fills to `MaxLoadoutSize`
+from owned units **without consulting `LoadoutConfig`'s unlock levels**, so a level-1 player is
+handed 5 units for 3 slots. Locking made that visible. The fix belongs Lobby-side, in the fallback —
+not in the UI, by continuing to lie about which slots exist.
+
+### Landing
+
+`shared/manifest.json`, `docs/contracts/teleport.md` (285/300), `battlepass.md`, `rewards.md`,
+`STATE.md` (120/120), `places/game/CONTEXT.md` (150/150), `ROADMAP`.
+**Republish BOTH Places — a shared hash moved and the return payload gained a field.**
+
+
 ## 2026-08-29 [lobby] B42+ — AD-UI: **Battlepass + Daily Rewards re-laid-out to the user's UI reference, Image-based frames**.
 
 The user supplied a reference mockup (Alamat Season 1) and asked for the two screens to match it, with

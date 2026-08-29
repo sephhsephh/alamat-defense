@@ -1,6 +1,6 @@
 # ROADMAP — feature status for the whole Experience
 <!-- owner: all (any chat updates its own system's rows at landing) | scope: global -->
-<!-- last-verified: 2026-08-27 (B41) -->
+<!-- last-verified: 2026-08-29 (B43) -->
 
 Status legend: ✅ done · 🟡 partial/placeholder · 🔲 planned · 💭 idea (not committed)
 Meta-systems detail + rationale: `docs/proposals/2026-07-18-meta-systems-design.md`
@@ -32,6 +32,15 @@ everything untradeable at launch).
 - ✅ **`MatchDirector.AbortMatch` (B41)** — an abort **pays nothing** (user's call): `MatchEnded` is
   never fired, so no XP/gold/drops/counters, and deliberately not a Defeat (whose consolation would
   make restart farmable). Restarting a live match aborts it first. `MatchStateChanged` gains `StageId`.
+- ✅ **Battlepass XP at match end (B43)** — computed from `Configs.Global.BattlepassXpConfig` and
+  **accumulated**, never granted here: `Data.Battlepass`'s one writer is Lobby-side, so the number
+  rides `MatchReturn.BattlepassXP` and the Lobby applies it. Cleared only after `TeleportAsync`
+  succeeds; applied once per join, after the profile loads. `docs/contracts/teleport.md`.
+- ✅ **In-match hotbar locks (B43)** — `LoadoutAssigned` carries server-read `PlayerLevel`, so both
+  Places draw the same `LoadoutConfig` locks. 🔲 Exposed: the Lobby's auto-loadout fallback ignores
+  slot unlocks and can hand a level-1 player more units than they have slots for (AD-Lobby).
+- ✅ **`RewardScalingConfig` stale header fixed (B43)** — `1d789978` → `5a4cf793`, comment-only,
+  mirrored byte-identical to both Places, manifest updated, 36/36 re-verified.
 - ✅ **The Game has an audio owner (B41, open since B32)** — `GameAudio` plays per-act BGM off
   `MatchStateChanged.StageId`, falling back to `BGM.Default`. All 13 SoundIds stay empty until
   release by standing user decision; the caller exists so pasting an id is the only remaining step.
@@ -752,7 +761,12 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
 - 🔲 Codes system (CodesConfig: rewards, expiry, one-per-player)
 
 ### Phase E — Seasonal & presentation
-- 🔲 Battlepass (seasonal config file; 50 tiers free/paid; BP XP at match end; level skips)
+- 🟡 Battlepass — **backend + screen B42, BP XP AT MATCH END LANDED B43.** `RewardCalculator` →
+  `MatchReturn.BattlepassXP` → Lobby `MatchReturnService` → `BattlepassAddXP` → `BattlepassService`
+  (still the one writer of `Data.Battlepass`; the Game never writes it). Rule in the Game's
+  `BattlepassXpConfig`: placeholder `50 + 5/wave`, loss ×0.4, ×1.0–2.0 by difficulty. Still 10
+  placeholder tiers against the blueprint's 50. 🔲 **Monetization** (paid unlock + level skips) is
+  the remaining gap — `Owned` gates the paid track and nothing sets it.
 - 🔲 Event framework (event banner + EventTokens + event quests bundle; Pre-Release first)
 - 🔲 News/update board + banner showcase on join
 - 🔲 Titles (equip UI + overhead) · 🔲 Skins (catalog → model swap both Places)

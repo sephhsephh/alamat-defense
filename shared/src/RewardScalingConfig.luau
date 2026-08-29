@@ -21,8 +21,9 @@
 -- ===== THE TWO DIFFICULTY SCALES -- READ THIS BEFORE TOUCHING ANY NUMBER =====
 -- There are TWO scales in this project and confusing them pays max rewards for a normal match:
 --   * UI scale   1..100    -- what the PLAYER sees on the PlayGUI slider. 1 = normal, 100 = hardest.
---   * WIRE scale 100..1000 -- `DifficultyPercent`, the field in the teleport MatchLaunch payload
---                             (contract v2). 100 = normal (1x enemy health), 1000 = 10x.
+--   * WIRE scale 100..1000 -- `DifficultyPercent`, the field in the teleport MatchLaunch payload.
+--                             100 = normal (1x enemy health), 1000 = 10x. The field has kept its
+--                             name, range and meaning through every contract bump to date.
 -- ADR-0011: the remap is DISPLAY-ONLY and the wire format never changed. The Lobby converts
 -- UI -> wire in exactly one place (`StarterGui.PlayGUI.DifficultyScale`). **This Place only ever
 -- receives the WIRE value**, so it must do its own wire -> t conversion -- see `TFromWire` below.
@@ -53,10 +54,15 @@ RewardScalingConfig.DefaultCurve = "Standard"
 -- ===== INSANE =====
 -- Section 8: Insane runs the SAME gold curve and adds ITEM rewards on top. Mode is a separate axis
 -- from the slider and never enters the conversion.
--- ⚠ The teleport MatchLaunch payload (v2) carries NO mode field, so in production this Place always
--- sees Normal. Reaching Insane live is a teleport contract v2 -> v3 change (both Places, ONE
--- session, synchronised republish) -- NOT a quiet addition. Until then this table is exercised only
--- by harnesses and by any caller that supplies the mode explicitly.
+-- ⚠ COMMENT CORRECTED B43 2026-08-29 -- IT HAD BEEN WRONG SINCE B20.
+-- This used to say the MatchLaunch payload "(v2) carries NO mode field, so in production this Place
+-- always sees Normal", and that reaching Insane live still needed a v2 -> v3 change. That change
+-- LANDED at B20 (2026-08-14) and was verified live end to end: the payload carries `DifficultyMode`,
+-- v4 kept it unchanged, and the Insane branch fires in production. The table below is NOT
+-- harness-only. The stale text survived two sessions that read it and believed it -- correcting it
+-- re-hashes a shared module, which is exactly why it kept being deferred.
+-- Mode remains a SEPARATE axis: it does not scale enemy health and never enters the wire -> t
+-- conversion. An absent or unrecognised mode fails SAFE to Normal, the branch that pays no items.
 RewardScalingConfig.ModeNormal = "Normal"
 RewardScalingConfig.ModeInsane = "Insane"
 
