@@ -63,6 +63,9 @@
   against a baseline** taken at assignment (a lifetime counter read would finish every quest instantly
   for an established player) and for the rule that a quest naming a counter nothing writes is
   **refused and named at boot** rather than left sitting at 0.
+- `battlepass.md` — **AD-Meta/AD-Gacha canon, LOBBY**: the seasonal tier ladder (B42). BACKEND only
+  (config + one-writer service + remotes); the screen, the match-end XP source and monetization are
+  deferred. Read it for the SeasonId-keyed reset and the free/paid claim gates.
 - `daily-rewards.md` — **AD-Gacha canon, LOBBY**: the login streak (B38). The pure `DailyRewardConfig`
   (7-day table, `MetaMath` day number, miss-a-day-resets-to-1), `DailyRewardService` as **THE one
   writer of `Data.LoginStreak`**, the HUD button, and the `DevDailyRewind` harness. Read it for the

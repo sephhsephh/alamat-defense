@@ -35,6 +35,29 @@ remote: a counter bump made `PullOne` **CanClaim=true**, `ClaimQuest` returned `
 mark-second. The button→`claim()`→`ShowRewards` line is parse-verified and identical to the shipped
 DailyRewards claim (a real click is not tool-fireable — the project's standing `Activated` limitation).
 
+### The Battlepass BACKEND (Phase E, no schema bump)
+
+`RS.Configs.Meta.BattlepassConfig` + `SSS.Server.Meta.BattlepassService` (**the one writer of
+`Data.Battlepass`**) build the blueprint's seasonal ladder — a FREE and a PAID track, `Level =
+floor(XP/XPPerTier)+1`. **No schema bump:** `Data.Battlepass { SeasonId, XP, Owned, ClaimedFree,
+ClaimedPaid }` was in the template since v2, unwritten — the `Quests`/`ShopStock` free ride. Remotes
+**31 → 33** (`GetBattlepass`, `ClaimBattlepassTier`). SeasonId is a **static string**: when the
+stored one differs the service resets XP + claims for the new season (blueprint keying) but keeps
+`Owned`. Claims are GRANT-FIRST-MARK-SECOND; Paid requires `Owned`; reveal = return value (B37).
+
+**Two things deliberately NOT built** (both flagged in the config/service headers and
+`docs/systems/battlepass.md`): (1) **the XP source** — blueprint commits BP XP at MATCH END, a GAME
+change; until then XP moves only through the server-only `ServerStorage.BattlepassAddXP`
+BindableFunction, which nothing calls yet (the pre-B41 Quests-counter state). (2) **monetization** —
+the paid unlock + level-skips are a gamepass/dev-product decision; `Owned` gates the paid track and
+nothing sets it. Content (XPPerTier, 10 placeholder tiers vs the blueprint's 50, rewards) is
+PLACEHOLDER, labelled.
+
+**Verified live:** addXP 250 → level 3; Free tier 1 → Silver x100 (again `already_claimed`); Paid
+tier 1 while un-owned → `not_owned`; tier 5 while level 3 → `not_unlocked`; `bad_tier`/`bad_track`;
+after setting Owned, Paid tier 2 → Silver x200; forcing a stale SeasonId reset XP→0/claims-cleared
+while **Owned survived**. Boot clean, no catalogue warnings (all reward ids valid), watchdog 29/29.
+
 ### Two HUD buttons wired (no new backend)
 
 `HUD.Right.Buttons.EventButton` now **deep-links to the DailyRewards EVENT tab** — no event backend of
