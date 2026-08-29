@@ -55,6 +55,14 @@ Reason codes: `bad_tier` · `bad_track` · `no_such_tier` · `not_unlocked` · `
 Content (`XPPerTier`, tiers, rewards) is **PLACEHOLDER**, labelled in the file. Blueprint target is
 **50 tiers** (ships 10). Every reward Id is validated against `ItemCatalog` at boot.
 
-## Not built
-The **screen** (blockout to a spec, the Quests/Shop pattern) — `HUD.Right.Buttons.BattlePassButton`
-is still unwired. Plus the two deferred decisions above (match-end XP source; monetization).
+## The screen (B42)
+Built as **BLOCKOUT** to `docs/specs/2026-08-28-battlepass-screen.md` (Quests/Shop pattern).
+`StarterGui.BattlePassGUI` + `BattlePassController`; `HUD.Right.Buttons.BattlePassButton` fires
+`ClientEvents.OpenBattlepass` (self-wired). Horizontal tier track (Free/Paid slots per column), XP bar,
+lock + claimed states, `Owned` gate on the paid track; claim → `ShowRewards`. Verified live (Level 4/10,
+tiers 5+ LOCKED; Free/Paid claims; not_unlocked; already_claimed). The spec is the CONTRACT: re-author
+keeping the names, zero controller edits.
+
+## Still not built
+The two deferred decisions above: the **match-end XP source** (a GAME change) and **monetization**
+(the paid unlock + level-skips; `Owned` gates the paid track and nothing sets it).

@@ -58,6 +58,17 @@ tier 1 while un-owned → `not_owned`; tier 5 while level 3 → `not_unlocked`; 
 after setting Owned, Paid tier 2 → Silver x200; forcing a stale SeasonId reset XP→0/claims-cleared
 while **Owned survived**. Boot clean, no catalogue warnings (all reward ids valid), watchdog 29/29.
 
+### The Battlepass SCREEN (blockout)
+
+`StarterGui.BattlePassGUI` + `BattlePassController`, BLOCKOUT to `docs/specs/2026-08-28-battlepass-screen.md`,
+self-wiring `HUD.Right.Buttons.BattlePassButton` → `ClientEvents.OpenBattlepass`. A horizontal tier
+track: one column per tier with a FREE (top) and PAID (bottom) reward slot, a header XP bar showing
+within-level progress + `Level N / MaxTier` + the `Owned` state, `LockOverlay` on locked tiers, and
+the paid Claim gated on `Owned` (the server is the authority — a dim button still clicks and toasts
+the reason). Claim → `ShowRewards` (B37). Verified live at Level 4/10: 10 tier cards, tiers 5+ LOCKED,
+Free tier 1 → Silver x100, Paid tier 1 → Gold x100 (Owned), Free tier 4 → Gold x75, tier 5 →
+`not_unlocked`, re-claim → `already_claimed`; CurrencyBar updated live; watchdog **30/30 green**.
+
 ### Two HUD buttons wired (no new backend)
 
 `HUD.Right.Buttons.EventButton` now **deep-links to the DailyRewards EVENT tab** — no event backend of

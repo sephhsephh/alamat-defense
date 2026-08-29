@@ -79,7 +79,7 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   `-shop-screen.md`; specs are the CONTRACT, re-author = zero code). QUESTS: the B41 one-line edit LANDED (`Clears` + `InsaneVictories` in
   `QuestRegistry.LiveCounters`, `ClearThree` reads **`Clears`** NOT `ActsCleared`, `WinInsane`), 6/6 assignable, 0 orphans, claim verified live.
   SHOP: **NPC-opened** — blockout `Workspace.Lobby.NPC_Shop` prompt → `ClientEvents.OpenShop` (user's call, ADR-0010 shape); buy verified live
-  (Silver 1400→1100, Gold +250). Event/InviteFriends WIRED B42; **`BattlePass` BACKEND built B42** (`BattlepassConfig`+`BattlepassService`, Remotes 31→33; screen + match-end XP source + monetization pending). **PENDING (AD-UI):** `LeaderBoards`/`Inbox` need backends (Inbox a v5 field).
+  (Silver 1400→1100, Gold +250). Event/InviteFriends WIRED B42; **`BattlePass` built B42** — backend (`BattlepassConfig`+`BattlepassService`, Remotes 31→33) + BLOCKOUT screen (`BattlePassGUI`, `BattlePassButton`→`OpenBattlepass`); **match-end XP source + monetization still pending**. **PENDING (AD-UI):** `LeaderBoards`/`Inbox` need backends (Inbox a v5 field).
 - **NOT A PENDING — DAILY REWARDS (B38/B39/B40).** **7-day cycle, MISS A DAY = RESET TO 1**; event ladders do NOT wrap. **GRANT FIRST,
   MARK SECOND** — the rule for daily, event, codes, shop AND quests. `daily-rewards.md`.
 - **PENDING (AD-Game, B24):** `UnitIconV2` needs PLACEMENT COST + ELEMENT; **(AD-Traits)** `TraitDefinitions` has NO icon field.
@@ -117,4 +117,4 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
    B11 moved ascension to an NPC screen (ADR-0010) — **C1/C2 copy that shape, selling deliberately did not.** **C1+C2 are AD-TRAITS' and
    unblocked since B12.** Row-by-row: `docs/ROADMAP.md`.
 3. **B41 CLEARED THE GAME-PLACE BLOCKER** (levelling, the counters, the settings actions, the audio owner). What the Lobby's meta layer
-   now waits on is **UI**, not the match: Shop/Quests screens + the BattlePass backend shipped B42; LeaderBoards/Inbox still need backends, and BattlePass still needs a screen + an XP source. That is AD-UI's, not AD-Game's.
+   now waits on is **UI**, not the match: Shop/Quests/BattlePass screens all shipped B42; LeaderBoards/Inbox still need backends, and BattlePass still needs its XP source + monetization. That is AD-UI's, not AD-Game's.
