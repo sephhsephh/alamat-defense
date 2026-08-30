@@ -81,10 +81,10 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   Abandoned pays NOTHING (B41's rule). **`MatchReturnService` is no longer strictly display-only** — it applies this ONE thing and must
   never write the field. **GUARDED BOTH ENDS:** Game clears only after `TeleportAsync` SUCCEEDS; Lobby applies ONCE per join and only after
   `WaitForData` (**`PlayerAdded` fires BEFORE the profile loads** — that silently refused every grant until it was run). `teleport.md`.
-- **B43: the in-match hotbar draws REAL LOCKS** -- `LoadoutAssigned` carries `PlayerLevel` (server-read). **This exposed an upstream bug,
-  NOT a regression:** the Lobby's auto-loadout FALLBACK (`PartyService.buildLoadout`, used when `Data.Loadout` is empty) fills to
-  `MaxLoadoutSize` WITHOUT consulting `LoadoutConfig` unlocks, so a level-1 player gets 5 units for 3 slots. **PENDING (AD-Lobby): cap
-  that fallback.**
+- **B43: the in-match hotbar draws REAL LOCKS** -- `LoadoutAssigned` carries `PlayerLevel` (server-read). It exposed an upstream bug
+  (**FIXED B44**): the Lobby's auto-loadout FALLBACK (`LaunchService.BuildLoadout`, used when `Data.Loadout` is empty) filled to
+  `MaxLoadoutSize` ignoring `LoadoutConfig` unlocks. Now capped to `LoadoutConfig.UnlockedSlots(PlayerLevel)` (verified L1 8-owned -> 3);
+  the saved-Loadout path was already unlock-respecting.
 - **NOT A PENDING — DAILY REWARDS (B38/B39/B40).** **7-day cycle, MISS A DAY = RESET TO 1**; event ladders do NOT wrap. **GRANT FIRST,
   MARK SECOND** — the rule for daily, event, codes, shop AND quests. `daily-rewards.md`.
 - **PENDING (AD-Game, B24):** `UnitIconV2` needs PLACEMENT COST + ELEMENT; **(AD-Traits)** `TraitDefinitions` has NO icon field.

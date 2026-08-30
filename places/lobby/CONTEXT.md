@@ -34,7 +34,7 @@ The social/meta Place: collection, banners, stage + difficulty select, parties, 
   round trip). **The match runs at the host's EXACT wire value — never an average**, which would move everyone's `GoldBand` payout.
   `MatchmakingRules.BucketOf` is the ONE home for queue difficulty arithmetic and is **not** the ADR-0011 conversion. Timeout 45s
   **OFFERS** solo. **The mode joins the payload in `PartyService`, not the UI.** `buildLoadout` = saved `Loadout` filtered to
-  still-owned uuids, else auto by MetaLevel desc. `GamePlaceId` = **125430066355564**. Only the party HOST may launch. -
+  still-owned uuids, else auto by MetaLevel desc, capped to unlocked slots (B44). `GamePlaceId` = **125430066355564**. Only the party HOST may launch. -
   **MatchReturn (v3):** `MatchReturnService` reads `TeleportData.MatchReturn` on join (version from `LobbyConfig`, NOT hardcoded; drops
   an unknown `SuggestNextActId` — a stale mirror fails safe) and serves `Remotes.GetMatchReturn`. `ReturnScreen` = welcome-back banner.
   Harness `DevSimulateReturn` **only fires on JOIN** — set it in EDIT and restart Play. - **Starter tower choice:**

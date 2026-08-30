@@ -1,5 +1,18 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-30 [lobby] B44 — AD-Lobby: **the auto-loadout fallback now respects slot unlocks** (the bug B43's real locks exposed).
+
+`LaunchService.BuildLoadout`'s AUTO fallback (used when `Data.Loadout` is empty -- a fresh or migrated
+profile) filled to `LobbyConfig.MaxLoadoutSize` from owned units by MetaLevel, **ignoring
+`LoadoutConfig.SlotUnlockLevel`**. A level-1 account (3 unlocked slots) was handed up to 6 units; since
+B43 draws real in-match locks, the extras rendered locked. Now capped to
+`math.min(MaxLoadoutSize, LoadoutConfig.UnlockedSlots(Data.PlayerLevel))` -- the config already had the
+helper. The saved-Loadout path is untouched (unlock-respecting by construction: you cannot equip into a
+locked slot). Both callers (`PartyService`, `MatchmakingService`) go through `BuildLoadout`, so both are fixed.
+
+Verified live (Lobby, dev profile 8 units, empty Loadout): BuildLoadout returned **3 / 4 / 5 / 6** at levels
+1 / 5 / 20 / 50 -- exactly `UnlockedSlots`. Watchdog 30/30 green. Lobby-local; no shared canon, no schema bump.
+
 ## 2026-08-29 [game] B43 — AD-Game: **the Battlepass becomes a real loop** — BP XP earned at match end, delivered by teleport, applied by the Lobby's one writer. Plus the shared-canon comment fix that had been deferred three times.
 
 Shared canon **36 entries**, `RewardScalingConfig` `1d789978` → **`5a4cf793`**, `TOOLVERSION B41-1`
