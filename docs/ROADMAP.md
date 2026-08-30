@@ -743,10 +743,22 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
   destroying nothing, a real 3-unit sale (18 → 15 units, Silver 0 → 170) with client preview and
   server payment **MATCHing**, and the deletions surviving a real DataStore stop/start.
   Docs: `docs/systems/ascension.md`.
-- 🔲 **Trait reroll (C1) + Stat reroll (C2) — UNBLOCKED B12, still AD-TRAITS' ROW (not AD-Gacha's).**
-  The trait rarity table (`TraitRegistry` + `TraitDefinitions`) is now shared canon in both Places.
-  **API is `TraitRegistry.Roll(rng)` — there is NO `RollTrait`;** `SummonEngine` assumed that name
-  from B3 and, inside a pcall, failed SILENTLY until B12 fixed it. Trait-on-summon is now LIVE.
+- ✅ **Trait reroll (C1) — AD-Traits, B44.** `docs/systems/trait-reroll.md`. Pick a unit, spend one
+  `TraitRerollToken`, reroll its `Trait`. **The cost is the ITEM token, not `Currencies.TraitRerolls`**
+  — that scalar has no source, so a reroll priced in it would be unspendable; the token is what the
+  shop/battlepass/quests hand out, and this is its FIRST sink (spent via `GrantService.SpendItems`).
+  `TraitRerollService` is the ONE reroll writer of `UnitInstance.Trait`, distinct from `SummonService`
+  (which writes it at creation), like `AscensionService` owns the Ascension write. Server order
+  **PRE-CHECK owned → SPEND → ROLL → WRITE**; a reroll grants nothing (no reveal — the new trait is the
+  return value); `TraitRegistry.Roll` is weighted (None 1000 vs Blitz/Sniper 80, Deadeye 25, Godly 3),
+  so it routinely lands `None` and spends anyway. **NPC-opened, Image-based blockout screen** copying
+  ADR-0010 (the B11 ascension shape); token + current trait read off `GetUnitViews`, no second remote.
+  Verified live incl. every refusal and a real Blitz landing then rerolling back to None. Lobby-local,
+  no schema bump. **The rarity table (`TraitRegistry` + `TraitDefinitions`) is shared canon; API is
+  `TraitRegistry.Roll(rng)` — there is NO `RollTrait`** (`SummonEngine` assumed that name and failed
+  silently in a pcall until B12; trait-on-summon is LIVE).
+- 🔲 **Stat reroll (C2) — AD-Traits, still unbuilt.** Copy C1/B11's NPC-opened-screen shape (ADR-0010).
+  Check for a currency SOURCE before pricing it, as C1 found `Currencies.TraitRerolls` had none.
 - 🔲 Worthiness meter (kills → 100% = guaranteed A-floor + boosted top-grade odds; resets on reroll).
 - 🔲 Feeding (C4) — per-stage exp food via catalog; mass-feed w/ protections. Check `FeedValue` in
   `ItemCatalog` and the `AddTowerXP` path actually exist in the Lobby before committing to it.

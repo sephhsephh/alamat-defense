@@ -1,5 +1,33 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-30 [lobby] B44 — AD-Traits: **trait reroll (blueprint C1) is built** — pick a unit, spend a `TraitRerollToken`, reroll its `Trait`.
+
+Phase C's **C1**, and **AD-Traits' first shipped feature**. Copies ADR-0010's NPC-opened-screen shape
+(ascension's B11 move), which the blueprint already specified for C1.
+`docs/systems/trait-reroll.md`, `docs/specs/2026-08-30-trait-reroll-screen.md`.
+
+**The cost is the ITEM `TraitRerollToken`, not `Currencies.TraitRerolls`.** The scalar currency has no
+source (nothing grants it); the token is what the shop / battlepass / quests hand out (`Kind="Item"`,
+in `Data.Items`). So the reroll spends the token via `GrantService.SpendItems` — **the token's FIRST
+sink** — and leaves the stale currency field untouched. A deliberate, documented blueprint correction.
+
+New, all **Lobby-local, no schema bump** (`Data.Items` + `UnitInstance.Trait` both pre-existed): `RS.Configs.Meta.TraitRerollConfig`
+(`{ ItemId="TraitRerollToken", Cost=1 }`, placeholder) · `SSS.Server.Meta.TraitRerollService` — **the
+ONE reroll writer of `UnitInstance.Trait`**, distinct from `SummonService` (which writes it at
+creation), the same way `AscensionService` owns the Ascension write · `RS.Remotes.RerollTrait`
+(RemoteFunction) · `StarterPlayerScripts.TraitRerollController` + `StarterGui.TraitRerollScreen`
+(Image-based blockout) + `Workspace.Lobby.NPC_TraitReroll` ("Trait Weaver") + `ClientEvents.OpenTraitReroll`.
+Server order: **PRE-CHECK owned → SPEND → ROLL → WRITE.** A reroll grants nothing, so no `ShowRewards`
+— the new trait is the return value. `TraitRegistry.Roll` is weighted (None 1000 vs Blitz/Sniper 80,
+Deadeye 25, Godly 3), so a reroll **routinely lands `None`** and the token is still spent, exactly like
+a gacha pull; the token/current-trait both read off `GetUnitViews` (ADR-0004), no second remote.
+
+Verified live (real `RerollTrait` from a real client): a reroll spent exactly 1 token (5→4) and wrote
+the trait; refusals `bad_uuid` / `not_owned` / `insufficient_tokens` (balance 0) each changed nothing;
+a real **Blitz** landed then rerolled back to `None`. Screen opened to 8 units, selecting showed the
+current trait, REROLL updated the result live and the button **disabled at balance 0**. Boot clean, no
+uncatalogued-item warning, watchdog green. Config / service / controller each parse-pre-flighted.
+
 ## 2026-08-30 [lobby] B44 — AD-Meta: **the Battlepass season is now a full 50 tiers** (was 10 placeholder).
 
 `BattlepassConfig.Tiers` went from a 10-entry hand-written table to the blueprint's **50** via a compact

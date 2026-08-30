@@ -23,7 +23,7 @@ task touches — resolved at bootstrap per the constitution.
 | ItemCatalog / TierConfig / icon-UI kit (Phase A) | AD-UI | both | `shared/src/{ItemCatalog,TierConfig}.luau` (SHARED since 2026-08-01) + kit in Studio |
 | StatGradeConfig / AscensionConfig | AD-Game | both | `shared/src/` (SHARED since 2026-08-01) |
 | TowerStatResolver (+ MetaScaling, Traits) | AD-Game | Game | Studio (Game) `RS.Shared.TowerStatResolver` — NOT shared; see the numbers PENDING in STATE.md |
-| Trait & stat rerolls / worthiness (C1/C2) | AD-Traits | Lobby | TBD when built — **UNBLOCKED B12** (rarity table is shared now). Copy B11's NPC-opened-screen shape (ADR-0010). |
+| Trait & stat rerolls / worthiness (C1/C2) | AD-Traits | Lobby | **C1 (trait reroll) BUILT B44** — Studio (Lobby) `SSS.Server.Meta.TraitRerollService` + `RS.Configs.Meta.TraitRerollConfig` + `StarterPlayerScripts.TraitRerollController` + `docs/systems/trait-reroll.md`. **C2 (stat reroll) + worthiness TBD** — copy C1/B11's NPC-opened-screen shape (ADR-0010). |
 | Quests / login / codes / battlepass (future) | AD-Meta | Lobby | TBD when built |
 | Evolution / spirits (future) | AD-Gacha | Lobby | TBD when built |
 | UI (StarterGui screens, HUD, panels) | AD-UI | both | Studio (per Place) StarterGui + `docs/systems/ui.md` (when migrated) |
