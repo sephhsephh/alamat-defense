@@ -1,5 +1,15 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-30 [lobby] B44 — AD-Meta: **the Battlepass season is now a full 50 tiers** (was 10 placeholder).
+
+`BattlepassConfig.Tiers` went from a 10-entry hand-written table to the blueprint's **50** via a compact
+generator (still PLACEHOLDER content, labelled): Free = Silver/Gold growing by 10-tier band, Paid = Gold
+with a rotating ITEM milestone (`TraitRerollToken`/`GoldenSeed`/`BannerTicket`) every 5th tier, and a
+tier-50 finale. `XPPerTier` stays 100 (so ~4900 XP tops the pass). Every reward Id is catalogued.
+Verified live: `BattlepassService ready (... 50 tier(s) ...)` with **no catalogue warning**; `GetBattlepass`
+returns 50 tiers; at level 22 tiers 1–22 unlock and tier 50 is the finale. Watchdog 30/30. Lobby-local,
+no shared canon, no schema bump.
+
 ## 2026-08-30 [lobby] B44 — AD-Lobby: **the auto-loadout fallback now respects slot unlocks** (the bug B43's real locks exposed).
 
 `LaunchService.BuildLoadout`'s AUTO fallback (used when `Data.Loadout` is empty -- a fresh or migrated

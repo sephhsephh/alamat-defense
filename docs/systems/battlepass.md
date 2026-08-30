@@ -56,7 +56,7 @@ requested. Full contract, both delivery guards and the known limit: `docs/contra
 | case | result |
 |---|---|
 | `addXP 250` via the server channel | XP=250, level 3 |
-| `GetBattlepass` | SeasonId Season1, 10 tiers, Owned false, tiers 1–3 unlocked |
+| `GetBattlepass` | SeasonId Season1, 50 tiers, Owned false, tiers 1–3 unlocked |
 | claim tier 1 Free | ok, Silver x100; again → `already_claimed` |
 | claim tier 1 Paid (Owned false) | `not_owned` |
 | claim tier 5 Free (level 3) | `not_unlocked` |
@@ -64,8 +64,10 @@ requested. Full contract, both delivery guards and the known limit: `docs/contra
 | set Owned, claim tier 2 Paid | ok, Silver x200; again → `already_claimed` |
 | force stale SeasonId, re-Get | XP=0, level 1, claims cleared, **Owned kept** |
 
-Content (`XPPerTier`, tiers, rewards) is **PLACEHOLDER**, labelled in the file. Blueprint target is
-**50 tiers** (ships 10). Every reward Id is validated against `ItemCatalog` at boot.
+Content (`XPPerTier`, tiers, rewards) is **PLACEHOLDER**, labelled in the file. The blueprint's **50
+tiers now ship** (B44) via a compact generator in the file — Free/Paid per tier, a rotating ITEM
+milestone every 5th tier, a tier-50 finale; edit the rule or override a single tier after the loop.
+Every reward Id is validated against `ItemCatalog` at boot.
 
 ## The screen (B42)
 Built as **BLOCKOUT** to `docs/specs/2026-08-28-battlepass-screen.md` (Quests/Shop pattern).
