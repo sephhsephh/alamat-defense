@@ -132,7 +132,8 @@ sentence directly contradicted the `InsaneVictories` counter added in the same f
 
 1. XP + gold (gold scaled; defeat flat) → `PerfectClearBonus` if the clear was flawless
 2. Drop-table roll (Victory only) → plus Insane items if the mode says so
-3. Commit account rewards: `AddPlayerXP`, `AddCurrency`, `AddItem` per drop
+3. Commit account rewards: `AddPlayerXP`, `AddCurrency` (Gold), then each drop **routed by its
+   catalogue `Kind`** — Currency → `AddScalarCurrency`, Item → `AddItem` (B45)
 4. Per-unit tower XP **by uuid**, from that unit's own damage/kills (B0)
 5. `CommitUnitKills` per unit — `Counters.PerUnit[uuid].Kills` + worthiness, one write (A8)
 6. Global counters: `Clears` + `ClearsByStage` **on Victory only**, `Waves` on any outcome,
@@ -193,6 +194,51 @@ outcome fails SAFE to 0, the same stance as an unknown mode failing safe to Norm
 **Accumulated, not overwritten**, because chained acts return to the Lobby once — and cleared only
 after `TeleportAsync` succeeds, so a failed teleport does not destroy earned XP. Both delivery
 guards, and the known limit (XP never carried back is lost), are in `docs/contracts/teleport.md`.
+
+## A drop is routed by its catalogue Kind, never assumed to be an item (B45)
+
+Every drop used to go to `AddItem`, which writes `Data.Items[id]`. That was correct while every
+droppable id really was an Item — but a **Currency lives in `Data.Currencies[id]`**, and crediting
+one into `Data.Items` puts it in a field nothing reads and nothing spends. The faucet would look
+wired and the currency would never arrive.
+
+`ItemCatalog` is the one place that knows which an id is, so `GrantForPlayer` asks it:
+
+| catalogue `Kind` | written to |
+|---|---|
+| `Currency` | `Data.Currencies[id]` via `PlayerInventoryService.AddScalarCurrency` |
+| anything else | `Data.Items[id]` via `AddItem` |
+| **uncatalogued** | **nothing — refused loudly** |
+
+Refusing an uncatalogued id is the same stance as `GrantService.Grant`'s invariant 4 in the Lobby: a
+typo in a drop table must never silently invent a profile field.
+
+`AddScalarCurrency` guards its own name list, mirrored from `GrantService.SCALAR_CURRENCIES`. **The
+two Places cannot share that list** — `GrantService` is Lobby-local and `PlayerInventoryService` is
+the Game's account writer — so if a scalar currency is ever added to the schema, **both lists must
+learn it**. Kept short and explicit rather than derived, so a divergence shows up in a diff.
+
+### `StatRerolls` — C2's faucet (B45)
+
+C2's stat reroll (B44) spends `Currencies.StatRerolls`, but nothing could mint it: the id was not in
+`ItemCatalog`, so `Grant` refused it. B45 catalogued it as `Kind="Currency"` (`fc4b8023` →
+`9be86a5f`) and added it to `RewardScalingConfig.InsaneItems` (`5a4cf793` → `e0a3bc2d`) — the same
+faucet `TraitRerollToken` has always used, which is the only reason C1 was reachable and C2 was not.
+Both are shared canon, mirrored byte-identical to both Places. **Its icon is a placeholder
+(`rbxassetid://0`) for the user to author.**
+
+## Worthiness — the meter has existed since A8, and is NOT a gap
+
+`CommitUnitKills` advances `UnitInstance.Worthiness` through `WorthinessConfig.Apply` once per match,
+in the same pass that commits `Counters.PerUnit[uuid].Kills`. Verified at A8 and re-verified
+independently at A9 (Archer 198 kills → 3.96, Necromancer 86 → 1.72). The cap is enforced **inside
+`Apply`**, so no future caller can bypass it.
+
+Several later docs described this as unbuilt — `stat-reroll.md` said so in the paragraph directly
+below one that said the opposite. It is built. Whether a player *reaches* 100 is a **tuning**
+question: `PointsPerKill` is `0.02` (the user's choice at A8, reaffirmed at B45), so ~5,000 kills
+caps a unit and a favourite maxes over roughly 25–50 matches — the intended long-term goal. Retune in
+`WorthinessConfig`, never at a call site.
 
 ## Invariant 1 does NOT hold here yet
 

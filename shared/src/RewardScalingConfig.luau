@@ -66,9 +66,17 @@ RewardScalingConfig.DefaultCurve = "Standard"
 RewardScalingConfig.ModeNormal = "Normal"
 RewardScalingConfig.ModeInsane = "Insane"
 
+-- ⚠ EVERY ItemId HERE MUST EXIST IN ItemCatalog, and a CURRENCY-kind id is credited to
+-- Data.Currencies, not Data.Items -- RewardCalculator routes by the catalogue's Kind (B45). An
+-- uncatalogued id is refused loudly and written nowhere, the same stance as GrantService's
+-- invariant 4 in the Lobby.
 RewardScalingConfig.InsaneItems = {
 	{ ItemId = "BannerTicket", DisplayName = "Banner Ticket", Rarity = "Rare", Count = 1 },
 	{ ItemId = "TraitRerollToken", DisplayName = "Trait Reroll Token", Rarity = "Epic", Count = 1 },
+	-- B45: the ONE source of StatRerolls, which C2's stat reroll spends. Deliberately the same
+	-- faucet TraitRerollToken already uses -- C1 was reachable and C2 was not purely because this
+	-- line did not exist and the id was uncatalogued.
+	{ ItemId = "StatRerolls", DisplayName = "Stat Reroll", Rarity = "Rare", Count = 1 },
 }
 
 local function lerp(a: number, b: number, t: number): number

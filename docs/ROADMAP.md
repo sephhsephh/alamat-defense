@@ -1,6 +1,6 @@
 # ROADMAP — feature status for the whole Experience
 <!-- owner: all (any chat updates its own system's rows at landing) | scope: global -->
-<!-- last-verified: 2026-08-29 (B43) -->
+<!-- last-verified: 2026-08-30 (B45) -->
 
 Status legend: ✅ done · 🟡 partial/placeholder · 🔲 planned · 💭 idea (not committed)
 Meta-systems detail + rationale: `docs/proposals/2026-07-18-meta-systems-design.md`
@@ -32,6 +32,11 @@ everything untradeable at launch).
 - ✅ **`MatchDirector.AbortMatch` (B41)** — an abort **pays nothing** (user's call): `MatchEnded` is
   never fired, so no XP/gold/drops/counters, and deliberately not a Defeat (whose consolation would
   make restart farmable). Restarting a live match aborts it first. `MatchStateChanged` gains `StageId`.
+- ✅ **Drops route by catalogue `Kind` (B45)** — a `Currency`-kind drop is credited to
+  `Data.Currencies` via `AddScalarCurrency`, an `Item` to `Data.Items`, and an **uncatalogued id is
+  refused loudly and written nowhere** (the stance of `GrantService`'s invariant 4). Before B45 every
+  drop went to `AddItem`, so C2's currency faucet would have landed in a field nothing reads.
+  ⚠ `SCALAR_CURRENCIES` is mirrored in both Places and cannot be shared — add one, teach both.
 - ✅ **Battlepass XP at match end (B43)** — computed from `Configs.Global.BattlepassXpConfig` and
   **accumulated**, never granted here: `Data.Battlepass`'s one writer is Lobby-side, so the number
   rides `MatchReturn.BattlepassXP` and the Lobby applies it. Cleared only after `TeleportAsync`
@@ -761,16 +766,21 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
   `StatReroll`, reroll all three `StatRolls` (DMG/RNG/SPA); grades + colours from `StatGradeConfig`
   only. **Priced in `Currencies.StatRerolls` (the blueprint's word), via `GrantService.Spend`** — a
   SCALAR_CURRENCY, so it debits with NO ItemCatalog/shared-canon change (where C1 needed a token).
-  `StatRerollService` is the ONE reroll writer of `UnitInstance.StatRolls`. **⚠ FAUCET DEFERRED:**
-  nothing grants `StatRerolls` yet (not even catalogued), so the reroll is a SINK with no source —
-  dormant until a later session catalogues it as a Currency or adds a `StatRerollToken` (battlepass-XP
-  shape). NPC-opened, Image-based blockout (ADR-0010). Verified live incl. the Worthiness floor and
-  every refusal; button disables at balance 0. Lobby-local, no schema bump.
-- 🟡 **Worthiness — the COMMIT half is built by C2 (B44).** The stat reroll reads `Worthiness`, and at
-  `>=100` floors every rolled stat at grade **A** (floor derived from `StatGradeConfig`) + passes
-  `TopGradeBoost` as luck, then resets it to 0 on ANY reroll. 🔲 The **METER** itself (kills →
-  `Worthiness` during a match) is the GAME place's writer and is still unbuilt; `TopGradeBoost` stays
-  dormant until `StatGradeConfig.RollStat` honours its `luck` arg (the FLOOR is the concrete effect).
+  `StatRerollService` is the ONE reroll writer of `UnitInstance.StatRolls`. ✅ **FAUCET OPENED B45:**
+  `StatRerolls` is catalogued (`Kind="Currency"`, `ItemCatalog` → `9be86a5f`) and drops from **Insane
+  wins** (`RewardScalingConfig` → `e0a3bc2d`) — the same faucet `TraitRerollToken` uses, which was the
+  only reason C1 was reachable and C2 was not. Its icon is a placeholder for the user to author.
+  NPC-opened, Image-based blockout (ADR-0010). Verified live incl. the Worthiness floor and every
+  refusal; button disables at balance 0. Lobby-local, no schema bump.
+- ✅ **Worthiness — BOTH halves are built, and the meter always was.** The stat reroll reads
+  `Worthiness` and at `>=100` floors every rolled stat at grade **A**, then resets to 0 on ANY reroll
+  (C2, B44). **⚠ CORRECTED B45: the METER (kills → `Worthiness`) is NOT unbuilt** — it has committed
+  once per match since **A8** via `CommitUnitKills` → `WorthinessConfig.Apply`, verified at A8 and
+  re-verified independently at A9 (Archer 198 kills → 3.96). This row and `stat-reroll.md` both said
+  otherwise, and that claim is what drove B45's agenda. Reaching 100 is **tuning**, not a gap:
+  `PointsPerKill` 0.02 (user's call at A8, reaffirmed B45) ≈ 25–50 matches for a favourite.
+  🔲 `TopGradeBoost` stays dormant until `StatGradeConfig.RollStat` honours its `luck` arg (the FLOOR
+  is the concrete effect).
 - 🔲 Feeding (C4) — per-stage exp food via catalog; mass-feed w/ protections. Check `FeedValue` in
   `ItemCatalog` and the `AddTowerXP` path actually exist in the Lobby before committing to it.
 

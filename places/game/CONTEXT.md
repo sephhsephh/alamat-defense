@@ -82,8 +82,11 @@ Boot order in `ReplicationBridge`: data services first; `[DATA]`/`[CONTRACT]` li
   `LobbyConfig.MatchLaunchVersion`; a mismatch is rejected, never downgraded. **v3 and v4 do NOT
   interoperate — republish the two Places TOGETHER.** In Studio Play a real TeleportAsync is
   attempted and fails (pcall'd, `TeleportInitFailed` handled) — expected, not a bug.
-- **Counters + Worthiness are WRITTEN (blueprint §6, A8).** One commit per match inside
-  `RewardCalculator.GrantForPlayer`; the `Worthiness` cap is enforced INSIDE `WorthinessConfig.Apply`.
+- **Counters + Worthiness are WRITTEN (blueprint §6, A8) — AND THE WORTHINESS METER IS NOT A GAP.**
+  One commit per match inside `RewardCalculator.GrantForPlayer`; the cap is enforced INSIDE
+  `WorthinessConfig.Apply`. Verified A8 AND re-verified A9 (Archer 198 kills → 3.96). Several later
+  docs called kills→Worthiness unbuilt; **it has run since A8.** Reaching 100 is TUNING, not a missing
+  writer: `PointsPerKill` 0.02 (user's call, reaffirmed B45) ≈ 25–50 matches for a favourite.
   `Counters.Global.Summons` is the one LIVE increment. Full order: `docs/systems/rewards.md`.
 - **PLACEMENT IS uuid-ADDRESSED END TO END (B0).** `RequestPlace` carries a **uuid**;
   `PlacementValidator` resolves it against the player's own validated loadout and reads every stat off
@@ -97,27 +100,21 @@ Boot order in `ReplicationBridge`: data services first; `[DATA]`/`[CONTRACT]` li
   max gold silently — never add a second conversion. `matchState` is OPTIONAL and fails SAFE.
 - **`RewardScalingConfig` is SHARED CANON (`1d789978`), Game-deployed only.** The Lobby's preview and the server's payout must read the SAME curve, so it could not live in `StageConfig`. Each act NAMES
   a curve (`Rewards.GoldCurve`). **`deployed.Lobby = null` → Lobby MISSING is expected, not drift.**
-- **INSANE IS LIVE-REACHABLE since B20 (teleport v3).** `DifficultyMode` → `matchState` →
-  `RewardCalculator`'s Insane branch. Mode is a SEPARATE axis: it does NOT scale enemy health and
-  never enters the wire→t conversion; absent/unknown fails SAFE to Normal. (B41 corrected
+- **INSANE IS LIVE-REACHABLE since B20 (teleport v3).** `DifficultyMode` → `matchState` → `RewardCalculator`'s Insane branch. Mode is a SEPARATE axis: it does NOT scale enemy health and never enters the wire→t conversion; absent/unknown fails SAFE to Normal. (B41 corrected
   `RewardCalculator`'s own header, which still claimed this branch could not fire live.)
-- **TELEPORT v4 (B23) — `IsMatchmade`, and the ONE-PARTY INVARIANT IS REPEALED.** A reserved server
-  can hold SEVERAL parties, or strangers with none. `matchState.IsMatchmade` is the flag to branch on
+- **TELEPORT v4 (B23) — `IsMatchmade`, and the ONE-PARTY INVARIANT IS REPEALED.** A reserved server can hold SEVERAL parties, or strangers with none. `matchState.IsMatchmade` is the flag to branch on
   — **never `PartyId`**. `HostUserId` is an ELECTED host (lowest userId), which this Place already used.
   **ONE one-party assumption with teeth remains: GAME SPEED** — match-wide, authority and the 3× gate
   from the host alone, matchmade an elected stranger. **Unchanged pending a user design call.**
-- **SHORT ROSTERS ARE ROUTINE AT v4 — the economy counts who ARRIVED (B23 fix).** `ValidatedPlayers`
-  is the payload ROSTER; `matchState.PresentUserIds` is who turned up. `PlayerCountRewardScaling`
-  divides kill AND wave cash by the headcount and used to read the roster — a lone survivor of a
+- **SHORT ROSTERS ARE ROUTINE AT v4 — the economy counts who ARRIVED (B23 fix).** `ValidatedPlayers` is the payload ROSTER; `matchState.PresentUserIds` is who turned up. `PlayerCountRewardScaling` divides kill AND wave cash by the headcount and used to read the roster — a lone survivor of a
   4-player launch played at 0.8× cash. **Never revert `playerCount` to `#userIds`.**
   **✅ `RewardScalingConfig`'s stale header FIXED at B43** — `1d789978` → **`5a4cf793`**, comment-only,
   mirrored byte-identical to both Places with the manifest updated. Deferred three times because a
   comment fix in canon costs a re-hash; meanwhile two sessions read it and believed it.
-- **ACCOUNT LEVELLING WORKS AS OF B41 — `AddPlayerXP` is the ONE application path.** It applies
-  `PlayerLevelConfig.ApplyXP` (SHARED CANON `2e99d041`) and writes BOTH fields. **`PlayerLevel` is
-  authoritative; `PlayerXP` is progress WITHIN the level, never a lifetime total.** Old profiles need
-  **no migration** — `ApplyXP` self-heals a backlog on the next grant. **⚠ BALANCE, USER'S CALL: L50 =
-  627,540 XP while `LoadoutConfig` gates slot 6 there.** Detail: `docs/systems/rewards.md`.
+- **ACCOUNT LEVELLING WORKS AS OF B41 — `AddPlayerXP` is the ONE application path.** Applies
+  `PlayerLevelConfig.ApplyXP` (SHARED `2e99d041`), writes BOTH fields. **`PlayerLevel` is
+  authoritative; `PlayerXP` is progress WITHIN the level, never a lifetime total.** No migration —
+  `ApplyXP` self-heals. **⚠ BALANCE, USER'S CALL: L50 = 627,540 XP, slot 6 gates there.**
 - **MATCH QUEST COUNTERS (B41).** `InsaneVictories` added (Victory AND Insane). **`Clears` already IS
   "acts cleared"** (a `StageConfig` IS an act), so no `ActsCleared` key was added — two numbers for
   one event is the drift the one-writer rule prevents. Names are a CROSS-PLACE contract: a rename
@@ -125,23 +122,26 @@ Boot order in `ReplicationBridge`: data services first; `[DATA]`/`[CONTRACT]` li
 - **THE THREE SETTINGS ACTIONS ARE WIRED (B41)** — `GameSettingsActions`, no edit to shared-canon
   `SettingsUI`. `ReturnToLobby`/`RestartMatch` fire `RequestMatchAction` so the SERVER keeps the
   teleport-v4 stamp; a client-side teleport would bypass the contract. `settings.md`.
-- **`MatchDirector.AbortMatch` (B41) — AN ABORT PAYS NOTHING (user's call).** `MatchEnded` is never
-  fired, so no XP/gold/drops/counters and no result recorded; deliberately NOT a Defeat, whose
+- **`MatchDirector.AbortMatch` (B41) — AN ABORT PAYS NOTHING (user's call).** `MatchEnded` is never fired, so no XP/gold/drops/counters and no result recorded; deliberately NOT a Defeat, whose
   consolation would make a restart button farmable. Restarting a live match aborts it first. The flag
   is consumed by the match LOOP, never the caller's thread — racing teardown leaks a wave into the next match. `MatchStateChanged` now carries `StageId` (B41).
 - **BATTLEPASS XP IS EARNED HERE AND APPLIED IN THE LOBBY (B43).** `RewardCalculator` computes it from
-  `Configs.Global.BattlepassXpConfig` (Game-local; PLACEHOLDER `50 + 5/wave`, loss ×0.4, ×1.0–2.0 via
-  the ONE `TFromWire`) and **ACCUMULATES** across chained acts — it does NOT grant. **THIS PLACE MUST
-  NEVER WRITE `Data.Battlepass`**: the Lobby's `BattlepassService` is its one writer, so the number
-  rides `MatchReturn.BattlepassXP`. `Abandoned` pays 0. **Cleared only after `TeleportAsync` SUCCEEDS**
-  — a failed teleport leaves the player here to retry, carrying the same XP. `teleport.md`.
+  `BattlepassXpConfig` and **ACCUMULATES** across chained acts — it does NOT grant. **THIS PLACE MUST
+  NEVER WRITE `Data.Battlepass`** (the Lobby's `BattlepassService` is its one writer). `Abandoned` pays
+  0. **Cleared only after `TeleportAsync` SUCCEEDS**, so a failed teleport keeps it. `teleport.md`.
 - **THE IN-MATCH HOTBAR DRAWS REAL LOCKS (B43).** `LoadoutAssigned` carries `PlayerLevel`, read from
   the SERVER's profile (a client-supplied level would unlock slot 6 for free); `HotbarController`
-  defaults to 1, which LOCKS rather than unlocks if absent. **This surfaced an upstream bug, not a
-  regression:** the Lobby's auto-loadout fallback fills to `MaxLoadoutSize` without consulting
-  `LoadoutConfig` unlocks — a level-1 profile gets 5 units for 3 slots. Capping it is AD-Lobby's.
-- **HARNESS GOTCHA — `Signal:Fire` runs handlers SEQUENTIALLY on ONE thread.** A `MatchEnded`
-  handler that YIELDS blocks every later handler, including `MatchEndPresenter`, which drives the
+  defaults to 1, which LOCKS rather than unlocks if absent. The auto-loadout fallback this exposed
+  was **capped to unlocked slots at B44** (`LaunchService.BuildLoadout`).
+- **A DROP IS ROUTED BY ITS CATALOGUE `Kind` (B45).** Every drop used to go to `AddItem`
+  (`Data.Items[id]`), which is wrong for a CURRENCY — those live in `Data.Currencies[id]`, so one
+  would land where nothing reads or spends it and the faucet would merely LOOK wired. `ItemCatalog`
+  is the ONE thing that knows which an id is; an **uncatalogued** drop id is refused loudly and
+  written NOWHERE (the stance of `GrantService.Grant`'s invariant 4). **`StatRerolls` is catalogued
+  (`9be86a5f`) and drops from Insane wins (`e0a3bc2d`)** — C2's faucet, the same one
+  `TraitRerollToken` uses. ⚠ `PlayerInventoryService.SCALAR_CURRENCIES` is MIRRORED from the Lobby's
+  `GrantService` list and CANNOT be shared — add a scalar currency and **both lists must learn it**.
+- **HARNESS GOTCHA — `Signal:Fire` runs handlers SEQUENTIALLY on ONE thread.** A `MatchEnded` handler that YIELDS blocks every later handler, including `MatchEndPresenter`, which drives the
   reward/counter commit (A9 burned three runs on this). To inspect post-commit state, `task.spawn`
   the body and return immediately — never `task.wait` inside a Signal handler here.
 - A unit at `MAX_META_LEVEL` LOSES stored XP (overflow discarded) — cosmetic, visible on Units. `DevSetOwnedTowers` replaces `data.Units` with new uuids, orphaning `Data.Loadout` (fails safe).

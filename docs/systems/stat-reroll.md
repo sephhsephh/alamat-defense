@@ -35,6 +35,11 @@ whitelist and the balance, never the catalogue, so a source-less currency still 
 > `Kind="Currency"` (AD-UI shared canon) so shop/BP/quests/Insane drops can hand it out, or adds a
 > `StatRerollToken` item the way `TraitRerollToken` exists for C1.
 
+**⚠ FAUCET OPENED B45.** `StatRerolls` is catalogued (`ItemCatalog`, `Kind="Currency"`) and drops
+from **Insane wins** (`RewardScalingConfig.InsaneItems`) — the same faucet `TraitRerollToken` uses.
+Before B45 this was a sink with no source: `GrantService.Grant` refuses any uncatalogued id
+(invariant 4), so nothing could mint it. See `docs/systems/rewards.md`.
+
 `StatRerollConfig` = `{ CurrencyId = "StatRerolls", Cost = 1, WorthinessThreshold = 100,
 TopGradeBoost = 1.0 }` — all PLACEHOLDER.
 
@@ -68,9 +73,14 @@ reroll sets Worthiness=0."* This service implements exactly that:
 > `StatGradeConfig.RollStat` honours its `luck` argument (it ignores it today); the **floor** is the
 > concrete, tested effect.
 >
-> The **METER itself** (kills → Worthiness) is the Game place's writer and is a separate 🔲 on the
-> roadmap. So at full worthiness the floor fires and is verified; whether a player can *reach* 100
-> depends on that Game-side writer.
+> **⚠ CORRECTED B45: the METER IS BUILT, and was already built when this was written.** The line
+> here used to call kills → Worthiness "a separate 🔲 on the roadmap", contradicting the sentence
+> directly above it. `RewardCalculator.GrantForPlayer` → `PlayerInventoryService.CommitUnitKills` →
+> `WorthinessConfig.Apply` has committed it once per match since **A8**, and A9 re-verified it
+> independently (Archer 198 kills → 3.96, Necromancer 86 → 1.72). Reaching 100 is a **tuning**
+> question, not a missing writer: `PointsPerKill` is 0.02 (the user's choice at A8, reaffirmed at
+> B45), so ~5,000 kills caps a unit and a favourite maxes over roughly 25–50 matches. That is the
+> intended long-term goal, not a gap.
 
 ## The screen (B44 — Image-based blockout, ADR-0010)
 

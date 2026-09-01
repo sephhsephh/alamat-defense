@@ -32,8 +32,15 @@ ItemCatalog.Entries = {
 	Necromancer = { Kind = "Tower", Tier = "Mythic",    Name = "Necromancer", Description = "Summon-on-kill chargers.",            Icon = { Model = { "TowerModels", "Necromancer" } }, Tradeable = false },
 
 	-- ===== Currencies =====
-	Gold   = { Kind = "Currency", Tier = "Common", Name = "Gold",   Description = "Gacha / banner roll currency.",       Icon = { Image = "rbxassetid://128910310881167" }, Tradeable = false },
-	Silver = { Kind = "Currency", Tier = "Common", Name = "Silver", Description = "Soft currency from dupes / sells.",    Icon = { Image = "rbxassetid://119213648374305" }, Tradeable = false },
+	-- StatRerolls added B45 (AD-Game, user-approved): C2's stat reroll SPENDS Currencies.StatRerolls,
+	-- but GrantService.Grant refuses any uncatalogued id (invariant 4), so nothing could MINT it and
+	-- the sink had no faucet. Catalogued here it becomes grantable; RewardScalingConfig.InsaneItems
+	-- is its one source, exactly as TraitRerollToken is C1's.
+	-- ⚠ ICON IS A PLACEHOLDER (rbxassetid://0) -- FOR THE USER TO AUTHOR, same as the five entries
+	-- they filled at B22. It renders as a blank square until then; nothing else breaks.
+	Gold        = { Kind = "Currency", Tier = "Common", Name = "Gold",        Description = "Gacha / banner roll currency.",       Icon = { Image = "rbxassetid://128910310881167" }, Tradeable = false },
+	Silver      = { Kind = "Currency", Tier = "Common", Name = "Silver",      Description = "Soft currency from dupes / sells.",   Icon = { Image = "rbxassetid://119213648374305" }, Tradeable = false },
+	StatRerolls = { Kind = "Currency", Tier = "Rare",   Name = "Stat Reroll", Description = "Rerolls a unit's three stat rolls.",  Icon = { Image = "rbxassetid://0" }, Tradeable = false },
 
 	-- ===== Items (existing stage drops) =====
 	BannerTicket     = { Kind = "Item", Tier = "Rare",      Name = "Banner Ticket",      Description = "A free banner pull.",       Icon = { Image = "rbxassetid://6731922404" }, MaxOwned = 9999, Tradeable = false },

@@ -1,5 +1,114 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-30 [game] B45 — AD-Game: **C2's faucet opens** — `StatRerolls` catalogued and dropping from Insane wins, plus the drop-routing bug that would have made it land in a field nothing reads. And the Worthiness meter turned out to have existed since A8.
+
+Two shared modules re-hashed: `ItemCatalog` `fc4b8023` → **`9be86a5f`**, `RewardScalingConfig`
+`5a4cf793` → **`e0a3bc2d`**. Both mirrored byte-identical to both Places; manifest updated; **36/36,
+0 issues, both Places**, before and after. Harnesses, both REAL `Script`s: **15/15** (Game) and
+**6/6** (Lobby).
+
+### The Worthiness meter was already built, and had been for 24 sessions
+
+The agenda's first item was "the accumulation — kills during a match raising `UnitInstance.Worthiness`
+— is the Game's writer and does not exist yet." **It exists.**
+`RewardCalculator.GrantForPlayer` → `PlayerInventoryService.CommitUnitKills` →
+`WorthinessConfig.Apply` has committed it once per match since **A8**, and A9 re-verified it
+independently from scratch: Archer 198 kills → 3.96, Necromancer 86 → 1.72, recomputed through
+`Apply` and matched.
+
+`docs/systems/stat-reroll.md` contained both claims **in adjacent paragraphs** — "the Game place
+writes `Worthiness` during a match (A8, kills → the meter)" immediately followed by "the METER itself
+(kills → Worthiness) is the Game place's writer and is a separate 🔲 on the roadmap." The second
+sentence is what propagated into the roadmap and then into this session's agenda.
+
+So there was nothing to build, only a rate to judge. `PointsPerKill` is `0.02` — the user's own choice
+at A8 — giving ~5,000 kills to cap and roughly 25–50 matches for a favourite. **The user reaffirmed
+it: left as-is.** Reaching 100 is a tuning question, not a missing writer, and C2's grade-A floor
+stays the long-term prestige reward it was designed to be. No code was written for this item.
+
+**Fourth stale "not built" claim in six sessions** (B40's PlayerXP, B41's quest counters, B43's
+`quests.md`, now this). Every one cost less than five minutes to check.
+
+### ⚠ The bug that would have shipped silently
+
+C2 spends `Currencies.StatRerolls`. The plan was to add it to `RewardScalingConfig.InsaneItems`, the
+same faucet `TraitRerollToken` uses. But every drop was committed like this:
+
+```luau
+for _, drop in ipairs(drops) do
+    PlayerInventoryService.AddItem(userId, drop.ItemId, drop.Count)
+end
+```
+
+`AddItem` writes `Data.Items[id]`. A **currency** lives in `Data.Currencies[id]`. So adding
+`StatRerolls` to the drop table on its own would have credited `Data.Items.StatRerolls` — a field
+nothing reads and nothing spends. **The faucet would have looked wired, the console would have said
+"Stat Reroll x1", and C2 would have stayed exactly as dormant as before.** `AddCurrency` was no help:
+it is hardcoded to Gold.
+
+Drops are now routed by the catalogue's `Kind`:
+
+| `Kind` | written to |
+|---|---|
+| `Currency` | `Data.Currencies[id]` via the new `PlayerInventoryService.AddScalarCurrency` |
+| anything else | `Data.Items[id]` via `AddItem` |
+| **uncatalogued** | **nothing — refused loudly** |
+
+`ItemCatalog` is the one thing that knows which an id is, so the Game asks it rather than encoding a
+second answer. Refusing an uncatalogued id is deliberately the same stance as `GrantService.Grant`'s
+invariant 4 in the Lobby: a typo in a drop table must never silently invent a profile field.
+
+`AddScalarCurrency` guards its own name list, **mirrored** from `GrantService.SCALAR_CURRENCIES`. The
+two Places cannot share it — `GrantService` is Lobby-local, `PlayerInventoryService` is the Game's
+account writer — so **if a scalar currency is ever added to the schema, both lists must learn it.**
+Kept short and explicit rather than derived, so a divergence shows up in a diff.
+
+### The faucet itself
+
+`StatRerolls` is now `Kind = "Currency"` in the shared `ItemCatalog` and drops from Insane wins.
+Cataloguing was the actual blocker: `Grant` refuses any uncatalogued id, which is the *only* reason
+C1 was reachable and C2 was not — `TraitRerollToken` was already in the catalogue.
+
+Cross-owner (`ItemCatalog` is AD-UI's canon) and user-approved before touching it. **Its icon is a
+placeholder `rbxassetid://0`, for the user to author** — the same convention as the five entries they
+filled at B22. It renders as a blank square until then and nothing else breaks.
+
+### Verified, both halves, from real Scripts
+
+**Game (15/15):** an Insane victory credits `Currencies.StatRerolls` **and does not write
+`Data.Items.StatRerolls`**; real item drops still land in `Items` (`TraitRerollToken` 1,
+`BannerTicket` 1); a Normal victory and an Insane **defeat** both mint none; `AddScalarCurrency`
+refuses an unknown currency, a negative and a fraction, writing nothing and inventing no field; every
+`InsaneItems` id is catalogued.
+
+**Lobby (6/6):** `GrantService.Grant` now **accepts** `StatRerolls` and credits the currency, returning
+a reveal view carrying the catalogue's `Name`/`Tier`/`Kind`; a genuinely uncatalogued id is **still**
+refused (`uncatalogued_id_Doubloons`) — the invariant is intact, not weakened; and `Spend` debits the
+same field the faucet fills, so faucet and sink agree.
+
+The Game's own boot validator also picked it up: `ItemCatalog valid (14 entries)`.
+
+### Two boot messages are now lying, and were deliberately NOT edited
+
+`StatRerollService` prints *"Spends the CURRENCY (no source yet -- SINK only)"* — untrue as of this
+session. `BattlepassService` prints *"XP SOURCE NOT WIRED"* — untrue since **B43**. Both print on
+every single boot, which is precisely how a stale claim gets believed: it is what this session's own
+agenda was built on.
+
+Both are one-line fixes in **other chats' services** (AD-Traits and AD-Meta), and the standing rule is
+not to edit those. Flagged for their owners rather than quietly corrected — but flagged loudly,
+because the cost of leaving them is now well evidenced.
+
+Also noted: **`Currencies.TraitRerolls` is a dead field.** C1 spends the `TraitRerollToken` *item*, so
+nothing reads or writes that currency. It stays uncatalogued, which is what keeps it unmintable.
+
+### Landing
+
+`shared/manifest.json`, `rewards.md` (260/300), `stat-reroll.md` (115/300), `STATE.md` (120/120),
+`places/game/CONTEXT.md` (150/150), `ROADMAP`.
+**Republish BOTH Places — two shared hashes moved.**
+
+
 ## 2026-08-30 [lobby] B44 — AD-Traits: **stat reroll (blueprint C2) is built** — pick a unit, spend a `StatReroll`, reroll all three StatRolls; Worthiness floors at grade A.
 
 Phase C's **C2**, same session as C1 — **Phase C is now complete** (ascension C3 B9/B31, trait reroll

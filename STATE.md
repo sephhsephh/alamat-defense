@@ -14,7 +14,7 @@ and the gacha engine (Standard + Event + Selection banners; ascension AND sellin
   combat, the stat resolver, match runtime. Detail: `places/game/CONTEXT.md`.
 - **Lobby** — the social/meta Place, scene `Workspace.Lobby`. **`GetUnitViews` is its SINGLE profile
   read path** (ADR-0004); **`GrantService` is its SINGLE grant/spend path**. `places/lobby/CONTEXT.md`.
-- **Shared canon** (`shared/manifest.json`): **36 entries = 29 modules + 7 templates**; B43 re-hashed `RewardScalingConfig` `1d789978`->**`5a4cf793`** (comment-only). Checked start AND end by
+- **Shared canon** (`shared/manifest.json`): **36 entries = 29 modules + 7 templates**; B45 re-hashed `ItemCatalog`->**`9be86a5f`** + `RewardScalingConfig`->**`e0a3bc2d`**. Checked start AND end by
   `ServerStorage.DevTools.HashShared` in each Place (two lines to run) — **compare each live hash to BOTH `hash` and `deployed.<Place>`,
   field by field; a glance missed real drift for two sessions.** `MetaMath` is Lobby-only until Phase D: **EXPECTED, not drift.** B26
   adopted the V2 kit in BOTH Places and RETIRED `Kit_UnitIcon`/`Kit_ItemIcon`/`Kit_HotbarSlot` (do not re-add). Templates hash as
@@ -67,31 +67,32 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   SECURITY**: without it the remote enumerates the code space. `redeem-codes.md`.
 - **NOT A PENDING — B39's EVENT TRACK: `EventDailyConfig` is a DATE WINDOW, not a banner**; extended ADDITIVELY.
 - **NOT A PENDING — B40's FOUR SYSTEMS.** Docs: `reward-push.md`, `shop.md`, `quests.md`, `daily-rewards.md`. Rules that bite: **specs
-  are the CONTRACT** · **HUD button names END IN `Button`** (B40 lost a live run on that) · **MAIL: GRANT FIRST, THEN `processed()`** —
-  same save, which is what makes at-least-once deliver exactly once; reveal via **`ToOrQueue`** · **SHOP is the FIRST Silver sink**, stock
-  DERIVED, **PRE-CHECK → SPEND → GRANT → MARK**, **client sends a slot INDEX, never a price** · **QUESTS = a DELTA vs a baseline.**
+  are the CONTRACT** · **HUD button names END IN `Button`** · **MAIL: GRANT FIRST, THEN `processed()`** — same save, which makes
+  at-least-once deliver exactly once; reveal via **`ToOrQueue`** · **SHOP is the FIRST Silver sink**, stock DERIVED, **PRE-CHECK → SPEND →
+  GRANT → MARK**, **client sends a slot INDEX, never a price** · **QUESTS = a DELTA vs a baseline.**
 - **B42 (AD-GACHA/AD-UI): QUESTS, SHOP and BATTLEPASS screens are live**, all BLOCKOUT to specs (`docs/specs/2026-08-28-*`; specs are the
   CONTRACT, re-author = zero code). QUESTS: B41's one-line edit LANDED (`Clears` + `InsaneVictories` in `LiveCounters`; **`ClearThree` reads
   `Clears`, NOT `ActsCleared`**), 6/6 assignable, 0 orphans. SHOP: **NPC-opened** (ADR-0010 shape), buy verified live. BATTLEPASS backend +
   screen, Remotes 31→33; **XP source LANDED B43** (below), **monetization still pending**. **PENDING (AD-UI):** `LeaderBoards`/`Inbox` need
   backends (Inbox a v5 field).
+- **NOT A PENDING — B45: A DROP IS ROUTED BY ITS CATALOGUE `Kind`, never assumed to be an Item.** A CURRENCY lives in
+  `Data.Currencies[id]`, not `Data.Items[id]` — routing it wrong puts it where nothing reads it and the faucet merely LOOKS wired.
+  **An uncatalogued drop id is refused loudly and written NOWHERE** (invariant 4's stance). **`StatRerolls` is catalogued + drops from
+  Insane wins** — C2's faucet, the same one `TraitRerollToken` uses. ⚠ `PlayerInventoryService.SCALAR_CURRENCIES` is MIRRORED from
+  `GrantService`'s and CANNOT be shared across Places — **add a scalar currency and BOTH lists must learn it.** Icon is a PLACEHOLDER
+  `rbxassetid://0` (USER). `Currencies.TraitRerolls` is a DEAD field. `rewards.md`.
 - **NOT A PENDING — B43: THE BATTLEPASS IS A REAL LOOP.** `RewardCalculator` (compute + ACCUMULATE, never grant) ->
   `MatchReturn.BattlepassXP` -> `MatchReturnService` -> `BattlepassAddXP` -> `BattlepassService`, **which stays the ONE writer of
   `Data.Battlepass`.** Rule = Game-local `BattlepassXpConfig` (PLACEHOLDER: 50 + 5/wave, loss x0.4, x1.0-2.0 via the ONE `TFromWire`);
   Abandoned pays NOTHING (B41's rule). **`MatchReturnService` is no longer strictly display-only** — it applies this ONE thing and must
   never write the field. **GUARDED BOTH ENDS:** Game clears only after `TeleportAsync` SUCCEEDS; Lobby applies ONCE per join and only after
   `WaitForData` (**`PlayerAdded` fires BEFORE the profile loads** — that silently refused every grant until it was run). `teleport.md`.
-- **B43: the in-match hotbar draws REAL LOCKS** -- `LoadoutAssigned` carries `PlayerLevel` (server-read). It exposed an upstream bug
-  (**FIXED B44**): the Lobby's auto-loadout FALLBACK (`LaunchService.BuildLoadout`, used when `Data.Loadout` is empty) filled to
-  `MaxLoadoutSize` ignoring `LoadoutConfig` unlocks. Now capped to `LoadoutConfig.UnlockedSlots(PlayerLevel)` (verified L1 8-owned -> 3);
-  the saved-Loadout path was already unlock-respecting.
-- **NOT A PENDING — DAILY REWARDS (B38/B39/B40).** **7-day cycle, MISS A DAY = RESET TO 1**; event ladders do NOT wrap. **GRANT FIRST,
-  MARK SECOND** — the rule for daily, event, codes, shop AND quests. `daily-rewards.md`.
+- **B43: the in-match hotbar draws REAL LOCKS** -- `LoadoutAssigned` carries `PlayerLevel` (server-read). It exposed an upstream bug (**FIXED B44**): the Lobby's auto-loadout FALLBACK (`LaunchService.BuildLoadout`, used when `Data.Loadout` is empty) filled to `MaxLoadoutSize` ignoring `LoadoutConfig` unlocks. Now capped to `LoadoutConfig.UnlockedSlots(PlayerLevel)` (verified L1 8-owned -> 3); the saved-Loadout path was already unlock-respecting.
+- **NOT A PENDING — DAILY REWARDS (B38/B39/B40).** **7-day cycle, MISS A DAY = RESET TO 1**; event ladders do NOT wrap. **GRANT FIRST, MARK SECOND** — the rule for daily, event, codes, shop AND quests. `daily-rewards.md`.
 - **PENDING (AD-Game, B24):** `UnitIconV2` needs PLACEMENT COST + ELEMENT; **(AD-Traits)** `TraitDefinitions` has NO icon field.
 - **PENDING (USER, design — B23): GAME SPEED IN A MATCHMADE MATCH** — authority and the 3× gate come from an **elected stranger**.
 - **PENDING (USER, balance):** `StartingLives` **3 / 15 / 10** across Acts 1–3 — Act 1's `3` looks like a leftover test value.
-- **NOT A PENDING — B35's UNIFIED SETTINGS, BOTH PLACES HASH-MATCHED**, at IDENTICAL paths, which is why it cost ZERO consumer edits.
-  `Scope`+`Kind`, never a branch. **`Sanitize` is Scope-BLIND ON PURPOSE** — one profile serves both Places. `settings.md`.
+- **NOT A PENDING — B35's UNIFIED SETTINGS, BOTH PLACES HASH-MATCHED**, at IDENTICAL paths, which is why it cost ZERO consumer edits. `Scope`+`Kind`, never a branch. **`Sanitize` is Scope-BLIND ON PURPOSE** — one profile serves both Places. `settings.md`.
 - **B36: the Lobby settings screen is LIVE.** **Tidy (USER):** the dev profile carries a dead `BannerChoices["B29ProbeBanner"]`.
 - **NOT A PENDING — B36's LESSON:** `execute_luau` has plugin capability AND its own require cache — **clone a module to exercise a fresh copy**, and prove behaviour from a REAL Script. **The boot marker goes AFTER `--!strict`** or Luau silently drops strict mode.
 - **B39 REPAIRED B36's `UIKitBootstrap` DRIFT** (→ `9c9539c0`). Comparing each live hash to BOTH `hash` AND `deployed.<Place>` **in code** is what caught it after two sessions of "looking green" — B41 and B43 both ran that way, 36/36.
@@ -101,10 +102,7 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 - **PENDING (Game):** the `ServerStorage.Documentation` → `docs/systems/` migration. `Data.Items`' only writer is an **INSANE Victory**.
 - **B28:** `PlayGUI` is EXCLUDED from the slide (the veil fights it). **KNOWN REGRESSION (B26):** V2 has no `ShinyBadge`.
 - **NOT a bug:** Units stat NUMBERS are per-TOWER (ADR-0003) — two copies show equal numbers while GRADES differ. `Data.Loadout` is dense. Difficulty: UI 1–100, wire 100–1000 (ADR-0011).
-- **Save schema v4** (B39, PUBLISHED B40) — `ProfileTemplate` **`8e4224b9`**, hash-matched BOTH Places. **v4 IS SHIPPED, so a new field
-  now costs v5.** **`Migrations[2]` AND `[3]` are DELIBERATE NO-OPs and must stay ones** (`Reconcile()` runs BEFORE `Migrate()`); never
-  delete one — `Migrate()` warns and STOPS at a missing step, stranding every later one. Store `Beta1_PlayerData` (Studio
-  `Beta1_PlayerDataDev1`, API ON).
+- **Save schema v4** (B39, PUBLISHED B40) — `ProfileTemplate` **`8e4224b9`**, hash-matched BOTH Places. **v4 IS SHIPPED, so a new field now costs v5.** **`Migrations[2]` AND `[3]` are DELIBERATE NO-OPs and must stay ones** (`Reconcile()` runs BEFORE `Migrate()`); never delete one — `Migrate()` warns and STOPS at a missing step, stranding every later one. Store `Beta1_PlayerData` (Studio `Beta1_PlayerDataDev1`, API ON).
 - **Teleport payload v4** (B23) — `docs/contracts/teleport.md`. Hard cutover, **v3 REJECTED**. `LobbyConfig.MatchLaunchVersion` must ALWAYS equal `GameConfig.TeleportPayloadVersion`.
 
 ## Next up
@@ -115,6 +113,8 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 1. **PLAYGUI — P1–P7 ✅ COMPLETE** (`playgui.md` is LAW). ADR-0011's remap is isolated in `PlayGUI.DifficultyScale` — **the ONE conversion.**
 2. **Phase B** (`phases-b-f-meta.md`): B0–B8 + **B30 Selection ✅ → B4 COMPLETE.** **Phase C: DONE** — ascension B9 + selling B31 (C3),
    trait reroll C1 + stat reroll C2 B44 (`trait-reroll.md`/`stat-reroll.md`), all NPC-opened (ADR-0010). C1 spends the `TraitRerollToken` ITEM;
-   C2 spends `Currencies.StatRerolls` (**SINK only — NO source yet**), floors at grade A at Worthiness 100. **Meter (kills→100) still 🔲 (GAME).** `docs/ROADMAP.md`.
+   C2 spends `Currencies.StatRerolls` — **FAUCET OPENED B45** (catalogued + Insane-win drop), floors at grade A at Worthiness 100.
+   **⚠ THE WORTHINESS METER WAS NEVER MISSING** — `CommitUnitKills`→`WorthinessConfig.Apply` has run since A8, verified at A8 AND A9.
+   Reaching 100 is TUNING, not a gap: `PointsPerKill` 0.02 (user's call, reaffirmed B45) = ~5,000 kills, ~25-50 matches for a favourite.
 3. **B41 CLEARED THE GAME-PLACE BLOCKER** (levelling, the counters, the settings actions, the audio owner). What the Lobby's meta layer
    now waits on is **UI**, not the match: Shop/Quests/BattlePass screens all shipped B42 (BattlePass + Daily Rewards then re-laid-out to the user's UI reference, Image-based frames); LeaderBoards/Inbox still need backends; BattlePass needs only monetization now (B43 landed its XP source). Mostly AD-UI's, not AD-Game's.
