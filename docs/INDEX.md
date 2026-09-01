@@ -36,10 +36,10 @@
   rules (locked/favourited/**equipped**, oldest-first), the server-enforced confirm, why
   `AscensionRules` is split from the service, and the one authorised line in `UnitsController`.
   Read before touching anything that destroys a player's unit.
-- `trait-reroll.md` — **AD-Traits canon, LOBBY**: the trait reroll (blueprint C1, B44). Read it for
-  **why the cost is the `TraitRerollToken` ITEM and not `Currencies.TraitRerolls`** (the scalar
-  currency has no source), the PRE-CHECK → SPEND → ROLL → WRITE order, and why a reroll routinely
-  lands `None` and spends the token anyway. Copies ADR-0010's NPC-opened-screen shape.
+- `trait-reroll.md` — **AD-Traits, LOBBY**: trait reroll (C1, B44). Cost is the `TraitRerollToken`
+  ITEM, not `Currencies.TraitRerolls` (no source). PRE-CHECK→SPEND→ROLL→WRITE. NPC-opened (ADR-0010).
+- `stat-reroll.md` — **AD-Traits, LOBBY**: stat reroll (C2, B44). Rerolls all 3 StatRolls for
+  `Currencies.StatRerolls` (source DEFERRED); Worthiness>=100 floors each roll at grade A + resets. NPC-opened.
 - `gacha.md` — **AD-Gacha canon**: the banner engine (B3). `MetaMath` (shared), `GrantService` (THE
   one grant path), `BannerRegistry` + banner file shape, the exact summon order, pity, the
   empty-pool fallback, and the "remote returns the views" reveal decision. Read before touching

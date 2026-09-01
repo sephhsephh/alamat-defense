@@ -1,5 +1,43 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-08-30 [lobby] B44 — AD-Traits: **stat reroll (blueprint C2) is built** — pick a unit, spend a `StatReroll`, reroll all three StatRolls; Worthiness floors at grade A.
+
+Phase C's **C2**, same session as C1 — **Phase C is now complete** (ascension C3 B9/B31, trait reroll
+C1 + stat reroll C2 B44). `docs/systems/stat-reroll.md`, `docs/specs/2026-08-30-stat-reroll-screen.md`.
+NPC-opened blockout copying ADR-0010, sibling of the trait reroll.
+
+**The cost is `Currencies.StatRerolls`, spent via `GrantService.Spend` — no shared-canon edit.** This
+DIFFERS from C1 on purpose: C1 spends the `TraitRerollToken` ITEM because that token has a live source;
+C2 has no live source either way, so it follows the blueprint literally ("reroll spends StatRerolls")
+and `StatRerolls` IS a `SCALAR_CURRENCY`, so `Spend` debits it (whitelist + balance, no ItemCatalog
+lookup) with nothing shared touched. **>>> THE FAUCET IS DEFERRED <<<** nothing grants `StatRerolls`
+today (it is not even catalogued, so `Grant` cannot mint it) — so the reroll is economically DORMANT:
+the SINK is built and verified, the FAUCET is a later cross-Place task, same shape as the battlepass XP
+source before B43.
+
+New, all **Lobby-local, no schema bump** (`StatRolls` + `Worthiness` both pre-existed): `RS.Configs.Meta.StatRerollConfig`
+(`{ CurrencyId="StatRerolls", Cost=1, WorthinessThreshold=100, TopGradeBoost=1.0 }`, placeholder) ·
+`SSS.Server.Meta.StatRerollService` — **the ONE reroll writer of `UnitInstance.StatRolls`**, distinct
+from the creation writers, like TraitRerollService/AscensionService own their reroll/ascend writes ·
+`RS.Remotes.RerollStats` (RemoteFunction, static; Remotes 34→35 with C1's `RerollTrait`) ·
+`StarterPlayerScripts.StatRerollController` + `StarterGui.StatRerollScreen` (Image-based blockout) +
+`Workspace.Lobby.NPC_StatReroll` ("Stat Diviner") + `ClientEvents.OpenStatReroll`. Server order:
+**PRE-CHECK owned → SPEND → ROLL → WRITE.** Grades/colours from `StatGradeConfig` only.
+
+**Worthiness (the commit half of the meter):** the reroll reads `unit.Worthiness`; at `>=100` it floors
+every rolled stat at grade **A** (the floor DERIVED from `StatGradeConfig`, 0.8201 today) and passes
+`TopGradeBoost` as luck; **ANY reroll resets Worthiness to 0.** The **Game place writes Worthiness**
+during a match (A8) and the Lobby reroll resets it — a two-writer split the blueprint intends, inverted
+battlepass-XP shape. The METER itself (kills → Worthiness) is the Game's writer and still 🔲;
+`TopGradeBoost` is dormant until `StatGradeConfig.RollStat` honours its `luck` arg (the FLOOR is the
+concrete, tested effect).
+
+Verified live (real `RerollStats` from a real client): a normal reroll changed the three grades and
+spent 1 (5→4); refusals `bad_uuid` / `not_owned` / `insufficient_rerolls` (balance 0) each changed
+nothing; at `Worthiness=100` a reroll floored all three raw rolls to 0.8201 → **A/A/A** and reset
+Worthiness to 0. Screen opened to 8 units, rendered grades + the "FLOORED at A" hint, REROLL updated the
+per-stat result live and the button **disabled at balance 0**. Boot clean, watchdog **32/32**.
+
 ## 2026-08-30 [lobby] B44 — AD-Traits: **trait reroll (blueprint C1) is built** — pick a unit, spend a `TraitRerollToken`, reroll its `Trait`.
 
 Phase C's **C1**, and **AD-Traits' first shipped feature**. Copies ADR-0010's NPC-opened-screen shape

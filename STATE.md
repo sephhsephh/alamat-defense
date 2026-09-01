@@ -46,7 +46,7 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   consolation would make the restart button farmable.** Restarting a live match aborts it first; the flag is consumed by the match LOOP,
   never the caller's thread.
 - **B32/B33:** `UIKit.Sound` + `UIKit.Confirm` (2s gate); `Button` DETECTS panel vs flat; siblings use `optionalSibling` (10s+stub).
-  `Remotes`=**34** (B44, +`RerollTrait`). `CurrencyChanged` is a server→client PING with **no payload** (a balance on the wire = a second source of truth
+  `Remotes`=**35** (B44, +`RerollTrait`/`RerollStats`). `CurrencyChanged` is a server→client PING with **no payload** (a balance on the wire = a second source of truth
   beside ADR-0004's `GetUnitViews`). **TOAST EVENTS, LABEL STATE.**
 - **NOT A PENDING — DO NOT RE-RAISE (USER, B40): the empty SoundIds are DELIBERATE** — the user fills all 13 slots **at release**;
   silence in development is expected. Same standing class as the 0.05 `UIHoverStroke.Thickness`. **STILL UNCONFIRMED — ASK THE USER:
@@ -113,8 +113,8 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 — same letters, different sequences. PlayGUI uses `P1…P7` to avoid a third.
 
 1. **PLAYGUI — P1–P7 ✅ COMPLETE** (`playgui.md` is LAW). ADR-0011's remap is isolated in `PlayGUI.DifficultyScale` — **the ONE conversion.**
-2. **Phase B** (`phases-b-f-meta.md`): B0–B8 + **B30 Selection ✅ → B4 COMPLETE.** **Phase C: C3 COMPLETE** (ascension B9, selling B31);
-   **C1 trait reroll COMPLETE B44** (`trait-reroll.md`; spends the `TraitRerollToken` ITEM — `Currencies.TraitRerolls` has NO source). B11
-   moved ascension to an NPC screen (ADR-0010); C1 copied it; **C2 + worthiness are AD-TRAITS', unbuilt.** Row-by-row: `docs/ROADMAP.md`.
+2. **Phase B** (`phases-b-f-meta.md`): B0–B8 + **B30 Selection ✅ → B4 COMPLETE.** **Phase C: DONE** — ascension B9 + selling B31 (C3),
+   trait reroll C1 + stat reroll C2 B44 (`trait-reroll.md`/`stat-reroll.md`), all NPC-opened (ADR-0010). C1 spends the `TraitRerollToken` ITEM;
+   C2 spends `Currencies.StatRerolls` (**SINK only — NO source yet**), floors at grade A at Worthiness 100. **Meter (kills→100) still 🔲 (GAME).** `docs/ROADMAP.md`.
 3. **B41 CLEARED THE GAME-PLACE BLOCKER** (levelling, the counters, the settings actions, the audio owner). What the Lobby's meta layer
    now waits on is **UI**, not the match: Shop/Quests/BattlePass screens all shipped B42 (BattlePass + Daily Rewards then re-laid-out to the user's UI reference, Image-based frames); LeaderBoards/Inbox still need backends; BattlePass needs only monetization now (B43 landed its XP source). Mostly AD-UI's, not AD-Game's.

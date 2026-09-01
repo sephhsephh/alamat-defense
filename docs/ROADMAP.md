@@ -757,9 +757,20 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
   no schema bump. **The rarity table (`TraitRegistry` + `TraitDefinitions`) is shared canon; API is
   `TraitRegistry.Roll(rng)` — there is NO `RollTrait`** (`SummonEngine` assumed that name and failed
   silently in a pcall until B12; trait-on-summon is LIVE).
-- 🔲 **Stat reroll (C2) — AD-Traits, still unbuilt.** Copy C1/B11's NPC-opened-screen shape (ADR-0010).
-  Check for a currency SOURCE before pricing it, as C1 found `Currencies.TraitRerolls` had none.
-- 🔲 Worthiness meter (kills → 100% = guaranteed A-floor + boosted top-grade odds; resets on reroll).
+- ✅ **Stat reroll (C2) — AD-Traits, B44.** `docs/systems/stat-reroll.md`. Pick a unit, spend one
+  `StatReroll`, reroll all three `StatRolls` (DMG/RNG/SPA); grades + colours from `StatGradeConfig`
+  only. **Priced in `Currencies.StatRerolls` (the blueprint's word), via `GrantService.Spend`** — a
+  SCALAR_CURRENCY, so it debits with NO ItemCatalog/shared-canon change (where C1 needed a token).
+  `StatRerollService` is the ONE reroll writer of `UnitInstance.StatRolls`. **⚠ FAUCET DEFERRED:**
+  nothing grants `StatRerolls` yet (not even catalogued), so the reroll is a SINK with no source —
+  dormant until a later session catalogues it as a Currency or adds a `StatRerollToken` (battlepass-XP
+  shape). NPC-opened, Image-based blockout (ADR-0010). Verified live incl. the Worthiness floor and
+  every refusal; button disables at balance 0. Lobby-local, no schema bump.
+- 🟡 **Worthiness — the COMMIT half is built by C2 (B44).** The stat reroll reads `Worthiness`, and at
+  `>=100` floors every rolled stat at grade **A** (floor derived from `StatGradeConfig`) + passes
+  `TopGradeBoost` as luck, then resets it to 0 on ANY reroll. 🔲 The **METER** itself (kills →
+  `Worthiness` during a match) is the GAME place's writer and is still unbuilt; `TopGradeBoost` stays
+  dormant until `StatGradeConfig.RollStat` honours its `luck` arg (the FLOOR is the concrete effect).
 - 🔲 Feeding (C4) — per-stage exp food via catalog; mass-feed w/ protections. Check `FeedValue` in
   `ItemCatalog` and the `AddTowerXP` path actually exist in the Lobby before committing to it.
 
