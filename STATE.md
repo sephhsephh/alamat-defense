@@ -113,7 +113,7 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 1. **PLAYGUI — P1–P7 ✅ COMPLETE** (`playgui.md` is LAW). ADR-0011's remap is isolated in `PlayGUI.DifficultyScale` — **the ONE conversion.**
 2. **Phase B** (`phases-b-f-meta.md`): B0–B8 + **B30 Selection ✅ → B4 COMPLETE.** **Phase C: DONE** — ascension B9 + selling B31 (C3),
    trait reroll C1 + stat reroll C2 B44 (`trait-reroll.md`/`stat-reroll.md`), all NPC-opened (ADR-0010). C1 spends the `TraitRerollToken` ITEM;
-   C2 spends `Currencies.StatRerolls` — **FAUCET OPENED B45** (catalogued + Insane-win drop), floors at grade A at Worthiness 100.
+   C2 spends `Currencies.StatRerolls` — **FAUCET B45 (Insane) + EVERYDAY SOURCES B46** (daily/shop/BP-free/quest; `economy-map.md`), floors at grade A at Worthiness 100.
    **⚠ THE WORTHINESS METER WAS NEVER MISSING** — `CommitUnitKills`→`WorthinessConfig.Apply` has run since A8, verified at A8 AND A9.
    Reaching 100 is TUNING, not a gap: `PointsPerKill` 0.02 (user's call, reaffirmed B45) = ~5,000 kills, ~25-50 matches for a favourite.
 3. **B41 CLEARED THE GAME-PLACE BLOCKER** (levelling, the counters, the settings actions, the audio owner). What the Lobby's meta layer

@@ -1,5 +1,27 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-09-02 [lobby] B46 — AD-Meta/AD-Gacha: **StatRerolls reaches the everyday loop** — the C2 stat-reroll faucet now flows through daily / shop / battlepass / quests, not only Insane wins; and the whole economy's faucet↔sink map is written down.
+
+Lobby-local **CONFIG only**. No schema bump, no shared-canon change, no contract change. Drift **36/36, 0 issues** before AND after (TOOLVERSION B41-1). Routing proven **live**: a `{Id="StatRerolls", Qty=1}` grant through the real `GrantService` landed in `Data.Currencies` (+1), NOT `Data.Items`, and the C2 spender debited the same field back — self-cleaning `[Test]` harness, net-zero residue in the dev profile, harness deleted.
+
+### The problem C2 had
+B45 gave `StatRerolls` its first source — a drop from Insane wins, the same faucet `TraitRerollToken` uses. But that left an EARLY upgrade sink reachable only by players who can clear Insane — the opposite of where it belongs. `TraitRerollToken` had four everyday sources; `StatRerolls` had none.
+
+### Four everyday sources added (user-approved default; all placeholder balance)
+- `DailyRewardConfig[4]` — was `Gold 300`, now `StatRerolls ×1` (~1/week from logins).
+- `ShopConfig.Catalog` — new slot `StatRerolls ×1, 450 Silver, Weight 5` (mirrors the trait-token slot; pool 6→7).
+- `BattlepassConfig` — **FREE** tier 25 overridden to `StatRerolls ×1` (paid track is unreachable while monetization is deferred, so the free track carries it); the tier-25 Paid GoldenSeed milestone is preserved.
+- `QuestRegistry` — `ClearThree` reward gains `StatRerolls ×1` (effort-gated; 6/6 assignable, 0 orphans).
+The Insane-win drop stays the premium source. Cost is unchanged (`StatRerollConfig.Cost = 1`/reroll). Generosity was the USER's call — this is the proposed default, all one-file config edits to retune.
+
+### The economy map is written down — `docs/systems/economy-map.md` (NEW)
+AD-Meta/AD-Gacha canon: for Gold, Silver, `TraitRerollToken`, `StatRerolls` and `EventTokens`, what GRANTS each and what SPENDS it, in one table. The next economy change is a lookup, not archaeology. Indexed — INDEX condensed the now-stale `stat-reroll.md` "source DEFERRED" line to fit, stays 150/150.
+
+### The dead scalar `Currencies.TraitRerolls`
+Confirmed **no faucet and no spender** anywhere — C1 spends the `TraitRerollToken` ITEM, not this scalar. It reads `0` forever, is surfaced read-only (`LobbyServices`/`SummonService`) but hidden in the currency bar and items screen, so no live confusion. Removing it costs a v5 schema bump — documented-dead in `economy-map.md`, flagged for removal at the next bump, NOT bumped for this alone. (`StatRerolls`, the other original reroll scalar, is now fully alive.)
+
+Open thread: `StatRerollService`'s boot print still says StatRerolls has "no source yet — SINK only" — now false; cosmetic, AD-Traits' service to correct, noted in `economy-map.md` so it does not re-read as an "unbuilt" claim.
+
 ## 2026-08-30 [game] B45 — AD-Game: **C2's faucet opens** — `StatRerolls` catalogued and dropping from Insane wins, plus the drop-routing bug that would have made it land in a field nothing reads. And the Worthiness meter turned out to have existed since A8.
 
 Two shared modules re-hashed: `ItemCatalog` `fc4b8023` → **`9be86a5f`**, `RewardScalingConfig`

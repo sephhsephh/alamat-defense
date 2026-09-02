@@ -771,7 +771,7 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
   wins** (`RewardScalingConfig` → `e0a3bc2d`) — the same faucet `TraitRerollToken` uses, which was the
   only reason C1 was reachable and C2 was not. Its icon is a placeholder for the user to author.
   NPC-opened, Image-based blockout (ADR-0010). Verified live incl. the Worthiness floor and every
-  refusal; button disables at balance 0. Lobby-local, no schema bump.
+  refusal; button disables at balance 0. Lobby-local, no schema bump. ✅ **EVERYDAY SOURCES B46:** `StatRerolls` added to `DailyRewardConfig`[4], `ShopConfig` (450 Silver, wt5), `BattlepassConfig` FREE tier 25, `QuestRegistry` ClearThree — reachable in the normal loop, not Insane-only. Faucet↔sink map: `economy-map.md`. Config-only, no schema/canon change.
 - ✅ **Worthiness — BOTH halves are built, and the meter always was.** The stat reroll reads
   `Worthiness` and at `>=100` floors every rolled stat at grade **A**, then resets to 0 on ANY reroll
   (C2, B44). **⚠ CORRECTED B45: the METER (kills → `Worthiness`) is NOT unbuilt** — it has committed

@@ -118,8 +118,7 @@ lookups are NON-RECURSIVE on purpose. **`ReserveServer` is 403 in Studio**; the 
 `RS.Remotes.RequestSummon`. Rules:
 
 - **`GrantService` is THE one grant path** (invariant 1) — never write `Currencies` inline; `Spend` is the one debit.
-- **`RS.Shared.MetaMath` is SHARED canon**, **not deployed to the Game** — MISSING there is EXPECTED, not drift. It is what every
-  per-day derivation in the Lobby (dailies, event, codes, shop, quests) agrees through.
+- **`RS.Shared.MetaMath` is SHARED canon**, **not deployed to the Game** — MISSING there is EXPECTED, not drift; it is what every per-day derivation (dailies, event, codes, shop, quests) agrees through.
 - **Reveal = the remote's RETURN VALUE** for anything the player CLICKED; `RewardPush` is for server-initiated grants only. Pity uses
   `Data.Pity[ref]`; pulls count on `Counters.Global.GachaPulls`, NOT `Summons` (ADR-0008) — **and B40's quests read that counter.**
 - **SELECTION banners LIVE at B30 — FULL DOC: `gacha-selection.md`.** `BannerChoiceService` + `Remotes.ChooseBannerUnit` are **the ONE
@@ -127,6 +126,7 @@ lookups are NON-RECURSIVE on purpose. **`ReserveServer` is 403 in Studio**; the 
 - **SELL DUPES LIVE at B31 — doc: `ascension.md`.** **`UnitConsumeRules` = THE ONE "may this unit be destroyed" rule**, shared with
   ascension's `PickDupe`; **`GrantService.SellUnits` is the ONLY `Data.Units` delete** and it CREDITS BEFORE DESTROYING. Prices are
   `TierConfig.GetSellValue` — **the Silver faucet B40's shop finally drains.**
+- **REROLL CURRENCIES economy (B46):** `StatRerolls` now has everyday sources — `DailyRewardConfig`[4], `ShopConfig` (450 Silver, wt5), `BattlepassConfig` FREE tier 25, `QuestRegistry` ClearThree — plus Insane drops (B45); reachable in the normal loop, no longer Insane-only. Faucet↔sink table: **`economy-map.md`**. `Currencies.TraitRerolls` is a DEAD scalar (no faucet/sink; remove at v5).
 
 ## Open PENDINGs (see STATE.md — this is the Lobby-relevant subset)
 
