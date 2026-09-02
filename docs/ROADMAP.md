@@ -450,8 +450,9 @@ everything untradeable at launch).
   ✅ **AD-Game cleared that blocker at B41** — see the Game-place rows. The two match quests now need
   only a one-line Lobby edit: add `Clears` + `InsaneVictories` to `QuestRegistry.LiveCounters` and
   uncomment them. **`ClearThree` reads `Clears`, NOT a new `ActsCleared`** (user's call, B41).
-  🔲 **Still unbuilt:** Shop and Quests UI; BattlePass, Event, LeaderBoards, InviteFriends; an Inbox
+  🔲 **Still unbuilt:** Shop and Quests UI; BattlePass, Event, InviteFriends; an Inbox
   SCREEN (needs a v5 field for message history — mail itself does not).
+- ✅ **LeaderBoards — AD-Meta/AD-Gacha, B47.** Global top-N account-LEVEL board via OrderedDataStore (keyed by userId, published on the Lobby's ProfileLoaded). **Lobby-local: no schema bump, no Game change, no shared canon.** `GetLeaderboard` remote (Remotes 35→36) + blockout screen wired to the HUD button. `docs/systems/leaderboards.md`.
 
 
 ## Cross-Place

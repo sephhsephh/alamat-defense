@@ -25,6 +25,7 @@ task touches — resolved at bootstrap per the constitution.
 | TowerStatResolver (+ MetaScaling, Traits) | AD-Game | Game | Studio (Game) `RS.Shared.TowerStatResolver` — NOT shared; see the numbers PENDING in STATE.md |
 | Trait & stat rerolls / worthiness (C1/C2) | AD-Traits | Lobby | **C1 trait reroll + C2 stat reroll BOTH BUILT B44** — Studio (Lobby) `SSS.Server.Meta.{TraitRerollService,StatRerollService}` + `RS.Configs.Meta.{TraitRerollConfig,StatRerollConfig}` + `StarterPlayerScripts.{TraitRerollController,StatRerollController}` + `docs/systems/{trait-reroll,stat-reroll}.md`. **Worthiness METER (kills→100) still TBD** — the GAME place's writer. |
 | Quests / login / codes / battlepass (future) | AD-Meta | Lobby | TBD when built |
+| Leaderboards (global account-level board) | AD-Meta/AD-Gacha | Lobby | Studio (Lobby) `SSS.Server.Meta.LeaderboardService` + `RS.Configs.Meta.LeaderboardConfig` + `RS.Remotes.GetLeaderboard` + `StarterGui.LeaderBoards` + `docs/systems/leaderboards.md` (built B47, 2026-09-02). OrderedDataStore-backed; screen art re-skinnable (AD-UI). |
 | Evolution / spirits (future) | AD-Gacha | Lobby | TBD when built |
 | UI (StarterGui screens, HUD, panels) | AD-UI | both | Studio (per Place) StarterGui + `docs/systems/ui.md` (when migrated) |
 | PlayerLevel / progression curves | AD-PlayerLevel | Game | Studio (Game) `RS.Configs.Global.TowerProgressionConfig`, `MetaScalingConfig` |

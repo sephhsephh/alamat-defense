@@ -1,5 +1,27 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-09-02 [lobby] B47 — AD-Meta/AD-Gacha: **LeaderBoards** — a GLOBAL top-N account-LEVEL board, backend + screen, Lobby-local end to end.
+
+NET-NEW system. **Lobby-local: no schema bump, no Game change, no shared canon, no contract.** Remotes 35→36 (`GetLeaderboard`). No shared module touched, so drift is unchanged at 36/36. Verified LIVE (below).
+
+### The decision (USER)
+Ranked metric = **account level** (`Data.PlayerLevel`); scope = **global top N**. Chosen over stage-cleared / kills / clear-time because those are match-derived (the GAME writes them) and would make the board cross-Place; PlayerLevel already lives on the profile, so the whole thing stays Lobby-local.
+
+### Why it needs no Game change and no schema bump
+`Data.PlayerLevel` is written by the GAME (`AddPlayerXP`) at match end, but a player CANNOT change level while in the Lobby (no Lobby XP source) and returns to the Lobby after any level-up. So publishing each player's CURRENT level on the Lobby's `ProfileLoaded` is always up to date, with zero Game writes. `PlayerLevel` has been on the schema since v2, so no v5. KNOWN LIMIT (documented in `leaderboards.md`, not a bug): a player who levels up and quits from the GAME publishes that level on their NEXT lobby visit.
+
+### What landed (all Lobby-local)
+- `RS.Configs.Meta.LeaderboardConfig` (pure) — Studio-aware OrderedDataStore name (dev store in Studio, same rule as `ProfileTemplate.GetStoreName`), TopN 100, server cache 30s, client refresh 60s.
+- `SSS.Server.Meta.LeaderboardService` (self-running Script) — THE one publisher/reader. Publishes on `ProfileLoaded` + a boot-race sweep (the same sweep LoadoutService/RevealDrainService run). Serves `GetLeaderboard`. OrderedDataStore stores INTEGERS keyed by userId: `SetAsync` publish, `GetSortedAsync(false, TopN)` read (descending); all store calls pcall'd, the sorted read CACHED server-side, a throttle served from the last good cache. Names via `GetNameFromUserIdAsync`, cached.
+- `RS.Remotes.GetLeaderboard` (authored RemoteFunction). Contract: `{ ok, TopN, Entries={{Rank,UserId,Name,Level,IsYou}} } | { ok=false, reason }`.
+- `StarterGui.LeaderBoards` + `LeaderBoardsController` — blockout screen authored as real instances (row `RowTemplate` Visible=false, cloned + filled). Names are the contract, re-skin at zero code cost. Opens from `HUD.Right.UpperRight.LeaderBoardsButton` (was UNWIRED) and `ClientEvents.OpenLeaderBoards`. Read-only: no claim, no grant, no reveal.
+
+### Verified LIVE (B47)
+Seeded four fake ranks into the dev OrderedDataStore + the real dev player (auto-published at Lv 1 by the ProfileLoaded hook — confirmed by reading it back). `GetLeaderboard` returned them sorted descending (#1 Lv 88 … #5 the dev player Lv 1, `IsYou=true`); the screen rendered all five rows with the viewer highlighted (green YOU pill + stroke). One blockout fix mid-test: `LevelLabel` had an opaque background — set transparent. Seeds removed afterward; dev store left with only the real dev player. No Dev* residue.
+
+### Docs
+New `docs/systems/leaderboards.md` (the contract + the known limit + future metrics). OWNERSHIP row added (AD-Meta/AD-Gacha, Lobby). INDEX (condensed `trait-reroll` to fit, 150/150), CONTEXT (LeaderBoards Unwired→Wired), STATE (AD-UI PENDING now Inbox-only; Remotes 36), ROADMAP (✅ row) all updated.
+
 ## 2026-09-02 [lobby] B46 — AD-Meta/AD-Gacha: **StatRerolls reaches the everyday loop** — the C2 stat-reroll faucet now flows through daily / shop / battlepass / quests, not only Insane wins; and the whole economy's faucet↔sink map is written down.
 
 Lobby-local **CONFIG only**. No schema bump, no shared-canon change, no contract change. Drift **36/36, 0 issues** before AND after (TOOLVERSION B41-1). Routing proven **live**: a `{Id="StatRerolls", Qty=1}` grant through the real `GrantService` landed in `Data.Currencies` (+1), NOT `Data.Items`, and the C2 spender debited the same field back — self-cleaning `[Test]` harness, net-zero residue in the dev profile, harness deleted.

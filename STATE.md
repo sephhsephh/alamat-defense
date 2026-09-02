@@ -46,7 +46,7 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   consolation would make the restart button farmable.** Restarting a live match aborts it first; the flag is consumed by the match LOOP,
   never the caller's thread.
 - **B32/B33:** `UIKit.Sound` + `UIKit.Confirm` (2s gate); `Button` DETECTS panel vs flat; siblings use `optionalSibling` (10s+stub).
-  `Remotes`=**35** (B44, +`RerollTrait`/`RerollStats`). `CurrencyChanged` is a server→client PING with **no payload** (a balance on the wire = a second source of truth
+  `Remotes`=**36** (B47 +`GetLeaderboard`; B44 +`RerollTrait`/`RerollStats`). `CurrencyChanged` is a server→client PING with **no payload** (a balance on the wire = a second source of truth
   beside ADR-0004's `GetUnitViews`). **TOAST EVENTS, LABEL STATE.**
 - **NOT A PENDING — DO NOT RE-RAISE (USER, B40): the empty SoundIds are DELIBERATE** — the user fills all 13 slots **at release**;
   silence in development is expected. Same standing class as the 0.05 `UIHoverStroke.Thickness`. **STILL UNCONFIRMED — ASK THE USER:
@@ -73,8 +73,8 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 - **B42 (AD-GACHA/AD-UI): QUESTS, SHOP and BATTLEPASS screens are live**, all BLOCKOUT to specs (`docs/specs/2026-08-28-*`; specs are the
   CONTRACT, re-author = zero code). QUESTS: B41's one-line edit LANDED (`Clears` + `InsaneVictories` in `LiveCounters`; **`ClearThree` reads
   `Clears`, NOT `ActsCleared`**), 6/6 assignable, 0 orphans. SHOP: **NPC-opened** (ADR-0010 shape), buy verified live. BATTLEPASS backend +
-  screen, Remotes 31→33; **XP source LANDED B43** (below), **monetization still pending**. **PENDING (AD-UI):** `LeaderBoards`/`Inbox` need
-  backends (Inbox a v5 field).
+  screen, Remotes 31→33; **XP source LANDED B43** (below), **monetization still pending**. **PENDING (AD-UI):** `Inbox` needs a
+  backend (a v5 field). `LeaderBoards` backend LANDED B47 (global level board, `leaderboards.md`).
 - **NOT A PENDING — B45: A DROP IS ROUTED BY ITS CATALOGUE `Kind`, never assumed to be an Item.** A CURRENCY lives in
   `Data.Currencies[id]`, not `Data.Items[id]` — routing it wrong puts it where nothing reads it and the faucet merely LOOKS wired.
   **An uncatalogued drop id is refused loudly and written NOWHERE** (invariant 4's stance). **`StatRerolls` is catalogued + drops from
@@ -117,4 +117,4 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
    **⚠ THE WORTHINESS METER WAS NEVER MISSING** — `CommitUnitKills`→`WorthinessConfig.Apply` has run since A8, verified at A8 AND A9.
    Reaching 100 is TUNING, not a gap: `PointsPerKill` 0.02 (user's call, reaffirmed B45) = ~5,000 kills, ~25-50 matches for a favourite.
 3. **B41 CLEARED THE GAME-PLACE BLOCKER** (levelling, the counters, the settings actions, the audio owner). What the Lobby's meta layer
-   now waits on is **UI**, not the match: Shop/Quests/BattlePass screens all shipped B42 (BattlePass + Daily Rewards then re-laid-out to the user's UI reference, Image-based frames); LeaderBoards/Inbox still need backends; BattlePass needs only monetization now (B43 landed its XP source). Mostly AD-UI's, not AD-Game's.
+   now waits on is **UI**, not the match: Shop/Quests/BattlePass screens all shipped B42 (BattlePass + Daily Rewards then re-laid-out to the user's UI reference, Image-based frames); Inbox still needs a backend (LeaderBoards landed B47); BattlePass needs only monetization now (B43 landed its XP source). Mostly AD-UI's, not AD-Game's.
