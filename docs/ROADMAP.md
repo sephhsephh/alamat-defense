@@ -54,7 +54,7 @@ everything untradeable at launch).
 - ✅ Persistence: ProfileStore schema v1, session-locked, dev store in Studio
 - ✅ Settings persisted in profile
 - 🟡 Art: attack anim/VFX/sound ids placeholder; weapon grips approximate
-- 🟡 Monetization: config + 3× gamepass check exist; purchase path unwired
+- ✅ Monetization (B48, AD-Meta): paid track = **permanent gamepass unlock**, WIRED. `BattlepassConfig.GamePassId` + `BattlepassService` ownership sync (`UserOwnsGamePassAsync` on load + `PromptGamePassPurchaseFinished`) + client `PromptGamePassPurchase`. `Owned` stays the one writer's field. **User creates the gamepass + sets the id.** 🔲 level-skip products (5/10/50) still unbuilt.
 - 🟡 Content: 1 map, 2 enemies, 8 towers, 1 stage — pipeline proven, content thin
 - 🔲 Enemy behaviors (Flying/Splitting/Shielding) · 🔲 Endless + BossRush modes
 - 🔲 Persistence round-trip test (PENDING in STATE.md)

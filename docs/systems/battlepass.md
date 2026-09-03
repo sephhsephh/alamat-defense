@@ -22,7 +22,7 @@ no writer — the same free ride `LoginStreak`/`Quests`/`ShopStock` got.
 Blueprint: "season rollover = new file + SeasonId switch (old claims keyed by SeasonId — no wipe)".
 When the stored `SeasonId` ≠ the config's, the service **RESETS** XP + both Claimed maps for the new
 season. **`Owned` is NOT reset** (a gamepass-style permanent unlock; a per-season product would reset
-it — part of the deferred monetization decision). Rolling the season is a content edit here.
+it — but B48 chose a permanent gamepass, so keeping `Owned` is correct). Rolling the season is a content edit here.
 
 ## Claiming: GRANT FIRST, MARK SECOND
 Free always (once unlocked); **Paid requires `Owned`**. Validate tier/track → `Level ≥ tier` →
@@ -47,10 +47,23 @@ An **Abandoned** run pays nothing, matching B41's rule that an aborted match gra
 caller, and it is still a `BindableFunction` so no client can reach it — BP XP is earned, never
 requested. Full contract, both delivery guards and the known limit: `docs/contracts/teleport.md`.
 
-## ⚠ ONE THING IS STILL DELIBERATELY NOT BUILT (open decision)
-1. **MONETIZATION.** Blueprint: the Paid track unlocks via a **gamepass/dev product**, plus level-skip
-   products (5/10/50). No purchase is built; `Owned` gates the paid track and nothing sets it. Wiring
-   a Robux product is a business decision, deliberately left out.
+## ✅ MONETIZATION WIRED (B48, AD-Meta) — the paid track is a permanent gamepass unlock
+The Paid track unlocks by owning the **Alamat Pass gamepass**. AD-Meta's call: a **gamepass** (permanent),
+not a per-season dev product — it matches the SeasonId rule that keeps `Owned` across seasons, so a
+one-time buy unlocks the paid track for good. Ownership is **authoritative** via `MarketplaceService`;
+`Data.Battlepass.Owned` is a cache `BattlepassService` keeps in sync, and the service stays THE one writer:
+- On `ProfileLoaded` (+ a boot-race sweep) → `UserOwnsGamePassAsync` → `setOwned` (authoritative: a
+  refund flips it back on the next join).
+- On server-side `MarketplaceService.PromptGamePassPurchaseFinished` → `setOwned(true)` immediately.
+- The client PurchaseButton / AlamatPassButton call `PromptGamePassPurchase`; the screen re-syncs on
+  completion so the paid slots unlock without a rejoin. `GetBattlepass` now returns `GamePassId`.
+`BattlepassConfig.GamePassId` is the one knob. **`0` = NOT configured: every purchase/ownership path
+no-ops — safe in Studio and in production until the id is set.** THE USER creates the gamepass (Creator
+Dashboard → Monetization → Passes), sets its price there (the art shows 799 R$), and pastes the id into
+`BattlepassConfig.GamePassId`. Verified B48: boots clean with the wiring logged, `GamePassId=0` safely
+no-ops (no web calls, no errors), `GetBattlepass` exposes `GamePassId`; the live purchase/ownership sync
+needs the published gamepass and follows the standard MarketplaceService pattern.
+**Level-skip products (5/10/50) remain unbuilt** — a separate dev-product `ProcessReceipt` flow.
 
 ## Verified live (Lobby Play, B42)
 | case | result |
@@ -78,5 +91,6 @@ tiers 5+ LOCKED; Free/Paid claims; not_unlocked; already_claimed). The spec is t
 keeping the names, zero controller edits.
 
 ## Still not built
-**Monetization** — the paid unlock + level-skips; `Owned` gates the paid track and nothing sets it.
-The match-end XP source, the other half of this pair, landed at B43.
+**Level-skip products** (5/10/50) — a dev-product `ProcessReceipt` flow. The paid-track unlock landed
+at B48 (gamepass) and the match-end XP source at B43, so the core loop is complete; what remains is the
+user creating the Alamat Pass gamepass and pasting its id into `BattlepassConfig.GamePassId`.

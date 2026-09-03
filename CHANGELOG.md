@@ -1,5 +1,23 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-09-02 [lobby] B48 — AD-Meta/AD-Gacha: **Battlepass monetization** — the paid track unlocks via a permanent **Alamat Pass gamepass**. Lobby-local, no schema bump.
+
+Finishes the Battlepass loop: the `Owned` gate (built B42, XP source B43) now has a purchase behind it. **Lobby-local: no schema bump (`Owned` has been on the profile since v2), no shared canon, no Game change, no contract.** No shared module touched → drift unchanged 36/36. `BattlepassService` stays THE one writer of `Data.Battlepass.Owned`.
+
+### The decision (AD-Meta's call)
+A **gamepass** (permanent unlock), not a per-season dev product. It matches the existing SeasonId rule — `BattlepassService` already keeps `Owned` across season resets, calling it "a gamepass-style permanent unlock" — so this is **zero change to the season logic**, and a one-time buy unlocks the paid track for every future season. (Per-season monetization would instead reset `Owned` on rollover + use a dev product; documented in `battlepass.md` as the alternative.)
+
+### What landed
+- `BattlepassConfig.GamePassId` — the one knob, placeholder **`0`**. **`0` = NOT configured: every purchase/ownership path no-ops**, so it is safe in Studio and in production until the real id is set.
+- `BattlepassService` — ownership sync, authoritative via `MarketplaceService` and cached in `Owned` (still the one writer): `UserOwnsGamePassAsync` on `ProfileLoaded` + a boot-race sweep; `setOwned(true)` on server-side `PromptGamePassPurchaseFinished`. `GetBattlepass` now returns `GamePassId`.
+- Client `BattlePassController` — the PurchaseButton / AlamatPassButton (previously art-only toasts) now call `PromptGamePassPurchase`; on completion the screen re-syncs so the paid slots unlock without a rejoin. Already-owned / not-configured both toast gracefully.
+
+### Verified (Lobby Play, B48)
+Boots clean — `BattlepassService ready … MONETIZATION WIRED (B48): paid track = PERMANENT gamepass unlock; GamePassId=0 (NOT configured)`, `BattlePassController ready … purchase prompts the Alamat Pass gamepass`, **33/33 boot scripts, no errors**. `GetBattlepass` exposes `GamePassId`; with `GamePassId=0` the guard made no web calls and left the (pre-existing) `Owned` untouched. **The live purchase + ownership sync require a PUBLISHED gamepass and cannot be exercised in Studio** — they follow the standard MarketplaceService gamepass pattern and were verified by clean boot + parse-check + code review, and are guarded to no-op until the id is set.
+
+### USER TODO
+Create the **Alamat Pass** gamepass (Creator Dashboard → your experience → Monetization → Passes), set its price there (the art shows 799 R$), and paste its id into `BattlepassConfig.GamePassId`. That single edit turns the whole flow live. **Level-skip products (5/10/50) remain unbuilt** — a separate dev-product `ProcessReceipt` flow.
+
 ## 2026-09-02 [lobby] B47 — AD-Meta/AD-Gacha: **LeaderBoards** — a GLOBAL top-N account-LEVEL board, backend + screen, Lobby-local end to end.
 
 NET-NEW system. **Lobby-local: no schema bump, no Game change, no shared canon, no contract.** Remotes 35→36 (`GetLeaderboard`). No shared module touched, so drift is unchanged at 36/36. Verified LIVE (below).
