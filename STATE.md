@@ -14,7 +14,7 @@ and the gacha engine (Standard + Event + Selection banners; ascension AND sellin
   combat, the stat resolver, match runtime. Detail: `places/game/CONTEXT.md`.
 - **Lobby** — the social/meta Place, scene `Workspace.Lobby`. **`GetUnitViews` is its SINGLE profile
   read path** (ADR-0004); **`GrantService` is its SINGLE grant/spend path**. `places/lobby/CONTEXT.md`.
-- **Shared canon** (`shared/manifest.json`): **36 entries = 29 modules + 7 templates**; B45 re-hashed `ItemCatalog`->**`9be86a5f`** + `RewardScalingConfig`->**`e0a3bc2d`**. Checked start AND end by
+- **Shared canon** (`shared/manifest.json`): **36 entries = 29 modules + 7 templates**; B45 re-hashed `ItemCatalog`->**`2ee5f976`** (B50 +15 crafting items) + `RewardScalingConfig`->**`e0a3bc2d`**. Checked start AND end by
   `ServerStorage.DevTools.HashShared` in each Place (two lines to run) — **compare each live hash to BOTH `hash` and `deployed.<Place>`,
   field by field; a glance missed real drift for two sessions.** `MetaMath` is Lobby-only until Phase D: **EXPECTED, not drift.** B26
   adopted the V2 kit in BOTH Places and RETIRED `Kit_UnitIcon`/`Kit_ItemIcon`/`Kit_HotbarSlot` (do not re-add). Templates hash as
@@ -104,6 +104,7 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 - **Save schema v5** (B48) — `ProfileTemplate` **`91ffab78`**, hash-matched BOTH Places (36/36). **DEPLOYED in Studio; USER REPUBLISHES BOTH to ship** (forward-tolerant, so the window is safe). Adds `Inbox` (capped msg history, `inbox.md`). **`Migrations[2]`/`[3]`/`[4]` are DELIBERATE NO-OPs and must stay ones** (`Reconcile()` runs BEFORE `Migrate()`); never delete one — `Migrate()` warns and STOPS at a missing step. **A new field now costs v6.** Store `Beta1_PlayerData` (Studio `Beta1_PlayerDataDev1`, API ON).
 - **Teleport payload v4** (B23) — `docs/contracts/teleport.md`. Hard cutover, **v3 REJECTED**. `LobbyConfig.MatchLaunchVersion` must ALWAYS equal `GameConfig.TeleportPayloadVersion`.
 
+- **NOT A PENDING — B50: CRAFTING (Phase D / D1).** fragments -> colour artifacts (2:1) -> Rainbow (all 7). 15 new SHARED `ItemCatalog` items (`2ee5f976`, deployed BOTH Places 36/36, **USER REPUBLISHES BOTH**); `CraftingService` spends+grants via `GrantService`; pure `CraftingRecipes` + NPC-opened screen (`NPC_Craft`). Interim fragment source = shop (7 frags); REAL source = D2 challenges (Game, proposal). Artifacts are OWNED items, gameplay use DEFERRED. `crafting.md`.
 ## Next up
 
 **✅ PHASE A SIGNED OFF (A9).** **LABEL COLLISION:** changelog `B0…B40` are SESSION COUNTERS; blueprint `B1…B5` are SESSION-TASK names

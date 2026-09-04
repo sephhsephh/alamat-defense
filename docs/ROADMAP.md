@@ -787,8 +787,8 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
   `ItemCatalog` and the `AddTowerXP` path actually exist in the Lobby before committing to it.
 
 ### Phase D — Economy loops
-- 🔲 Crafting (fragments→artifacts→rainbow; CraftingRecipes config; caps via catalog)
-- 🔲 Challenges (rotating daily modifiers stage; artifact rewards — closes crafting loop)
+- ✅ **Crafting (D1) — AD-Meta/AD-Gacha, B50.** fragments→colour artifacts (2:1)→Rainbow (all 7). 15 shared `ItemCatalog` items (`9be86a5f`→`2ee5f976`, both Places, 36/36; user republishes), pure `CraftingRecipes` + `CraftingService` (spend+grant via GrantService) + `GetCraftInfo`/`Craft` + NPC-opened screen (`NPC_Craft`). Interim fragment source = shop; artifacts are owned items, gameplay use DEFERRED. `docs/systems/crafting.md`.
+- 🔲 **Challenges (D2)** — the rotating daily-modifier stage + match-end fragment/artifact rewards (the REAL crafting source). Game place (AD-Game); proposal `docs/proposals/2026-09-02-d2-challenges.md`. Reward ids already catalogued both Places (B50).
 - 🔲 Shop NPC (per-player daily stock keyed by day number; ShopConfig; Silver prices)
 - 🔲 Daily login (7-day repeating cycle, deterministic reset hour config)
 - 🔲 Quests + pinned-quest tracker in both Places (QuestConfig; progress via Counters;

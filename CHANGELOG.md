@@ -1,5 +1,25 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-09-02 [both] B50 — AD-Meta/AD-Gacha: **Crafting (Phase D / D1)** — combine fragments into colour artifacts, then into the Rainbow, on a SHARED `ItemCatalog` bump.
+
+Blueprint **Phase D / D1**. The recipe: 2 same-colour **fragments** → 1 colour **artifact** (×7 colours), then all 7 colour artifacts → the **Rainbow** artifact. Spend + grant go through the ONE path (`GrantService`), so crafting inherits its all-or-nothing guarantees for free.
+
+### The one thing that touches BOTH Places: 15 new items
+Crafting needs catalogued items, and `ItemCatalog` is SHARED canon — so this is a **shared bump deployed byte-identical to both Places** (`9be86a5f → 2ee5f976`, manifest updated, **36/36 verified in both**; MetaMath=MISSING in Game still expected). 15 new `Kind="Item"` entries after `GoldenSeed`: `Fragment{Red,Orange,Yellow,Green,Blue,Indigo,Violet}` (Rare), `Artifact{Red..Violet}` (Epic), `ArtifactRainbow` (Mythic) — all `Tradeable=false`, `MaxOwned=9999`, placeholder `rbxassetid://0` icons. `Validate()` clean (29 entries). **USER republishes BOTH Places** to ship the new items.
+
+### The build (all Lobby-local except the shared items)
+- `RS.Configs.Meta.CraftingRecipes` (pure ModuleScript) — the 8 recipes derived from a `Colours` list (7 fragment→artifact + 1 rainbow), plus `Get(outId)`. One list drives both the server and the client render, so they can't disagree.
+- `SSS.Server.Meta.CraftingService` (Script) — `GetCraftInfo` (owned counts) + `Craft(outId)`: validate the recipe, collapse inputs to a map, `GrantService.SpendItems` (PRE-CHECK → SPEND, all-or-nothing) then `GrantService.Grant` the output, and return the reward views. Refuses an unknown recipe or unaffordable inputs by code.
+- `RS.Remotes.{GetCraftInfo, Craft}` (authored; Remotes 38 → 40) + `StarterGui.Crafting` blockout screen/controller (recipe rows with "have N" affordability, craft → `ShowRewards`) opening from the new `Workspace.Lobby.NPC_Craft` **Artificer** ProximityPrompt (ADR-0010 NPC-screen shape) + `ClientEvents.OpenCrafting`.
+- **Interim fragment source:** 7 `Fragment<Colour>` rows appended to `ShopConfig` (Price 100, Weight 3) so fragments are obtainable NOW. The REAL source is **D2 challenges** (proposal below) — the shop is the placeholder until that lands.
+
+### Verified LIVE (B50)
+Granted fragments through the real `GrantService`, then drove the real `Craft` remote: `FragmentRed×2 → ArtifactRed` returned `ok=true`, owned counts moved `Red 2→nil, ArtifactRed nil→1`; crafting again with 0 fragments returned `ok=false reason=insufficient_items_FragmentRed`; the Rainbow with only 1 artifact returned `ok=false reason=insufficient_items_ArtifactOrange` — the all-or-nothing spend held. Temp grant harness deleted after.
+
+### Deferred + USER TODO
+**Republish BOTH Places** (ItemCatalog `2ee5f976`) then `git push` (B48 `ac7b8b1` onward may still be unpushed — git shows ahead of origin). **Artifacts have no gameplay use yet** — that's a deliberate design decision, crafting is the sink/collection loop for now. **D2 challenges** (the fragment source) is an OPEN AD-Game proposal — NOT built this session. Dev residue: a few fragments + 1 `ArtifactRed` sit in the dev profile (plus the 3 inbox test msgs) — harmless, say the word to clear. Docs: new `docs/systems/crafting.md` + `docs/proposals/2026-09-02-d2-challenges.md`; STATE/ROADMAP/OWNERSHIP/INDEX updated.
+
+
 ## 2026-09-02 [lobby] B49 — AD-Meta/AD-Gacha: **HUD notification badges** — the red count badge on a button when there is something new or claimable on it.
 
 A pure Lobby-UI layer: **no server code, no new remotes, no schema change, no shared canon** (drift unchanged 36/36). Badges on Inbox (unread), Daily + Event (claimable), Quests (claimable), Battlepass (claimable tiers).

@@ -50,12 +50,9 @@
   NUMBER and not a timestamp, the pure `BannerRegistry` choice API, `BannerChoiceService` as the ONE
   writer + `ChooseBannerUnit`'s two modes and refusal codes, and the `ChoiceOverlay` UI. Split out
   of `gacha.md` at B30 on its 300-line cap.
-- `reward-push.md` — **AD-Gacha canon, LOBBY**: how the SERVER reveals a grant nobody asked for
-  (B37) and what happens when it cannot reach the player (B39's `PendingReveals` queue). Read it for
-  the opt-in rule (`GrantService` never pushes), for why the drain is a **client-announced
-  handshake** rather than a `ProfileLoaded` hook, and for the correction to B37's "known gap" — a
-  grant to a genuinely OFFLINE player cannot happen at all. Split out of `rewards.md` at B39 on its
-  300-line cap.
+- `reward-push.md` — **AD-Gacha canon, LOBBY**: how the SERVER reveals a grant nobody asked for (B37)
+  + the `PendingReveals` queue when it can't reach the player (B39). The opt-in rule (`GrantService`
+  never pushes), the client-announced-handshake drain, and why an OFFLINE grant can't happen at all.
 - `redeem-codes.md` — **AD-Gacha canon, LOBBY**: promo codes (B39). `CodeRegistry` (pure) +
   `CodeService` (**THE one writer of `Data.RedeemedCodes`**). Read the two warnings before touching
   it: every code in the registry is **PUBLIC** because the module replicates, and the rate limit is
@@ -78,18 +75,17 @@
 - `lobby-ui.md` — the LOBBY's screens only (Units, Items, Collection, Hotbar, CurrencyBar, HUD buttons,
   the legacy script-built four) + the `DevAutoOpen` harness. Split from `lobby/CONTEXT.md` at A5.
 - `notifications.md` — **AD-Meta/AD-Gacha canon, LOBBY**: the HUD "new/claimable" count badges (B49). Reads authoritative counts from existing remotes (Inbox/Daily/Event/Quests/BP), `NotificationController` + `NotifBadgeTemplate` + `RefreshBadges`; no server code. Read before adding a badge.
+- `crafting.md` — **AD-Meta/AD-Gacha canon, LOBBY**: fragments→artifacts→Rainbow crafting (B50, Phase D/D1). 15 SHARED `ItemCatalog` items (both Places `2ee5f976`); `CraftingRecipes` (pure) + `CraftingService` (SpendItems→Grant, ONE path) + `GetCraftInfo`/`Craft` + NPC screen; fragments from an interim shop source until D2. Read before touching recipes or the item catalog.
 - `settings.md` — **AD-Game + AD-UI canon, BOTH Places**: the ONE settings system (B35). `Scope`
   (Both/GameOnly/LobbyOnly) + `Kind` (Preference/Action) mean the shared screen builder has no
   Place branch at all. Read the `Sanitize`-is-Scope-blind warning before touching it: one profile
   serves both Places, so scope-filtering persistence would permanently lose the other Place's keys.
 - `ui-feedback.md` — **AD-UI canon, BOTH Places**: how the UI answers the player (B32). The
   `UIKitButton` tag as the one wiring mechanism; PANEL-STYLE vs FLAT buttons **detected, not
-  configured** (what scales, how the hover stroke grows, whether its gradient spins); `LogoContainer`
-  tilt and the click dip/overshoot; **audio, where assigning a sound is pasting a SoundId onto a real
-  `Sound` under `SoundService` and never a code change** (name a Sound after an act id to give that
-  stage music); and `UIKit.Confirm`'s 2-second grey→green Yes gate. Also records the
-  `optionalSibling` rule — a bare `WaitForChild` on a sibling module blocks FOREVER and froze the
-  whole UI mid-deploy. Split out of `ui-kit.md` at B32 on its 300-line cap.
+  configured**; `LogoContainer` tilt, the click dip/overshoot; **audio = pasting a SoundId onto a real
+  `Sound` under `SoundService`, never a code change** (name a Sound after an act id for stage music);
+  `UIKit.Confirm`'s 2s grey→green gate; and the `optionalSibling` rule — a bare `WaitForChild` on a
+  sibling module blocks FOREVER and froze the whole UI mid-deploy. Split from `ui-kit.md` at B32.
 - `play-menu.md` — **AD-UI canon for `PlayGUI` + `LoadingScreen`** (P2/B15): the Play-button entry
   and GUI hide/restore, the veil's `Show`/`Hide` module API, the menu camera + cursor parallax and
   its respawn release, and the CanvasGroup frame transitions. **Says why `MainMenu`/`StoryModeFrame`/
@@ -132,6 +128,7 @@
 - `2026-08-20-c4-feeding.md` — AD-Gacha: C4 feeding is **blocked on DATA, not code** — no `FeedValue`
   in `ItemCatalog`, no unit XP curve, no `UnitInstance.XP` writer. Needs food + a curve + a source. OPEN.
 - `2026-09-02-inbox-v5.md` — AD-Meta/AD-Gacha → AD-Game: the Inbox screen needs a **v5 schema bump** (a new `Data.Inbox` history field + both-Place publish — the first genuinely necessary bump since v4). Migration + build sketch. OPEN.
+- `2026-09-02-d2-challenges.md` — AD-Meta/AD-Gacha → AD-Game: **D2 challenges** — the rotating modifier stage that DROPS crafting fragments (the real source D1 was built for; interim shop source until then). Needs the Game place. OPEN.
 - `2026-08-14-reward-preview-wiring.md` — AD-Integration→AD-UI: `RewardScalingConfig` is deployed in
   the Lobby (B20) so the preview has real numbers, but `renderRewards` cannot express a min–max BAND
   and re-runs only on act select while the slider keeps moving. Needs a rendering decision + a

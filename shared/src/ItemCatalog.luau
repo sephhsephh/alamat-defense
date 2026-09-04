@@ -46,6 +46,26 @@ ItemCatalog.Entries = {
 	BannerTicket     = { Kind = "Item", Tier = "Rare",      Name = "Banner Ticket",      Description = "A free banner pull.",       Icon = { Image = "rbxassetid://6731922404" }, MaxOwned = 9999, Tradeable = false },
 	TraitRerollToken = { Kind = "Item", Tier = "Epic",      Name = "Trait Reroll Token", Description = "Reroll a unit's trait.",     Icon = { Image = "rbxassetid://12590248124" }, MaxOwned = 9999, Tradeable = false },
 	GoldenSeed       = { Kind = "Item", Tier = "Legendary", Name = "Golden Seed",        Description = "Rare crafting material.",    Icon = { Image = "rbxassetid://124757602236693" }, MaxOwned = 9999, Tradeable = false },
+
+	-- ===== Crafting materials (Phase D / D1): fragments -> colour artifacts (2:1) -> Rainbow (all 7). =====
+	-- 7 ROYGBIV fragment colours. 2 fragments of a colour craft that colour's artifact; all 7 colour
+	-- artifacts craft the Rainbow. Recipes: RS.Configs.Meta.CraftingRecipes (Lobby). Icons PLACEHOLDER
+	-- rbxassetid://0 (author later). Source: interim Lobby drop now, the D2 challenge stage later.
+	FragmentRed = { Kind = "Item", Tier = "Rare", Name = "Red Fragment", Description = "Crafting fragment; 2 craft a Red Artifact.", Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	FragmentOrange = { Kind = "Item", Tier = "Rare", Name = "Orange Fragment", Description = "Crafting fragment; 2 craft an Orange Artifact.", Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	FragmentYellow = { Kind = "Item", Tier = "Rare", Name = "Yellow Fragment", Description = "Crafting fragment; 2 craft a Yellow Artifact.", Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	FragmentGreen = { Kind = "Item", Tier = "Rare", Name = "Green Fragment", Description = "Crafting fragment; 2 craft a Green Artifact.", Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	FragmentBlue = { Kind = "Item", Tier = "Rare", Name = "Blue Fragment", Description = "Crafting fragment; 2 craft a Blue Artifact.", Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	FragmentIndigo = { Kind = "Item", Tier = "Rare", Name = "Indigo Fragment", Description = "Crafting fragment; 2 craft an Indigo Artifact.", Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	FragmentViolet = { Kind = "Item", Tier = "Rare", Name = "Violet Fragment", Description = "Crafting fragment; 2 craft a Violet Artifact.", Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	ArtifactRed = { Kind = "Item", Tier = "Epic", Name = "Red Artifact", Description = "Crafted from 2 Red Fragments; part of the Rainbow set.", Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	ArtifactOrange = { Kind = "Item", Tier = "Epic", Name = "Orange Artifact", Description = "Crafted from 2 Orange Fragments; part of the Rainbow set.", Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	ArtifactYellow = { Kind = "Item", Tier = "Epic", Name = "Yellow Artifact", Description = "Crafted from 2 Yellow Fragments; part of the Rainbow set.", Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	ArtifactGreen = { Kind = "Item", Tier = "Epic", Name = "Green Artifact", Description = "Crafted from 2 Green Fragments; part of the Rainbow set.", Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	ArtifactBlue = { Kind = "Item", Tier = "Epic", Name = "Blue Artifact", Description = "Crafted from 2 Blue Fragments; part of the Rainbow set.", Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	ArtifactIndigo = { Kind = "Item", Tier = "Epic", Name = "Indigo Artifact", Description = "Crafted from 2 Indigo Fragments; part of the Rainbow set.", Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	ArtifactViolet = { Kind = "Item", Tier = "Epic", Name = "Violet Artifact", Description = "Crafted from 2 Violet Fragments; part of the Rainbow set.", Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	ArtifactRainbow = { Kind = "Item", Tier = "Mythic", Name = "Rainbow Artifact", Description = "The pinnacle craft, made from all 7 colour artifacts.", Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
 }
 
 function ItemCatalog.Get(id: string): any?
