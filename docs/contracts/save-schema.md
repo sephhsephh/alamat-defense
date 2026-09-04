@@ -1,5 +1,5 @@
 # Contract: Save Schema
-<!-- owner: game | scope: global | version: 4 | last-verified: 2026-08-27 (B39) -->
+<!-- owner: game | scope: global | version: 5 | last-verified: 2026-09-02 (B48) -->
 
 Canonical implementation: `shared/src/ProfileTemplate.luau` (deployed to
 `ReplicatedStorage.Shared.ProfileTemplate` in every Place). This doc explains it; the
@@ -13,7 +13,7 @@ whole Experience.
 > exact store 2026-08-01** (drift check during the v2 work) — no split-brain. Store target only,
 > unrelated to the schema version.
 
-## v4 shape (current)
+## v5 shape (current)
 
 ```luau
 {
@@ -50,6 +50,7 @@ whole Experience.
 	Counters: { Global: { [string]: any }, PerUnit: { [string]: { [string]: number } } },
 	Quests, LoginStreak, ShopStock, Titles, Spirits, Battlepass, -- exact shapes in ProfileTemplate
 	Settings: { [string]: any },      -- client settings, SettingsConfig.Sanitize'd
+	Inbox: { Messages: { {Id,Title,Body,Rewards?,Day,Read} } }, -- v5: CAPPED received-message history
 }
 ```
 
@@ -114,6 +115,24 @@ queue respectively.
   `Migrations[1..3]` all present, a reconciled v3 profile walks **1 step** to v4, and a v1 profile
   still walks the **full 3-step** chain with `Currencies.Gold = 500` and its migrated unit intact.
 
+**Migration 4→5** (`Migrations[4]`, B48 2026-09-02): adds `Inbox` — the stored message history
+for the Inbox screen.
+
+- **The FIRST genuinely necessary bump since v4.** Unlike `LoginStreak`/`Quests`/`ShopStock`/
+  `Battlepass` (all on the schema since v2, unwritten), there was NO inbox/mail/history field — a
+  listable history must be persisted, so it could not ride an existing key.
+- **The step is a DELIBERATE NO-OP**, same reason as `[2]`/`[3]`: `Inbox` is an additive-optional
+  top-level key and `Reconcile()` runs *before* `Migrate()`, so it is already `{ Messages = {} }` when
+  the step runs. It exists because `Migrate()` warns and **STOPS** at a missing step.
+- `Data.Inbox = { Messages = { {Id, Title, Body, Rewards?, Day, Read} } }`, **CAPPED** (newest 30;
+  oldest dropped) so the profile cannot grow without bound. `Day` is a `MetaMath.Slot` day number
+  (invariant 3). `InboxService` is THE one writer; mail records into it in the same save as its grant.
+- **Forward-tolerant, same as v3/v4.** A v4 server reading a v5 profile leaves `Inbox` intact. **Both
+  Places must still be republished together** — the tolerance is a safety net, not a licence to split.
+- ProfileTemplate hash `8e4224b9 → 91ffab78`, deployed byte-identical to BOTH Places in one session,
+  manifest updated, **36/36 verified in both**. Verified live: the dev profile migrated **1 step** v4→v5
+  on a real DataStore, and `Data.Inbox` survived a stop/start round trip.
+
 The *flow* on top — the `ChooseBannerUnit` remote, a per-player `BannerRegistry.FeaturedFor`, and
 adding `Selection` to `SUPPORTED_TYPES` — is AD-Gacha's work and is NOT part of this bump. Until it
 lands, Selection banners stay validated-but-refused (`banner_type_not_supported_yet`).
@@ -135,6 +154,10 @@ PENDING for other Places in `STATE.md`. Never edit or remove an existing migrati
 
 ## Version history
 
+- **v5** (2026-09-02, B48): `Inbox` — a CAPPED received-message history for the Inbox screen. The
+  first bump since v4 that truly needed a new field. `Migrations[4]` is a deliberate no-op. ProfileTemplate
+  hash `8e4224b9 → 91ffab78`, deployed + hash-matched in **both** Places the same session (36/36). Forward-
+  tolerant, but **both Places must be republished together.**
 - **v4** (2026-08-27, B39): `EventLoginStreaks` + `RedeemedCodes` + `PendingReveals` in one bump.
   `Migrations[3]` is a deliberate no-op. ProfileTemplate hash `72d3944f → 8e4224b9`, deployed and
   hash-matched in **both** Places the same session (invariant 5). **Both Places must be republished

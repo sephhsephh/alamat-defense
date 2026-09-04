@@ -1,5 +1,28 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-09-02 [both] B48 — AD-Meta/AD-Gacha: **Inbox + schema v5** — a stored message-history screen, on the first genuinely necessary `ProfileTemplate` bump since v4.
+
+The Inbox screen (the last unwired upper-right HUD button) needed a place to store history, and — unlike every meta system since v4 — no field existed for it. So this is a **v4 → v5 schema bump**, done with the USER's explicit sign-off (the save schema is AD-Game's canon; AD-Game: your schema is now v5, deployed + verified). `ProfileTemplate` `8e4224b9 → 91ffab78`, **deployed byte-identical to BOTH Places in one session, manifest updated, 36/36 verified in both.** Remotes 36 → 38.
+
+### Why v5 was unavoidable
+`LoginStreak`/`Quests`/`ShopStock`/`Battlepass` all rode v2 unwritten, dodging bumps. Inbox could not: there was NO inbox/mail/history field (`MailService`'s header said so — mail delivers and reveals but stores nothing). A listable history must be persisted. Checked at B48 before committing to the bump.
+
+### The bump (forward-tolerant, so the publish window is safe)
+`Data.Inbox = { Messages = { {Id, Title, Body, Rewards?, Day, Read} } }` — a CAPPED history (newest 30). `Migrations[4]` is a **DELIBERATE NO-OP** (Reconcile runs before Migrate; additive-optional key) — and, like `[2]`/`[3]`, must stay one or Migrate strands every later step. Forward-tolerant like v3/v4: a v4 server reading a v5 profile leaves `Inbox` intact. Verified: `Migrate` walks v1→v5 (4 steps) and v4→v5 (1 step) with no stranded step; **the real dev profile migrated v4→v5 in one step on a live DataStore** (`DataStoreState=Access`, no warning).
+
+### The Inbox (all Lobby-local)
+- `SSS.Server.Meta.InboxService` (self-running Script) — **THE one writer of `Data.Inbox`**. `GetInbox` (newest-first + unread count) + `MarkInboxRead(id|"*")`; cap 30. Records via `ServerStorage.InboxRecord`, a BindableFunction (the `BattlepassAddXP` pattern) so senders append without requiring the Script.
+- `MailService.handle` now records each delivered mail into the inbox **in the SAME save as its GRANT + `processed()`** — so mail's at-least-once redelivery cannot double-append, exactly like the grant. A missing/failed InboxRecord never blocks the (already-granted) mail.
+- `RS.Remotes.{GetInbox, MarkInboxRead}` (authored) + `StarterGui.Inbox` blockout screen/controller, opening from `HUD.Right.UpperRight.InboxButton` (was UNWIRED) + `ClientEvents.OpenInbox`. Names are the contract, re-skin at zero cost.
+
+### Verified LIVE (B48)
+Recorded two messages through the real `InboxRecord` bridge; `GetInbox` returned them newest-first with `Unread=2` and rewards preserved; the screen rendered them (one blockout fix: `DayLabel` opaque background → transparent); `MarkInboxRead("*")` cleared the unread; **both the messages AND the read-state survived a stop/start round trip** — v5 persistence proven end to end.
+
+### USER TODO
+**Republish BOTH Places** to ship v5 (the bump is forward-tolerant, so the window is safe, but the Inbox won't record or show on live servers until published). Then `git push`. Dev residue: 2 test inbox messages ("Welcome Gift", "Daily Bonus") sit in the dev profile — harmless, say the word to clear them.
+
+Docs: new `docs/systems/inbox.md`; `save-schema.md` → v5 (Migration 4→5 + version history); OWNERSHIP row added; STATE/CONTEXT/ROADMAP/INDEX updated.
+
 ## 2026-09-02 [lobby] B48 — AD-Meta/AD-Gacha: **Battlepass monetization** — the paid track unlocks via a permanent **Alamat Pass gamepass**. Lobby-local, no schema bump.
 
 Finishes the Battlepass loop: the `Owned` gate (built B42, XP source B43) now has a purchase behind it. **Lobby-local: no schema bump (`Owned` has been on the profile since v2), no shared canon, no Game change, no contract.** No shared module touched → drift unchanged 36/36. `BattlepassService` stays THE one writer of `Data.Battlepass.Owned`.

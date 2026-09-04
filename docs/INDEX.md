@@ -16,7 +16,7 @@
   it lists the blockers that stop the screen being fillable at all.**
 
 ## contracts/
-- `save-schema.md` — Profile data shape, versions, migration rules (owner: Game). **v2**
+- `save-schema.md` — Profile data shape, versions, migration rules (owner: Game). **v5**
 - `teleport.md` — Lobby→Game / Game→Lobby TeleportData payloads (owner: Lobby). **v2**
 
 ## design/
@@ -40,6 +40,7 @@
 - `stat-reroll.md` — **AD-Traits, LOBBY**: stat reroll (C2, B44). Rerolls all 3 StatRolls for `Currencies.StatRerolls` (sources: `economy-map.md`); Worthiness>=100 floors each roll at grade A + resets. NPC-opened.
 - `economy-map.md` — **AD-Meta/AD-Gacha canon, LOBBY**: the faucet↔sink map for every spendable resource (Gold, Silver, TraitRerollToken, StatRerolls, EventTokens) — what grants each and what spends it, in one table. Read before any economy tuning. `Currencies.TraitRerolls` is documented-dead here.
 - `leaderboards.md` — **AD-Meta/AD-Gacha canon, LOBBY**: the global top-N account-LEVEL board (B47). OrderedDataStore keyed by userId, published on ProfileLoaded (Lobby-only, no schema/Game change); `GetLeaderboard` remote + blockout screen. Read before touching the board or adding a ranked metric.
+- `inbox.md` — **AD-Meta/AD-Gacha canon, LOBBY**: the stored message-history screen (B48, schema **v5**). `Data.Inbox` (NEW v5 field) + `InboxService` (one writer) + `GetInbox`/`MarkInboxRead` + blockout screen; mail records in the SAME save as its grant. Read before touching the Inbox or the save schema.
 - `gacha.md` — **AD-Gacha canon**: the banner engine (B3). `MetaMath` (shared), `GrantService` (THE
   one grant path), `BannerRegistry` + banner file shape, the exact summon order, pity, the
   empty-pool fallback, and the "remote returns the views" reveal decision. Read before touching
@@ -67,9 +68,8 @@
   against a baseline** taken at assignment (a lifetime counter read would finish every quest instantly
   for an established player) and for the rule that a quest naming a counter nothing writes is
   **refused and named at boot** rather than left sitting at 0.
-- `battlepass.md` — **AD-Meta/AD-Gacha canon, LOBBY**: the seasonal tier ladder (B42). BACKEND only
-  (config + one-writer service + remotes); the screen, the match-end XP source and monetization are
-  deferred. Read it for the SeasonId-keyed reset and the free/paid claim gates.
+- `battlepass.md` — **AD-Meta/AD-Gacha canon, LOBBY**: the seasonal tier ladder (B42) + match-end XP (B43)
+  + gamepass monetization (B48). Read it for the SeasonId-keyed reset (Owned kept across seasons) and the free/paid gates.
 - `daily-rewards.md` — **AD-Gacha canon, LOBBY**: the login streak (B38). The pure `DailyRewardConfig`
   (7-day table, `MetaMath` day number, miss-a-day-resets-to-1), `DailyRewardService` as **THE one
   writer of `Data.LoginStreak`**, the HUD button, and the `DevDailyRewind` harness. Read it for the

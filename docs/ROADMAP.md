@@ -392,7 +392,7 @@ everything untradeable at launch).
   would have lit day 1 for someone who had just claimed day 5. `NextDay` is correct and answering a
   different question. Invisible to reading; it showed up only as a live
   `{Streak: 2, ClaimedToday: true, Day: 1}`.
-  🔲 **Still unblocked but unbuilt:** RedeemCodes, Inbox, Quests, BattlePass, Event.
+  🔲 **Still unblocked but unbuilt:** RedeemCodes, Quests, BattlePass, Event.
 
 
 - ✅ **B39 (AD-Gacha, BOTH PLACES for the schema, 2026-08-27) — EVENT DAILIES + REDEEM CODES + THE
@@ -420,7 +420,7 @@ everything untradeable at launch).
   **additively** so the deployed B38 HUD controller kept working, verified live rather than assumed.
   🔲 **Not built: the two SCREENS** (`StarterGui.DailyRewards`, `StarterGui.RedeemCodes`). Both
   servers are complete and tested; both need authored art (B26). Specs in `docs/specs/`.
-  🔲 **Still unbuilt:** Inbox, Quests, BattlePass, Event; offline delivery via `MessageAsync`.
+  🔲 **Still unbuilt:** Quests, BattlePass, Event; offline delivery via `MessageAsync`.
 
 
 - ✅ **B40 (AD-Gacha, Lobby, 2026-08-27) — THE TWO SCREENS, MAIL, THE SHOP, AND QUESTS.** Docs:
@@ -450,9 +450,9 @@ everything untradeable at launch).
   ✅ **AD-Game cleared that blocker at B41** — see the Game-place rows. The two match quests now need
   only a one-line Lobby edit: add `Clears` + `InsaneVictories` to `QuestRegistry.LiveCounters` and
   uncomment them. **`ClearThree` reads `Clears`, NOT a new `ActsCleared`** (user's call, B41).
-  🔲 **Still unbuilt:** Shop and Quests UI; BattlePass, Event, InviteFriends; an Inbox
-  SCREEN (needs a v5 field for message history — mail itself does not).
+  🔲 **Still unbuilt:** Shop and Quests UI; BattlePass, Event, InviteFriends.
 - ✅ **LeaderBoards — AD-Meta/AD-Gacha, B47.** Global top-N account-LEVEL board via OrderedDataStore (keyed by userId, published on the Lobby's ProfileLoaded). **Lobby-local: no schema bump, no Game change, no shared canon.** `GetLeaderboard` remote (Remotes 35→36) + blockout screen wired to the HUD button. `docs/systems/leaderboards.md`.
+- ✅ **Inbox — AD-Meta/AD-Gacha, B48 (schema v5).** Stored message-history screen. Adds the `Data.Inbox` field (the FIRST necessary bump since v4 — no inbox field existed), `InboxService` (one writer) + `GetInbox`/`MarkInboxRead` + a blockout screen wired to the HUD button; mail records into it in the SAME save as its grant (exactly-once). Deployed byte-identical to BOTH Places (`91ffab78`, 36/36); **user republishes both.** `docs/systems/inbox.md`.
 
 
 ## Cross-Place

@@ -16,7 +16,7 @@
 
 local ProfileTemplate = {}
 
-ProfileTemplate.SCHEMA_VERSION = 4
+ProfileTemplate.SCHEMA_VERSION = 5
 ProfileTemplate.STORE_NAME = "Beta1_PlayerData" -- one store for the whole Experience (production)
 
 -- Live store name. In Studio ALL data goes to a separate dev store, so playtests and
@@ -68,6 +68,19 @@ export type EventStreak = {
 	LastClaimDayNumber: number,
 }
 
+-- A stored inbox message (schema v5, B48). A CAPPED history of things the player received -- login
+-- gifts, code rewards, dev grants, mail -- so the Inbox screen can list them after the fact. `Day` is
+-- a MetaMath.Slot DAY NUMBER, never a timestamp (cross-phase invariant 3). `Rewards` mirrors
+-- GrantService's view shape (nil for a plain message). `Read` defaults false.
+export type InboxMessage = {
+	Id: string,
+	Title: string,
+	Body: string,
+	Rewards: { any }?,
+	Day: number,
+	Read: boolean,
+}
+
 export type ProfileData = {
 	SchemaVersion: number,
 	PlayerXP: number,
@@ -98,6 +111,8 @@ export type ProfileData = {
 	Spirits: { [string]: { SpiritId: string, ObtainedAt: number } },
 	Battlepass: { SeasonId: string, XP: number, Owned: boolean, ClaimedFree: { [string]: any }, ClaimedPaid: { [string]: any } },
 	Settings: { [string]: any },
+	-- v5 (B48): a CAPPED history of received messages for the Inbox screen. See docs/systems/inbox.md.
+	Inbox: { Messages: { InboxMessage } },
 }
 
 -- New players start with NO units. The Lobby's first-join starter choice grants the first
@@ -124,6 +139,7 @@ ProfileTemplate.Template = {
 	Spirits = {},
 	Battlepass = { SeasonId = "", XP = 0, Owned = false, ClaimedFree = {}, ClaimedPaid = {} },
 	Settings = {},
+	Inbox = { Messages = {} },
 }
 
 -- Migrations[fromVersion] mutates data from fromVersion to fromVersion + 1.
@@ -193,6 +209,15 @@ end
 -- PUBLISH, not the field. If a fourth system needs a field before v4 ships, add it HERE rather than
 -- opening v5.
 ProfileTemplate.Migrations[3] = function(_data)
+	-- intentionally empty; see above
+end
+
+-- v4 -> v5: add `Inbox`, the stored message history for the Inbox screen (B48).
+-- *** ALSO A DELIBERATE NO-OP, SAME REASON AS v2->v3 and v3->v4. ***
+-- `Inbox` is an ADDITIVE-OPTIONAL top-level key and `Reconcile()` runs BEFORE `Migrate()`, so by the
+-- time this executes it is already present as `{ Messages = {} }`. Nothing to convert. The step exists
+-- because `Migrate()` WARNS AND STOPS at a missing step -- a gap here would strand every later one.
+ProfileTemplate.Migrations[4] = function(_data)
 	-- intentionally empty; see above
 end
 

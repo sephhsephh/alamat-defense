@@ -10,7 +10,7 @@ The social/meta Place: collection, banners, stage + difficulty select, parties, 
 - **Trait rarity table (B12):** `RS.Configs.Traits.*` are SHARED canon; API is `TraitRegistry.Roll(rng)`, not `RollTrait`.
 - **`UnitStatsCatalog`** = GENERATED cache of resolved base DMG/RNG/SPA at tier 1 / ML 1 / mid-roll / asc 0, **SPA already inverted**.
   AD-Game owns it; **Farm has no DMG/SPA keys**. ADR-0003.
-- **Boot:** `Server.Bootstrap` asserts the save contract, runs `PlayerDataService.Init()`. **Schema v4** (`8e4224b9`, PUBLISHED B40)
+- **Boot:** `Server.Bootstrap` asserts the save contract, runs `PlayerDataService.Init()`. **Schema v5** (`91ffab78`, B48; user republishes both)
   from **Beta1_PlayerDataDev1** (prod **Beta1_PlayerData**) — shares the Game's profile.
 - **Scene:** `Workspace.Lobby` blockout hub. **Its presence is the Lobby Place assertion**, paired with `RS.Configs.Towers` being ABSENT.
 - **Flow:** - **`GetUnitViews` is the SINGLE profile read path** (ADR-0004): additive changes are free, a breaking one needs contract
@@ -135,8 +135,8 @@ lookups are NON-RECURSIVE on purpose. **`ReserveServer` is 403 in Studio**; the 
 - **Teleport v3/v4 do NOT interoperate:** a partial publish breaks EVERY launch.
 - **AD-UI:** unit models are all `UnitModels.Placeholder`; `ItemHoverCard` split. `QuickSellButton` wired B31; `FavoriteButton` +
   `LockUnitButon` (sic) wired B32 through `UnitFlagsService`. **HUD button names all END IN `Button`** — B40 lost a live run looking up
-  `RedeemCodes` because this list used to abbreviate them. **Unwired:** `InviteFriends`/`Inbox`/`BattlePass`/`Event`/
-  `Quests`Button. **Wired:** `Settings`, `RedeemCodes` (B40), `DailyRewards` (B38/B40), `LeaderBoards` (B47, global level board).
+  `RedeemCodes` because this list used to abbreviate them. **Unwired:** `InviteFriends`/`BattlePass`/`Event`/
+  `Quests`Button. **Wired:** `Settings`, `RedeemCodes` (B40), `DailyRewards` (B38/B40), `LeaderBoards` (B47), `Inbox` (B48, v5 msg history).
 - **V2 kit: ✅ ADOPTED BOTH PLACES AT B26, v1 RETIRED.** **Canon: `ui-kit.md`.** Rarity is on the ROOT `UIGradient`,
   direct-children-only, **NO tier border** (user, B25); **no `ShinyBadge` in V2**.
 - **B28 — SCREENS SLIDE** via **`Motion.slideIn`/`slideOut`** (opts is a TABLE, and `slideOut` owns BOTH flags); test
