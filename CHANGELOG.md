@@ -1,5 +1,22 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-09-02 [lobby] B49 — AD-Meta/AD-Gacha: **HUD notification badges** — the red count badge on a button when there is something new or claimable on it.
+
+A pure Lobby-UI layer: **no server code, no new remotes, no schema change, no shared canon** (drift unchanged 36/36). Badges on Inbox (unread), Daily + Event (claimable), Quests (claimable), Battlepass (claimable tiers).
+
+### The idea: read the authoritative count, don't re-derive it
+Each system already has a remote returning exactly the state a badge needs, so the controller calls those and counts — rather than duplicating "is this claimable?" logic that would drift from the owning service. Sources: `GetInbox.Unread`, `GetDailyState.CanClaim` (+ `.Event.CanClaim`), `GetQuests` (count of `CanClaim`), `GetBattlepass` (unlocked+unclaimed tiers, Free always + Paid if `Owned`).
+
+### Pieces
+- `StarterGui.HUD.NotifBadgeTemplate` — an authored round red badge (Visible=false, a plain Frame so it never captures input; clicks pass through). Anchored (1,0) INSET at the button's top-right corner, so it stays fully visible even on the right-edge-anchored panels (a corner-overlap badge clips off-screen there).
+- `StarterGui.HUD.NotificationController` — clones one badge per configured button, calls the 4 remotes once each on refresh, shows/hides each badge (`>9` → `9+`). Adding a badge later = one `{path, source}` row + a count extractor.
+- Refresh: on join + a 15s poll + `ClientEvents.RefreshBadges`. The event is fired by **`ShowRewards`** (every claim reveal — Quests/Daily/Battlepass — fires it, so all claim paths are covered with NO edits to those controllers) and by the Inbox controller after it mark-all-reads on open.
+
+### Verified LIVE (B49)
+Dev profile (BP level 22, event claimable, one unread inbox msg): badges showed **Battlepass 9+** (15 claimable tiers), **Event 1**, **Inbox 1**; Daily and Quests correctly showed nothing (`Resets in ...`). Opening the Inbox mark-all-read + fired `RefreshBadges` and its badge cleared immediately (`true → false`). One layout fix mid-test: moved the badge from a corner-overlap (clipped by the screen edge on the right panels) to an inset corner.
+
+Dev residue: **3 test inbox messages** now sit in the dev profile (2 from B48 + 1 from this test) — harmless, say the word to clear. Docs: new `docs/systems/notifications.md`; OWNERSHIP row; STATE/CONTEXT/ROADMAP/INDEX updated. Commit is local — `git push` pending (and B48's `ac7b8b1` may still be unpushed — git shows ahead of origin).
+
 ## 2026-09-02 [both] B48 — AD-Meta/AD-Gacha: **Inbox + schema v5** — a stored message-history screen, on the first genuinely necessary `ProfileTemplate` bump since v4.
 
 The Inbox screen (the last unwired upper-right HUD button) needed a place to store history, and — unlike every meta system since v4 — no field existed for it. So this is a **v4 → v5 schema bump**, done with the USER's explicit sign-off (the save schema is AD-Game's canon; AD-Game: your schema is now v5, deployed + verified). `ProfileTemplate` `8e4224b9 → 91ffab78`, **deployed byte-identical to BOTH Places in one session, manifest updated, 36/36 verified in both.** Remotes 36 → 38.

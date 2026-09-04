@@ -75,9 +75,9 @@
   writer of `Data.LoginStreak`**, the HUD button, and the `DevDailyRewind` harness. Read it for the
   worked example of **why a click-to-claim reward must NOT use `RewardPush`**, and for `Day` vs
   `NextDay` — a bug that was invisible to reading. Split out of `rewards.md` at B38 on its cap.
-- `lobby-ui.md` — the LOBBY's screens only (Units, Items, Collection, Hotbar, CurrencyBar, HUD
-  buttons, the legacy script-built four) + the `DevAutoOpen` Studio harness. Split out of
-  `places/lobby/CONTEXT.md` at A5 when that file passed its 150-line cap.
+- `lobby-ui.md` — the LOBBY's screens only (Units, Items, Collection, Hotbar, CurrencyBar, HUD buttons,
+  the legacy script-built four) + the `DevAutoOpen` harness. Split from `lobby/CONTEXT.md` at A5.
+- `notifications.md` — **AD-Meta/AD-Gacha canon, LOBBY**: the HUD "new/claimable" count badges (B49). Reads authoritative counts from existing remotes (Inbox/Daily/Event/Quests/BP), `NotificationController` + `NotifBadgeTemplate` + `RefreshBadges`; no server code. Read before adding a badge.
 - `settings.md` — **AD-Game + AD-UI canon, BOTH Places**: the ONE settings system (B35). `Scope`
   (Both/GameOnly/LobbyOnly) + `Kind` (Preference/Action) mean the shared screen builder has no
   Place branch at all. Read the `Sanitize`-is-Scope-blind warning before touching it: one profile

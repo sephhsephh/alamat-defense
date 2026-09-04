@@ -27,6 +27,7 @@ task touches — resolved at bootstrap per the constitution.
 | Quests / login / codes / battlepass (future) | AD-Meta | Lobby | TBD when built |
 | Leaderboards (global account-level board) | AD-Meta/AD-Gacha | Lobby | Studio (Lobby) `SSS.Server.Meta.LeaderboardService` + `RS.Configs.Meta.LeaderboardConfig` + `RS.Remotes.GetLeaderboard` + `StarterGui.LeaderBoards` + `docs/systems/leaderboards.md` (built B47, 2026-09-02). OrderedDataStore-backed; screen art re-skinnable (AD-UI). |
 | Inbox (stored message history) | AD-Meta/AD-Gacha | Lobby | Studio (Lobby) `SSS.Server.Meta.InboxService` + `RS.Remotes.{GetInbox,MarkInboxRead}` + `ServerStorage.InboxRecord` + `StarterGui.Inbox` + `docs/systems/inbox.md` (built B48, 2026-09-02). Backed by the **v5** `Data.Inbox` field (schema is AD-Game's; bumped B48 with user sign-off). Screen art re-skinnable (AD-UI). |
+| HUD notification badges | AD-Meta/AD-Gacha | Lobby | Studio (Lobby) `StarterGui.HUD.{NotificationController,NotifBadgeTemplate}` + `ClientEvents.RefreshBadges` + `docs/systems/notifications.md` (built B49, 2026-09-02). Pure client layer — reads counts from existing remotes (Inbox/Daily/Quests/Battlepass); no server code. |
 | Evolution / spirits (future) | AD-Gacha | Lobby | TBD when built |
 | UI (StarterGui screens, HUD, panels) | AD-UI | both | Studio (per Place) StarterGui + `docs/systems/ui.md` (when migrated) |
 | PlayerLevel / progression curves | AD-PlayerLevel | Game | Studio (Game) `RS.Configs.Global.TowerProgressionConfig`, `MetaScalingConfig` |

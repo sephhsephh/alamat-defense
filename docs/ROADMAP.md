@@ -453,6 +453,7 @@ everything untradeable at launch).
   🔲 **Still unbuilt:** Shop and Quests UI; BattlePass, Event, InviteFriends.
 - ✅ **LeaderBoards — AD-Meta/AD-Gacha, B47.** Global top-N account-LEVEL board via OrderedDataStore (keyed by userId, published on the Lobby's ProfileLoaded). **Lobby-local: no schema bump, no Game change, no shared canon.** `GetLeaderboard` remote (Remotes 35→36) + blockout screen wired to the HUD button. `docs/systems/leaderboards.md`.
 - ✅ **Inbox — AD-Meta/AD-Gacha, B48 (schema v5).** Stored message-history screen. Adds the `Data.Inbox` field (the FIRST necessary bump since v4 — no inbox field existed), `InboxService` (one writer) + `GetInbox`/`MarkInboxRead` + a blockout screen wired to the HUD button; mail records into it in the SAME save as its grant (exactly-once). Deployed byte-identical to BOTH Places (`91ffab78`, 36/36); **user republishes both.** `docs/systems/inbox.md`.
+- ✅ **HUD notification badges — AD-Meta/AD-Gacha, B49.** Red count badges on Inbox/Daily/Event/Quests/BattlePass buttons when something is new/claimable. Pure client layer: reads authoritative counts from the existing remotes (no server code, no new data), `NotificationController` + `HUD.NotifBadgeTemplate`, refreshed on join / 15s poll / `ShowRewards` + mark-read. `docs/systems/notifications.md`.
 
 
 ## Cross-Place

@@ -47,7 +47,7 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
   never the caller's thread.
 - **B32/B33:** `UIKit.Sound` + `UIKit.Confirm` (2s gate); `Button` DETECTS panel vs flat; siblings use `optionalSibling` (10s+stub).
   `Remotes`=**38** (B48 +`GetInbox`/`MarkInboxRead`; B47 +`GetLeaderboard`; B44 +rerolls). `CurrencyChanged` is a server→client PING with **no payload** (a balance on the wire = a second source of truth
-  beside ADR-0004's `GetUnitViews`). **TOAST EVENTS, LABEL STATE.**
+  beside ADR-0004's `GetUnitViews`). **TOAST EVENTS, LABEL STATE.** **B49: HUD NOTIFICATION BADGES** — red counts on Inbox/Daily/Event/Quests/BP from the existing remotes (no server code, no new remote); `NotificationController` + `HUD.NotifBadgeTemplate` + `ClientEvents.RefreshBadges`. `notifications.md`.
 - **NOT A PENDING — DO NOT RE-RAISE (USER, B40): the empty SoundIds are DELIBERATE** — the user fills all 13 slots **at release**;
   silence in development is expected. Same standing class as the 0.05 `UIHoverStroke.Thickness`. **STILL UNCONFIRMED — ASK THE USER:
   `ConfirmationPopupUI` IS in the GAME** (23-descendant tree, every part `UIKit.Confirm` needs). B41's settings actions now CALL

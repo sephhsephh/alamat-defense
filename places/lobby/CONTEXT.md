@@ -136,7 +136,7 @@ lookups are NON-RECURSIVE on purpose. **`ReserveServer` is 403 in Studio**; the 
 - **AD-UI:** unit models are all `UnitModels.Placeholder`; `ItemHoverCard` split. `QuickSellButton` wired B31; `FavoriteButton` +
   `LockUnitButon` (sic) wired B32 through `UnitFlagsService`. **HUD button names all END IN `Button`** — B40 lost a live run looking up
   `RedeemCodes` because this list used to abbreviate them. **Unwired:** `InviteFriends`/`BattlePass`/`Event`/
-  `Quests`Button. **Wired:** `Settings`, `RedeemCodes` (B40), `DailyRewards` (B38/B40), `LeaderBoards` (B47), `Inbox` (B48, v5 msg history).
+  `Quests`Button. **Wired:** `Settings`, `RedeemCodes` (B40), `DailyRewards` (B38/B40), `LeaderBoards` (B47), `Inbox` (B48, v5). **HUD notification badges** (B49) on Inbox/Daily/Event/Quests/BP — counts from existing remotes, `notifications.md`.
 - **V2 kit: ✅ ADOPTED BOTH PLACES AT B26, v1 RETIRED.** **Canon: `ui-kit.md`.** Rarity is on the ROOT `UIGradient`,
   direct-children-only, **NO tier border** (user, B25); **no `ShinyBadge` in V2**.
 - **B28 — SCREENS SLIDE** via **`Motion.slideIn`/`slideOut`** (opts is a TABLE, and `slideOut` owns BOTH flags); test
