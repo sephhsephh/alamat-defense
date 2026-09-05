@@ -1,5 +1,29 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-09-04 [both] B51 — AD-Game: **Challenges (Phase D / D2, Game side)** — the daily harder match that DROPS crafting fragments, plus two shared modules promoted to the Game.
+
+Blueprint **Phase D / D2**, the fragment SOURCE that D1 crafting (B50) was built for. A challenge is a **Classic match plus modifiers plus a fragment reward**, resolved SERVER-AUTHORITATIVELY. The Game side is complete and verified; the Lobby "Challenge" tab is a small follow-up (the proposal always drew that line).
+
+### Two shared modules reach the Game (exactly what "Phase D" was reserved for)
+The daily pick needs the same deterministic Slot the Lobby's shop/daily/quests use, so B51 **deployed `MetaMath` to the Game** (it was Lobby-only with a manifest note saying "until Phase D"; `deployed.Game` was `null`) and **promoted `MetaConfig` to shared canon** — byte-identical to the Lobby original (`5166d377`, len 1414), so **the Lobby needs no republish for it**. Both deployed via a base64 transport and verified by in-Studio hash; `HashShared`/manifest updated; **drift is now 37/37 GREEN in both Places**. (MetaConfig's header still reads "LOBBY-LOCAL" — kept byte-identical on purpose; a comment-only refresh rides the next AD-Gacha Lobby touch, the RewardScalingConfig-header precedent.)
+
+### Server-authoritative, so a forged payload can't cheat it
+The Lobby only asks to launch "the challenge" (`GameMode = "Challenge"` — an **additive, forward-tolerant** payload field, no version bump). `MatchEntryService` resolves the day's stage, modifiers AND reward from `ChallengeConfig.GetDaily()` off the day Slot, **overriding the payload** — verified: a payload naming a junk `StageId` is ignored and the real challenge stage runs. The day Slot is stashed on the match config at entry and re-read at grant, so a match that straddles the daily reset still pays the day it started.
+
+### The pieces (all Game-local except the two shared modules)
+- `RS.Configs.Global.ChallengeConfig` (pure) — a challenge POOL + `GetForSlot`/`GetDaily` (deterministic rotation) + `RewardsForSlot` (a rotating fragment colour, 2–3, ~10% bonus artifact) + `Validate`.
+- `RS.Configs.Global.MatchModifiersConfig` (pure) — modifier ids → effects + `Resolve`/`ApplyLives`. **Live modifiers:** `EnemyHpX1_5`, `EnemyHpX2` (fold into `EnemyHealthScale`), `HalfLives` (LivesMult), `OneLife` (LivesCap). **Named but NOT-YET-APPLIED** (no live modifier uses them, so nothing silently no-ops): `RangeMult`/`SpaMult` (tower-stat seam) and `NoFarm` (economy seam).
+- `SSS.Server.GameModes.Challenge` (registered in `GameModeRegistry`) — a thin GameMode over Classic (reuses its waves/win-lose/wave-scale by reference); logs the live modifiers on start.
+- **Modifier application** — `MatchDirector.buildValidatedMatchState`, the ONE place, as a GENERIC step for any match carrying `MatchModifiers` (so the mode stays free of modifier math): `EnemyHealthScale *= EnemyHpMult`, `startingLives = ApplyLives(...)`, floored at 1.
+- **Reward + counter** — `RewardCalculator.GrantForPlayer` appends the day's fragments to `drops` (SAME `ItemCatalog`-Kind routing → `AddItem`, SAME end screen) and increments `Counters.Global.ChallengeClears` (lifetime + monotonic, the counter-name contract a Lobby quest can read).
+
+### Verified LIVE (B51, fresh Play server VM)
+Config resolvers deterministic (`GetForSlot` identical twice; rotation across slots); `Validate` clean. `BuildRawConfig` with a challenge payload → `GameMode=Challenge`, junk `StageId` ignored, modifiers + `ChallengeDaySlot` server-picked. A `StartMatch` peek: `Stage1_Act1` (base 3 lives) with `EnemyHpX2 + HalfLives` ran at **Lives = 1, EnemyHealthScale = 2.0** (`GameMode.Id = Challenge`), then aborted clean (no leak). A challenge `Victory` through the real `GrantForPlayer` committed **`FragmentGreen` 0→2** (on the end-screen Drops) and **`ChallengeClears` 0→1**. Boot clean, no module load errors, drift 37/37 both Places.
+
+### USER TODO + deferred
+**Republish the GAME** (it gained `MetaMath`, `MetaConfig`, `ChallengeConfig`, `MatchModifiersConfig`, the `Challenge` mode, and edits to `MatchDirector`/`MatchEntryService`/`RewardCalculator`/`GameModeRegistry`) — the **Lobby needs no republish for D2** (its MetaConfig is byte-identical; the Challenge tab is not built yet). Combined with B50, republishing **both** Places once ships B50 + B51. **Deferred:** the Lobby "Challenge" tab (launch + a display of today's challenge — needs a Game→Lobby remote or a shared `ChallengeConfig`), varied base stages + bespoke challenge waves, and the `RangeMult`/`SpaMult`/`NoFarm` modifiers (add each at its seam). Dev residue: the challenge verification granted `FragmentGreen` ×2 + `ChallengeClears` = 1 to the dev profile — harmless, say the word to clear. Docs: new `docs/systems/challenges.md`; proposal marked shipped; STATE/ROADMAP/OWNERSHIP/INDEX updated; RecentChanges (Game) mirrored; manifest 37 modules.
+
+
 ## 2026-09-02 [both] B50 — AD-Meta/AD-Gacha: **Crafting (Phase D / D1)** — combine fragments into colour artifacts, then into the Rainbow, on a SHARED `ItemCatalog` bump.
 
 Blueprint **Phase D / D1**. The recipe: 2 same-colour **fragments** → 1 colour **artifact** (×7 colours), then all 7 colour artifacts → the **Rainbow** artifact. Spend + grant go through the ONE path (`GrantService`), so crafting inherits its all-or-nothing guarantees for free.

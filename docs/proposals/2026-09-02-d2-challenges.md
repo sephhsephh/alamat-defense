@@ -1,5 +1,5 @@
 # D2 Challenges — the rotating modifier stage that feeds crafting (needs the Game place)
-<!-- from: AD-Meta/AD-Gacha | to: AD-Game (Game place) | status: OPEN | 2026-09-02 (B50) -->
+<!-- from: AD-Meta/AD-Gacha | to: AD-Game (Game place) | status: GAME SIDE SHIPPED B51 (2026-09-04) -- see docs/systems/challenges.md; Lobby tab is the remaining follow-up | 2026-09-02 (B50) -->
 
 ## The ask
 Build **Phase D / D2 challenges**: a daily-rotating modifier stage, entered from the Lobby, that at

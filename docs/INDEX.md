@@ -76,6 +76,7 @@
   the legacy script-built four) + the `DevAutoOpen` harness. Split from `lobby/CONTEXT.md` at A5.
 - `notifications.md` — **AD-Meta/AD-Gacha canon, LOBBY**: the HUD "new/claimable" count badges (B49). Reads authoritative counts from existing remotes (Inbox/Daily/Event/Quests/BP), `NotificationController` + `NotifBadgeTemplate` + `RefreshBadges`; no server code. Read before adding a badge.
 - `crafting.md` — **AD-Meta/AD-Gacha canon, LOBBY**: fragments→artifacts→Rainbow crafting (B50, Phase D/D1). 15 SHARED `ItemCatalog` items (both Places `2ee5f976`); `CraftingRecipes` (pure) + `CraftingService` (SpendItems→Grant, ONE path) + `GetCraftInfo`/`Craft` + NPC screen; fragments from an interim shop source until D2. Read before touching recipes or the item catalog.
+- `challenges.md` — **AD-Game canon, GAME (+ MetaMath/MetaConfig shared)**: the daily CHALLENGE stage (B51, Phase D/D2) — a harder match whose Victory drops crafting fragments (the real source). SERVER-AUTHORITATIVE `ChallengeConfig.GetDaily()`; `MatchModifiersConfig` (EnemyHp/lives applied in MatchDirector); reward + `ChallengeClears` in RewardCalculator; `Challenge` GameMode. Deployed `MetaMath`+`MetaConfig` to the Game. Read before touching the challenge, its modifiers, or the match-modifier seam.
 - `settings.md` — **AD-Game + AD-UI canon, BOTH Places**: the ONE settings system (B35). `Scope`
   (Both/GameOnly/LobbyOnly) + `Kind` (Preference/Action) mean the shared screen builder has no
   Place branch at all. Read the `Sanitize`-is-Scope-blind warning before touching it: one profile

@@ -88,10 +88,22 @@
       "owner": "gacha",
       "deployPath": "ReplicatedStorage.Shared.MetaMath",
       "deployed": {
-        "Game": null,
+        "Game": "6badac1d",
         "Lobby": "6badac1d"
       },
-      "comment": "Added B3 2026-08-09 (AD-Gacha, Lobby). The algorithms the blueprint says to implement ONCE for every meta system: Slot(period, offsetSec) deterministic time buckets (rotations/resets agree across servers with no MessagingService and no stored state), RngForSlot(slot, salt), Pick(rng, {{v,w}}) weighted choice, PickDistinct. Cross-phase invariant 3 routes every reset/rotation through Slot(). PURE -- no services, no state, no config reads; the reset-hour knob is MetaConfig.ResetOffsetSec and is passed IN, which is what keeps this Place-neutral. NOTE the `salt` argument on RngForSlot: without it two banners sharing a RotationPeriod would draw the identical featured set forever. GAME DEPLOY PENDING -- deliberately NOT deployed there yet: nothing in the Game reads it until Phase D challenges need Slot(), so the Game reporting MISSING is the EXPECTED state, not drift. Deploy it (and flip deployed.Game) in the session that first needs it.",
+      "comment": "Added B3 2026-08-09 (AD-Gacha, Lobby). The algorithms the blueprint says to implement ONCE for every meta system: Slot(period, offsetSec) deterministic time buckets (rotations/resets agree across servers with no MessagingService and no stored state), RngForSlot(slot, salt), Pick(rng, {{v,w}}) weighted choice, PickDistinct. Cross-phase invariant 3 routes every reset/rotation through Slot(). PURE -- no services, no state, no config reads; the reset-hour knob is MetaConfig.ResetOffsetSec and is passed IN, which is what keeps this Place-neutral. NOTE the `salt` argument on RngForSlot: without it two banners sharing a RotationPeriod would draw the identical featured set forever. GAME DEPLOY PENDING -- deliberately NOT deployed there yet: nothing in the Game reads it until Phase D challenges need Slot(), so the Game reporting MISSING is the EXPECTED state, not drift. Deploy it (and flip deployed.Game) in the session that first needs it. DEPLOYED to the Game at B51 (Phase D / D2 challenges) -- the first Game-side consumer, exactly as the 'Lobby-only until Phase D' note anticipated. Now present in BOTH Places.",
+      "kind": "module"
+    },
+    "MetaConfig": {
+      "file": "shared/src/MetaConfig.luau",
+      "hash": "5166d377",
+      "owner": "gacha",
+      "deployPath": "ReplicatedStorage.Configs.Meta.MetaConfig",
+      "deployed": {
+        "Game": "5166d377",
+        "Lobby": "5166d377"
+      },
+      "comment": "Promoted to shared canon at B51 (Phase D / D2 challenges), byte-identical to the Lobby original (len 1414). Deployed to the Game so ChallengeConfig computes the SAME daily Slot boundary the Lobby's shop/daily/quests use. Its header still reads 'LOBBY-LOCAL' -- kept byte-identical so the Lobby needs no republish; refresh that line (comment-only re-hash + both-Place redeploy) next time an AD-Gacha session touches the Lobby, the RewardScalingConfig-header precedent.",
       "kind": "module"
     },
     "PlayerDataService": {

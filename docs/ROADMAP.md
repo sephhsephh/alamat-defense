@@ -788,7 +788,7 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
 
 ### Phase D — Economy loops
 - ✅ **Crafting (D1) — AD-Meta/AD-Gacha, B50.** fragments→colour artifacts (2:1)→Rainbow (all 7). 15 shared `ItemCatalog` items (`9be86a5f`→`2ee5f976`, both Places, 36/36; user republishes), pure `CraftingRecipes` + `CraftingService` (spend+grant via GrantService) + `GetCraftInfo`/`Craft` + NPC-opened screen (`NPC_Craft`). Interim fragment source = shop; artifacts are owned items, gameplay use DEFERRED. `docs/systems/crafting.md`.
-- 🔲 **Challenges (D2)** — the rotating daily-modifier stage + match-end fragment/artifact rewards (the REAL crafting source). Game place (AD-Game); proposal `docs/proposals/2026-09-02-d2-challenges.md`. Reward ids already catalogued both Places (B50).
+- ✅ **Challenges (D2) — GAME SIDE, AD-Game, B51.** Daily-rotating harder match → match-end fragment reward (the REAL crafting source). SERVER-AUTHORITATIVE off `ChallengeConfig.GetDaily()` (`MetaMath.Slot`); modifiers (`EnemyHp`/lives) applied generically in `MatchDirector`; reward + `Counters.Global.ChallengeClears` in `RewardCalculator`; `Challenge` GameMode over Classic. Deployed `MetaMath`+`MetaConfig` to the Game (37/37, user republishes the Game). `docs/systems/challenges.md`. **Follow-up:** the Lobby "Challenge" tab (launch + display), varied base stages, and the `RangeMult`/`SpaMult`/`NoFarm` modifiers.
 - 🔲 Shop NPC (per-player daily stock keyed by day number; ShopConfig; Silver prices)
 - 🔲 Daily login (7-day repeating cycle, deterministic reset hour config)
 - 🔲 Quests + pinned-quest tracker in both Places (QuestConfig; progress via Counters;

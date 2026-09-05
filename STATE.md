@@ -14,9 +14,9 @@ and the gacha engine (Standard + Event + Selection banners; ascension AND sellin
   combat, the stat resolver, match runtime. Detail: `places/game/CONTEXT.md`.
 - **Lobby** — the social/meta Place, scene `Workspace.Lobby`. **`GetUnitViews` is its SINGLE profile
   read path** (ADR-0004); **`GrantService` is its SINGLE grant/spend path**. `places/lobby/CONTEXT.md`.
-- **Shared canon** (`shared/manifest.json`): **36 entries = 29 modules + 7 templates**; B45 re-hashed `ItemCatalog`->**`2ee5f976`** (B50 +15 crafting items) + `RewardScalingConfig`->**`e0a3bc2d`**. Checked start AND end by
+- **Shared canon** (`shared/manifest.json`): **37 entries = 30 modules + 7 templates**; B45 re-hashed `ItemCatalog`->**`2ee5f976`** (B50 +15 crafting items) + `RewardScalingConfig`->**`e0a3bc2d`**; B51 +`MetaConfig` (shared, `5166d377`) and `MetaMath` now in the GAME too. Checked start AND end by
   `ServerStorage.DevTools.HashShared` in each Place (two lines to run) — **compare each live hash to BOTH `hash` and `deployed.<Place>`,
-  field by field; a glance missed real drift for two sessions.** `MetaMath` is Lobby-only until Phase D: **EXPECTED, not drift.** B26
+  field by field; a glance missed real drift for two sessions.** `MetaMath`+`MetaConfig` are now in BOTH Places (B51, Phase D) -- no longer a Game gap. B26
   adopted the V2 kit in BOTH Places and RETIRED `Kit_UnitIcon`/`Kit_ItemIcon`/`Kit_HotbarSlot` (do not re-add). Templates hash as
   INSTANCE trees, no `shared/src` file (ADR-0005).
 
@@ -95,7 +95,6 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 - **B36: the Lobby settings screen is LIVE.** **Tidy (USER):** the dev profile carries a dead `BannerChoices["B29ProbeBanner"]`.
 - **NOT A PENDING — B36's LESSON:** `execute_luau` has plugin capability AND its own require cache — **clone a module to exercise a fresh copy**, and prove behaviour from a REAL Script. **The boot marker goes AFTER `--!strict`** or Luau silently drops strict mode.
 - **B39 REPAIRED B36's `UIKitBootstrap` DRIFT** (→ `9c9539c0`). Comparing each live hash to BOTH `hash` AND `deployed.<Place>` **in code** is what caught it after two sessions of "looking green" — B41 and B43 both ran that way, 36/36.
-- **PENDING (AD-Meta at Phase D):** deploy `MetaMath` to the GAME + flip `deployed.Game`. **Invariant 1 is Lobby-only.**
 - **PENDING (AD-UI, small):** `Kit_ItemHoverCard`'s master/clone split (hover race FIXED B29a; awaiting confirmation).
 - **PENDING (AD-Game, small):** a unit at `MAX_META_LEVEL` **loses stored XP** · promote `TowerProgressionConfig` to shared for per-unit XP.
 - **PENDING (Game):** the `ServerStorage.Documentation` → `docs/systems/` migration. `Data.Items`' only writer is an **INSANE Victory**.
@@ -105,6 +104,7 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 - **Teleport payload v4** (B23) — `docs/contracts/teleport.md`. Hard cutover, **v3 REJECTED**. `LobbyConfig.MatchLaunchVersion` must ALWAYS equal `GameConfig.TeleportPayloadVersion`.
 
 - **NOT A PENDING — B50: CRAFTING (Phase D / D1).** fragments -> colour artifacts (2:1) -> Rainbow (all 7). 15 new SHARED `ItemCatalog` items (`2ee5f976`, deployed BOTH Places 36/36, **USER REPUBLISHES BOTH**); `CraftingService` spends+grants via `GrantService`; pure `CraftingRecipes` + NPC-opened screen (`NPC_Craft`). Interim fragment source = shop (7 frags); REAL source = D2 challenges (Game, proposal). Artifacts are OWNED items, gameplay use DEFERRED. `crafting.md`.
+- **NOT A PENDING — B51: CHALLENGES (Phase D / D2, GAME SIDE).** Daily-rotating harder match -> match-end fragment reward (the REAL crafting source). SERVER-AUTHORITATIVE off `ChallengeConfig.GetDaily()` (Lobby only sends `GameMode="Challenge"`; forged payload StageId ignored). Modifiers (`EnemyHp`/lives) applied in `MatchDirector` (GENERIC step, any match); reward + `Counters.Global.ChallengeClears` in `RewardCalculator`; `Challenge` GameMode over Classic. **Deployed `MetaMath`+`MetaConfig` to the GAME (37/37); USER REPUBLISHES THE GAME.** Invariant 1 (one grant path) still Lobby-only. Lobby "Challenge" tab + `RangeMult`/`SpaMult`/`NoFarm` = follow-up. `challenges.md`.
 ## Next up
 
 **✅ PHASE A SIGNED OFF (A9).** **LABEL COLLISION:** changelog `B0…B40` are SESSION COUNTERS; blueprint `B1…B5` are SESSION-TASK names
