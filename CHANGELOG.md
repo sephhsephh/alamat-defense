@@ -1,5 +1,22 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-09-04 [both] B53 -- AD-Game: **Challenges (Phase D / D2) -- economy modifiers** -- a challenge can now make resources scarce, and a fourth daily challenge uses it.
+
+The deferred modifier list was `RangeMult`/`SpaMult`/`NoFarm`. B53 lands the **economy** half of it (the "NoFarm" intent) with a clean, directly-verified seam, and adds a `Scarce Fields` daily challenge. The two tower-stat modifiers stay deferred (their seam is now confirmed and documented, but verifying them needs a full winnable match, best done attended).
+
+### The seam (mirrors `EnemySpawner.SetHealthScale`)
+`EconomyManager` gains two match-wide scalars -- `SetIncomeScale` (kill + wave + wave-start cash) and `SetStartingCashScale` (applied inside `InitPlayer`, so the base amount stays single-sourced in `EconomyConfig`). `MatchDirector` sets both from the resolved `ModifierEffects` before `InitPlayer` seeds cash and before any grant, and `EconomyManager.Reset` clears them at cleanup -- exactly the shape `SetHealthScale` already uses, so a normal match (scales = 1.0) is byte-for-byte unchanged.
+
+### New modifiers + challenge
+`MatchModifiersConfig` gains `IncomeMult` + `StartingCashMult` effects and two modifiers: `Scarcity` (half income + half starting cash) and `LeanStart` (half starting cash). `ChallengeConfig`'s pool grows to **4** with `Scarce Fields` (`EnemyHpX1_5` + `Scarcity`). Both configs are SHARED, so they were re-hashed (`MatchModifiersConfig` `6b209b22 -> 5610e268`, `ChallengeConfig` `c000ba58 -> 097a7bd5`) and redeployed byte-identical to both Places; manifest updated; **drift 39/39 GREEN both Places**. The Lobby screen shows the new challenge with NO Lobby code change (it reads the shared config): verified it renders "Scarce Fields -- Tough enemies (+50% HP) + Scarce resources (half economy)".
+
+### Verified LIVE
+Through a real `EconomyManager`: `InitPlayer` at StartingCashMult 0.5 gave **600** (from `BaseStartingCash` 1200); a `Cash=100` kill at IncomeMult 0.5 granted **50**; `Reset` cleared both scales (next `InitPlayer` = 1200 full). `Resolve{EnemyHpX1_5,Scarcity}` = EnemyHpMult 1.5 / IncomeMult 0.5 / StartingCashMult 0.5; pool rotates tough/sudden/brutal/scarce; `Validate` clean; 39/39 drift both Places.
+
+### USER TODO
+**Republish BOTH Places** (the two shared configs changed; the Game also gained the `EconomyManager`/`MatchDirector` edits). Deferred: `RangeMult`/`SpaMult` tower-stat modifiers (seam confirmed in `TowerController`, needs an attended full-match verify) and varied challenge base stages/waves. Docs: `challenges.md` (economy modifiers + the confirmed tower-stat seam); manifest 39 modules; RecentChanges mirrored both Places.
+
+
 ## 2026-09-04 [both] B52 -- AD-Game/AD-Lobby: **Challenges (Phase D / D2) -- the Lobby tab** -- the daily challenge is now reachable and launchable in-game.
 
 B51 built the challenge Game-side and left the Lobby entry as the one follow-up. B52 is that entry: a player can now SEE today's challenge and START it. Two shared modules and a small server-payload field make it work; verified end to end in Play.

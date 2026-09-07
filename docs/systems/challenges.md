@@ -47,13 +47,24 @@ itself stays free of modifier math):
 | `EnemyHpMult` | folded into `matchState.EnemyHealthScale` (every enemy at spawn) | `EnemyHpX1_5`, `EnemyHpX2` |
 | `LivesMult` | multiplies the resolved starting lives | `HalfLives` |
 | `LivesCap` | hard minimum on starting lives (floored at 1 — never 0) | `OneLife` |
+| `IncomeMult` | scales in-match cash (kill + wave + wave-start), via `EconomyManager.SetIncomeScale` [B53] | `Scarcity` |
+| `StartingCashMult` | scales starting cash, via MatchDirector's `EconomyManager.InitPlayer` call [B53] | `Scarcity`, `LeanStart` |
 
 `Resolve(list)` folds a list: HP/lives mults MULTIPLY, LivesCap takes the MIN. Verified live: a
 challenge on Stage1_Act1 (base 3 lives) with `EnemyHpX2 + HalfLives` ran at **1 life, 2x enemy HP**.
 
-**NOT-YET-APPLIED, named for the roadmap** (deliberately absent from every live modifier so nothing
-silently claims to do something it doesn't): `RangeMult` / `SpaMult` (need a tower-stat seam) and
-`NoFarm` (needs an EconomyManager seam). Add one **here AND at its seam together**.
+The **economy** effects landed at B53 (mirroring `EnemySpawner.SetHealthScale`): a match-wide income
+scale on `EconomyManager` + a starting-cash scale applied at `InitPlayer`, both set once by
+`MatchDirector` from the resolved effects and cleared in `EconomyManager.Reset`. This covers the old
+"NoFarm" intent (`Scarcity` = half income + half starting cash; `LeanStart` = half starting cash).
+Verified: `InitPlayer` at ×0.5 gives 600 (from 1200), a `Cash=100` kill at ×0.5 income grants 50, and
+`Reset` clears both scales. The daily pool now has **4 challenges** (a `Scarce Fields` was added).
+
+**STILL NOT-YET-APPLIED** (deliberately absent from every live modifier): `RangeMult` / `SpaMult`. The
+seam is **confirmed** — a module-level scale on `TowerController` applied to `self.BaseStats` after
+`TowerStatResolver.Resolve` (never editing the SHARED resolver), set by `MatchDirector` like
+`SetHealthScale`. It stays deferred only because it needs a full **winnable** match to verify (a headless
+match can't place towers, so it always loses), which is best done attended. Add each **here AND at its seam together**.
 
 ## The reward + counter (`RewardCalculator`)
 On a **challenge Victory**, `GrantForPlayer` appends the day's `RewardsForSlot(ChallengeDaySlot)` to
@@ -84,7 +95,7 @@ Built at B52. `ChallengeConfig`/`MatchModifiersConfig` are now SHARED (see above
 ## What's still open (follow-ups)
 - **Varied base stages + bespoke challenge wave content** — the pool currently bases every entry on
   `Stage1_Act1`; the challenge is the modifiers + reward, not new waves yet. Tuning follow-up.
-- **`RangeMult`/`SpaMult`/`NoFarm`** modifiers — see the seams noted above.
+- **`RangeMult`/`SpaMult`** tower-stat modifiers — the seam is confirmed (see the modifiers section); deferred pending an attended full-match verify. (`NoFarm`/economy is DONE at B53.)
 
 ## Verifying a change
 `ChallengeConfig.Validate()` checks every template names a stage-shaped id + known modifiers and every
