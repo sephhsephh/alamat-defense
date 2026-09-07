@@ -76,7 +76,7 @@
   the legacy script-built four) + the `DevAutoOpen` harness. Split from `lobby/CONTEXT.md` at A5.
 - `notifications.md` — **AD-Meta/AD-Gacha canon, LOBBY**: the HUD "new/claimable" count badges (B49). Reads authoritative counts from existing remotes (Inbox/Daily/Event/Quests/BP), `NotificationController` + `NotifBadgeTemplate` + `RefreshBadges`; no server code. Read before adding a badge.
 - `crafting.md` — **AD-Meta/AD-Gacha canon, LOBBY**: fragments→artifacts→Rainbow crafting (B50, Phase D/D1). 15 SHARED `ItemCatalog` items (both Places `2ee5f976`); `CraftingRecipes` (pure) + `CraftingService` (SpendItems→Grant, ONE path) + `GetCraftInfo`/`Craft` + NPC screen; fragments from an interim shop source until D2. Read before touching recipes or the item catalog.
-- `challenges.md` — **AD-Game canon, GAME (+ MetaMath/MetaConfig shared)**: the daily CHALLENGE stage (B51, Phase D/D2) — a harder match whose Victory drops crafting fragments (the real source). SERVER-AUTHORITATIVE `ChallengeConfig.GetDaily()`; `MatchModifiersConfig` (EnemyHp/lives applied in MatchDirector); reward + `ChallengeClears` in RewardCalculator; `Challenge` GameMode. Deployed `MetaMath`+`MetaConfig` to the Game. Read before touching the challenge, its modifiers, or the match-modifier seam.
+- `challenges.md` — **AD-Game canon, GAME (+ MetaMath/MetaConfig shared)**: the daily CHALLENGE stage (B51 Game, B52 Lobby tab; Phase D/D2) — a harder match whose Victory drops crafting fragments (the real source). SERVER-AUTHORITATIVE `ChallengeConfig.GetDaily()`; `MatchModifiersConfig` (EnemyHp/lives applied in MatchDirector); reward + `ChallengeClears` in RewardCalculator; `Challenge` GameMode. **Lobby tab (B52):** `StarterGui.Challenge` + `NPC_Challenge` read the SHARED `ChallengeConfig`/`MatchModifiersConfig` and launch via `RequestLaunch` `GameMode="Challenge"`. Read before touching the challenge, its modifiers, or the match-modifier seam.
 - `settings.md` — **AD-Game + AD-UI canon, BOTH Places**: the ONE settings system (B35). `Scope`
   (Both/GameOnly/LobbyOnly) + `Kind` (Preference/Action) mean the shared screen builder has no
   Place branch at all. Read the `Sanitize`-is-Scope-blind warning before touching it: one profile
@@ -129,7 +129,7 @@
 - `2026-08-20-c4-feeding.md` — AD-Gacha: C4 feeding is **blocked on DATA, not code** — no `FeedValue`
   in `ItemCatalog`, no unit XP curve, no `UnitInstance.XP` writer. Needs food + a curve + a source. OPEN.
 - `2026-09-02-inbox-v5.md` — AD-Meta/AD-Gacha → AD-Game: the Inbox screen needs a **v5 schema bump** (a new `Data.Inbox` history field + both-Place publish — the first genuinely necessary bump since v4). Migration + build sketch. OPEN.
-- `2026-09-02-d2-challenges.md` — AD-Meta/AD-Gacha → AD-Game: **D2 challenges** — the rotating modifier stage that DROPS crafting fragments (the real source D1 was built for; interim shop source until then). Needs the Game place. OPEN.
+- `2026-09-02-d2-challenges.md` — AD-Meta/AD-Gacha → AD-Game: **D2 challenges** — the rotating modifier stage that DROPS crafting fragments (the real source D1 was built for; interim shop source until then). SHIPPED B51 (Game) + B52 (Lobby tab).
 - `2026-08-14-reward-preview-wiring.md` — AD-Integration→AD-UI: `RewardScalingConfig` is deployed in
   the Lobby (B20) so the preview has real numbers, but `renderRewards` cannot express a min–max BAND
   and re-runs only on act select while the slider keeps moving. Needs a rendering decision + a

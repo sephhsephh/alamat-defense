@@ -1,5 +1,26 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-09-04 [both] B52 -- AD-Game/AD-Lobby: **Challenges (Phase D / D2) -- the Lobby tab** -- the daily challenge is now reachable and launchable in-game.
+
+B51 built the challenge Game-side and left the Lobby entry as the one follow-up. B52 is that entry: a player can now SEE today's challenge and START it. Two shared modules and a small server-payload field make it work; verified end to end in Play.
+
+### `ChallengeConfig` + `MatchModifiersConfig` promoted to shared canon
+The Lobby needs the day's challenge to display AND launch it, and (per the security stance) rewards stay server-authoritative -- so rather than a Game->Lobby remote, both configs are now SHARED, byte-identical to the Game originals (`ChallengeConfig` `c000ba58`, `MatchModifiersConfig` `6b209b22`), deployed to the Lobby, manifest + `HashShared` updated. **Drift is 39/39 GREEN in both Places.** Their deps (MetaMath, MetaConfig) reached the Game at B51, so the promotion had everything it needed.
+
+### The Lobby screen (all Lobby-local except the two shared configs)
+- `StarterGui.Challenge` + `ChallengeController` -- a blockout screen showing the day's NAME, its MODIFIERS (`MatchModifiersConfig.Describe`) and its REWARD (`ItemCatalog` names), read from the shared `ChallengeConfig.GetDaily()`. Opened from `Workspace.Lobby.NPC_Challenge` (the "Challenge Master" ProximityPrompt, ADR-0010 NPC-screen shape) or `ClientEvents.OpenChallenge`.
+- **It reinvents no launch path.** The Start button fires the EXISTING `Remotes.RequestLaunch` with `GameMode="Challenge"` + the day's `StageId` + `DifficultyPercent=100` (the challenge's difficulty is its MODIFIERS, not the slider) and shows the SAME `LoadingScreen` veil the normal StartButton uses -- one more CALLER of the one remote (blueprint sec 11/12), and it drops the veil on a server error.
+
+### `GameMode` on the wire (additive, no version bump)
+`PartyService` honours a `req.GameMode=="Challenge"` override (only that one; anything else -> the stage's own mode) and passes it to `LaunchService.BuildPayload`, which adds `GameMode` to the `MatchLaunch` payload. It is ADDITIVE + forward-tolerant -- an older Game ignores it and runs the stage's mode -- so **no teleport-version bump** (v4 stands). Absent for a normal launch. The Game still re-resolves the challenge server-authoritatively; the field only REQUESTS it.
+
+### Verified LIVE (B52, Play)
+Both configs require + `GetDaily()`/`Validate()` clean in the Lobby (39/39 drift). `LaunchService.BuildPayload` carries `GameMode="Challenge"` for a challenge and OMITS it for a normal launch. In Play: the screen rendered "Brutal Fields / Brutal enemies (2x HP) + Fragile (half lives) / 2x Violet Fragment"; the Start button built `[CONTRACT] MatchLaunch v4 ... gameMode=Challenge stage=Stage1_Act1` on the server and the veil showed then hid on the (expected) `ReserveServer` 403 -- Studio can't complete a reserved teleport, so the assertion is on the payload BUILT, exactly as every teleport-contract check has been. Boot clean, `ChallengeController ready`, no errors.
+
+### USER TODO
+**Republish BOTH Places.** B52 adds Lobby scripts (`StarterGui.Challenge`, `ChallengeController`, `NPC_Challenge`, edited `PartyService`/`LaunchService`) AND the two now-shared configs to the Lobby; the Game gained them at B51. Combined with B50/B51, republishing both once ships the whole crafting+challenge loop. Deferred: varied challenge base stages/waves, and the `RangeMult`/`SpaMult`/`NoFarm` modifiers (each needs its own seam). Docs: `docs/systems/challenges.md` updated (Lobby tab section); proposal marked shipped; STATE/ROADMAP/OWNERSHIP/INDEX updated; manifest 39 modules; RecentChanges mirrored both Places.
+
+
 ## 2026-09-04 [both] B51 — AD-Game: **Challenges (Phase D / D2, Game side)** — the daily harder match that DROPS crafting fragments, plus two shared modules promoted to the Game.
 
 Blueprint **Phase D / D2**, the fragment SOURCE that D1 crafting (B50) was built for. A challenge is a **Classic match plus modifiers plus a fragment reward**, resolved SERVER-AUTHORITATIVELY. The Game side is complete and verified; the Lobby "Challenge" tab is a small follow-up (the proposal always drew that line).

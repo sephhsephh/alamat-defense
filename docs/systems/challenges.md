@@ -1,5 +1,5 @@
 # challenges — the daily challenge stage (Game meta, AD-Game)
-<!-- owner: AD-Game | scope: game (+ MetaMath/MetaConfig shared) | added: 2026-09-04 (B51, Phase D/D2) -->
+<!-- owner: AD-Game | scope: game + lobby (ChallengeConfig/MatchModifiersConfig/MetaMath/MetaConfig shared) | added: 2026-09-04 (B51 Game side, B52 Lobby tab), Phase D/D2 -->
 
 Blueprint Phase D / D2. A **daily-rotating challenge**: a harder match (modifiers) whose Victory
 drops the crafting **fragments** — the real SOURCE the crafting loop (D1, B50) was built for. Until
@@ -25,7 +25,9 @@ choose the reward.
 SAME deterministic daily boundary the Lobby's shop/daily/quests use. This is why B51 **deployed
 MetaMath to the Game** (it was Lobby-only "until Phase D", exactly as its manifest note anticipated)
 and **promoted MetaConfig to shared canon** (byte-identical, `5166d377`, both Places) — challenges are
-the first Game-side consumer of both. Drift is now 37/37 in both Places.
+the first Game-side consumer of both. B52 then promoted `ChallengeConfig` (`c000ba58`) and
+`MatchModifiersConfig` (`6b209b22`) to shared canon too, so the Lobby reads the SAME `GetDaily()` the Game
+resolves. Drift is now 39/39 in both Places.
 
 - `GetForSlot(slot)` rotates the POOL by `slot % #POOL` and derives the reward from the slot, so entry
   and match-end agree even minutes apart. `RewardsForSlot(slot)` is a pure `RngForSlot`-seeded pick of
@@ -61,12 +63,25 @@ On a **challenge Victory**, `GrantForPlayer` appends the day's `RewardsForSlot(C
 contract as `Clears`/`InsaneVictories`, so a Lobby quest can read it as a baseline delta. Verified
 live: a challenge Victory committed `FragmentGreen` +2 and `ChallengeClears` 0->1.
 
-## What's still open (follow-ups, NOT built at B51)
-- **The Lobby "Challenge" tab** — a stage-select entry that launches `GameMode="Challenge"` and shows
-  the player what today's challenge is. The Game side is complete and testable via the harness without
-  it; the launch needs only `GameMode="Challenge"` on `RequestLaunch`. A display of today's challenge
-  needs the Lobby to know the daily pick — either a small Game->Lobby remote, or promote `ChallengeConfig`
-  to shared canon.
+## The Lobby Challenge tab (B52)
+Built at B52. `ChallengeConfig`/`MatchModifiersConfig` are now SHARED (see above), so the Lobby reads
+`ChallengeConfig.GetDaily()` directly to DISPLAY and LAUNCH today's challenge -- no Game->Lobby remote.
+- **`StarterGui.Challenge` + `ChallengeController`** -- a blockout screen showing the day's name, its
+  modifiers (`MatchModifiersConfig.Describe`) and reward (`ItemCatalog` names). Opened from
+  `Workspace.Lobby.NPC_Challenge` (the "Challenge Master" ProximityPrompt, ADR-0010 NPC-screen shape) or
+  `ClientEvents.OpenChallenge`. Its **Start** button fires the EXISTING `Remotes.RequestLaunch` with
+  `GameMode="Challenge"` + the day's `StageId` + `DifficultyPercent=100` (the modifiers, not the slider,
+  are the difficulty) and shows the SAME `LoadingScreen` veil the StartButton uses. It reinvents no
+  launch path -- one more CALLER of the one remote (blueprint sec 11/12).
+- **`GameMode` on the wire** -- `PartyService` honours a `req.GameMode=="Challenge"` override (only that
+  one) and passes it to `LaunchService.BuildPayload`, which adds `GameMode` to the `MatchLaunch` payload.
+  ADDITIVE + forward-tolerant (an older Game ignores it), so NO teleport-version bump. Absent for a normal
+  launch. The Game re-resolves the challenge server-authoritatively, so the payload is only a request.
+  Verified live: the Lobby screen rendered "Brutal Fields / 2x HP + half lives / 2x Violet Fragment",
+  Start built `MatchLaunch v4 ... gameMode=Challenge stage=Stage1_Act1` (ReserveServer is 403 in Studio,
+  so the assertion is on the payload BUILT, as with every teleport-contract check).
+
+## What's still open (follow-ups)
 - **Varied base stages + bespoke challenge wave content** — the pool currently bases every entry on
   `Stage1_Act1`; the challenge is the modifiers + reward, not new waves yet. Tuning follow-up.
 - **`RangeMult`/`SpaMult`/`NoFarm`** modifiers — see the seams noted above.

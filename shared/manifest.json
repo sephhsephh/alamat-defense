@@ -106,6 +106,30 @@
       "comment": "Promoted to shared canon at B51 (Phase D / D2 challenges), byte-identical to the Lobby original (len 1414). Deployed to the Game so ChallengeConfig computes the SAME daily Slot boundary the Lobby's shop/daily/quests use. Its header still reads 'LOBBY-LOCAL' -- kept byte-identical so the Lobby needs no republish; refresh that line (comment-only re-hash + both-Place redeploy) next time an AD-Gacha session touches the Lobby, the RewardScalingConfig-header precedent.",
       "kind": "module"
     },
+    "MatchModifiersConfig": {
+      "file": "shared/src/MatchModifiersConfig.luau",
+      "hash": "6b209b22",
+      "owner": "game",
+      "deployPath": "ReplicatedStorage.Configs.Global.MatchModifiersConfig",
+      "deployed": {
+        "Game": "6b209b22",
+        "Lobby": "6b209b22"
+      },
+      "comment": "Promoted to shared canon at B52 (Phase D / D2 -- the Lobby Challenge tab), byte-identical to the Game original. The Lobby reads it to describe the day's modifiers; the Game applies them in MatchDirector. Pure, no deps.",
+      "kind": "module"
+    },
+    "ChallengeConfig": {
+      "file": "shared/src/ChallengeConfig.luau",
+      "hash": "c000ba58",
+      "owner": "game",
+      "deployPath": "ReplicatedStorage.Configs.Global.ChallengeConfig",
+      "deployed": {
+        "Game": "c000ba58",
+        "Lobby": "c000ba58"
+      },
+      "comment": "Promoted to shared canon at B52 (Phase D / D2 -- the Lobby Challenge tab), byte-identical to the Game original. The Lobby reads GetDaily() to display + launch today's challenge; the Game re-resolves it server-authoritatively at entry + match-end. Requires MetaMath + MetaConfig + MatchModifiersConfig (all shared).",
+      "kind": "module"
+    },
     "PlayerDataService": {
       "file": "shared/src/PlayerDataService.luau",
       "hash": "613f0d39",
