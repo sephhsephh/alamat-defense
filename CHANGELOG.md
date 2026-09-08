@@ -1,5 +1,29 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-09-08 [lobby] B55 -- AD-UI/AD-Gacha: **the summon screen rebuilt to the reference**, plus Luck, gem packs and auto-sell.
+
+The user supplied a reference screen and four decisions: the packs grant currency **and a real timed Luck buff**, bought with **Robux Developer Products**; the currency stays Gold (the gem art is a placeholder); four tabs become **three** (Friend dropped) mapped to the banner TYPES this game already has; the rarity pill is removed; auto-sell offers **the game's real six tiers, Common included**; and the reference's bottom bar is a composite of another screen, so it is ignored.
+
+**The layout.** `Panel` is now three columns -- `Tabs` (left rail) / `Banner` (centre) / `Packs` (right). The B6 CAROUSEL is gone: one card per banner with prev/next arrows is a different shape, so the layout was rebuilt rather than bent. `ChoiceOverlay`, `ChooseButton` and `ClosedOverlay` were REPARENTED out of the dead `BannerCardTemplate` onto `Banner`, which is why the B30 Selection flow survived the rebuild. **Tabs map by banner TYPE, not by id**, so shipping a second event stays "drop in a file". The old controller is parked at `ServerStorage.SummonController_B54_backup` -- **delete it once B55 is confirmed.**
+
+**The countdown tells the truth per type.** An Event counts its WINDOW ("Banner Ends"); Standard and Selection count the next FEATURED ROTATION, because those banners never end; an **ENDED** banner gets no clock at all, since a rotation countdown there promises something on a banner nobody can pull from. Pity bars skip any threshold above 5000 -- `Secret` is 100000 and a bar that never visibly moves is noise, not information.
+
+**Show Chances is computed the way the ENGINE computes it**, not approximated: banner `LuckMult` x the player's live buff multiplies the pity tiers only, and inside a tier a featured unit's weight is x`Boost`. Verified: the displayed split sums to exactly 100.000% and matches a 40k dry-roll run. Tiers with weight but an empty pool are **excluded and named in the footer** -- listing `Secret` as obtainable when it has no units would be the exact fabrication this screen exists to avoid.
+
+**Luck** (`LuckConfig` pure + `LuckService`, the one writer of `Data.LuckBuff`). **Expiry is a COMPARISON against an absolute `os.time()`, never a scheduled write**, so a buff ends on time with no server up and the schema bump needed no data pass. `SummonEngine.BuildContext` gained a 4th optional arg, `luckBonusMult` -- the same shape as `featuredOverride`: a plain number, so the engine still never learns what a profile is and the odds harness still calls it with two arguments. `SummonService` resolves it ONCE per batch, so an x10 rolls under one multiplier even if the buff expires mid-batch.
+
+**`ReceiptService` is THE one owner of `MarketplaceService.ProcessReceipt`, and a REGISTRY rather than just the gem packs.** ProcessReceipt is a single callback for the whole Place -- assigning it twice silently discards the first, and the system that lost would take money and grant nothing; the battlepass level-skip products already noted as wanted now have somewhere to plug in. Idempotency lives in the **profile** (`Data.Purchases`, capped 50), not server memory, because the retry usually arrives on a different server. Anything uncertain returns `NotProcessedYet`: granting on a failure is the one unrecoverable outcome.
+
+**Auto-sell**'s tier list is DERIVED -- the tiers a registered banner can actually award, in `TierConfig.Order` order. `TierConfig` carries eight, but `Exclusive`/`Bathala` have no weight and no unit, so offering those toggles would be a lie; today it resolves to exactly the six the user asked for. The selling is `SummonService` step 12, AFTER the grant and after `views` is captured, so the reveal still shows what was pulled and THEN it is sold -- through `GrantService.SellUnits`, the one path that deletes a `Data.Units` record.
+
+**Two bugs found by verifying, not by reading.** `DevPopup` resets itself to `""`, which re-fires its own changed signal -- the re-entrant call was closing the popup the first call had just opened (a re-entry guard fixes it). And an ENDED banner was showing a featured-rotation countdown.
+
+Remotes 40 -> 44 (`GetSummonState`, `SetAutoSell`, `GetGemPacks`, `BuyGemPack`). `GetSummonState` is deliberately small: pity, Luck, auto-sell and balances only -- everything else the screen derives from the ReplicatedStorage config, which is what that placement is for, and a second copy on the wire is a second thing that can disagree with the roll.
+
+**USER: create four Developer Products and paste their ids into `GemPackConfig`.** A Developer Product cannot be created from a script. Until then each pack renders with a "Coming soon" button and `BuyGemPack` refuses `pack_not_configured` -- it never prompts with a zero id, which fails in front of the player with no explanation.
+
+`summon-screen.md` is the canon doc.
+
 ## 2026-09-08 [both] B54 -- AD-Game: **sprint + dash** -- Shift toggles sprint everywhere, Q dashes in the Lobby, and one binding covers PC, console and mobile.
 
 The user asked for sprint on Shift (a **TOGGLE**, not a hold), dash on Q in the **Lobby only**, buttons for mobile and console, and an `Always Sprinting` setting. Animations are theirs to add later.

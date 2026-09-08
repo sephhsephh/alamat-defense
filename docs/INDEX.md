@@ -45,6 +45,7 @@
   one grant path), `BannerRegistry` + banner file shape, the exact summon order, pity, the
   empty-pool fallback, and the "remote returns the views" reveal decision. Read before touching
   anything that grants, spends, rotates or rolls.
+- `summon-screen.md` — **AD-UI + AD-Gacha canon, LOBBY**: the B55 summon-screen rebuild to the user's reference (3 tabs mapped by banner TYPE: Special=Selection, Standard, Limited=Event; the B6 carousel is GONE, old controller parked at `ServerStorage.SummonController_B54_backup` — DELETE once confirmed) **plus the three systems it needed**: the timed **Luck** buff (`LuckConfig` pure + `LuckService`; expiry is a COMPARISON, never a scheduled write; `BuildContext` gained a 4th arg `luckBonusMult`), **gem packs on Robux Developer Products** (`GemPackConfig` + `GemPackService`; **USER must paste 4 ProductIds**) over **`ReceiptService`** — THE one owner of `ProcessReceipt`, a REGISTRY so the battlepass level-skips can plug in, idempotent via `Data.Purchases` — and **auto-sell** (`AutoSellConfig` derives its tier list; selling is SummonService step 12 via `GrantService.SellUnits`). Show Chances recomputes the engine's own maths incl. live Luck. Read before touching the summon screen, Luck, packs, receipts or auto-sell.
 - `gacha-selection.md` — **AD-Gacha canon**: SELECTION banners only (blueprint B4's other half,
   B30). The `PlayerChoice` config shape, `BannerChoices` (schema v3) and why `ChosenAtDay` is a DAY
   NUMBER and not a timestamp, the pure `BannerRegistry` choice API, `BannerChoiceService` as the ONE
