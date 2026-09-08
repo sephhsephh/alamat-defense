@@ -13,7 +13,7 @@ whole Experience.
 > exact store 2026-08-01** (drift check during the v2 work) — no split-brain. Store target only,
 > unrelated to the schema version.
 
-## v5 shape (current)
+## v6 shape (current)
 
 ```luau
 {
@@ -51,6 +51,9 @@ whole Experience.
 	Quests, LoginStreak, ShopStock, Titles, Spirits, Battlepass, -- exact shapes in ProfileTemplate
 	Settings: { [string]: any },      -- client settings, SettingsConfig.Sanitize'd
 	Inbox: { Messages: { {Id,Title,Body,Rewards?,Day,Read} } }, -- v5: CAPPED received-message history
+	LuckBuff: { Percent: number, ExpiresAtUtc: number },        -- v6: ONE timed Luck buff; 0/0 = none
+	AutoSell: { [tierName]: true },                             -- v6: Auto Summon toggles; SPARSE, absent = off
+	Purchases: { Ids: { string } },                             -- v6: CAPPED granted-receipt ledger (no double-grant)
 }
 ```
 
@@ -137,6 +140,35 @@ The *flow* on top — the `ChooseBannerUnit` remote, a per-player `BannerRegistr
 adding `Selection` to `SUPPORTED_TYPES` — is AD-Gacha's work and is NOT part of this bump. Until it
 lands, Selection banners stay validated-but-refused (`banner_type_not_supported_yet`).
 
+**Migration 5→6** (`Migrations[5]`, B55 2026-09-08): adds `LuckBuff`, `AutoSell` and `Purchases` —
+the timed Luck buff a gem pack grants, the Auto Summon panel's per-tier auto-sell toggles, and the
+Developer Product receipt ledger.
+
+- **Three systems, ONE bump, on purpose** — the v3→v4 precedent. The cost of a bump is the
+  both-Places PUBLISH, not the field. `Purchases` was in fact added to v6 *after* `LuckBuff` and
+  `AutoSell`, in the same session, by following exactly that rule. If a fourth system needs a field
+  before v6 ships, add it to **v6**.
+- **The step is a DELIBERATE NO-OP**, same reason as `[2]`/`[3]`/`[4]`: both are additive-optional
+  top-level keys and `Reconcile()` runs *before* `Migrate()`, so both already hold their template
+  defaults when the step runs. It exists because `Migrate()` warns and **STOPS** at a missing step.
+- `Data.LuckBuff = { Percent, ExpiresAtUtc }`. `Percent` is a WHOLE number (25 = +25%);
+  `ExpiresAtUtc` is an absolute `os.time()` second. **Expiry is a COMPARISON, never a scheduled
+  write** — an expired buff and no buff are the SAME state, so a buff cannot outlive its window just
+  because no server was up to clear it, and the migration needs no pass over existing data. ONE buff
+  at a time: buying while one is live keeps the **higher** percent and refreshes the timer (user).
+- `Data.AutoSell = { [tierName] = true }`, **SPARSE** — never write `false`. Absent means off, so a
+  tier added to the game later defaults to KEPT, which is the safe direction.
+- `Data.Purchases = { Ids = { purchaseId } }`, **CAPPED** (newest 50). **This is what stops a player
+  being charged twice.** Roblox re-delivers a Developer Product receipt until `ProcessReceipt`
+  returns `PurchaseGranted`, and may re-deliver one it already accepted — so the ledger must live in
+  the PROFILE, not in server memory, because the retry usually arrives on a *different server*.
+  `ReceiptService` is THE one writer; it records the id in the SAME profile as the grant.
+- **Forward-tolerant, same as v3/v4/v5.** A v5 server reading a v6 profile leaves both keys intact.
+  **Both Places must still be republished together** — the tolerance is a safety net, not a licence
+  to split.
+- ProfileTemplate hash `91ffab78 → 83633e44`, deployed byte-identical to BOTH Places in one session,
+  manifest updated, **41/41 verified in both**.
+
 ## Access rules
 
 - Only `Server.Data.PlayerDataService` opens/closes sessions. Everything else reaches data
@@ -154,6 +186,12 @@ PENDING for other Places in `STATE.md`. Never edit or remove an existing migrati
 
 ## Version history
 
+- **v6** (2026-09-08, B55): `LuckBuff` + `AutoSell` + `Purchases` in one bump — the timed gem-pack
+  Luck buff, the Auto Summon auto-sell toggles, and the Developer Product receipt ledger.
+  `Migrations[5]` is a deliberate no-op; expiry is a comparison, so no data pass was needed.
+  ProfileTemplate hash `91ffab78 → 83633e44`, deployed + hash-matched in
+  **both** Places the same session (41/41). Forward-tolerant, but **both Places must be republished
+  together.**
 - **v5** (2026-09-02, B48): `Inbox` — a CAPPED received-message history for the Inbox screen. The
   first bump since v4 that truly needed a new field. `Migrations[4]` is a deliberate no-op. ProfileTemplate
   hash `8e4224b9 → 91ffab78`, deployed + hash-matched in **both** Places the same session (36/36). Forward-

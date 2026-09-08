@@ -16,7 +16,7 @@
 
 local ProfileTemplate = {}
 
-ProfileTemplate.SCHEMA_VERSION = 5
+ProfileTemplate.SCHEMA_VERSION = 6
 ProfileTemplate.STORE_NAME = "Beta1_PlayerData" -- one store for the whole Experience (production)
 
 -- Live store name. In Studio ALL data goes to a separate dev store, so playtests and
@@ -140,6 +140,32 @@ ProfileTemplate.Template = {
 	Battlepass = { SeasonId = "", XP = 0, Owned = false, ClaimedFree = {}, ClaimedPaid = {} },
 	Settings = {},
 	Inbox = { Messages = {} },
+
+	-- v6 (B55). THREE systems, ONE bump, on purpose -- the cost of a schema bump is the both-Places
+	-- PUBLISH, not the field (the v3->v4 precedent). If a third system needs a field before v6 ships,
+	-- add it HERE rather than opening v7.
+	--
+	-- LuckBuff: the timed Luck buff a gem pack grants. `Percent` is a WHOLE number (25 = +25%),
+	-- `ExpiresAtUtc` an absolute `os.time()` second. Both 0 = no buff, which is also what an expired
+	-- buff reads as -- expiry is a COMPARISON, never a scheduled write, so a buff cannot outlive its
+	-- window just because no server was up to clear it. ONE buff at a time: buying while one is live
+	-- keeps the HIGHER percent and refreshes the timer (user, B55).
+	LuckBuff = { Percent = 0, ExpiresAtUtc = 0 },
+
+	-- AutoSell: the Auto Summon panel's per-tier toggles, `[tierName] = true` for tiers the player
+	-- wants sold on summon. ABSENT means off, so a tier added to the game later defaults to KEPT --
+	-- the safe direction. Sparse on purpose: never write `false`.
+	AutoSell = {},
+
+	-- Purchases: the Robux Developer Product receipt ledger. `Ids` is the newest N granted
+	-- `receiptInfo.PurchaseId` strings, CAPPED like `Inbox.Messages` so the profile cannot grow
+	-- without bound.
+	--
+	-- THIS FIELD IS WHY A PLAYER IS NOT CHARGED TWICE. Roblox re-delivers a receipt until the
+	-- callback returns `PurchaseGranted`, and it may re-deliver one it already accepted. Without a
+	-- record of what was granted, a retry is a second grant. The check must live in the PROFILE, not
+	-- in server memory: the retry usually arrives on a different server.
+	Purchases = { Ids = {} },
 }
 
 -- Migrations[fromVersion] mutates data from fromVersion to fromVersion + 1.
@@ -218,6 +244,22 @@ end
 -- time this executes it is already present as `{ Messages = {} }`. Nothing to convert. The step exists
 -- because `Migrate()` WARNS AND STOPS at a missing step -- a gap here would strand every later one.
 ProfileTemplate.Migrations[4] = function(_data)
+	-- intentionally empty; see above
+end
+
+-- v5 -> v6: add `LuckBuff`, `AutoSell` and `Purchases` (B55).
+-- *** ALSO A DELIBERATE NO-OP, SAME REASON AS v2->v3, v3->v4 and v4->v5. ***
+-- All three are ADDITIVE-OPTIONAL top-level keys and `Reconcile()` runs BEFORE `Migrate()`, so by the
+-- time this executes each is already present with its template default. Nothing to convert. The step
+-- exists because `Migrate()` WARNS AND STOPS at a missing step -- a gap here would strand every
+-- later one.
+--
+-- Note what this DOESN'T need: no pass to expire old buffs, because an expired buff and no buff are
+-- the SAME state (`ExpiresAtUtc` in the past); no pass to seed AutoSell, because absent means off;
+-- and no pass to backfill Purchases, because no Developer Product existed before v6, so there is no
+-- receipt history to lose. A migration that had to walk every profile's data would be the expensive
+-- kind.
+ProfileTemplate.Migrations[5] = function(_data)
 	-- intentionally empty; see above
 end
 
