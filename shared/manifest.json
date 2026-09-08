@@ -403,14 +403,38 @@
     },
     "SettingsConfig": {
       "file": "shared/src/SettingsConfig.luau",
-      "hash": "5f0dc44d",
+      "hash": "2bb4a943",
       "owner": "game",
       "deployPath": "ReplicatedStorage.Configs.Global.SettingsConfig",
       "deployed": {
-        "Game": "5f0dc44d",
-        "Lobby": "5f0dc44d"
+        "Game": "2bb4a943",
+        "Lobby": "2bb4a943"
       },
-      "comment": "PROMOTED TO SHARED CANON B35 2026-08-20 (owner AD-Game, schema shared with AD-UI). The one structure behind the unified settings system the user asked for: 'there will be one settings system for both game and lobby ... but both should use same structure, same gui.' Two fields carry that: Scope (Both/GameOnly/LobbyOnly) decides where an entry is SHOWN, Kind (Preference/Action) decides whether it PERSISTS. A Place difference is therefore a config field and NEVER a branch in a script -- SettingsUI contains no Place-specific `if` at all. *** THE TRAP, AND THE REASON Sanitize IGNORES Scope: one profile serves BOTH Places. If Sanitize dropped out-of-scope keys, changing any setting in the Lobby would sanitize every GameOnly preference out of the payload and PERMANENTLY LOSE it (and vice versa). So Sanitize processes every Preference regardless of Scope; Scope is a rendering concern only. Proven live at B35: a Game-side save left the LobbyOnly SkipRevealAnim intact, and MusicVolume set in the Game was read back in the Lobby. *** Actions have no Default and are skipped by Sanitize entirely, so a button press can never persist as a preference. KEY-NAME NOTE: `SoundVolume` IS the SFX slider -- do NOT rename it to SFXVolume; it shipped as the only volume key and players have saved values under it, so a rename silently resets everyone. Place() is the ONE definition of the Workspace.Lobby assertion every script in the project otherwise repeats. NO save-schema bump was needed: Data.Settings has been free-form {[string]: any} since v1.",
+      "comment": "PROMOTED TO SHARED CANON B35 2026-08-20 (owner AD-Game, schema shared with AD-UI). The one structure behind the unified settings system the user asked for: 'there will be one settings system for both game and lobby ... but both should use same structure, same gui.' Two fields carry that: Scope (Both/GameOnly/LobbyOnly) decides where an entry is SHOWN, Kind (Preference/Action) decides whether it PERSISTS. A Place difference is therefore a config field and NEVER a branch in a script -- SettingsUI contains no Place-specific `if` at all. *** THE TRAP, AND THE REASON Sanitize IGNORES Scope: one profile serves BOTH Places. If Sanitize dropped out-of-scope keys, changing any setting in the Lobby would sanitize every GameOnly preference out of the payload and PERMANENTLY LOSE it (and vice versa). So Sanitize processes every Preference regardless of Scope; Scope is a rendering concern only. Proven live at B35: a Game-side save left the LobbyOnly SkipRevealAnim intact, and MusicVolume set in the Game was read back in the Lobby. *** Actions have no Default and are skipped by Sanitize entirely, so a button press can never persist as a preference. KEY-NAME NOTE: `SoundVolume` IS the SFX slider -- do NOT rename it to SFXVolume; it shipped as the only volume key and players have saved values under it, so a rename silently resets everyone. Place() is the ONE definition of the Workspace.Lobby assertion every script in the project otherwise repeats. NO save-schema bump was needed: Data.Settings has been free-form {[string]: any} since v1. B54: +AlwaysSprint (Scope Both, Category Game) for the sprint toggle; re-hashed + redeployed both Places.",
+      "kind": "module"
+    },
+    "MovementConfig": {
+      "file": "shared/src/MovementConfig.luau",
+      "hash": "9c7cbd32",
+      "owner": "game",
+      "deployPath": "ReplicatedStorage.Configs.Global.MovementConfig",
+      "deployed": {
+        "Game": "9c7cbd32",
+        "Lobby": "9c7cbd32"
+      },
+      "comment": "Added B54 (sprint + dash). PURE movement-feel knobs shared by both Places: WalkSpeed/SprintSpeed (sprint is a TOGGLE, both Places) and the LOBBY-only dash (DashSpeed/Duration/Cooldown). DashPlaces gates the dash by Place name the same way SettingsConfig's Scope gates a settings row -- a Place difference is a FIELD, never a second file.",
+      "kind": "module"
+    },
+    "MovementController": {
+      "file": "shared/src/MovementController.luau",
+      "hash": "e2668274",
+      "owner": "game",
+      "deployPath": "StarterPlayer.StarterPlayerScripts.Client.MovementController",
+      "deployed": {
+        "Game": "e2668274",
+        "Lobby": "e2668274"
+      },
+      "comment": "Added B54. Sprint (BOTH Places, a TOGGLE) + dash (LOBBY only, gated by MovementConfig.DashPlaces). LocalScript, hashed as source -- same precedent as UIKitBootstrap/SettingsUI. The FIRST ContextActionService use in the project: one BindAction carries keyboard + gamepad + a generated mobile touch button, so there is no per-platform branch. Deployed at an IDENTICAL path in both Places (the ClientSettings precedent), which is why promotion cost zero consumer edits.",
       "kind": "module"
     },
     "SettingsService": {

@@ -1,5 +1,25 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-09-08 [both] B54 -- AD-Game: **sprint + dash** -- Shift toggles sprint everywhere, Q dashes in the Lobby, and one binding covers PC, console and mobile.
+
+The user asked for sprint on Shift (a **TOGGLE**, not a hold), dash on Q in the **Lobby only**, buttons for mobile and console, and an `Always Sprinting` setting. Animations are theirs to add later.
+
+**Two new shared-canon modules, deployed byte-identical to BOTH Places (drift 41/41 green in each):**
+- `MovementConfig` (`9c7cbd32`) -- every number in one pure module, plus `DashAllowed(place)` reading `DashPlaces = { Lobby = true }`.
+- `MovementController` (`e2668274`) -- a LocalScript at an IDENTICAL path in both Places (the `ClientSettings` precedent), which is why promotion cost **zero** consumer edits. Hashed as source, the `UIKitBootstrap`/`SettingsUI` precedent.
+
+**The FIRST ContextActionService use in the project.** One `BindAction` takes the keyboard key AND the gamepad button in the same call, and `createTouchButton = true` generates the mobile button. So there is **no `if TouchEnabled` branch anywhere** -- PC, console and mobile are one code path, and a fourth platform costs one extra `KeyCode`. Sprint is LeftShift/RightShift/**ButtonL3** (thumbstick click, the console convention); dash is Q/**ButtonR1**. Q is safe because the Game binds Q to a tower Ability but never binds the dash.
+
+**Sprint is a toggle that cannot strand you.** `applySpeed()` is the ONE place `WalkSpeed` is written and it always writes an ABSOLUTE value from config, never a delta -- the classic sprint bug is unreachable by construction. The new `AlwaysSprint` setting (`SettingsConfig` -> `2bb4a943`, Category `Game`, Scope Both) **PINS** sprint on; while pinned the toggle is inert rather than letting a player fight their own setting, and `ClientSettings.Changed` re-applies the speed so the setting takes effect immediately.
+
+**Dash leaves Y alone.** It re-asserts horizontal `AssemblyLinearVelocity` each Heartbeat for `DashDuration`, so gravity still applies and it cannot launch anyone off the floor -- and it uses no BodyVelocity/LinearVelocity instance, so there is nothing to leak if the character dies mid-dash.
+
+**One bug found by verifying, not by reading.** The first Game-place run showed `AD_Dash` correctly unbound yet the dash still fired when the handler was called directly. The Place gate now lives in **two** places -- at `BindAction` and at the top of `onDashAction` -- so the only way to dash where it is forbidden is to change `MovementConfig.DashPlaces`.
+
+**Verified live in both Places:** sprint 16 <-> 26 on toggle; `AlwaysSprint` ON pins 26 and the key goes inert, OFF drops to 16 and the key works again (driven by a REAL click on the settings row -- `execute_luau`'s own require cache holds a DIFFERENT `ClientSettings` instance, B36's lesson again); dash ~14-15 studs flat with Y unchanged, blocked during its 1.5 s cooldown, working again after; Game has `AD_Sprint` bound and `AD_Dash` absent with a 0.00-stud dash.
+
+**USER: republish BOTH Places.** `movement.md` is the canon doc.
+
 ## 2026-09-04 [both] B53 -- AD-Game: **Challenges (Phase D / D2) -- economy modifiers** -- a challenge can now make resources scarce, and a fourth daily challenge uses it.
 
 The deferred modifier list was `RangeMult`/`SpaMult`/`NoFarm`. B53 lands the **economy** half of it (the "NoFarm" intent) with a clean, directly-verified seam, and adds a `Scarce Fields` daily challenge. The two tower-stat modifiers stay deferred (their seam is now confirmed and documented, but verifying them needs a full winnable match, best done attended).

@@ -34,6 +34,7 @@ SettingsConfig.Defaults = {
 	ShowHealthBar = true,      -- show floating health bars over non-boss enemies
 	SimplifyHealthBar = false, -- when on: no health text, no tween/damage-trail (instant bars)
 	SkipRevealAnim = false,    -- skip the reward reveal animation and show the result at once
+	AlwaysSprint = false,      -- B54: pin sprint ON so the sprint key never has to be pressed
 }
 
 -- *** KEY-NAME NOTE: `SoundVolume` IS THE SFX SLIDER. DO NOT RENAME IT TO `SFXVolume`. ***
@@ -58,6 +59,9 @@ SettingsConfig.Schema = {
 	{ Key = "UIVolume", Type = "number", Label = "UI Volume", Min = 0, Max = 1, Category = "Sounds" },
 
 	-- ===== Game =====
+	-- B54: sprint is a TOGGLE in both Places; this pins it on. Scope "Both" on purpose -- the player
+	-- runs around in the Lobby and in a match, and one profile serves both.
+	{ Key = "AlwaysSprint", Type = "boolean", Label = "Always Sprint", Category = "Game" },
 	{ Key = "AutoSkipWave", Type = "boolean", Label = "Auto Skip Wave", Category = "Game", Scope = "GameOnly" },
 	{ Key = "ShowHealthBar", Type = "boolean", Label = "Show Health Bar", Category = "Game", Scope = "GameOnly" },
 	-- The reward reveal lives in the Lobby (ObtainRewardsGUI), so the toggle belongs there. This is
