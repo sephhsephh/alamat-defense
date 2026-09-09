@@ -83,7 +83,15 @@ the first time it is edited on the website. `PriceText` is only the fallback if 
 > **USER TODO: create four Developer Products and paste their ids into `GemPackConfig`.** A Developer
 > Product cannot be created from a script. Until then each pack is UNCONFIGURED: the column still
 > renders, the button reads "Coming soon", and `BuyGemPack` refuses `pack_not_configured`. It never
-> prompts with a zero id -- that fails in front of the player with no explanation.
+> prompts with a zero id -- that fails in front of the player with no explanation. `GemPackService`
+> also **warns loudly at boot** while any pack is a placeholder, so shipping with nothing on sale
+> cannot happen by accident.
+>
+> **Checked 2026-09-09:** the Experience has exactly ONE Developer Product, `3711220080`
+> *"Premium Battlepass Season 1"* (799 R$). **Do not point a gem pack at it** -- reusing it would
+> charge a player for the battlepass and hand them Gold, and it would collide in `ReceiptService`
+> the day the battlepass registers its own products. There is nothing else to borrow, so the four
+> `ProductId = 0` values stay as marked placeholders (user, B55).
 
 ## Auto Summon = auto-sell (`AutoSellConfig` pure + `AutoSellService`)
 **The tier list is DERIVED, not typed**: the tiers any registered banner can actually award, in
@@ -117,6 +125,19 @@ Harness attributes on the ScreenGui, each running the SAME function a real click
 ("chances"/"info"/"autosell"/""). Server-side, `ReplicatedStorage:SetAttribute("DevLuck", 100)`
 applies a real buff through `LuckService` (Studio only, grants NO currency).
 
-**`DevPopup` resets itself to `""`, which RE-FIRES its own changed signal** -- without a re-entry
-guard the second call closes the popup the first just opened. That bug was real and is fixed; keep
-the guard if you add another self-resetting attribute.
+**`DevPopup` is the ONE Dev attribute here that does NOT self-reset.** The others write themselves
+back to a neutral value so the same value can be set twice; their re-entrant call then hits an early
+return and does nothing. `DevPopup` cannot, because its neutral value `""` is a REAL command (close
+everything) -- the reset re-fired the signal and closed the popup the first call had just opened.
+**A re-entry flag does not fix it either: Roblox attribute signals are DEFERRED**, so the re-entrant
+call runs after the flag has been cleared. (That was the first attempted fix, and it failed the same
+way.) So `DevPopup` is a STATE, not a pulse: set a popup name to open, `""` to close, and go through
+`""` to re-open the same one.
+
+**The screen re-polls `GetSummonState` every 5s while it is OPEN.** A gem-pack purchase lands in
+`ProcessReceipt`, possibly seconds later and possibly on a different server, and there is no
+server->client push for it (the reveal contract deliberately has none). Without the re-poll a player
+who had just bought Luck would see "no Luck" and **Show Chances would quote the unbuffed odds** --
+a stale odds table is the one thing this screen must never show. Verified: clearing a buff
+server-side re-renders an OPEN chances popup from 5.854%/1.456% back to 4%/0.995% with no
+interaction.
