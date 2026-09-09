@@ -1,5 +1,27 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-09-09 [both] B56b -- AD-Game: **the last two deferred modifiers land** -- tower range and attack speed.
+
+`RangeMult`/`SpaMult` had been named in the registry since B51 and applied by nothing. B51 predicted the seam exactly ("a module-level scale on TowerController applied to self.BaseStats after Resolve, set by MatchDirector like SetHealthScale") and deferred only the verification. B56 built that seam. **Every effect `MatchModifiersConfig` names is now applied.**
+
+`TowerController` gains `SetStatScales` / `ResetStatScales` / `GetStatScales` -- module-level scalars set once by `MatchDirector` at match start and cleared at cleanup, the same shape `EnemySpawner.SetHealthScale` and `EconomyManager.SetIncomeScale` already had. The fold happens in **`RefreshStats`, straight after `TowerStatResolver.Resolve`**, and that placement is the whole design:
+
+- the **resolver stays pure and per-unit** -- this is a match-wide layer over its output, not an edit to SHARED canon;
+- `RefreshStats` also runs on every **upgrade**, so an upgraded tower keeps the modifier -- and, verified, does not compound it;
+- the live **buff layer** in `RecomputeStats` composes over the SCALED base, so a range aura on a short-sight challenge boosts the scaled range, which is the reading a player expects.
+
+`Resolve` returns a fresh table per call, so the fold mutates safely in place. The `~= 1` guards keep a normal match byte-identical to before B56 -- no writes, no rounding. `SetStatScales` refuses NaN and non-positive values, which would otherwise produce zero-range or infinite-fire-rate towers. The reset is mirrored on the **error path** as well: a crashed challenge would otherwise leave the NEXT match's towers scaled.
+
+> **`SPA` is SECONDS PER ATTACK, so bigger is slower.** Modifiers may only ever make a match harder, so a range modifier is `< 1` and an SPA modifier is `> 1`. A `SpaMult` below 1 would be a BUFF and must never ship. Both the config and the seam say so in place.
+
+Shipped: **`ShortSight`** (`RangeMult = 0.75`) and **`SlowHands`** (`SpaMult = 1.25`), one per challenge (`blind_fields`, `sluggish_fields`) alongside a mild HP bump. Range and fire rate are what a player's whole placement plan is built on, so stacking both at once reads as broken towers rather than a challenge. The daily pool is now **6**.
+
+**A harness, because the verification was the deferred part.** `MatchLifecycleSmokeTest` gained a `DevMatchModifiers` attribute -- a comma-separated id list -- so a real match can run with modifiers without a Lobby, a teleport, or waiting for the daily rotation. Empty/unset runs the normal smoke match.
+
+Verified live: a real match started with `ShortSight,SlowHands` logged `RangeMult=0.75 SpaMult=1.25`, and the real `RefreshStats` gave Archer `Range 20.00 -> 15.00`, `SPA 6.00 -> 7.50`, **unchanged on a re-run** (the upgrade path), and back to `20.00 / 6.00` after the reset. Shared canon re-hashed byte-identical in both Places (`MatchModifiersConfig` -> `42c252dc`, `ChallengeConfig` -> `1640a980`), drift 41/41 GREEN in each.
+
+**USER: republish BOTH Places.**
+
 ## 2026-09-09 [lobby] B56 -- AD-UI/AD-Gacha: **the watchdog was right for 20+ sessions** -- PlayGUI's 30-second boot block, and an orphan-pick prune.
 
 ### PlayGUIController blocked boot for THIRTY SECONDS on every join

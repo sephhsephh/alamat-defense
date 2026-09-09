@@ -108,24 +108,24 @@
     },
     "MatchModifiersConfig": {
       "file": "shared/src/MatchModifiersConfig.luau",
-      "hash": "5610e268",
+      "hash": "42c252dc",
       "owner": "game",
       "deployPath": "ReplicatedStorage.Configs.Global.MatchModifiersConfig",
       "deployed": {
-        "Game": "5610e268",
-        "Lobby": "5610e268"
+        "Game": "42c252dc",
+        "Lobby": "42c252dc"
       },
       "comment": "Promoted to shared canon at B52 (Phase D / D2 -- the Lobby Challenge tab), byte-identical to the Game original. The Lobby reads it to describe the day's modifiers; the Game applies them in MatchDirector. Pure, no deps. B53: added economy modifiers (IncomeMult/StartingCashMult -> the Scarcity/LeanStart modifiers) + a Scarce Fields challenge; re-hashed + redeployed both Places.",
       "kind": "module"
     },
     "ChallengeConfig": {
       "file": "shared/src/ChallengeConfig.luau",
-      "hash": "097a7bd5",
+      "hash": "1640a980",
       "owner": "game",
       "deployPath": "ReplicatedStorage.Configs.Global.ChallengeConfig",
       "deployed": {
-        "Game": "097a7bd5",
-        "Lobby": "097a7bd5"
+        "Game": "1640a980",
+        "Lobby": "1640a980"
       },
       "comment": "Promoted to shared canon at B52 (Phase D / D2 -- the Lobby Challenge tab), byte-identical to the Game original. The Lobby reads GetDaily() to display + launch today's challenge; the Game re-resolves it server-authoritatively at entry + match-end. Requires MetaMath + MetaConfig + MatchModifiersConfig (all shared). B53: added economy modifiers (IncomeMult/StartingCashMult -> the Scarcity/LeanStart modifiers) + a Scarce Fields challenge; re-hashed + redeployed both Places.",
       "kind": "module"

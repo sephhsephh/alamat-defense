@@ -49,6 +49,8 @@ itself stays free of modifier math):
 | `LivesCap` | hard minimum on starting lives (floored at 1 — never 0) | `OneLife` |
 | `IncomeMult` | scales in-match cash (kill + wave + wave-start), via `EconomyManager.SetIncomeScale` [B53] | `Scarcity` |
 | `StartingCashMult` | scales starting cash, via MatchDirector's `EconomyManager.InitPlayer` call [B53] | `Scarcity`, `LeanStart` |
+| `RangeMult` | scales every tower's resolved `Range`, via `TowerController.SetStatScales` [B56] | `ShortSight` |
+| `SpaMult` | scales every tower's resolved `SPA`, via `TowerController.SetStatScales` [B56] | `SlowHands` |
 
 `Resolve(list)` folds a list: HP/lives mults MULTIPLY, LivesCap takes the MIN. Verified live: a
 challenge on Stage1_Act1 (base 3 lives) with `EnemyHpX2 + HalfLives` ran at **1 life, 2x enemy HP**.
@@ -60,11 +62,38 @@ scale on `EconomyManager` + a starting-cash scale applied at `InitPlayer`, both 
 Verified: `InitPlayer` at ×0.5 gives 600 (from 1200), a `Cash=100` kill at ×0.5 income grants 50, and
 `Reset` clears both scales. The daily pool now has **4 challenges** (a `Scarce Fields` was added).
 
-**STILL NOT-YET-APPLIED** (deliberately absent from every live modifier): `RangeMult` / `SpaMult`. The
-seam is **confirmed** — a module-level scale on `TowerController` applied to `self.BaseStats` after
-`TowerStatResolver.Resolve` (never editing the SHARED resolver), set by `MatchDirector` like
-`SetHealthScale`. It stays deferred only because it needs a full **winnable** match to verify (a headless
-match can't place towers, so it always loses), which is best done attended. Add each **here AND at its seam together**.
+### The tower-stat seam — LANDED B56
+`RangeMult`/`SpaMult` were the last two deferred effects; B56 built exactly the seam B51 had
+predicted. **Every effect the registry names is now applied.** The rule stands for anything added
+next: a new effect goes in **here AND at its seam together**, never named-but-inert.
+
+`TowerController` keeps a module-level `statScales`, set once by `MatchDirector` at match start and
+cleared at cleanup — the same shape `EnemySpawner.SetHealthScale` and `EconomyManager.SetIncomeScale`
+already have. It is folded over `self.BaseStats` **in `RefreshStats`, straight after
+`TowerStatResolver.Resolve`** (never editing the SHARED resolver), which matters for three reasons:
+
+- the resolver stays PURE and per-unit; this is a match-wide layer over its output;
+- `RefreshStats` also runs on every UPGRADE, so an upgraded tower keeps the modifier — and, verified,
+  does **not** compound it;
+- the live BUFF layer in `RecomputeStats` composes over the SCALED base, so a range aura on a
+  short-sight challenge boosts the scaled range, which is the reading a player expects.
+
+`Resolve` returns a fresh table every call, so the fold mutates in place safely. The `~= 1` guards
+keep a normal match byte-identical to before B56. `SetStatScales` refuses NaN and non-positive values,
+which would otherwise produce zero-range or infinite-fire-rate towers. The cleanup reset is mirrored
+on the **error path** too — a crashed challenge would otherwise leave the NEXT match's towers scaled.
+
+> **`SPA` is SECONDS PER ATTACK, so BIGGER IS SLOWER.** Modifiers may only make a match harder, so a
+> range modifier is `< 1` and an SPA modifier is `> 1`. A `SpaMult` below 1 would be a BUFF.
+
+Shipped: **`ShortSight`** (`RangeMult = 0.75`) and **`SlowHands`** (`SpaMult = 1.25`), one per
+challenge (`blind_fields`, `sluggish_fields`) alongside a mild HP bump — range and fire rate are what a
+player's whole placement plan is built on, so stacking both reads as broken towers, not a challenge.
+The daily pool is now **6 challenges**.
+
+Verified live: a real match started with `ShortSight,SlowHands` logged `RangeMult=0.75 SpaMult=1.25`,
+and the real `RefreshStats` produced Archer `Range 20.00 → 15.00` and `SPA 6.00 → 7.50`, unchanged on
+a re-run (the upgrade path), and back to `20.00 / 6.00` after the reset.
 
 ## The reward + counter (`RewardCalculator`)
 On a **challenge Victory**, `GrantForPlayer` appends the day's `RewardsForSlot(ChallengeDaySlot)` to
@@ -95,12 +124,17 @@ Built at B52. `ChallengeConfig`/`MatchModifiersConfig` are now SHARED (see above
 ## What's still open (follow-ups)
 - **Varied base stages + bespoke challenge wave content** — the pool currently bases every entry on
   `Stage1_Act1`; the challenge is the modifiers + reward, not new waves yet. Tuning follow-up.
-- **`RangeMult`/`SpaMult`** tower-stat modifiers — the seam is confirmed (see the modifiers section); deferred pending an attended full-match verify. (`NoFarm`/economy is DONE at B53.)
+- ~~`RangeMult`/`SpaMult` tower-stat modifiers~~ **LANDED B56.** Every named effect is now applied (economy B53, tower stats B56).
 
 ## Verifying a change
 `ChallengeConfig.Validate()` checks every template names a stage-shaped id + known modifiers and every
 colour's reward ids are catalogued. `MatchModifiersConfig.Resolve`/`ApplyLives` are pure and unit-testable.
 For the match path, assert on the profile DELTA (`FragmentColour`, `ChallengeClears`) from a real
 `RewardCalculator.GrantForPlayer` on a fabricated challenge `matchState`, and peek `GetActiveMatchState()`
-after a `StartMatch` for the modifier-applied `Lives`/`EnemyHealthScale`. The `execute_luau` require-cache
+after a `StartMatch` for the modifier-applied `Lives`/`EnemyHealthScale`. **To run a real match WITH modifiers — no Lobby, no teleport, no waiting for the daily rotation
+(B56):** set `ServerScriptService.Server.MatchLifecycleSmokeTest`'s `DevMatchModifiers` attribute to a
+comma-separated id list (e.g. `"ShortSight,SlowHands"`) and press Play. Empty/unset runs the normal
+smoke match. **Leave it empty when you are done.**
+
+The `execute_luau` require-cache
 trap applies — verify from a fresh Play server VM.

@@ -33,6 +33,11 @@ local POOL = {
 	{ Id = "sudden_fields", Name = "Sudden Death",  StageId = "Stage1_Act1", Modifiers = { "OneLife" } },
 	{ Id = "brutal_fields", Name = "Brutal Fields", StageId = "Stage1_Act1", Modifiers = { "EnemyHpX2", "HalfLives" } },
 	{ Id = "scarce_fields", Name = "Scarce Fields", StageId = "Stage1_Act1", Modifiers = { "EnemyHpX1_5", "Scarcity" } },
+	-- B56: the first challenges to use the TOWER-STAT modifiers. Kept to ONE stat modifier each,
+	-- paired with a mild HP bump: range and fire rate are what a player's whole placement plan is
+	-- built on, so stacking both at once reads as broken towers rather than a challenge.
+	{ Id = "blind_fields",  Name = "Blind Fields",  StageId = "Stage1_Act1", Modifiers = { "ShortSight", "EnemyHpX1_5" } },
+	{ Id = "sluggish_fields", Name = "Sluggish Fields", StageId = "Stage1_Act1", Modifiers = { "SlowHands", "EnemyHpX1_5" } },
 }
 
 -- Deterministic reward for a day Slot: a rotating colour's fragments, with a small bonus chance. Same

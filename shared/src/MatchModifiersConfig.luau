@@ -10,18 +10,24 @@
 --   LivesCap     -> hard cap on the resolved starting lives (a MINIMUM against it)
 --   IncomeMult   -> scales in-match cash (kill + wave + wave-start), via EconomyManager.SetIncomeScale [B53]
 --   StartingCashMult -> scales the starting cash, via MatchDirector's EconomyManager.InitPlayer call [B53]
+--   RangeMult    -> scales every tower's resolved Range, via TowerController.SetStatScales [B56]
+--   SpaMult      -> scales every tower's resolved SPA,   via TowerController.SetStatScales [B56]
 -- Resolve() folds a list into one effects table; unknown ids are WARNED and skipped -- a modifier that
 -- does nothing is safe, because a modifier can only ever REMOVE difficulty, never invent a reward.
 --
--- NOT-YET-APPLIED (named for the roadmap, deliberately absent from every live modifier so nothing
--- silently claims to do something it doesn't): RangeMult / SpaMult (need a tower-stat seam -- confirmed:
--- a module-level scale on TowerController applied to self.BaseStats after Resolve, set by MatchDirector
--- like SetHealthScale; deferred because it needs a full winnable match to verify). The ECONOMY seam is
--- live as of B53 (IncomeMult / StartingCashMult above), which covers the old "NoFarm" intent. See challenges.md.
+-- EVERY effect this file names is now APPLIED. The B51 registry deliberately named RangeMult/SpaMult
+-- without applying them; B56 built the seam it had predicted (a module-level scale on TowerController
+-- folded over self.BaseStats after Resolve, set by MatchDirector exactly like SetHealthScale) and
+-- turned them on. The ECONOMY seam went live at B53 (IncomeMult / StartingCashMult), covering the old
+-- "NoFarm" intent. See challenges.md.
+--
+-- ===== SPA IS SECONDS PER ATTACK: BIGGER IS SLOWER =====
+-- Modifiers may only ever make a match HARDER. So a range modifier is < 1 (see less) and an SPA
+-- modifier is > 1 (attack less often). A `SpaMult` below 1 would be a BUFF and must never ship.
 
 local MatchModifiersConfig = {}
 
-export type Effects = { EnemyHpMult: number, LivesMult: number, LivesCap: number, IncomeMult: number, StartingCashMult: number }
+export type Effects = { EnemyHpMult: number, LivesMult: number, LivesCap: number, IncomeMult: number, StartingCashMult: number, RangeMult: number, SpaMult: number }
 
 -- id -> { effect fields..., Label = human string }. Only fields the match flow applies TODAY.
 local MODIFIERS: { [string]: any } = {
@@ -32,6 +38,12 @@ local MODIFIERS: { [string]: any } = {
 	-- B53: economy modifiers (applied in EconomyManager / MatchDirector, see the header).
 	Scarcity    = { IncomeMult = 0.5, StartingCashMult = 0.5, Label = "Scarce resources (half economy)" },
 	LeanStart   = { StartingCashMult = 0.5, Label = "Lean start (half starting cash)" },
+	-- B56: tower-stat modifiers. RangeMult < 1 and SpaMult > 1 are both HARDER (SPA is seconds per
+	-- attack). Tuned deliberately mild: range and fire rate are the two stats a player has built
+	-- their whole placement plan around, so a heavy hand here does not read as "challenging", it
+	-- reads as "my towers are broken".
+	ShortSight  = { RangeMult = 0.75, Label = "Short sight (-25% tower range)" },
+	SlowHands   = { SpaMult = 1.25,   Label = "Slow hands (+25% attack interval)" },
 }
 
 function MatchModifiersConfig.IsKnown(id: string): boolean
@@ -47,7 +59,7 @@ end
 -- empty list resolves to a normal match. EnemyHpMult and LivesMult MULTIPLY across modifiers; LivesCap
 -- takes the MINIMUM cap seen. Unknown ids are warned and skipped.
 function MatchModifiersConfig.Resolve(list: { string }?): Effects
-	local eff: Effects = { EnemyHpMult = 1.0, LivesMult = 1.0, LivesCap = math.huge, IncomeMult = 1.0, StartingCashMult = 1.0 }
+	local eff: Effects = { EnemyHpMult = 1.0, LivesMult = 1.0, LivesCap = math.huge, IncomeMult = 1.0, StartingCashMult = 1.0, RangeMult = 1.0, SpaMult = 1.0 }
 	if type(list) ~= "table" then
 		return eff
 	end
@@ -57,6 +69,8 @@ function MatchModifiersConfig.Resolve(list: { string }?): Effects
 			warn(("[MatchModifiers] unknown modifier %q -- skipped"):format(tostring(id)))
 		else
 			if m.EnemyHpMult then eff.EnemyHpMult *= m.EnemyHpMult end
+			if m.RangeMult then eff.RangeMult *= m.RangeMult end
+			if m.SpaMult then eff.SpaMult *= m.SpaMult end
 			if m.LivesMult then eff.LivesMult *= m.LivesMult end
 			if m.LivesCap then eff.LivesCap = math.min(eff.LivesCap, m.LivesCap) end
 			if m.IncomeMult then eff.IncomeMult *= m.IncomeMult end
