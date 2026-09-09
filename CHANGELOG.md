@@ -1,5 +1,37 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-09-09 [lobby] B56 -- AD-UI/AD-Gacha: **the watchdog was right for 20+ sessions** -- PlayGUI's 30-second boot block, and an orphan-pick prune.
+
+### PlayGUIController blocked boot for THIRTY SECONDS on every join
+
+`ScreenBootWatchdog` had reported `37/38 ... PlayGUIController STARTED BUT NEVER FINISHED BOOTING` on every single run for many sessions. It was easy to dismiss because the screen still opened -- the "ready" line just arrived later, below the warning.
+
+It was real. `local camPart = Workspace:WaitForChild("PlayGUICamera", 30)` sat at TOP LEVEL, and the cause was **STREAMING, not a rename**: `Workspace.StreamingEnabled` is true and the part sits **~1830 studs** from the SpawnLocation, so it is never replicated to a client standing at spawn. The wait therefore ran its full 30s and **returned nil anyway** -- which means the Play menu's camera had never worked either. It failed silently through the existing `if not camPart` guard, and the warning it prints only fires when the menu is opened.
+
+So two bugs behind one symptom, and both are fixed:
+- **The block.** `camPart` is only ever READ, and only when the menu OPENS -- never at boot. It is now resolved LAZILY and without blocking, so the resting state, the Dev harness and the HUD binding all run immediately instead of half a minute late. The lookup is recursive and re-resolves if the cached instance is unparented, so it survives streaming and a designer replacing the part.
+- **The camera.** `PlayGUICamera` now lives under `Workspace.PersistentScene`, a Model with `ModelStreamingMode = Persistent`, so it replicates to every client regardless of distance. Its CFrame -- the USER'S framing -- was asserted unchanged across the reparent.
+
+Verified live: `BootComplete = true`, the client sees the part, opening the menu sets `CameraType = Scriptable` with the camera **exactly at the framing part's position**, leaving restores `Custom`, and the watchdog now reports **38/38 with nothing stuck**.
+
+> **The lesson worth keeping: never block top-level boot on a Workspace instance while streaming is on.** A timed `WaitForChild` there is not a safety net, it is a guaranteed stall of exactly that timeout.
+
+### B29's orphaned banner pick, pruned properly
+
+`Data.BannerChoices["B29ProbeBanner"]` had sat in the dev profile since B29 -- the banner file is gone, so nothing could read or clear it (`ChooseBannerUnit` refuses it with `unknown_banner`).
+
+Rather than hand-delete one row, `BannerChoiceService` now **prunes picks for unregistered banners on profile load** -- the same thing `LoadoutService` already does for dangling unit uuids, and it keeps the single-writer rule intact (the player-facing remote does not grow a "delete" mode it would then have to validate). Any future re-curated or removed banner cleans itself up.
+
+**The guard matters more than the prune:** if `BannerRegistry` ever reported ZERO banners, an unguarded version would wipe every player's picks on load. It runs only when the registry actually has banners, and warns loudly if it ever sees none.
+
+Verified live: `pruned 1 orphaned pick(s) ... (B29ProbeBanner)`, with the real `SelectionAncestors` pick untouched.
+
+### Also
+
+`ServerStorage.SummonController_B54_backup` deleted -- the B55 rebuild is verified.
+
+**Found, NOT changed -- it needs a decision (see STATE.md):** the paid battlepass track can never unlock. `3711220080` is configured as a `GamePassId` but it is a **Developer Product**. Proven live: `GetProductInfo(id, GamePass)` fails "Item not found", `GetProductInfo(id, Product)` returns "Premium Battlepass Season 1" (799 R$), and `UserOwnsGamePassAsync` returns false and always will. Until it is resolved a 799 R$ purchase takes the money and grants nothing.
+
 ## 2026-09-08 [lobby] B55 -- AD-UI/AD-Gacha: **the summon screen rebuilt to the reference**, plus Luck, gem packs and auto-sell.
 
 The user supplied a reference screen and four decisions: the packs grant currency **and a real timed Luck buff**, bought with **Robux Developer Products**; the currency stays Gold (the gem art is a placeholder); four tabs become **three** (Friend dropped) mapped to the banner TYPES this game already has; the rarity pill is removed; auto-sell offers **the game's real six tiers, Common included**; and the reference's bottom bar is a composite of another screen, so it is ignored.
