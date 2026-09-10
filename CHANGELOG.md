@@ -1,5 +1,43 @@
 # CHANGELOG (append-only; newest first)
 
+## 2026-09-10 [lobby] B57 -- AD-Meta: **the money works** -- battlepass, gem packs and new luck passes all wired + verified, plus a Buffs UI.
+
+The whole monetisation surface was inert or broken. This session made it real, end to end, and added the buff-display layer the user asked for on top.
+
+### Battlepass -- the paid track can actually unlock now
+
+`BattlepassConfig.GamePassId` was `3711220080`, which was proven at B56 to be a **Developer Product**, not a gamepass -- so `UserOwnsGamePassAsync` always returned false and a 799 R$ purchase granted nothing. The user created a real gamepass (`1975634753`, "Battlepass S1", 599 R$) and it is now the configured id. **Verified LIVE, not assumed:** the boot log shows `Battlepass Owned=true` for the owner's account -- real ownership flows through to the paid-track unlock. (Every id this session was type-checked against the platform first, the B56 lesson.)
+
+### Gem packs -- the 4 placeholders are live
+
+`GemPackConfig`'s four `ProductId = 0` placeholders are now the user's four Developer Products (500/750/1000/1999 R$). `Validate` clean, prices read live from `MarketplaceService`.
+
+### Luck-only passes -- NEW (`LuckPackConfig` + `LuckPackService`)
+
+Four luck-only Robux products (25/50/75/100% Luck for 1 hour; 100/200/400/599 R$). The sibling of the gem packs: same greyed-button/BlockedReason contract and the same `ReceiptService` registry, but a luck pack grants Luck **alone** (no currency), so a failed apply safely returns false. Sold on the summon screen in a new **LUCK BOOSTS** section below the gem packs -- the pack column became a `ScrollingFrame` with a `UIListLayout` so all 8 cards fit (the gem 2x2 grid was untouched). New remotes `GetLuckPacks`/`BuyLuckPack`.
+
+### ReceiptService -- proven for the first time
+
+`ReceiptService` had **0 products registered in every boot before this session** -- its pipeline had never run. It now carries **8** (4 gem + 4 luck). A Studio-only test seam (`ReceiptService._Decide`, the same function assigned to `ProcessReceipt`) + a `DevReceiptTest` harness on `LuckPackService` drove it without spending Robux: **unknown product -> NotProcessedYet**, **first delivery -> PurchaseGranted** (applied +25% Luck, recorded in `Data.Purchases`), **re-delivery of the same PurchaseId -> PurchaseGranted with no re-grant** (idempotency via the profile ledger). **UNTESTED: an actual Robux charge** (a real `PromptProductPurchase` -> live receipt) -- that needs a real purchase.
+
+### Buffs UI (crosses AD-UI -- user go-ahead, ownership noted)
+
+- `BuffService.GetActiveBuffs` (LOBBY, AD-Meta) -- READ-ONLY, composes the Luck buff (`LuckService`) and the Weekend Rush window (`WeekendRushConfig`) into one ordered list, each buff carrying its own display copy + SecondsLeft.
+- `HUD.BuffStrip` + `BuffStripController` -- always-visible strip, top-3 buffs as chips with a live timer, and a **View All** button (`ClientEvents.OpenBuffs`).
+- `BuffsScreen` + `BuffsController` -- the dedicated screen: every active buff as a card (title / subtitle / description + countdown). Both are real editable instances (the no-UI-in-scripts rule); controllers only read data, clone templates, set text. Both boot-instrumented (`ScreenBootWatchdog`). Verified live via screenshots (Luck card "50% Luck Boost" + 58:44 timer; strip chip; summon LUCK BOOSTS column).
+
+### Weekend Rush -- Lobby half only
+
+`WeekendRushConfig` (Lobby-local, PURE): active **Friday 00:00 -> Monday 00:00 UTC**, `RewardMultiplier = 2`, time-derived (no field, no writer). Verified across the week. It drives the Buffs card when active. **The actual x2 on rewards + exp is GAME-side and NOT built** -- `docs/proposals/2026-09-10-weekend-rush-game-doubling.md` (promote the config to shared; confirm timezone; confirm whether BP XP doubles too).
+
+### Not built on purpose: luck-on-rerolls
+
+The user asked for Luck to affect trait + stat rerolls too. It touches `TraitRegistry`/`StatGradeConfig` (**shared canon, both Places**) and is an unspecified balance change, so per the constitution it is a proposal, not a rushed edit: `docs/proposals/2026-09-10-luck-on-rerolls.md` (weight-bias vs best-of-N; magnitude is the user's call; owner AD-Traits).
+
+Remotes **44 -> 47**. No shared-canon change this session (drift 41/41 at bootstrap, untouched). No schema change.
+
+**USER: republish the Lobby Place. `git push` (this makes 6 local commits). Optionally deactivate the orphaned Dev Product `3711220080` (the old battlepass id -- nothing sells it now).**
+
 ## 2026-09-09 [both] B56b -- AD-Game: **the last two deferred modifiers land** -- tower range and attack speed.
 
 `RangeMult`/`SpaMult` had been named in the registry since B51 and applied by nothing. B51 predicted the seam exactly ("a module-level scale on TowerController applied to self.BaseStats after Resolve, set by MatchDirector like SetHealthScale") and deferred only the verification. B56 built that seam. **Every effect `MatchModifiersConfig` names is now applied.**

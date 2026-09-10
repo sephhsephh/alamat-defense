@@ -141,3 +141,20 @@ who had just bought Luck would see "no Luck" and **Show Chances would quote the 
 a stale odds table is the one thing this screen must never show. Verified: clearing a buff
 server-side re-renders an OPEN chances popup from 5.854%/1.456% back to 4%/0.995% with no
 interaction.
+
+
+## B57 — packs configured + luck-only passes + the luck buff shown
+
+- **Gem packs are LIVE.** `GemPackConfig`'s four `ProductId`s are the user's Developer Products
+  (verified live B57). No more `pack_not_configured`.
+- **Luck-only passes (NEW).** `RS.Configs.Gacha.LuckPackConfig` + `SSS.Server.Meta.LuckPackService`
+  — 4 Robux Dev Products (25/50/75/100% Luck for 1 hour) that grant Luck ALONE (no currency), over
+  the same `ReceiptService` registry (now 8 products). Remotes `GetLuckPacks` / `BuyLuckPack`.
+- **Summon pack column.** The gem grid + a new **LUCK BOOSTS** grid stack inside a `ScrollingFrame`
+  (`Packs.Scroll`, vertical `UIListLayout`), so all 8 cards fit; the gem 2x2 grid is untouched.
+  `SummonController.renderLuckPacks` mirrors `renderPacks`. `refreshLuckStrip` now resizes `Scroll`.
+- **The active luck buff** shows in the existing `Packs.LuckStrip` here AND in the new Buffs UI
+  (`docs/systems/buffs.md`).
+- **ReceiptService** gained a Studio-only test seam (`_Decide`) driven by `LuckPackService`'s
+  `DevReceiptTest` harness — the first real exercise of the receipt pipeline. A real Robux charge
+  is still untested (needs a purchase).

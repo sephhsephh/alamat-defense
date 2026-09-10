@@ -43,6 +43,8 @@ The social/meta Place: collection, banners, stage + difficulty select, parties, 
 
 ## UI kit + screens (AD-UI)
 
+**B57 — MONETISATION + BUFFS (AD-Meta; UI crosses AD-UI, user go-ahead).** Battlepass gamepass `1975634753` live (`Owned=true` VERIFIED). Gem packs wired + **NEW luck-only passes** (`LuckPackConfig`/`LuckPackService`, luck via `LuckService`, no currency) sell in a **LUCK BOOSTS** scroll below the gems on the summon screen. `ReceiptService` PROVEN (8 products; idempotency/unknown/refusal via `DevReceiptTest`; a real Robux charge UNTESTED). **Buffs:** `BuffService.GetActiveBuffs` (READ-ONLY) + always-visible HUD `BuffStrip` (top-3 + View All → `ClientEvents.OpenBuffs`) + `BuffsScreen` cards. `WeekendRushConfig` (Fri 00:00–Mon 00:00 UTC, x2) is DISPLAY-ONLY here — the GAME does the doubling (PENDING). Remotes **44→47**. Docs: `buffs.md`, `summon-screen.md`. Luck-on-rerolls = PENDING (proposal). See STATE.md.
+
 **B40 — THE TWO SCREENS, MAIL, THE SHOP AND QUESTS. Docs: `shop.md`, `quests.md`, `reward-push.md`.** `Remotes` **27 → 31**. NO schema
 bump: `ShopStock` and `Quests` were BOTH in the template since v2 unwritten, like `LoginStreak` at B38 — **check the schema before
 designing.** **SCREENS:** `StarterGui.DailyRewards` (2 tabs) + `StarterGui.RedeemCodes` are BLOCKOUT ART I scripted to the published

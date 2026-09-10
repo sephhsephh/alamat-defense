@@ -46,6 +46,7 @@
   empty-pool fallback, and the "remote returns the views" reveal decision. Read before touching
   anything that grants, spends, rotates or rolls.
 - `summon-screen.md` — **AD-UI + AD-Gacha canon, LOBBY**: the B55 summon-screen rebuild to the user's reference (3 tabs mapped by banner TYPE: Special=Selection, Standard, Limited=Event; the B6 carousel is GONE, old controller parked at `ServerStorage.SummonController_B54_backup` — DELETE once confirmed) **plus the three systems it needed**: the timed **Luck** buff (`LuckConfig` pure + `LuckService`; expiry is a COMPARISON, never a scheduled write; `BuildContext` gained a 4th arg `luckBonusMult`), **gem packs on Robux Developer Products** (`GemPackConfig` + `GemPackService`; **USER must paste 4 ProductIds**) over **`ReceiptService`** — THE one owner of `ProcessReceipt`, a REGISTRY so the battlepass level-skips can plug in, idempotent via `Data.Purchases` — and **auto-sell** (`AutoSellConfig` derives its tier list; selling is SummonService step 12 via `GrantService.SellUnits`). Show Chances recomputes the engine's own maths incl. live Luck. Read before touching the summon screen, Luck, packs, receipts or auto-sell.
+- `buffs.md` — **AD-Meta canon (UI surfaces AD-UI's), LOBBY**: the active-buff layer (B57). `BuffService.GetActiveBuffs` (READ-ONLY: Luck + Weekend Rush) + HUD `BuffStrip` (top-3 + View All) + `BuffsScreen` cards; `WeekendRushConfig` (Fri–Mon UTC) is DISPLAY-ONLY (the Game does the x2). Read before touching buffs or Weekend Rush.
 - `gacha-selection.md` — **AD-Gacha canon**: SELECTION banners only (blueprint B4's other half,
   B30). The `PlayerChoice` config shape, `BannerChoices` (schema v3) and why `ChosenAtDay` is a DAY
   NUMBER and not a timestamp, the pure `BannerRegistry` choice API, `BannerChoiceService` as the ONE
@@ -128,6 +129,8 @@
   2026-08-09)
 
 ## proposals/
+- `2026-09-10-weekend-rush-game-doubling.md` — AD-Meta→AD-Game: apply Weekend Rush **x2** to rewards+exp (GAME); promote `WeekendRushConfig` to shared; confirm tz + whether BP XP doubles. OPEN.
+- `2026-09-10-luck-on-rerolls.md` — AD-Meta→AD-Traits: make Luck bias trait+stat rerolls; weight-bias (shared canon) vs best-of-N (Lobby-local); magnitude is the user's call. OPEN.
 - `2026-08-20-c4-feeding.md` — AD-Gacha: C4 feeding is **blocked on DATA, not code** — no `FeedValue`
   in `ItemCatalog`, no unit XP curve, no `UnitInstance.XP` writer. Needs food + a curve + a source. OPEN.
 - `2026-09-02-inbox-v5.md` — AD-Meta/AD-Gacha → AD-Game: the Inbox screen needs a **v5 schema bump** (a new `Data.Inbox` history field + both-Place publish — the first genuinely necessary bump since v4). Migration + build sketch. OPEN.

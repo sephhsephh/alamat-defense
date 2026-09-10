@@ -40,6 +40,8 @@ task touches — resolved at bootstrap per the constitution.
 | Maps / stages / waves content | AD-Game | Game | Studio (Game) `RS.Configs.{Maps,Stages,Waves}`, `ServerStorage.Maps` |
 | Settings (client settings pipeline) | AD-Game | both | Studio (Game) `Server.Settings` + profile `Settings` field |
 | Repo / constitution / tooling | AD-Integration | — | this repo root + `tools/` |
+| Monetisation: receipts + gem/luck packs | AD-Meta/AD-Gacha | Lobby | Studio (Lobby) `SSS.Server.Meta.{ReceiptService,GemPackService,LuckPackService}` + `RS.Configs.Gacha.{GemPackConfig,LuckPackConfig,LuckConfig}` + `RS.Remotes.{GetGemPacks,BuyGemPack,GetLuckPacks,BuyLuckPack}` + `docs/systems/summon-screen.md`. `ReceiptService` = THE one `ProcessReceipt` owner (a registry). Gem packs B55; **luck packs B57**; all ids VERIFIED live B57. |
+| Buffs (HUD strip + Buffs screen + BuffService) | AD-Meta (UI surfaces are AD-UI's) | Lobby | Studio (Lobby) `SSS.Server.Meta.BuffService` + `RS.Configs.Meta.WeekendRushConfig` + `RS.Remotes.GetActiveBuffs` + `StarterGui.HUD.BuffStrip` + `StarterGui.BuffsScreen` + `docs/systems/buffs.md` (B57). BuffService + config = AD-Meta; the two StarterGui surfaces were built by AD-Meta with the user's go-ahead but are **AD-UI's to restyle** (crossing, changelog B57). Weekend Rush x2 doubling is a GAME PENDING. |
 
 Notes:
 - A "chat" here is a persistent named conversation; one human can of course run only a
