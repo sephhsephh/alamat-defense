@@ -1,4 +1,30 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-14 [game] B63 -- AD-Game: **four open questions closed** -- two design calls settled, one popup verified for real, one backup already gone. `STATE.md` is finally UNDER its cap.
+
+A decisions-and-verification session. No gameplay value changed; what changed is that four things that had been carried as "someone should check this" are now either answered or proven.
+
+**THE USER SETTLED BOTH DESIGN CALLS B61/B62 RAISED. Recorded as canon so no later session "fixes" them.**
+
+- **ACT 3 IS MEANT TO BE A BOSS WALL.** B61 found its 15 waves are a formality for any loadout that reaches the boss, which then decides the match alone. That is the intended fight: the waves are the warm-up, the Scarecrow King is the test. The PENDING is deleted and nothing is tuned. `FarmBoss.Health`/`Armor` and the `99999` stay as they are.
+- **ASCENSION IS MEANT TO BE THE POWER AXIS.** B62 measured it at +17.7% against meta level's +4.1% and perfect rolls' +2.7% -- dominating every other axis combined, and hard-gating Act 3. Intended: ascension is the hard gate and the main chase, with levelling and the C1/C2 reroll loops as refinement on top. **Its dominance must not be flattened.** A future session reading B62's numbers as a balance bug would be wrong.
+
+**`ConfirmationPopupUI` -- VERIFIED LIVE, END TO END, AFTER SITTING UNCONFIRMED SINCE B32.** `STATE.md` had carried "it IS in the Game, ask the user whether they copied it" for thirty-one sessions. The user could not recall, so it was proven instead of assumed. Structural check first -- 23 descendants, every part `UIKit.Confirm.resolve()` gates on (`Background` > `ConfirmationFrame` > `Main` > `YesButton`/`NoButton`, plus both optional labels), so the gate PASSES and confirms do not silently auto-answer NO. Then driven in Play:
+
+    RESTING (fresh session): gui.Enabled=false busy=false
+    OPEN:                    gui.Enabled=true bg.Visible=true frame.Visible=true busy=true
+    ASK RETURNED:            false          <- a REAL mouse click on NoButton
+    AFTER CLOSE:             gui.Enabled=false bg.Visible=false busy=false
+
+The B32 two-second gate checks out too: `YesButton` starts `Active=false` at `LockedColor` with a live `YES (3)` countdown while `NoButton` is clickable immediately, then flips to `Active=true` at `ReadyColor` with the label restored. Answered by `user_mouse_input` on the real control rather than by poking state -- the project's own rule for proving UI.
+
+⚠ **TWO TRAPS FOUND WHILE TESTING IT, both worth knowing before anyone tests a UIKit module again.** (1) **Do NOT `:Clone()` a UIKit module to require it.** `Confirm`'s `optionalSibling` reads `script.Parent`, which is `nil` on a clone, so the require errors outright. The clone-to-dodge-the-require-cache habit (B36's lesson) is for stateful SERVICES; a UI controller that resolves live `PlayerGui` instances on every call must be required in place, and is safe to. (2) **`busy` is module state that survives an abandoned ask.** A first test whose ask is never answered leaves `busy = true`, and the NEXT ask is refused and returns false immediately -- a second test then reads as "working" while actually observing the first dialog's residue. Caught mid-session; the end-to-end run above was redone from a fresh Play for exactly this reason.
+
+**`SummonController_B54_backup` IS ALREADY GONE -- and this chat did not delete it.** The user's call was "delete it", but a DataModel-wide search found no `B54`/backup instance in the Game **or** the Lobby (the Game's `ServerScriptService.Server.Summons.SummonController` is the unrelated live server-side module). It was removed in Studio between sessions, which is the documented pattern for this project. Recorded as gone rather than claimed as done.
+
+**`STATE.md` IS 122 -> 119 LINES: UNDER THE ADR-0006 CAP FOR THE FIRST TIME IN SEVERAL SESSIONS**, and honestly, by resolving items rather than deleting anyone's open work -- the B61 design PENDING answered and folded away, the ConfirmationPopupUI uncertainty replaced by a verified statement, the B54 backup line retired. Both `CONTEXT.md` are still over (153/154) and remain the next prune.
+
+No gameplay value, no config and no shared canon changed. Drift 42/42 at bootstrap and landing. No schema change (v6). Remotes unchanged (47). Harness untouched and still OFF. **USER: republish the GAME Place** (B60-B63 are all Game-only; the Lobby has not been touched in any of them).
+
 ## 2026-09-14 [game] B62 -- AD-Game: **ascension is the gate.** B61's un-isolated variable, isolated -- and it turns out to be the game's dominant power axis.
 
 B61 showed Act 3 is decided by the boss and that the winning ceiling run varied ascension, rolls AND count all at once, so it could not say which mattered. Two runs settle it, each adding exactly ONE variable to B61's `12 towers / meta 50 / ascension 0 / average` baseline (Defeat, 366,169).
