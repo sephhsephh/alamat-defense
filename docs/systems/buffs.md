@@ -31,7 +31,7 @@ A time WINDOW, not a stored buff: active **Friday 00:00 -> Monday 00:00** in `Ti
 (default **UTC**), `RewardMultiplier = 2`. `IsActive(now?)` / `SecondsLeft(now?)` are pure and
 derived from `os.time()` — the same "expiry is a comparison, never a write" shape as the Luck buff.
 
-**The Lobby only DISPLAYS Weekend Rush.** The actual x2 on rewards + exp is GAME-side and NOT built:
+**The Lobby only DISPLAYS Weekend Rush.** The actual x2 on rewards + exp is BUILT in the Game (B57c: `RewardCalculator` doubles gold + all XP on a Victory; drops not doubled), currently via a byte-identical Game-LOCAL copy:
 `docs/proposals/2026-09-10-weekend-rush-game-doubling.md`. When the Game consumes it, promote
 `WeekendRushConfig` to shared canon (both Places byte-identical + manifest) so both read one window.
 
@@ -39,4 +39,4 @@ derived from `os.time()` — the same "expiry is a comparison, never a write" sh
 
 Lives in `summon-screen.md` (`LuckConfig` pure + `LuckService`, the one writer of `Data.LuckBuff`).
 Bought via gem packs, or the B57 **luck-only passes** (`LuckPackConfig` + `LuckPackService`). Luck
-currently affects summon only; extending it to rerolls is `docs/proposals/2026-09-10-luck-on-rerolls.md`.
+currently affects summon AND (B57b) trait + stat rerolls via best-of-N (`RerollLuckConfig`, Lobby-local; see `docs/proposals/2026-09-10-luck-on-rerolls.md`).

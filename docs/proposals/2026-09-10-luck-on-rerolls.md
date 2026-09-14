@@ -4,8 +4,9 @@
 - Raised by: AD-Meta (Lobby)
 - Owner to action: **AD-Traits** (owns `TraitRerollService` / `StatRerollService`), plus the
   shared-canon owners if the weight-bias option is chosen.
-- Status: OPEN — deliberately NOT built in B57. It is a balance change that touches shared canon;
-  the constitution says propose + decide the mechanic first.
+- Status: **IMPLEMENTED B57b** — best-of-N, Lobby-local, no shared-canon change (`RerollLuckConfig` +
+  edits to `TraitRerollService`/`StatRerollService`). Option A (weight-bias, summon-consistent) remains
+  available below if the user later wants it. The rest of this doc is the original decision record.
 
 ## What the user asked (B57)
 

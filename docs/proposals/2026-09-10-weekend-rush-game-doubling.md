@@ -4,7 +4,7 @@
 - Raised by: AD-Meta (Lobby)
 - Owner to action: **AD-Game** (rewards + XP are computed in the Game place), with the shared-canon
   owners for the config promotion.
-- Status: OPEN — Lobby half is built and live; the Game half is not.
+- Status: **IMPLEMENTED B57c** (best-effort under a shell outage) — Game `RewardCalculator` doubles gold + account/tower/battlepass XP on a Victory when the window is open; config is a byte-identical Game-LOCAL copy (promote to shared + `git commit` still PENDING); drops/fragments NOT doubled (a scope choice). Original plan below.
 
 ## What already exists (Lobby, B57)
 

@@ -1,4 +1,32 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-13 [game] B57c -- AD-Game (via AD-Meta, user go-ahead): **Weekend Rush x2 is real** -- the doubling.
+
+The B57 Weekend Rush proposal's Game half is built: while the weekend window is open, a CLEAR pays double. The Lobby already showed the card (B57); this makes it actually pay.
+
+`RewardCalculator.GrantForPlayer` now applies a Victory-only scalar (`WeekendRushConfig.RewardMultiplier`, 2) to **gold + account XP + tower XP + battlepass XP**, server-authoritative on `WeekendRushConfig.IsActive()`. Composed as a FINAL scalar over each computed number -- the same shape difficulty + economy modifiers already use. Gated on Victory, so a defeat's consolation is never inflated.
+
+**Scope choice (user to confirm/adjust):** item DROPS and challenge FRAGMENTS are deliberately NOT doubled -- a much bigger economy lever than double gold/XP. Doubling them is a one-line follow-up (PENDING notes it).
+
+**Config: a Game-LOCAL byte-identical copy, NOT a shared promotion.** The repo shell was down at build time (a Windows update blocking file access), so `WeekendRushConfig` could not be promoted to shared canon + committed safely. A byte-identical copy was created in the Game at `RS.Configs.Meta.WeekendRushConfig` (both copies hash `f2400aca`, verified). **PENDING: promote to shared canon (both Places + manifest) + drop the duplicate when git is back** -- the copies matching now makes that clean.
+
+Verified: the doubling expressions with the live (Friday) config give mult=2 on a Victory (accXP 100->200, gold 150->300, tower XP 40->80, BP XP 26->52) and mult=1 on a defeat; a real smoke-test match ran RewardCalculator clean and logged `WeekendRush x1` on its auto-lost defeat. NOT yet eyeballed on a WON match (the auto smoke-test places no towers and always loses).
+
+Timezone stays UTC (matches the deployed Lobby card). Crosses AD-Game's canon (`RewardCalculator`) with the user's go-ahead. No shared-canon or schema change (the copy is Place-local). Git commit deferred -- shell down; the Game code is saved in Studio.
+
+
+## 2026-09-12 [lobby] B57b -- AD-Traits (via AD-Meta, user go-ahead): **Luck now helps rerolls** -- best-of-N.
+
+The B57 luck-on-rerolls proposal is implemented with the contained option: **best-of-N**, entirely Lobby-local, no shared-canon change. A reroll now rolls N candidate outcomes and keeps the best; N scales with the player's active Luck % (`LuckService.ActivePercent`, the same read summon uses).
+
+- New `RS.Configs.Meta.RerollLuckConfig` (pure) -- ONE tunable knob, `RollCount(luckPercent)`: **1** with no buff (byte-identical to before), **2** at 25/50/75%, **3** at 100%.
+- `TraitRerollService`: keeps the RAREST of N candidates (smallest `TraitDefinitions.Weight`).
+- `StatRerollService`: keeps the candidate set with the highest total roll (the worthiness A-floor still clamps the chosen set).
+
+Best-of-N over a weight bias because a weight bias would change `TraitRegistry` / `StatGradeConfig` (SHARED canon, both Places -- a cross-place change). Best-of-N is Lobby-local and fully reversible; the weight-bias alternative stays documented in the proposal.
+
+Verified (real pure modules): trait NAMED-rate 15.7% (N=1) -> 29.0% (N=2) -> 40.6% (N=3); stat avg total roll 1.485 -> 1.784 -> 1.936; N=1 unchanged. Both services boot clean with the new requires. Also captured the Buffs screen with BOTH buffs live (Weekend Rush is active -- it is Friday), confirming the Weekend Rush card end to end. NOT yet driven in-game with a real unit+token+buff (the dev profile has no units) -- the live `bestOf=N` log line is the one thing left to eyeball.
+
+Crosses AD-Traits' canon with the user's go-ahead (noted). No shared-canon or schema change. Remotes unchanged (47).
 
 ## 2026-09-10 [lobby] B57 -- AD-Meta: **the money works** -- battlepass, gem packs and new luck passes all wired + verified, plus a Buffs UI.
 
