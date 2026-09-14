@@ -1,5 +1,5 @@
 -- tools/hash_shared.luau
--- TOOLVERSION: B41-1
+-- TOOLVERSION: B58-1
 -- DRIFT CHECK: run via execute_luau (Edit datamodel) in ANY Place at bootstrap.
 -- Prints fnv1a32 hashes of the deployed shared canon; compare against shared/manifest.json.
 -- Anything absent in this Place returns "MISSING" (expected before its first deploy).
@@ -267,6 +267,25 @@ local MODULES = {
 	-- rollover sat in a module it could not see, freezing PlayerLevel at 1 and making every
 	-- level-gated LoadoutConfig slot unreachable. Game applies the curve, Lobby draws the ExpBar.
 	PlayerLevelConfig = "ReplicatedStorage.Configs.Meta.PlayerLevelConfig",
+	-- ===== BACK-PORTED B58 (AD-Integration). READ THIS BEFORE TRUSTING A FALLBACK RUN. =====
+	-- The five entries below were added to the IN-STUDIO HashShared copy at B51/B52/B54 and never
+	-- back-ported here, so THIS FILE -- the canon tool -- silently checked 36 entries while the Places
+	-- held 41. The module header warns that a repo edit not re-deployed makes drift invisible; this is
+	-- that same hazard running the OTHER way, and it is why the header's "the repo tool always works as
+	-- a fallback" was untrue for four sessions. A promotion updates BOTH copies, in the same session.
+	-- Promoted B51 (Phase D / D2): ChallengeConfig reads the daily Slot offset from it, in both Places.
+	MetaConfig = "ReplicatedStorage.Configs.Meta.MetaConfig",
+	-- Promoted B52 (Phase D / D2, the Lobby Challenge tab): the Lobby reads the day's challenge the
+	-- GAME resolves. MatchModifiersConfig is pure; ChallengeConfig needs MetaMath + MetaConfig.
+	MatchModifiersConfig = "ReplicatedStorage.Configs.Global.MatchModifiersConfig",
+	ChallengeConfig = "ReplicatedStorage.Configs.Global.ChallengeConfig",
+	-- Promoted B54: the sprint/dash movement-feel knobs, shared so both Places move identically.
+	MovementConfig = "ReplicatedStorage.Configs.Global.MovementConfig",
+	-- LocalScript, hashed as source -- same precedent as UIKitBootstrap/SettingsUI.
+	MovementController = "StarterPlayer.StarterPlayerScripts.Client.MovementController",
+	-- Promoted B58 (AD-Integration): the Weekend Rush window. BOTH Places must read the SAME window --
+	-- the Lobby draws the Buffs card and its countdown, the GAME pays the x2 in RewardCalculator.
+	WeekendRushConfig = "ReplicatedStorage.Configs.Meta.WeekendRushConfig",
 }
 
 -- GuiObject subtrees. Promoted by AD-UI 2026-08-06; a Place that has not received the kit

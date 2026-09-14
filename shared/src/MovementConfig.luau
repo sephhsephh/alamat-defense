@@ -18,13 +18,13 @@ local MovementConfig = {}
 -- assuming the Humanoid still holds it, so anything else that touches WalkSpeed cannot strand a
 -- player at sprint speed.
 MovementConfig.WalkSpeed = 16
-MovementConfig.SprintSpeed = 26
+MovementConfig.SprintSpeed = 56
 
 -- ===== Dash (LOBBY only) =====
 -- A short horizontal burst in the direction the player is moving (or facing, when standing still).
 -- DashSpeed is studs/second applied for DashDuration, then released; the cooldown starts at the
 -- moment the dash BEGINS, so the usable gap is (DashCooldown - DashDuration).
-MovementConfig.DashSpeed = 70
+MovementConfig.DashSpeed = 300
 MovementConfig.DashDuration = 0.22
 MovementConfig.DashCooldown = 1.5
 

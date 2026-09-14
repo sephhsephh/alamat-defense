@@ -4,9 +4,24 @@
 - Raised by: AD-Meta (Lobby)
 - Owner to action: **AD-Traits** (owns `TraitRerollService` / `StatRerollService`), plus the
   shared-canon owners if the weight-bias option is chosen.
-- Status: **IMPLEMENTED B57b** — best-of-N, Lobby-local, no shared-canon change (`RerollLuckConfig` +
-  edits to `TraitRerollService`/`StatRerollService`). Option A (weight-bias, summon-consistent) remains
+- Status: **CLOSED — IMPLEMENTED B57b, VERIFIED LIVE B58 (2026-09-14).** Best-of-N (Option B),
+  Lobby-local, no shared-canon change (`RerollLuckConfig` + edits to
+  `TraitRerollService`/`StatRerollService`). Option A (weight-bias, summon-consistent) remains
   available below if the user later wants it. The rest of this doc is the original decision record.
+  - **Verified live B58**, closing B57b's one remaining gap (it had only been proven on pure modules,
+    never driven in-game): `DevLuck=100`, the real `RerollTrait` / `RerollStats` remotes, a real owned
+    unit and a real spent token -> `bestOf=3` in three `[DATA] TraitReroll` lines and three
+    `[DATA] StatReroll` lines.
+  - **Decision 2 (magnitude) ANSWERED B58: keep best-of-2/3 as built.** `RollCount`: 1 with no buff,
+    2 at 25/50/75%, 3 at 100%.
+  - **Decision 3 ANSWERED: BOTH rerolls** — trait keeps the rarest of N, stat the highest-total of N.
+  - ⚠ **Known feel issue, deliberately accepted at B58.** Best-of-N picks the best of N **new**
+    candidates and does NOT compare against the unit's current values, so a reroll at 100% Luck can
+    still downgrade a good unit -- observed live: `DMG D->B RNG SS->C SPA A->D`. Consistent with a
+    trait reroll landing back on `None`, but "Luck helps rerolls" reads to a player as "I cannot get
+    worse". If that complaint ever arrives, the contained fix is to seed the candidate list with the
+    CURRENT stat set so a stat reroll can only hold or improve -- a real change to AD-Traits' canon
+    and a separate proposal, not a tweak.
 
 ## What the user asked (B57)
 

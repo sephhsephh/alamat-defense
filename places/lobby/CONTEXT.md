@@ -5,8 +5,9 @@ The social/meta Place: collection, banners, stage + difficulty select, parties, 
 
 ## Current live state
 
-- **Shared canon: 35/35 PRESENT here**, hashes in `shared/manifest.json`. `MetaMath` stays Lobby-only, so the GAME reports 34/35 —
-  expected, not drift. **Compare live hashes to BOTH `hash` and `deployed.<Place>` field by field**, or real drift hides (B39).
+- **Shared canon: 42/42 PRESENT here** (B58; `MetaMath` reached the GAME at B51, so it is no longer a Game gap). Hashes in `shared/manifest.json`.
+  **B58 caught real drift here:** `MovementConfig` read `19421017` against a manifest of `9c7cbd32` — the USER's own `SprintSpeed` 26→56 /
+  `DashSpeed` 70→300 re-tune, confirmed by them and RECORDED as canon (B22 precedent), then mirrored to the Game. All three now `19421017`. **Compare live hashes to BOTH `hash` and `deployed.<Place>` field by field**, or real drift hides (B39).
 - **Trait rarity table (B12):** `RS.Configs.Traits.*` are SHARED canon; API is `TraitRegistry.Roll(rng)`, not `RollTrait`.
 - **`UnitStatsCatalog`** = GENERATED cache of resolved base DMG/RNG/SPA at tier 1 / ML 1 / mid-roll / asc 0, **SPA already inverted**.
   AD-Game owns it; **Farm has no DMG/SPA keys**. ADR-0003.
@@ -43,7 +44,7 @@ The social/meta Place: collection, banners, stage + difficulty select, parties, 
 
 ## UI kit + screens (AD-UI)
 
-**B57 — MONETISATION + BUFFS (AD-Meta; UI crosses AD-UI, user go-ahead).** Battlepass gamepass `1975634753` live (`Owned=true` VERIFIED). Gem packs wired + **NEW luck-only passes** (`LuckPackConfig`/`LuckPackService`, luck via `LuckService`, no currency) sell in a **LUCK BOOSTS** scroll below the gems on the summon screen. `ReceiptService` PROVEN (8 products; idempotency/unknown/refusal via `DevReceiptTest`; a real Robux charge UNTESTED). **Buffs:** `BuffService.GetActiveBuffs` (READ-ONLY) + always-visible HUD `BuffStrip` (top-3 + View All → `ClientEvents.OpenBuffs`) + `BuffsScreen` cards. `WeekendRushConfig` (Fri 00:00–Mon 00:00 UTC, x2) is DISPLAY-ONLY here — the GAME does the doubling (PENDING). Remotes **44→47**. Docs: `buffs.md`, `summon-screen.md`. Luck-on-rerolls = PENDING (proposal). See STATE.md.
+**B57 — MONETISATION + BUFFS (AD-Meta; UI crosses AD-UI, user go-ahead).** Battlepass gamepass `1975634753` live (`Owned=true` VERIFIED). Gem packs wired + **NEW luck-only passes** (`LuckPackConfig`/`LuckPackService`, luck via `LuckService`, no currency) sell in a **LUCK BOOSTS** scroll below the gems on the summon screen. `ReceiptService` PROVEN (8 products; idempotency/unknown/refusal via `DevReceiptTest`; a real Robux charge UNTESTED). **Buffs:** `BuffService.GetActiveBuffs` (READ-ONLY) + always-visible HUD `BuffStrip` (top-3 + View All → `ClientEvents.OpenBuffs`) + `BuffsScreen` cards. **B58: `WeekendRushConfig` is now SHARED CANON** (`44c549f0`, manifest entry 42, byte-identical in both Places; window **Fri 00:00–Mon 00:00 UTC+8**, user's call). Still DISPLAY-ONLY here — the GAME applies the x2 (gold + all XP + every drop). Remotes **44→47**. Docs: `buffs.md`, `summon-screen.md`. **Luck-on-rerolls VERIFIED LIVE B58** (`bestOf=3` at `DevLuck=100` through the real `RerollTrait`/`RerollStats` remotes); best-of-N does NOT compare against the unit's current values, so a reroll can still downgrade. See STATE.md.
 
 **B40 — THE TWO SCREENS, MAIL, THE SHOP AND QUESTS. Docs: `shop.md`, `quests.md`, `reward-push.md`.** `Remotes` **27 → 31**. NO schema
 bump: `ShopStock` and `Quests` were BOTH in the template since v2 unwritten, like `LoginStreak` at B38 — **check the schema before

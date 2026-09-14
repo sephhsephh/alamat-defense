@@ -4,7 +4,24 @@
 - Raised by: AD-Meta (Lobby)
 - Owner to action: **AD-Game** (rewards + XP are computed in the Game place), with the shared-canon
   owners for the config promotion.
-- Status: **IMPLEMENTED B57c** (best-effort under a shell outage) — Game `RewardCalculator` doubles gold + account/tower/battlepass XP on a Victory when the window is open; config is a byte-identical Game-LOCAL copy (promote to shared + `git commit` still PENDING); drops/fragments NOT doubled (a scope choice). Original plan below.
+- Status: **CLOSED — LANDED AND VERIFIED B58 (2026-09-14).** Every open thread in this proposal is
+  resolved; nothing here is outstanding. Original plan below, kept as the decision record.
+  - **The doubling** (B57c): `RewardCalculator.GrantForPlayer` applies a Victory-only scalar to gold +
+    account XP + tower XP + battlepass XP. **Verified live B58** on a real 15/15 Victory:
+    `gold 628` against a 100-300 band, `BP XP +250`, `WeekendRush x2`.
+  - **Drops + challenge fragments: DOUBLED (user's call, B58).** The open scope question is closed YES.
+    Applied at the one point where the stage drop roll, the Insane items and the day's challenge
+    fragments are all already in `drops`, scaling each `Count`; ids and `ItemCatalog` Kind routing
+    untouched. **Verified live B58** on an Insane Victory: `[DATA] Drop: StatRerolls x2 ->
+    Currencies.StatRerolls = 2` (Insane grants x1), still routed to `Currencies`, not `Items`.
+  - **Shared-canon promotion: DONE B58.** `shared/src/WeekendRushConfig.luau`, manifest 41 -> **42**,
+    byte-identical `44c549f0` in both Places and on disk, drift **42/42** in each, checked
+    field-by-field against both `hash` and `deployed.<Place>`.
+  - **Timezone: DECIDED B58 — `TimezoneOffsetHours = 8` (UTC+8, Asia/Manila)**, not UTC. Edges
+    verified: opens Fri 00:00 Manila, shut one second before, open through Sun 23:59, shut Mon 00:00.
+  - **Battlepass XP question (item 3 below): answered YES** — BP XP doubles, built that way at B57c.
+  - Follow-up noted, NOT part of this proposal: only CURRENCY drops print a `[DATA] Drop:` line; the
+    Item branch grants silently, so doubled `BannerTicket`/`TraitRerollToken` are invisible in the log.
 
 ## What already exists (Lobby, B57)
 

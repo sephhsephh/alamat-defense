@@ -2,7 +2,15 @@
 <!-- owner: AD-Game | scope: shared canon, BOTH Places | added: 2026-09-08 (B54) -->
 
 Sprint and dash, added at the user's request (B54). Two shared-canon modules, no Place branch:
-- **`RS.Configs.Global.MovementConfig`** (pure, `9c7cbd32`) -- every number, plus `DashAllowed(place)`.
+- **`RS.Configs.Global.MovementConfig`** (pure, **`19421017`**) -- every number, plus `DashAllowed(place)`.
+  **`9c7cbd32` -> `19421017` at B58:** the USER re-tuned movement feel directly in the LOBBY Studio --
+  `SprintSpeed` 26 -> **56** and `DashSpeed` 70 -> **300**, two values and nothing else. The bootstrap
+  drift check caught the Lobby at 40/41; the user confirmed the change was theirs and said to keep it,
+  so B58 RECORDED it as canon (the B22 `ItemCatalog` precedent: a user-authored value change is
+  recorded, never reverted and never "fixed"). `shared/src` was rebuilt from disk canon with exactly
+  those two edits and PROVED byte-identical to the live Lobby copy by hash BEFORE anything was written;
+  the Game was brought to the same bytes in the same session, so no stale `deployed.<Place>` was left
+  behind. All three -- Game, Lobby, disk -- are `19421017`.
 - **`StarterPlayer.StarterPlayerScripts.Client.MovementController`** (LocalScript, `e2668274`) -- the
   one consumer. Deployed at an IDENTICAL path in both Places (the `ClientSettings` precedent), which
   is why promotion cost ZERO consumer edits.

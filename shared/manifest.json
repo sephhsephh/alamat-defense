@@ -415,14 +415,14 @@
     },
     "MovementConfig": {
       "file": "shared/src/MovementConfig.luau",
-      "hash": "9c7cbd32",
+      "hash": "19421017",
       "owner": "game",
       "deployPath": "ReplicatedStorage.Configs.Global.MovementConfig",
       "deployed": {
-        "Game": "9c7cbd32",
-        "Lobby": "9c7cbd32"
+        "Game": "19421017",
+        "Lobby": "19421017"
       },
-      "comment": "Added B54 (sprint + dash). PURE movement-feel knobs shared by both Places: WalkSpeed/SprintSpeed (sprint is a TOGGLE, both Places) and the LOBBY-only dash (DashSpeed/Duration/Cooldown). DashPlaces gates the dash by Place name the same way SettingsConfig's Scope gates a settings row -- a Place difference is a FIELD, never a second file.",
+      "comment": "9c7cbd32 -> 19421017 at B58 2026-09-14 (AD-Integration): the USER re-tuned movement feel in the LOBBY Studio -- SprintSpeed 26 -> 56 and DashSpeed 70 -> 300, two values, nothing else. AD-Integration did not author this; the bootstrap drift check caught the Lobby at 40/41, the user confirmed the change was theirs and said to KEEP it, and B58 RECORDED it: shared/src was rebuilt from the disk canon with exactly those two edits and PROVED byte-identical to the live Lobby copy by hash (2350 bytes, 19421017) before anything was written. The GAME was then brought to the same bytes in the same session, so unlike B22's ItemCatalog there is no stale deployed.<Place> left behind -- both Places and disk are 19421017. Same precedent, same stance: a user-authored value change is RECORDED as canon, never reverted and never \"fixed\". Added B54 (sprint + dash). PURE movement-feel knobs shared by both Places: WalkSpeed/SprintSpeed (sprint is a TOGGLE, both Places) and the LOBBY-only dash (DashSpeed/Duration/Cooldown). DashPlaces gates the dash by Place name the same way SettingsConfig's Scope gates a settings row -- a Place difference is a FIELD, never a second file.",
       "kind": "module"
     },
     "MovementController": {
@@ -483,6 +483,18 @@
         "Lobby": "2e99d041"
       },
       "comment": "THE ONE account-XP curve (Base 100, Growth 1.15, RoundTo 10) and THE ONE rollover rule, ApplyXP. Lobby-local from B33 as 3d321740; PROMOTED to shared canon B41 2026-08-27 (35 -> 36) and rehashed to 2e99d041 because the promotion rewrote the header that argued for it being Lobby-local -- the body is byte-unchanged. Promoted because the GAME grants player XP (RewardCalculator -> PlayerInventoryService.AddPlayerXP) while the rollover lived only in the Lobby, so PlayerLevel was frozen at 1 forever and LoadoutConfig's level-gated slots could never unlock. CONTRACT: Data.PlayerLevel is authoritative; Data.PlayerXP is progress WITHIN the current level, never a lifetime total. AddPlayerXP is the ONE caller of ApplyXP -- do not add a second. ApplyXP(level, xp, 0) is a self-healing REPAIR for pre-B41 profiles, which is why this needed no v5 field.",
+      "kind": "module"
+    },
+    "WeekendRushConfig": {
+      "file": "shared/src/WeekendRushConfig.luau",
+      "hash": "44c549f0",
+      "owner": "meta",
+      "deployPath": "ReplicatedStorage.Configs.Meta.WeekendRushConfig",
+      "deployed": {
+        "Game": "44c549f0",
+        "Lobby": "44c549f0"
+      },
+      "comment": "Promoted to shared canon at B58 2026-09-14 (AD-Integration, owner AD-Meta). THE \"Weekend Rush\" buff window: Friday 00:00 -> Monday 00:00, x2. PURE -- no services, no state, no requires. WHY SHARED: both Places read the same clock for different halves of one feature -- the LOBBY draws the Buffs card and its countdown (B57), the GAME applies the x2 in RewardCalculator.GrantForPlayer (B57c). Two copies of one clock pays double in one Place while the other says the buff is over. It shipped B57/B57c as a Lobby-local module PLUS a byte-identical Game copy (both f2400aca) only because the repo shell was down and the promotion could not be committed safely; B58 made it official. CHANGED AT PROMOTION (f2400aca -> 44c549f0, one edit, mirrored byte-identical to both Places and re-hashed AFTER it): the header went from \"Lobby-local FOR NOW\" to shared canon, the RewardMultiplier comment now says rewards + XP AND DROPS, and TimezoneOffsetHours went 0 -> 8 (UTC+8 Manila, user's call at B58) so the weekend follows the user's own clock rather than UTC. The window arithmetic already measured against that field, so the offset was the only number that moved.",
       "kind": "module"
     }
   },
