@@ -1,4 +1,29 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-14 [game] B62 -- AD-Game: **ascension is the gate.** B61's un-isolated variable, isolated -- and it turns out to be the game's dominant power axis.
+
+B61 showed Act 3 is decided by the boss and that the winning ceiling run varied ascension, rolls AND count all at once, so it could not say which mattered. Two runs settle it, each adding exactly ONE variable to B61's `12 towers / meta 50 / ascension 0 / average` baseline (Defeat, 366,169).
+
+| run | towers | meta | asc | rolls | outcome | lives | damage | vs baseline |
+|---|---|---|---|---|---|---|---|---|
+| baseline (B61) | 12 | 50 | 0 | average | Defeat | 0/3 | 366,169 | -- |
+| **A: +ascension** | 12 | 50 | **3** | average | **VICTORY** | **3/3** | **431,153** | **+64,984 (+17.7%)** |
+| B: +perfect rolls | 12 | 50 | 0 | **perfect** | Defeat | 0/3 | 376,137 | +9,968 (+2.7%) |
+
+**ASCENSION ALONE FLIPS THE MATCH. PERFECT ROLLS DO NOT COME CLOSE.** Ascension 0 -> 3 is worth **6.5x** what perfect rolls are worth on the same seed, and it is the ONLY single change tested that converts an Act 3 defeat into a victory. Run A won with **half the towers and merely average rolls** and still landed 431,153 damage against B60's 24-tower max-everything ceiling of 434,750 -- **within 0.8%.** The ceiling was almost entirely ascension; the other twelve towers and the perfect rolls together bought under a percent.
+
+**THE FULL LADDER, from the weakest tested seed (12/meta20/asc0/average, 351,738) to a win.** Each step is what that ONE axis is worth on Act 3:
+
+- meta level 20 -> 50 ......... +14,431 (+4.1%) -- still a defeat
+- perfect rolls .............. +9,968 (+2.7%) -- still a defeat
+- **ascension 0 -> 3 ......... +64,984 (+17.7%) -- WIN**
+- 12 -> 24 towers + perfect on top of ascension ... +3,597 (+0.8%) -- noise
+
+**WHAT THIS MEANS BEYOND ACT 3, AND IT IS THE REASON THIS RUN WAS WORTH DOING.** Ascension is not one power axis among several -- on this evidence it dominates all of them combined. Meta level, stat rolls and tower count together moved ~7% of damage; ascension alone moved nearly 18% and decided the match. **A player with no ascension materials cannot clear Act 3 no matter how far they level or how lucky their rolls are** -- levelling and rerolling are, against this content, close to cosmetic. That is a real statement about the progression curve (ascension = Phase C / B9, `AscensionConfig`), and whether it is the intended shape is the user's call. It also reframes C1/C2: the trait and stat reroll loops the last several sessions built are polish next to the ascension track.
+
+**A caveat on the boss, kept honest.** These runs still lose the same way B61's did -- one `Enemy leaked!` line reading `Lives: 0`, the boss going straight through. Ascension does not change the loss MODE; it just kills the boss before it arrives. `StartingLives` remains inert on Act 3 (B61), and the B61 design PENDING about whether Act 3 should be a boss check stands unchanged.
+
+**Scope: measurement only.** No config, no gameplay value and no code changed this session -- the harness knobs were already built at B61, and every `DevSeed*` / `DevStageId` attribute is cleared with `AutoPlaceForEndScreenTest` back to `ENABLED = false`. Drift 42/42 at bootstrap and landing. No shared-canon change, no schema change (v6), Remotes unchanged (47). **USER: republish the GAME Place** (B60 + B61 + B62 all Game-only; the Lobby is untouched by all three).
+
 ## 2026-09-14 [game] B61 -- AD-Game: **the realistic-loadout question, answered -- and it was the wrong question.** Act 3 is decided by the BOSS, not by lives.
 
 B60 left one PENDING: its Acts 2/3 clears were the 24-tower CEILING, so whether a REALISTIC loadout holds 3 lives was unknown. Answered, by making the seed a variable and sweeping it. The answer reframes the question.
