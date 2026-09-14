@@ -1,4 +1,58 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-14 [game] B61 -- AD-Game: **the realistic-loadout question, answered -- and it was the wrong question.** Act 3 is decided by the BOSS, not by lives.
+
+B60 left one PENDING: its Acts 2/3 clears were the 24-tower CEILING, so whether a REALISTIC loadout holds 3 lives was unknown. Answered, by making the seed a variable and sweeping it. The answer reframes the question.
+
+**THE SEED IS TUNABLE NOW.** `AutoPlaceForEndScreenTest` hardcoded 24 towers at max meta / max ascension / perfect rolls -- guaranteeing a Victory end screen is what it is FOR, which is exactly why it could never measure anything. Four optional attributes, each defaulting to the old ceiling value so an unset harness behaves EXACTLY as before: **`DevSeedCount`** (24), **`DevSeedMeta`** (50), **`DevSeedAscension`** (3), **`DevSeedRolls`** (`"perfect"` | `"average"`). Two details that matter: the count takes slots **evenly spaced** across the 24 rather than the first N (the first N bunch at one end and measure placement, not strength), and the numeric guard is `>= 0`, not `> 0` -- **ascension 0 is the most realistic value there is**, and a `> 0` guard would have silently swapped it for the default 3, quietly seeding a stronger run than the one asked for.
+
+**FOUR RUNS ON Stage1_Act3 (3 lives, scale 2.4, Normal). The last row is B60's ceiling, for comparison.**
+
+| towers | meta | asc | rolls | outcome | lives | damage |
+|---|---|---|---|---|---|---|
+| 12 | 20 | 0 | average | **Defeat** | 0/3 | 351,738 |
+| 18 | 20 | 0 | average | **Defeat** | 0/3 | 350,528 |
+| 12 | 50 | 0 | average | **Defeat** | 0/3 | 366,169 |
+| 24 | 50 | 3 | perfect | Victory | 3/3 | 434,750 |
+
+**EVERY LOSS IS A BOSS LOSS, NOT A CHIP-DAMAGE LOSS -- THIS IS THE FINDING.** Each defeat logged **exactly ONE** `[MatchDirector] Enemy leaked!` line, and it read `Lives: 0`. Three straight to zero in a single event is `FarmBoss.Damage = 99999`. In other words a realistic loadout leaks **not one grunt across all fifteen waves** and then loses outright to the boss.
+
+**SO `StartingLives` IS NOT WHAT DECIDES ACT 3, AND B59 IS RETROACTIVELY VINDICATED AS SAFE THERE.** When the only leak all match is a 99999-damage boss, 3 lives and the old 10 produce the identical result -- the boss empties any life total the game will ever hand out. B59's 10 -> 3 on Act 3 changed nothing about whether that match is winnable. It also means raising lives is not a lever on Act 3: the lever is killing the boss.
+
+**WHAT DOES AND DOESN'T MOVE IT.** Tower COUNT barely registers -- 12 -> 18 moved total damage by ~0.3% (351,738 -> 350,528, inside noise) and did not change the outcome. Meta LEVEL alone does not close it either: 20 -> 50 bought only ~15k damage (351,738 -> 366,169) and still lost. The three losing runs cluster at 350-366k while the ceiling win sits at 434,750 -- consistent with "every non-boss enemy dies in all four runs, and the gap is the boss's own health bar". **The remaining power is in ascension and/or perfect rolls, and this session did NOT isolate which** -- the ceiling run varies both at once, plus count. That is the honest limit of these four runs.
+
+**`FarmBoss` comment corrected (the NUMBER is deliberate and unchanged).** It read "costs 10 lives if it leaks", which was never what 99999 does and is actively misleading now that every act starts on 3: it is an instant loss at any life total. Corrected in place with the B61 consequence noted, so the next person tuning lives sees it before touching the number.
+
+**NEW PENDING, and it is a design question, not a bug.** Act 3 is currently a boss check with a ~max-power gate, and the 15 waves before it are a formality for any loadout that gets that far. Whether that is the intent is the user's call. If it is, nothing to do. If not, the levers are the boss's `Health = 3000` / `Armor = 8` against `BaseHealthScale = 2.4`, or the `Damage = 99999` instant loss -- **not** `StartingLives`, which this session has shown is inert here. Isolating ascension vs perfect rolls is one more run whenever it is wanted.
+
+Harness change + one comment correction only -- **no gameplay value was changed this session.** Drift 42/42 at bootstrap and landing. No shared-canon change, no schema change (v6), Remotes unchanged (47). Harness ships OFF with every `DevSeed*` and `DevStageId` attribute cleared. **USER: republish the GAME Place** (B60 + B61 together; the Lobby is untouched by both).
+
+## 2026-09-14 [game] B60 -- AD-Game: **Acts 2 and 3 played at 3 lives** -- B59's untested half, closed, plus the harness knob that made it testable.
+
+B59 took Act 2 from 15 lives and Act 3 from 10 down to 3 and shipped them UNPLAYED -- it flagged that as the session's own open risk. This closes it. Nothing about B59 needed changing.
+
+**THE HARNESS COULD NOT REACH THEM, WHICH IS WHY THEY WERE UNTESTED.** `MatchLifecycleSmokeTest` has hardcoded `Stage1_Act1` since it was written, so Acts 2 and 3 were reachable only through a real Lobby launch -- and they were exactly the two acts whose margin B59 changed. New **`DevStageId`** attribute, the third knob of the `DevMatchModifiers` / `DevDifficultyMode` shape: set it to `"Stage1_Act2"`, empty/unset = Act 1 as always. An unknown id falls back to Act 1 **loudly**, because a typo that quietly runs Act 1 and gets read as "Act 3 passed" would defeat the whole point. The harness's start line now prints the act's lives and health scale, so the run says what it is:
+
+    [Test] Starting Stage 1 "The Farm"  -  Act 3: "Harvest of Ruin"  [lives 3 | healthScale 2.4]
+
+⚠ **`devStageId` sits BELOW the requires, unlike its two sibling knobs** -- it is the first of them to touch a required module (`StageRegistry`), and defined above that `local` it would have captured `StageRegistry` as a GLOBAL: nil at call time, erroring inside the harness rather than in anything it tests. Caught before the first run, not after. The sibling knobs read only attributes, which is why they can sit up top.
+
+**RESULT -- BOTH ACTS CLEAR AT 3 LIVES WITHOUT LOSING ONE.** At the 24-tower ceiling (max meta / max ascension / perfect rolls, `AutoPlaceForEndScreenTest`), on Normal:
+
+| act | health scale | outcome | lives | damage |
+|---|---|---|---|---|
+| Stage1_Act2 | 1.6 | Victory 15/15 | **3/3** | 196,790 |
+| Stage1_Act3 | 2.4 | Victory 15/15 | **3/3** | 434,750 |
+
+Not one leak in either. **No regression from B59, and the margin is not thin at the ceiling** -- which is the question B59 left open and the reason it is now closed.
+
+**LIVES ARE IN THE END-OF-MATCH LOG NOW.** `MatchEndPresenter`'s line printed waves and damage but not lives, so Act 2's first run could only say "Victory" -- 3/3 and a 1/3 scrape are the same word in a log and opposite balance answers. It now reads `(waves 15/15, lives 3/3, dmg 196790)`. The end screen always had the numbers; the console did not.
+
+**A BONUS CONFIRMATION OF B59, FROM OUTSIDE ITS OWN TEST PATH.** Act 3's run rolled a *chance* drop off the stage table (0.25 / 0.08 / 0.02) and B59's new Item-branch print caught it: `[DATA] Drop: BannerTicket x1 -> Data.Items.BannerTicket = 1`. B59 could only prove that line through guaranteed Insane grants under a forced Weekend Rush window; this is the same line firing on an ordinary Normal victory with nothing forced.
+
+**WHAT IS STILL NOT KNOWN, AND IT IS THE REAL BALANCE QUESTION.** These runs prove the CEILING, not the floor: 24 maxed towers clear everything, which is what that harness is built to do. Whether a REALISTIC loadout holds 3 lives on Act 3 at 2.4 health scale is untested -- B58's datapoint that eight level-20 towers lost Act 1 on lives says the gap between ceiling and realistic is wide. `AutoPlaceForEndScreenTest` hardcodes its 24 towers at max with no count or level knob, so answering that needs a harness change and a deliberate balance pass with the user. NEW PENDING.
+
+No shared-canon change (drift 42/42 at bootstrap and landing). No schema change (v6). Remotes unchanged (47). Harnesses ship OFF, `DevStageId` cleared. **USER: republish the GAME Place** -- the Lobby is untouched.
+
 ## 2026-09-14 [game] B59 -- AD-Game: **the silent half of the drop faucet now prints**, and `StartingLives` is settled at 3 for every act.
 
 The B58 follow-up. Two things, both small, both closing something B58 could only flag.
