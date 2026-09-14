@@ -213,6 +213,28 @@ wired and the currency would never arrive.
 Refusing an uncatalogued id is the same stance as `GrantService.Grant`'s invariant 4 in the Lobby: a
 typo in a drop table must never silently invent a profile field.
 
+### Every drop grant prints, both branches (B59)
+
+Until B59 only the **Currency** branch logged a line; the Item branch called `AddItem` and said
+nothing. Both print now, same `[DATA] Drop:` prefix, same shape, the destination naming which branch
+ran:
+
+```
+[DATA] Drop: StatRerolls x2 -> Currencies.StatRerolls = 4
+[DATA] Drop: BannerTicket x2 -> Data.Items.BannerTicket = 4
+```
+
+`PlayerInventoryService.AddItem` returns the new stack total to make the second line possible —
+additive, and what `AddCurrency`/`AddScalarCurrency` already did; it used to return nothing, which is
+the whole reason the line could not be written.
+
+**Why this is not cosmetic.** A silent grant path cannot be verified from a log, and that is exactly
+the condition B45's mis-routed drop lived in: the faucet *looked* wired while landing in a field
+nothing read. B58 hit the same wall from the other side — it could only prove the Weekend Rush drop
+doubling through `StatRerolls`, the one guaranteed Insane drop that happens to be a Currency, because
+a doubled `BannerTicket`, `TraitRerollToken` or challenge `Fragment*` produced no output at all. Add
+a drop source and this log is how you prove it arrived where the catalogue says it should.
+
 `AddScalarCurrency` guards its own name list, mirrored from `GrantService.SCALAR_CURRENCIES`. **The
 two Places cannot share that list** — `GrantService` is Lobby-local and `PlayerInventoryService` is
 the Game's account writer — so if a scalar currency is ever added to the schema, **both lists must

@@ -1,4 +1,33 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-14 [game] B59 -- AD-Game: **the silent half of the drop faucet now prints**, and `StartingLives` is settled at 3 for every act.
+
+The B58 follow-up. Two things, both small, both closing something B58 could only flag.
+
+**THE ITEM BRANCH PRINTS.** `RewardCalculator.GrantForPlayer` routes every drop by its `ItemCatalog` Kind (B45), but only the CURRENCY branch logged a `[DATA] Drop:` line -- the Item branch called `PlayerInventoryService.AddItem` and said nothing. So a doubled `BannerTicket`, `TraitRerollToken` or challenge `Fragment*` was invisible in the console, and B58 could prove the Weekend Rush drop doubling ONLY through `StatRerolls`, the one drop that happens to be a currency. A grant path you cannot see in a log is precisely the condition that let B45's mis-routed drop "look wired" while landing where nothing read it. The Item branch now prints the same prefix in the same shape, naming `Data.Items`:
+
+    [DATA] Drop: BannerTicket x2 -> Data.Items.BannerTicket = 4
+
+`PlayerInventoryService.AddItem` returns the new stack total to make that possible -- additive, matching what `AddCurrency`/`AddScalarCurrency` already did; it previously returned nothing, which is why the line could not be written. Game-local, no shared-canon change, no schema change.
+
+**VERIFIED LIVE on a real 15/15 Insane Victory inside the Weekend Rush window** (B58's recipe: `AutoPlaceForEndScreenTest` ENABLED with its 24 max-meta towers, `MatchLifecycleSmokeTest.DevDifficultyMode = "Insane"` for GUARANTEED grants, `WeekendRushConfig.TimezoneOffsetHours` temporarily 8 -> -12 to put "now" inside the window with ~8.9h of margin). All three guaranteed Insane items, all doubled, all now visible:
+
+    [DATA] Drop: BannerTicket x2 -> Data.Items.BannerTicket = 4
+    [DATA] Drop: TraitRerollToken x2 -> Data.Items.TraitRerollToken = 4
+    [DATA] Drop: StatRerolls x2 -> Currencies.StatRerolls = 4
+    [DATA] Rewards: outcome=Victory mode=Insane wire=100 t=0.000 band=100-300 -> gold 390 | BP XP +250 | WeekendRush x2
+
+Two of those three lines did not exist before this session. Offset RESTORED to 8 and `WeekendRushConfig` re-hashed to `44c549f0`; drift **42/42** at bootstrap AND at landing, field-by-field against both `hash` and `deployed.Game`. Both harnesses back to `ENABLED = false`, `DevDifficultyMode` cleared.
+
+**`StartingLives` -- SETTLED, AND THE STANDING READING WAS BACKWARDS.** Carried as a balance PENDING since P5 on the theory that Act 1's `3` was a leftover test value beside Act 2's `15`. The user's answer: **3 is the DEFAULT FOR EVERY ACT -- three leaked enemies lose the run, and one leaked boss loses it outright.** So `15` and `10` were the outliers, not the `3`. Acts 1/2/3 are now **3 / 3 / 3** (Act 1 unchanged), and `ClassicGameMode.StartingLives` -- the fallback a stage with no field of its own inherits, i.e. the literal default -- went **20 -> 3** so the next act authored without the field cannot quietly get seven times the margin every existing act has.
+
+The rule needs no new code: `Grunt.Damage = 1` means one leak costs one life, and `FarmBoss.Damage = 99999` empties a 3-life bar on a single leaked boss. Verified by resolving the live configs: `Stage1_Act1/2/3 StartingLives = 3` against `BaseHealthScale 1.0 / 1.6 / 2.4`, Classic fallback 3. **An act is made harder by health scale and its wave list from here on, never by taking the margin away.** Note B58's evidence reads differently under this rule: eight level-20 towers clearing 12/15 and losing was not a sign the `3` was wrong -- 3 is simply what every act is meant to be.
+
+Data-only change (four config values + comments); `MatchDirector`'s `stageConfig.StartingLives or gameModeModule.StartingLives or 10` is untouched and is the one read. Acts 2 and 3 have NOT been played end-to-end at 3 lives -- they are meaningfully harder now and are the thing to watch.
+
+Open threads unchanged from B58: best-of-N can still DOWNGRADE a 100%-Luck reroll (accepted, user). `STATE.md` is back AT its 120-line cap with the `StartingLives` PENDING resolved out; both `CONTEXT.md` (153/154) are still over ADR-0006 and still need the user's call on the `ConfirmationPopupUI` line and the `SummonController_B54_backup` deletion.
+
+No shared-canon change. No schema change (v6). Remotes unchanged (47). **USER: republish the GAME Place** -- the Lobby is untouched this session.
+
 ## 2026-09-14 [both] B58 -- AD-Integration: **Weekend Rush becomes shared canon and pays on a real win**, plus two drift findings.
 
 Closes B57/B57b/B57c. The repo shell is STILL down (the Sept 8 Windows update); git was driven by the user pasting one PowerShell block, which also cleared two stale `.git` locks -- `HEAD.lock` + `index.lock`, both timestamped the exact minute the B57 commit landed on Sept 10. **That, not the mount outage, is why B57b/B57c never committed.** Check `.git/*.lock` first next time git "is down".
