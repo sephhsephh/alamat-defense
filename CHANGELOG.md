@@ -1,4 +1,33 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-16 [both] B66 -- AD-Game (crossing AD-Lobby/AD-UI with the user's go-ahead): **double jump everywhere, and the Game gets the dash -- which cost Q a remap.**
+
+Two movement features, one shared module, one re-hash. Both were the user's explicit call, and one of them overrides a decision the user themselves made at B54.
+
+**DOUBLE JUMP, BOTH PLACES.** One extra jump per airborne stretch. It deliberately adds **NO new binding**: it listens to `UserInputService.JumpRequest`, which already fires for Space, gamepad A **and** the mobile jump button -- so it inherits all three platforms for free, the same one-code-path principle B54's `ContextActionService` bindings follow. Two details that matter:
+
+- **The impulse is derived from the character's OWN jump strength**, never hardcoded. Roblox characters use either `JumpPower` or `JumpHeight`, so the controller reads whichever this Humanoid actually uses (`v = sqrt(2*g*h)` for the height case). A fixed velocity would feel wrong the moment either is retuned.
+- **It REPLACES the Y velocity rather than adding to it.** Adding to a fast fall gives a limp jump and adding to a rise gives a rocket; a flat set makes the second jump feel identical however it was entered. Verified: falling at **-33.5** studs/s, relaunched to **+43.3**.
+- **A re-arm window (0.2s) exists because the jump key REPEATS while held** and `JumpRequest` fires on every repeat -- without it one press spends the first jump AND the double instantly and reads as a single tall jump.
+
+Verified live in BOTH Places, including the once-per-airborne guard: first press relaunched to +40.1, the next two attempts showed only gravity (+27.0, +13.9) with no second launch. Re-armed on `Landed`/`Running`/`RunningNoPhysics`/`Seated`/`Climbing`, and per-character connections are dropped and rebuilt on respawn so nothing leaks across a death.
+
+**THE GAME NOW DASHES -- AND THE USER OVERRODE THEIR OWN B54 REASONING TO GET IT.** B54 recorded, deliberately: *"The Game deliberately has NO dash: it is a tower-defence match where the player is a cursor, not a fighter, and a dash there would let players cross placement zones in ways the match was never balanced for."* That argument was put to the user at B66 before anything changed; they chose the dash anyway. **The reasoning is kept VERBATIM in `MovementConfig` rather than deleted**, because it is still the argument against and the next person to tune this should read it rather than rediscover it. **Reverting is ONE field: `DashPlaces.Game = nil`** -- exactly why B54 made this a field instead of a second Lobby-local file. Verified live: 39.5 studs of horizontal travel in the Game.
+
+**⚠ THE PART THAT WOULD HAVE SHIPPED BROKEN: Q WAS ALREADY TAKEN IN THE GAME, TWICE.** `TowerSelectionUI` used Q for the tower **Ability**, and `MatchEndUI` used Q for **Return to Lobby**. A `ContextActionService` bind **sinks** the key *and* marks the input `gameProcessed` -- which every one of the Game's `UserInputService` handlers checks and returns on. Binding dash to Q would have silently killed both, with no error and nothing on screen: precisely the failure class B65 just spent a session on. Caught by grepping the other Place before binding, and the user chose to move the Game's keys:
+
+- tower **Ability Q -> V** (`TowerSelectionUI`; E/X/T/Z/C/R/G/F and 1-6 were all taken)
+- end screen **Return to Lobby Q -> L** (`MatchEndUI`, mnemonic; the on-screen BUTTONS are untouched, this is the keyboard shortcut only)
+
+B54's header claim that Q "never coexists" is now obsolete and is corrected in place, with a standing instruction: **before binding ANY key in the shared controller, grep the OTHER Place for it.**
+
+**SHARED CANON, both re-hashed and mirrored in the SAME session** (no stale `deployed.<Place>`; the B58 precedent): `MovementConfig` **`19421017` -> `3598e7d0`** (4,788 bytes), `MovementController` **`e2668274` -> `8e995f32`** (14,767 bytes). Byte-identical in both Places AND on disk -- disk canon was rebuilt from the same edits and PROVEN identical by hash before writing. Manifest stays at 42 entries.
+
+⚠ **A near-miss worth recording:** the first manifest edit was built on a copy staged BEFORE B65 landed, and would have silently REVERTED `SettingsUI` to `7e5a736a`. Caught by asserting the baseline (`SettingsUI == 10f3d48c`) before applying. **Re-stage the manifest immediately before editing it -- a staged file is a snapshot, and this session changed it twice.**
+
+⚠ **If any AUTHORED label in the Game's UI still shows "Q" for the ability or the end screen**, it needs updating by hand -- the code carries no key hints beyond the boot print (now `Ability(V)`), and art is a user action.
+
+No schema change (v6). Remotes unchanged (47). **USER: republish BOTH Places** -- shared canon moved again.
+
 ## 2026-09-16 [both] B65 -- AD-Game (crossing AD-UI/AD-Lobby with the user's go-ahead): **the Lobby's dead buttons were TWO bugs, and the bigger one was respawn.**
 
 The user's report: "sometimes other buttons don't work, it randomizes each time which ones work and which ones not... only encountered it a few times." A random SUBSET, varying per join, is not an overlay -- an overlay kills every button at once. It was a race. Then a second, worse fault turned up underneath it.

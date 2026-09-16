@@ -2,17 +2,29 @@
 script:SetAttribute("BootComplete", false)
 -- MovementController (SHARED CANON -- deploy path
 -- StarterPlayer.StarterPlayerScripts.Client.MovementController)
--- Sprint (BOTH Places) + dash (LOBBY only). Added B54, at the user's request.
+-- Sprint + dash + double jump, ALL in BOTH Places. Added B54 (sprint + Lobby dash); B66 extended the
+-- dash to the Game and added the double jump, both at the user's request.
 --
 -- ===== ONE BINDING SERVES THREE PLATFORMS =====
 -- Everything goes through ContextActionService -- the FIRST use of CAS in this project. BindAction
 -- takes the keyboard key AND the gamepad button in the same call, and `createTouchButton = true`
 -- makes the mobile button for free. That is why there is no `if UserInputService.TouchEnabled` branch
 -- anywhere below: PC, console and mobile are one code path, and a fourth platform costs one KeyCode.
---   Sprint : LeftShift / RightShift / gamepad ButtonL3 (thumbstick click -- the console convention)
---   Dash   : Q / gamepad ButtonR1                      (Lobby only)
--- Q is safe: the GAME binds Q to a tower Ability, but the dash is never bound in the Game (see
--- MovementConfig.DashPlaces), so the two never coexist.
+--   Sprint      : LeftShift / RightShift / gamepad ButtonL3 (thumbstick click -- console convention)
+--   Dash        : Q / gamepad ButtonR1                      (BOTH Places since B66)
+--   Double jump : the ORDINARY jump input, second press while airborne (BOTH Places, B66)
+--
+-- ⚠ B54's header used to say "Q is safe: the GAME binds Q to a tower Ability, but the dash is never
+-- bound in the Game, so the two never coexist." THAT IS NO LONGER TRUE. B66 gave the Game a dash on
+-- Q, and a ContextActionService bind SINKS the key (it also marks the input gameProcessed, which the
+-- Game's UserInputService handlers all check), so Q would have silently killed the tower Ability AND
+-- the end screen's Return to Lobby. At the user's call the GAME moved Ability Q -> V and Return to
+-- Lobby Q -> L. Q is now dash-only in both Places. Before binding ANY key here, grep the OTHER
+-- Place for it -- this is the second time a shared binding nearly ate a Place-local one.
+--
+-- The double jump deliberately adds NO binding: it listens to UserInputService.JumpRequest, which
+-- already fires for Space, gamepad A and the mobile jump button, so it inherits all three platforms
+-- for free -- the same one-code-path principle the CAS bindings follow.
 --
 -- ===== SPRINT IS A TOGGLE, NOT A HOLD (user, B54) =====
 -- Tap to flip; it stays flipped, and survives respawn. The `AlwaysSprint` setting PINS it on -- while
@@ -40,6 +52,7 @@ local ClientSettings = settingsFolder and require(settingsFolder:WaitForChild("C
 local player = Players.LocalPlayer
 local PLACE = SettingsConfig.Place()
 local DASH_ENABLED = MovementConfig.DashAllowed(PLACE)
+local DOUBLE_JUMP_ENABLED = MovementConfig.DoubleJumpAllowed(PLACE)
 
 local ACTION_SPRINT = "AD_Sprint"
 local ACTION_DASH = "AD_Dash"
@@ -49,6 +62,11 @@ local dashing = false
 local lastDashAt = -math.huge
 local humanoid: Humanoid? = nil
 local rootPart: BasePart? = nil
+
+-- Double-jump state. Reset per character AND on every landing, never trusted across a respawn.
+local doubleJumpUsed = false
+local lastJumpAt = -math.huge
+local humanoidConns: { RBXScriptConnection } = {}
 
 local function alwaysSprint(): boolean
 	return ClientSettings ~= nil and ClientSettings.Get("AlwaysSprint") == true
@@ -170,11 +188,79 @@ local function onDashAction(_action: string, state: Enum.UserInputState): Enum.C
 	return Enum.ContextActionResult.Sink
 end
 
+-- ===== double jump =====
+-- One extra jump per airborne stretch. Roblox characters use EITHER JumpPower or JumpHeight, so the
+-- impulse is derived from whichever this Humanoid actually uses rather than hardcoded -- a fixed
+-- velocity would feel wrong the moment either property is retuned.
+local function jumpVelocity(h: Humanoid): number
+	if h.UseJumpPower then
+		return h.JumpPower
+	end
+	-- v = sqrt(2 * g * h) -- the launch speed that reaches JumpHeight under the current gravity.
+	return math.sqrt(2 * workspace.Gravity * math.max(h.JumpHeight, 0))
+end
+
+local function tryDoubleJump()
+	if not DOUBLE_JUMP_ENABLED or typing() then
+		return
+	end
+	local h, root = humanoid, rootPart
+	if h == nil or root == nil or h.Health <= 0 or doubleJumpUsed then
+		return
+	end
+	-- Only while genuinely airborne. Freefall also covers walking off a ledge without jumping, which
+	-- is the forgiving behaviour players expect from an air jump.
+	if h:GetState() ~= Enum.HumanoidStateType.Freefall then
+		return
+	end
+	-- The jump key REPEATS while held and JumpRequest fires on every repeat, so without this gap one
+	-- press would spend the first jump and the double instantly and read as a single tall jump.
+	if os.clock() - lastJumpAt < MovementConfig.DoubleJumpRearmSeconds then
+		return
+	end
+	doubleJumpUsed = true
+	local v = root.AssemblyLinearVelocity
+	-- REPLACE the Y component rather than adding to it: adding to a fast fall gives a limp jump and
+	-- adding to a rising one gives a rocket. A flat set makes the second jump feel identical however
+	-- it was entered.
+	root.AssemblyLinearVelocity = Vector3.new(v.X, jumpVelocity(h) * MovementConfig.DoubleJumpPowerScale, v.Z)
+end
+
 -- ===== character lifecycle =====
 local function onCharacter(character: Model)
+	-- Drop the previous character's connections: these are per-Humanoid and the old one is gone.
+	for _, c in ipairs(humanoidConns) do
+		c:Disconnect()
+	end
+	table.clear(humanoidConns)
+
 	humanoid = character:WaitForChild("Humanoid", 10) :: Humanoid?
 	rootPart = character:WaitForChild("HumanoidRootPart", 10) :: BasePart?
 	dashing = false
+	doubleJumpUsed = false
+	lastJumpAt = -math.huge
+
+	local h = humanoid
+	if h then
+		table.insert(humanoidConns, h.Jumping:Connect(function(active: boolean)
+			if active then
+				lastJumpAt = os.clock()
+			end
+		end))
+		table.insert(humanoidConns, h.StateChanged:Connect(function(_old, new)
+			-- Re-arm the moment the player is supported again. Seated/Climbing count: leaving either
+			-- is a fresh airborne stretch, and not re-arming there strands the double jump.
+			if new == Enum.HumanoidStateType.Landed
+				or new == Enum.HumanoidStateType.Running
+				or new == Enum.HumanoidStateType.RunningNoPhysics
+				or new == Enum.HumanoidStateType.Seated
+				or new == Enum.HumanoidStateType.Climbing
+			then
+				doubleJumpUsed = false
+			end
+		end))
+	end
+
 	applySpeed() -- re-assert the toggle the player already chose
 	paintSprintButton()
 end
@@ -183,6 +269,12 @@ if player.Character then
 	task.spawn(onCharacter, player.Character)
 end
 player.CharacterAdded:Connect(onCharacter)
+
+-- The double jump rides the ORDINARY jump input -- no binding of its own, so Space, gamepad A and
+-- the mobile jump button all work with no per-platform branch.
+if DOUBLE_JUMP_ENABLED then
+	UserInputService.JumpRequest:Connect(tryDoubleJump)
+end
 
 -- A settings change (AlwaysSprint flipped in the panel) takes effect immediately.
 if ClientSettings then
@@ -213,6 +305,14 @@ paintSprintButton()
 -- DevOpen precedent every screen controller already uses. Never a shipping path.
 script:SetAttribute("DevSprintToggle", false)
 script:SetAttribute("DevDash", false)
+script:SetAttribute("DevDoubleJump", false)
+script:GetAttributeChangedSignal("DevDoubleJump"):Connect(function()
+	if script:GetAttribute("DevDoubleJump") ~= true then return end
+	script:SetAttribute("DevDoubleJump", false)
+	-- Same function a real JumpRequest runs. Note it still requires the character to BE airborne and
+	-- past the re-arm window, so firing this on the ground correctly does nothing.
+	tryDoubleJump()
+end)
 script:GetAttributeChangedSignal("DevSprintToggle"):Connect(function()
 	if script:GetAttribute("DevSprintToggle") ~= true then return end
 	script:SetAttribute("DevSprintToggle", false)
@@ -225,10 +325,13 @@ script:GetAttributeChangedSignal("DevDash"):Connect(function()
 end)
 
 print(string.format("[DIAG] MovementController ready (%s): sprint TOGGLE on LeftShift/ButtonL3 (walk %d -> sprint %d,"
-	.. " AlwaysSprint honoured); dash %s. Mobile buttons via ContextActionService.",
+	.. " AlwaysSprint honoured); dash %s; double jump %s. Mobile buttons via ContextActionService.",
 	PLACE, MovementConfig.WalkSpeed, MovementConfig.SprintSpeed,
 	DASH_ENABLED and string.format("on Q/ButtonR1 (%d studs/s for %.2fs, %.1fs cooldown)",
 		MovementConfig.DashSpeed, MovementConfig.DashDuration, MovementConfig.DashCooldown)
+		or "DISABLED in this Place",
+	DOUBLE_JUMP_ENABLED and string.format("ON (x%.2f jump strength, %.2fs re-arm, ordinary jump input)",
+		MovementConfig.DoubleJumpPowerScale, MovementConfig.DoubleJumpRearmSeconds)
 		or "DISABLED in this Place"))
 
 -- ===== B34 BOOT MARKER =====

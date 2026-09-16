@@ -415,26 +415,26 @@
     },
     "MovementConfig": {
       "file": "shared/src/MovementConfig.luau",
-      "hash": "19421017",
+      "hash": "3598e7d0",
       "owner": "game",
       "deployPath": "ReplicatedStorage.Configs.Global.MovementConfig",
       "deployed": {
-        "Game": "19421017",
-        "Lobby": "19421017"
+        "Game": "3598e7d0",
+        "Lobby": "3598e7d0"
       },
-      "comment": "9c7cbd32 -> 19421017 at B58 2026-09-14 (AD-Integration): the USER re-tuned movement feel in the LOBBY Studio -- SprintSpeed 26 -> 56 and DashSpeed 70 -> 300, two values, nothing else. AD-Integration did not author this; the bootstrap drift check caught the Lobby at 40/41, the user confirmed the change was theirs and said to KEEP it, and B58 RECORDED it: shared/src was rebuilt from the disk canon with exactly those two edits and PROVED byte-identical to the live Lobby copy by hash (2350 bytes, 19421017) before anything was written. The GAME was then brought to the same bytes in the same session, so unlike B22's ItemCatalog there is no stale deployed.<Place> left behind -- both Places and disk are 19421017. Same precedent, same stance: a user-authored value change is RECORDED as canon, never reverted and never \"fixed\". Added B54 (sprint + dash). PURE movement-feel knobs shared by both Places: WalkSpeed/SprintSpeed (sprint is a TOGGLE, both Places) and the LOBBY-only dash (DashSpeed/Duration/Cooldown). DashPlaces gates the dash by Place name the same way SettingsConfig's Scope gates a settings row -- a Place difference is a FIELD, never a second file.",
+      "comment": "9c7cbd32 -> 19421017 at B58 2026-09-14 (AD-Integration): the USER re-tuned movement feel in the LOBBY Studio -- SprintSpeed 26 -> 56 and DashSpeed 70 -> 300, two values, nothing else. AD-Integration did not author this; the bootstrap drift check caught the Lobby at 40/41, the user confirmed the change was theirs and said to KEEP it, and B58 RECORDED it: shared/src was rebuilt from the disk canon with exactly those two edits and PROVED byte-identical to the live Lobby copy by hash (2350 bytes, 19421017) before anything was written. The GAME was then brought to the same bytes in the same session, so unlike B22's ItemCatalog there is no stale deployed.<Place> left behind -- both Places and disk are 19421017. Same precedent, same stance: a user-authored value change is RECORDED as canon, never reverted and never \"fixed\". Added B54 (sprint + dash). PURE movement-feel knobs shared by both Places: WalkSpeed/SprintSpeed (sprint is a TOGGLE, both Places) and the LOBBY-only dash (DashSpeed/Duration/Cooldown). DashPlaces gates the dash by Place name the same way SettingsConfig's Scope gates a settings row -- a Place difference is a FIELD, never a second file. B66: dash extended to the GAME (user overrode their own B54 Lobby-only call; revert = set DashPlaces.Game = nil) and DOUBLE JUMP added for both Places. 19421017 -> 3598e7d0.",
       "kind": "module"
     },
     "MovementController": {
       "file": "shared/src/MovementController.luau",
-      "hash": "e2668274",
+      "hash": "8e995f32",
       "owner": "game",
       "deployPath": "StarterPlayer.StarterPlayerScripts.Client.MovementController",
       "deployed": {
-        "Game": "e2668274",
-        "Lobby": "e2668274"
+        "Game": "8e995f32",
+        "Lobby": "8e995f32"
       },
-      "comment": "Added B54. Sprint (BOTH Places, a TOGGLE) + dash (LOBBY only, gated by MovementConfig.DashPlaces). LocalScript, hashed as source -- same precedent as UIKitBootstrap/SettingsUI. The FIRST ContextActionService use in the project: one BindAction carries keyboard + gamepad + a generated mobile touch button, so there is no per-platform branch. Deployed at an IDENTICAL path in both Places (the ClientSettings precedent), which is why promotion cost zero consumer edits.",
+      "comment": "Added B54. Sprint (BOTH Places, a TOGGLE) + dash (LOBBY only, gated by MovementConfig.DashPlaces). LocalScript, hashed as source -- same precedent as UIKitBootstrap/SettingsUI. The FIRST ContextActionService use in the project: one BindAction carries keyboard + gamepad + a generated mobile touch button, so there is no per-platform branch. Deployed at an IDENTICAL path in both Places (the ClientSettings precedent), which is why promotion cost zero consumer edits. B66: double jump on the ordinary jump input (UserInputService.JumpRequest, so Space/gamepad A/mobile all work with no extra binding), once per airborne stretch, re-armed on landing; dash now also bound in the Game. e2668274 -> 8e995f32.",
       "kind": "module"
     },
     "SettingsService": {
