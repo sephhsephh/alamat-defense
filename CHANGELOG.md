@@ -1,4 +1,83 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-16 [both] B65 -- AD-Game (crossing AD-UI/AD-Lobby with the user's go-ahead): **the Lobby's dead buttons were TWO bugs, and the bigger one was respawn.**
+
+The user's report: "sometimes other buttons don't work, it randomizes each time which ones work and which ones not... only encountered it a few times." A random SUBSET, varying per join, is not an overlay -- an overlay kills every button at once. It was a race. Then a second, worse fault turned up underneath it.
+
+**BUG 1 -- THE BOOT RACE.** The HUD is a StarterGui ScreenGui, so it is on screen and clickable from the FIRST FRAME. But every controller wired its HUD button at the very END of its own file -- `QuestsController` line ~390 of 392, `UnitsController` ~1420, `SummonController` ~1300 -- after all its lookups. **Roblox starts LocalScripts in a NON-DETERMINISTIC order**, so on any given join a different, random subset of buttons was not yet connected, and **Roblox DROPS a click on an unconnected button rather than queuing it.** Silent: no error, no warning. The project already knew half of this -- `DailyRewardsButton` resolves its target lazily at click time *"because the controllers boot in an unspecified order"* -- but the insight was never generalised past that one button.
+
+**BUG 2 -- RESPAWN WIPES EVERY CONNECTION, AND THIS IS THE BIGGER ONE.** **`HUD.ResetOnSpawn = true`**: the HUD is DESTROYED and re-cloned on every respawn, and every `Activated` connection made against the old copy dies with it. **Only `PlayGUIController` ever re-bound** (it carries its own `playerGui.ChildAdded` handler). Every other controller connected ONCE and never again -- so after a single respawn its button was dead until rejoin. The screens that accidentally survived are the ones whose OWN ScreenGui is also `ResetOnSpawn = true` (`UnitsGUI`, `Hotbar`, `ExpBar`), because their controller re-runs; the `ResetOnSpawn = false` ones (Items, Quests, BattlePass, Inbox, LeaderBoards, RedeemCodes, SummonScreen, Settings) did not.
+
+**PROVEN LIVE, SIDE BY SIDE, in one session after a forced respawn:**
+
+    QuestsButton   (converted)     -> QuestsGUI.Enabled = true    <- works
+    SettingsButton (not yet)       -> Settings.Panel.Visible = false <- DEAD
+
+**THE FIX -- `HudEntry`, one new Lobby-local module, two lines per controller.** `reserve(path)` connects the button IMMEDIATELY (before the controller does any I/O) and BUFFERS a click that lands early; `bind(fn)` installs the real handler and replays it; and it re-binds to every re-cloned HUD, which is what `PlayGUIController` did by hand and nobody else did. A click during boot is honoured a moment late instead of lost -- a button that works 300ms later is fine, a button that silently does nothing is the bug.
+
+Done as a helper, not ~10 bespoke refactors, on purpose: by hand this is a forward declaration + pending flag + replay + ChildAdded watcher in each file, a large diff across working code. That is exactly the reasoning B34 used to reject the 334-`WaitForChild` sweep.
+
+**CONVERTED (8, Lobby-local):** Quests, Inbox, LeaderBoards, RedeemCodes, BattlePass, Units, Items, Summon.
+**DELIBERATELY NOT converted:** `PlayGUIController` already re-binds itself; `DailyRewardsController`, `EventButtonController`, `InviteFriendsController` and `BuffStripController` live INSIDE the HUD, so they are re-cloned and re-run with it.
+
+**`SettingsUI` IS SHARED CANON, so it got the same fix INLINE rather than through the Lobby-local helper** -- a shared module must not grow a Lobby-local dependency. **`7e5a736a` -> `10f3d48c`**, mirrored byte-identical to BOTH Places and rebuilt on disk in the SAME session, so no stale `deployed.<Place>` is left behind (the B58 precedent). Disk canon was PROVEN identical to both live copies by hash before writing: 13,545 bytes, `10f3d48c` in all three. A Place whose HUD has no `SettingsButton` (the Game) simply never matches and stays silent, exactly as before. Manifest stays at 42 entries.
+
+**ALSO FIXED -- a latent full-HUD click-eater.** `StarterChoiceScreen.Controller` returned early on the "not a first join" path WITHOUT disabling its ScreenGui. That screen is `Enabled` at **DisplayOrder 10** -- above the HUD (1) and every other screen -- with a `Dim` covering 100% of the display and a `Panel` at 41%, both authored `Visible = true`; the ONLY thing keeping them off screen was `Root.Visible = false`. It sat enabled over the entire HUD for every returning player, one property away from swallowing everything. Now disabled outright when there is no offer.
+
+**RULED OUT (recorded so nobody re-investigates):** the LoadingScreen veil is down and clean at rest -- the documented "half-faded veil swallows input" race was NOT firing; the Settings dim layer opens and closes cleanly; the boot watchdog reports 40/40, so nothing is hanging.
+
+⚠ **`ProfileButton` IS WIRED TO NOTHING AT ALL** -- a DataModel-wide grep finds no handler. `AIState` already said "QuestsButton + ProfileButton duplicate HUD.Right's and are UNWIRED". Clicking it has never done anything and that is not this bug. Left alone: whether it should open a profile screen is a design call.
+
+Drift verified with B64's require-free FNV-1a recipe: **LOBBY 35/35 clean against the updated manifest**, Game likewise (only `SettingsUI` moved). No schema change (v6). Remotes unchanged (47). **USER: republish BOTH Places** -- shared canon changed, so this is one of the sessions where the standing republish actually matters.
+
+## 2026-09-15 [game] B64 -- AD-Game: **the status board stops lying**, and the drift check is rebuilt after Studio's sandbox took `require` away.
+
+Docs-only session. No gameplay value, no config, no code, no shared canon changed. Two things happened: the planned roadmap/CONTEXT truth pass, and an unplanned tooling break that had to be solved before the mandatory bootstrap gate could run at all.
+
+### ⚠ `require` FROM `execute_luau` IS DEAD -- AND IT IS NOT YOUR CODE
+
+The bootstrap drift check failed on its first call: *"The current thread cannot require 'HashShared' since 'HashShared' has additional values for the Capabilities property: LoadUnownedAsset (and 3 more)."* Studio had restarted (the instance ids rotated), and this is new.
+
+**It is NOT a change to the place.** `HashShared.Capabilities` enumerates as **empty**, `Sandboxed=false`, and every ancestor the same -- the script asks for nothing. Nor is it specific to `HashShared`: `require` was tried on `WeekendRushConfig`, `Stage1_Act1` and `UIKit.Confirm` and **all three fail identically**. The restriction is on the MCP/Assistant *calling thread*, i.e. Roblox's script-capability sandboxing applied to the assistant context. Nothing in the repo or either Place caused it and nothing in them can fix it. Reading `.Source` and instance properties still works fine.
+
+**Consequence for every future session: the constitution's drift recipe (`require(...HashShared:Clone())()`) no longer runs, and neither does any other `require`-based verification from `execute_luau`.**
+
+### THE DRIFT CHECK, REBUILT WITHOUT `require` -- AND IT PASSES 35/35
+
+`HashShared` hashes module `.Source`, and reading `.Source` is still allowed, so the check was reconstructed from the outside. The algorithm turned out to be plain **FNV-1a (32-bit)**: hashing the disk files in `shared/src/` with FNV-1a in the container reproduced **all 35 manifest hashes exactly**, which both identifies the function and proves disk canon matches the manifest. The same hash was then computed over each live `.Source` in the Place and compared.
+
+**Result: 35/35 modules IDENTICAL -- live Place == disk canon == `manifest.json`.** No drift.
+
+⚠ **One trap if anyone reimplements this: `h * 16777619` OVERFLOWS A DOUBLE past 2^53, so the naive Luau version silently returns garbage** -- the first run produced 35 "mismatches" that were purely precision loss. Do the multiply in 16-bit halves:
+
+    local function mul32(h)
+        local lo = h % 65536
+        local hi = (h - lo) / 65536
+        return ((lo * 16777619) + ((hi * 16777619) % 65536) * 65536) % 4294967296
+    end
+
+⚠ **This covers the 35 MODULES only. The 7 Kit TEMPLATES hash as INSTANCE TREES (ADR-0005), not source, so they cannot be checked this way and are UNVERIFIED this session.** 35/42, honestly stated. Templates change only when the user copies one across Places, and none was touched.
+
+### THE ROADMAP WAS WRONG IN A WAY THAT COULD HAVE CAUSED REAL REWORK
+
+`docs/ROADMAP.md` is the one-glance status board, and it had not been flipped for many sessions. **115 ✅ -> 127 ✅.** Twelve rows corrected, each verified against `STATE.md`/`CHANGELOG.md` first -- never flipped on assumption:
+
+- **Four Phase D rows marked 🔲 NOT BUILT that have all shipped:** Shop NPC (B40 backend + B42 screen), Daily login (B38/B39/B40), Quests (B40–B42), Codes (B39/B40). A session trusting that board could have rebuilt four live systems.
+- A fifth line still called DailyRewards, RedeemCodes, Inbox and Quests "now unblocked but unbuilt" -- **all four shipped**, Inbox at B48.
+- **Battlepass monetization** was "the remaining gap -- `Owned` gates the paid track and nothing sets it": wired B48, and B57 replaced the mis-typed Dev Product with the real gamepass `1975634753`, verified live (`Owned=true` at boot).
+- **Phase F's "Monetization store" 🔲** -> 🟡 largely shipped at B57 (gamepass + 4 gem packs + 4 luck packs + `ReceiptService` proven with 8 products; ⚠ a real Robux charge still untested).
+- **PlayGUI** 🟡 -> ✅ P1–P7 complete. **V2 kit** 🟡 "adoption BLOCKED ON THE USER" -> ✅ adopted both Places at B26, v1 trio retired. **Summon UX** 🟡 (the B6 carousel) -> ✅ rebuilt at B55.
+- **Three systems had no row at all** and now do: Weekend Rush (B57/B57c/B58), Buffs UI (B57), Movement/sprint (B54).
+
+Remaining 🟡 were checked and are genuinely partial -- content thin (1 map, 2 enemies, 8 towers, 1 stage), art placeholders, L50 XP balance, parties v1, battlepass tiers.
+
+### `places/game/CONTEXT.md` 154 -> 150, AT ITS CAP
+
+Condensed the UI-kit block: fifteen lines of resolved B26/B28 history became ten lines of current-state rule, with the detail left where it belongs (CHANGELOG). Also removed a **stale "Drift 25/26 at B26 (`MetaMath` MISSING)"** claim -- `MetaMath` was deployed to this Place at B51 and drift has been 42/42 since.
+
+⚠ `places/lobby/CONTEXT.md` is also over (153) but is **AD-Lobby's canon** -- single-writer rule, untouched. It needs an AD-Lobby session.
+
+No republish needed: nothing in either Place changed. Drift 35/35 modules (templates unverified, see above). No schema change (v6). Remotes unchanged (47). Harness untouched and OFF.
+
 ## 2026-09-14 [game] B63 -- AD-Game: **four open questions closed** -- two design calls settled, one popup verified for real, one backup already gone. `STATE.md` is finally UNDER its cap.
 
 A decisions-and-verification session. No gameplay value changed; what changed is that four things that had been carried as "someone should check this" are now either answered or proven.

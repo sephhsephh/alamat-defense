@@ -33,6 +33,46 @@ local ClientSettings = require(script.Parent.Parent.Settings.ClientSettings)
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
+-- ===== B65: RESERVE THE HUD SETTINGS BUTTON NOW, AND RE-BIND IT TO EVERY HUD =====
+-- Two separate faults, both of which made this button silently do nothing:
+--   (1) BOOT RACE -- the wiring used to sit at the BOTTOM of this file, after ClientSettings' remote
+--       round trip. Roblox starts LocalScripts in a NON-DETERMINISTIC order and DROPS a click on a
+--       button that is not connected yet, so on some joins this button was simply dead.
+--   (2) RESPAWN -- `HUD.ResetOnSpawn = true`, so the HUD is DESTROYED and re-cloned on every
+--       respawn and the old connection dies with it. Only PlayGUIController re-bound; this did not,
+--       so after one respawn the Settings button stayed dead until rejoin. Verified live at B65.
+-- This file is SHARED CANON, so the logic is INLINE rather than through the Lobby's `HudEntry`
+-- helper -- a shared module must not grow a Lobby-local dependency. A Place whose HUD has no
+-- SettingsButton (the Game) never matches and stays silent, exactly as before.
+local requestOpen: (() -> ())? = nil
+local pendingOpen = false
+local function wireHudSettingsButton(hud: Instance)
+	local right = hud:FindFirstChild("Right")
+	local upper = right and right:FindFirstChild("UpperRight")
+	local btn = upper and upper:FindFirstChild("SettingsButton")
+	if btn and btn:IsA("GuiButton") then
+		(btn :: GuiButton).MouseButton1Click:Connect(function()
+			if requestOpen then
+				requestOpen()
+			else
+				pendingOpen = true   -- clicked mid-boot; replayed below once setOpen exists
+			end
+		end)
+		print("[SettingsUI] HUD SettingsButton wired.")
+	end
+end
+task.spawn(function()
+	local hud = playerGui:FindFirstChild("HUD") or playerGui:WaitForChild("HUD", 10)
+	if hud then
+		wireHudSettingsButton(hud)
+	end
+end)
+playerGui.ChildAdded:Connect(function(child: Instance)
+	if child.Name == "HUD" and child:IsA("ScreenGui") then
+		wireHudSettingsButton(child)
+	end
+end)
+
 -- Bounded, never bare (B33). If this Place has no Settings screen yet the whole script stands down
 -- quietly instead of hanging forever on a ScreenGui that may never arrive.
 local gui = playerGui:FindFirstChild("Settings") or playerGui:WaitForChild("Settings", 10)
@@ -272,20 +312,19 @@ dimButton.MouseButton1Click:Connect(function()
 	setOpen(false)
 end)
 
--- The Lobby opens settings from its HUD rather than a floating gear. Wired here, optionally, so the
--- two Places share one screen and one builder while each keeps its own entry point.
-task.spawn(function()
-	local hud = playerGui:FindFirstChild("HUD") or playerGui:WaitForChild("HUD", 10)
-	local right = hud and hud:FindFirstChild("Right")
-	local upper = right and right:FindFirstChild("UpperRight")
-	local btn = upper and upper:FindFirstChild("SettingsButton")
-	if btn and btn:IsA("GuiButton") then
-		btn.MouseButton1Click:Connect(function()
-			setOpen(true)
-		end)
-		print("[SettingsUI] HUD SettingsButton wired.")
-	end
-end)
+-- The Lobby opens settings from its HUD rather than a floating gear, so the two Places share one
+-- screen and one builder while each keeps its own entry point.
+-- B65: the button itself was RESERVED at the TOP of this file (see the note there). This installs
+-- the real handler and replays a click that arrived while this script was still booting.
+requestOpen = function()
+	setOpen(true)
+end
+if pendingOpen then
+	pendingOpen = false
+	task.spawn(function()
+		setOpen(true)
+	end)
+end
 
 setOpen(false)
 print(string.format("[SettingsUI] Initialized (%s place, %d row(s), %d categor(ies)).",

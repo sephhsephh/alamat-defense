@@ -39,18 +39,14 @@ Boot order in `ReplicationBridge`: data services first; `[DATA]`/`[CONTRACT]` li
 - **UI kit (AD-UI, shared canon)** — 5 controllers in `RS.Shared.UIKit` + 7 REAL templates in
   `RS.UITemplates.Kit` (ADR-0005) + `StarterPlayerScripts.UIKitBootstrap`. **The Game HOTBAR is on
   it**: `StarterGui.Hotbar` is the Lobby's ScreenGui driven by the shared `UIKit.Hotbar`, the only
-  Place difference being `OnActivated` → **start placement**. Editing a kit half in ONE Place is DRIFT
-  (`docs/systems/ui-kit.md`, `tools/checklists.md`). Other
-  Game screens are still Place-local and script-era. **Drift 25/26 at B26** (`MetaMath` MISSING,
-  Phase D, expected). If a Kit template reads odd, ASK THE USER to re-copy it from the Lobby — never
-  edit or rebuild it; cross-Place copy is a USER action (`tools/checklists.md` step 2).
-  **✅ V2 IS ADOPTED HERE (B26).** The USER pasted `Kit.{UnitIconV2, ItemIconV2, HotbarSlotV2}` in;
-  verified by hash, v1 trio **deleted**; the hotbar is the only V2 consumer here (`UIKit.ItemIcon` is
-  canon but has no Game consumer).
-  **B28: `HotbarSlotV2` root `Size` was `{0.225,0.399}` here vs `{1,1}` in the Lobby — Lobby canonical
-  (user), so it is `{1,1}` now and both hash `cd5a2aa0`. THE GAME'S SLOTS RENDER BIGGER; that IS the
-  fix. `attach()` clones this master and never overrides Size; `UIAspectRatioConstraint` clamps it to
-  the square the Lobby draws. `UIKitMotion` → `a104e59d` (slide; no Game consumer). Canon: `ui-kit.md`.
+  Place difference being `OnActivated` → **start placement**. Other Game screens are still
+  Place-local and script-era. **Editing a kit half in ONE Place is DRIFT** — if a Kit template reads
+  odd, ASK THE USER to re-copy it from the Lobby, never edit or rebuild it; cross-Place copy is a
+  USER action (`ui-kit.md`, `tools/checklists.md` step 2). **V2 IS ADOPTED HERE (B26)** and the v1
+  trio is DELETED — do not re-add; the hotbar is its only Game consumer. **THE GAME'S SLOTS RENDER
+  BIGGER THAN THE LOBBY'S AND THAT IS THE FIX** (B28): `HotbarSlotV2` root `Size` is `{1,1}`, Lobby
+  canonical, `attach()` never overrides Size and `UIAspectRatioConstraint` clamps it. (B26/B28 detail
+  + the old 25/26 drift note: CHANGELOG.) **`SettingsUI` re-hashed B65 `7e5a736a` -> `10f3d48c`** (shared canon, mirrored byte-identical here): its HUD `SettingsButton` is reserved before the file's own boot work and **RE-BOUND on every HUD**, because `HUD.ResetOnSpawn = true` re-clones the HUD on respawn and silently kills the old connection. A Lobby-facing bug, but the file is SHARED -- this Place's HUD has no `SettingsButton`, so the lookup never matches and stays silent, exactly as before.
 - Remotes: `RS.Remotes.{Placement, Towers, Match, Economy, Combat, Settings}`
 - Rich legacy docs: `ServerStorage.Documentation.*` (AIState, SystemIndex, HowTo, ...) —
   still valid; migrating to repo `docs/systems/` on touch.

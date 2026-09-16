@@ -62,7 +62,7 @@ everything untradeable at launch).
 
 ## Lobby place
 
-- 🟡 **PlayGUI (user priority, blueprinted 2026-08-09 — `docs/blueprints/playgui.md`)**: Play button
+- ✅ **PlayGUI — P1–P7 ALL COMPLETE** (user priority, blueprinted 2026-08-09 — `docs/blueprints/playgui.md` is LAW). ADR-0011's UI 1–100 → wire 100–1000 remap is isolated in `PlayGUI.DifficultyScale`, **the ONE conversion**. Play button
   → loading screen → menu camera → MainMenu → StoryMode (stage/act lists, difficulty slider, reward
   preview) → LobbyFrame → launch. The GUI is BUILT by the user; P1–P7 wire it.
   **✅ P1 [AD-Lobby] (B14, 2026-08-09)** — the `StageRegistry` mirror now carries
@@ -135,7 +135,7 @@ everything untradeable at launch).
   **one of which was itself wrong and is corrected at B31: `QuickSellButton` DOES exist** — at
   `UnitsGUI.Main.Bottom.QuickSellButton`, not under `SelectedUnitFrame`, which is where B24 looked.
   It was unwired until B31 wired it. `LockUnitButon` (sic) + `FavoriteButton` were wired at B32.
-  🟡 **V2 kit — AUDITED at B25, adoption BLOCKED ON THE USER.** `Kit.{UnitIconV2, ItemIconV2,
+  ✅ **V2 kit — ADOPTED IN BOTH PLACES AT B26; the v1 trio (`Kit_UnitIcon`/`Kit_ItemIcon`/`Kit_HotbarSlot`) is RETIRED — do not re-add.** The user pasted the V2 templates in and they were verified by hash. (History below is the B25 audit that preceded it.) `Kit.{UnitIconV2, ItemIconV2,
   HotbarSlotV2}` are ADDITIONS beside the v1s (drift stays green), Lobby-only, not in the manifest.
   **✅ Rarity is DECIDED: it goes on the ROOT `UIGradient` and the tier BORDER is dropped** — v1's
   `BG` + `UIStrokeWithGradient` exist in no V2 template and `UIHoverStroke` is hover-only. The
@@ -359,8 +359,7 @@ everything untradeable at launch).
   revealed — `RewardPush` returns `player_not_in_server` and the grant stays safe on the profile.
   Persisting unseen reveals needs a queue on the profile (a schema change) plus an overflow rule, and
   must not be improvised inside `RewardPush`, which owns no storage.
-  🔲 **Now unblocked but unbuilt:** DailyRewards, RedeemCodes, Inbox and Quests. Each still needs its
-  own data — a reward table, a code registry, per-player redemption tracking — before it can be built.
+  ✅ **ALL FOUR HAVE SHIPPED:** DailyRewards (B38), RedeemCodes (B39/B40), Quests (B40–B42) and Inbox (B48, schema v5 + screen, `inbox.md`). Each got the data layer this line said it needed.
 
 
 - ✅ **B38 (AD-Gacha, Lobby, 2026-08-27) — DAILY REWARDS. The first of those four buttons to ship,
@@ -636,7 +635,7 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
   REAL algorithm. Verified live: **10k dry rolls, 0 distribution failures**, every tier inside 4σ;
   pity forced/priority/reset; x1 + x10 through the real remote into the real reveal
   (`n=10 cols=5 rows=2`, no scroll); units 8→22, Gold spent, `Pity.Default` persisted.
-- 🟡 **Summon UX (blueprint B3) — BUILT at B6 (2026-08-09), two pieces deliberately deferred.**
+- ✅ **Summon UX — REBUILT AT B55; the B6 carousel is GONE.** The screen now follows the user's reference: 3 tabs mapped by banner TYPE (Special=Selection, Standard, Limited=Event). Schema v5→v6 in that same bump (`LuckBuff` + `AutoSell` + `Purchases`). Gem packs + the new LUCK BOOSTS column landed B57. `summon-screen.md`. (History below is the superseded B6 build.) 🟡 **B6 original (2026-08-09), two pieces deliberately deferred.**
   `StarterGui.SummonScreen` + `SummonController`: banner carousel, x1/x10, featured chips, rates
   table, refusal handling — all **config-driven** from `BannerRegistry` + `GachaConfig`, so a new
   banner file or a new allowed pull count needs no code. Verified live through the real remote
@@ -789,19 +788,20 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
 ### Phase D — Economy loops
 - ✅ **Crafting (D1) — AD-Meta/AD-Gacha, B50.** fragments→colour artifacts (2:1)→Rainbow (all 7). 15 shared `ItemCatalog` items (`9be86a5f`→`2ee5f976`, both Places, 36/36; user republishes), pure `CraftingRecipes` + `CraftingService` (spend+grant via GrantService) + `GetCraftInfo`/`Craft` + NPC-opened screen (`NPC_Craft`). Interim fragment source = shop; artifacts are owned items, gameplay use DEFERRED. `docs/systems/crafting.md`.
 - ✅ **Challenges (D2) — AD-Game + AD-Lobby, B51-B52.** Daily-rotating harder match → match-end fragment reward (the REAL crafting source). SERVER-AUTHORITATIVE off `ChallengeConfig.GetDaily()` (`MetaMath.Slot`); modifiers (`EnemyHp`/lives) applied generically in `MatchDirector`; reward + `Counters.Global.ChallengeClears` in `RewardCalculator`; `Challenge` GameMode over Classic. Deployed `MetaMath`+`MetaConfig` (B51) + `ChallengeConfig`+`MatchModifiersConfig` (B52) to shared canon, 39/39 both Places; user republishes BOTH. `docs/systems/challenges.md`. Lobby "Challenge" tab BUILT B52 (NPC-opened `StarterGui.Challenge` reads the shared `GetDaily()`, launches via `RequestLaunch` `GameMode="Challenge"`). **B53:** economy modifiers landed (`Scarcity`/`LeanStart` -> `EconomyManager` income + starting-cash scale) + a 4th challenge (Scarce Fields), 39/39. **Follow-up:** varied base stages + the `RangeMult`/`SpaMult` tower-stat modifiers (seam confirmed, needs an attended full-match verify).
-- 🔲 Shop NPC (per-player daily stock keyed by day number; ShopConfig; Silver prices)
-- 🔲 Daily login (7-day repeating cycle, deterministic reset hour config)
-- 🔲 Quests + pinned-quest tracker in both Places (QuestConfig; progress via Counters;
-  Beginner's Path + Dailies first)
-- 🔲 Codes system (CodesConfig: rewards, expiry, one-per-player)
+- ✅ **Shop NPC — B40 backend + B42 screen.** NPC-opened (ADR-0010 shape); per-player daily stock DERIVED from the day number (`ShopStock.DayNumber`), never stored as a rolled list; Silver prices. **PRE-CHECK → SPEND → GRANT → MARK**, and the client sends a slot INDEX, never a price. Buy verified live (B42). First Silver sink. `shop.md`.
+- ✅ **Daily login — B38/B39/B40.** 7-day repeating cycle, **MISS A DAY = RESET TO 1**; reset hour from `MetaConfig.ResetOffsetSec` via `MetaMath.Slot`, so the day is derived, never stored as a timestamp. `DailyRewardService` is the one writer of `LoginStreak` + `EventLoginStreaks`; event ladders do NOT wrap. GRANT FIRST, MARK SECOND. `daily-rewards.md`.
+- ✅ **Quests — B40 backend + B41 counters + B42 screen.** Progress is a DELTA vs a stored baseline, not a running total. `QuestService` is the one writer of `Quests`; `Clears` + `InsaneVictories` land in `LiveCounters` (**`ClearThree` reads `Clears`, NOT `ActsCleared`** — one event, one number). 6/6 assignable, 0 orphans. `quests.md`. 🔲 pinned-quest tracker HUD still unbuilt.
+- ✅ **Codes — B39/B40.** `CodeService` is the one writer of `RedeemedCodes` (values are DAY NUMBERS). **Every code is PUBLIC** — the registry replicates, so a code is never a secret. **The rate limit is SECURITY, not politeness:** without it the remote enumerates the code space. `redeem-codes.md`.
 
 ### Phase E — Seasonal & presentation
 - 🟡 Battlepass — **backend + screen B42, BP XP AT MATCH END LANDED B43.** `RewardCalculator` →
   `MatchReturn.BattlepassXP` → Lobby `MatchReturnService` → `BattlepassAddXP` → `BattlepassService`
   (still the one writer of `Data.Battlepass`; the Game never writes it). Rule in the Game's
   `BattlepassXpConfig`: placeholder `50 + 5/wave`, loss ×0.4, ×1.0–2.0 by difficulty. Still 10
-  placeholder tiers against the blueprint's 50. 🔲 **Monetization** (paid unlock + level skips) is
-  the remaining gap — `Owned` gates the paid track and nothing sets it.
+  placeholder tiers against the blueprint's 50. ✅ **Monetization LANDED — B48 wired, B57 made it real.** `BattlepassConfig.GamePassId` was `3711220080`, proven at B56 to be a **Developer Product, not a gamepass**, so `UserOwnsGamePassAsync` always returned false and a purchase granted nothing. Now the user's real gamepass **`1975634753`** ("Battlepass S1", 599 R$): boot logs `Battlepass Owned=true` for the owner — verified live, not assumed. 🔲 level-skip products (5/10/50) still unbuilt.
+- ✅ **Weekend Rush — B57 Lobby card, B57c Game doubling, B58 shared canon + drops.** A time WINDOW, not a stored buff: Friday 00:00 → Monday 00:00 **UTC+8 (Asia/Manila)**, derived from `os.time()`, so no profile field and no writer. `WeekendRushConfig` is SHARED CANON (`44c549f0`, manifest entry 42, both Places — changing the window means both Places + manifest + re-hash). The Game applies `RewardMultiplier` as a FINAL scalar **on a Victory only**: gold + account/tower/battlepass XP, **and since B58 every drop's `Count`** (stage items, Insane items, challenge fragments) at the one point where all three are already in `drops`. Verified live on a real 15/15 Victory.
+- ✅ **Buffs UI — B57.** `BuffService.GetActiveBuffs` is READ-ONLY, composing the Luck buff and the Weekend Rush window into one ordered list with per-buff display copy + SecondsLeft. `HUD.BuffStrip` (top-3 chips + live timer + View All) and a dedicated `BuffsScreen` of cards — both REAL authored instances per the no-UI-in-scripts rule; the controllers only read data, clone templates and set text.
+- ✅ **Movement — B54.** Sprint TOGGLE on Shift/ButtonL3 in BOTH Places, dash on Q/ButtonR1 in the LOBBY only, via the project's FIRST `ContextActionService` use: ONE `BindAction` carries keyboard + gamepad + a generated mobile touch button, so there is **no per-platform branch**. `MovementConfig` + `MovementController` are shared canon; `AlwaysSprint` is settings row 7. Animations DEFERRED (user). `movement.md`.
 - 🔲 Event framework (event banner + EventTokens + event quests bundle; Pre-Release first)
 - 🔲 News/update board + banner showcase on join
 - 🔲 Titles (equip UI + overhead) · 🔲 Skins (catalog → model swap both Places)
@@ -813,7 +813,7 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
 - 🔲 Spirits (attach to units, stat boosts + passives; act-specific drops)
 - 🔲 Endless mode + global leaderboards (waves/summons/level)
 - 🔲 AFK rewards · 🔲 Team presets · 🔲 Group/like milestone rewards
-- 🔲 Monetization store (VIP/luck/x2XP passes, gold packs, BP; purchase path)
+- 🟡 **Monetization store — LARGELY SHIPPED AT B57.** Battlepass gamepass `1975634753` (599 R$) + **4 gem-pack Dev Products** (500/750/1000/1999 R$, prices read live from `MarketplaceService`) + **4 NEW luck-only passes** (`LuckPackConfig`/`LuckPackService`: 25/50/75/100% Luck for 1h at 100/200/400/599 R$, granting Luck ALONE so a failed apply safely returns false), all sold from the summon screen's LUCK BOOSTS column. **`ReceiptService` is THE one owner of `ProcessReceipt`** — a REGISTRY, never a second assignment — and the one writer of `Data.Purchases`; it carried **0 products in every boot before B57** and now carries 8. Proven via the `DevReceiptTest` seam: unknown product → NotProcessedYet, first delivery → granted, re-delivery of the same PurchaseId → **no re-grant** (idempotency via the profile ledger). ⚠ **UNTESTED: a real Robux charge.** 🔲 VIP and x2XP passes, gold packs. Orphan Dev Product `3711220080` (the old BP id) — nothing sells it; the user may deactivate.
 - 💭 Trading hub (all items untradeable until then) · 💭 Tutorial place · 💭 Event worlds
 
 ## How to update this file
