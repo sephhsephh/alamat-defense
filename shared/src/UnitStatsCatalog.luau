@@ -45,4 +45,42 @@ function UnitStatsCatalog.Get(towerId: string): { DMG: number?, RNG: number?, SP
 	return UnitStatsCatalog.Stats[towerId]
 end
 
+-- ===== PLACEMENT COST (B67, user) =====
+-- towerId -> what it costs to PLACE this tower, in match Gold.
+--
+-- WHY IT LIVES HERE. The hotbar is a SHARED controller drawn in BOTH Places, and the requirement is
+-- that the price reads THE SAME in the Lobby and the Game at all times. The truth is
+-- `TowerConfig.Cost` in the GAME's tower configs, which the Lobby cannot see -- so the only way to
+-- be identical in both is ONE shared number, drift-checked by hash like every other shared module
+-- and regenerated under the SAME load-bearing validator as the stats above. A remote that pushed
+-- the cost from the Game would leave the Lobby with nothing to show before it answered, and the two
+-- Places could disagree for as long as the round trip took.
+--
+-- SAFE TO CACHE BECAUSE PLACEMENT COST IS FLAT. `MetaScalingConfig.Cost` is 1.00 at level 1 AND at
+-- level 100 -- its own comment reads "Explicitly flat. Listed rather than omitted so the intent is
+-- unmistakable" -- and `PlacementValidator` spends `config.Cost` unmodified. There is no per-unit,
+-- per-level or per-trait variation for this cache to miss.
+-- ⚠ IF COST EVER STOPS BEING FLAT, THIS CACHE BECOMES A LIE and must be replaced by a resolved
+-- lookup, exactly as the stats above would be.
+--
+-- !! GENERATED, like `Stats`: the truth is the Game's tower configs, NOT this table.
+-- `SSS.Server.UnitStatsCatalogValidate` FAILS THE GAME'S BOOT if any value here disagrees with the
+-- live `TowerConfig.Cost`, so a stale price cannot ship silently.
+UnitStatsCatalog.Costs = {
+	Archer      = 100,
+	Knight      = 150,
+	Mage        = 200,
+	Farm        = 150,
+	Babaylan    = 300,
+	Meteor      = 300,
+	Warchief    = 350,
+	Necromancer = 400,
+}
+
+-- The placement cost for a tower, or nil if it is not in the catalog. Callers HIDE on nil rather
+-- than printing a 0 -- a zero is a claim that the tower is free; a hidden label claims nothing.
+function UnitStatsCatalog.GetCost(towerId: string): number?
+	return UnitStatsCatalog.Costs[towerId]
+end
+
 return UnitStatsCatalog

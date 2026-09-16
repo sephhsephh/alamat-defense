@@ -10,7 +10,7 @@ The social/meta Place: collection, banners, stage + difficulty select, parties, 
   `DashSpeed` 70→300 re-tune, confirmed by them and RECORDED as canon (B22 precedent), then mirrored to the Game. All three now `19421017`. **Compare live hashes to BOTH `hash` and `deployed.<Place>` field by field**, or real drift hides (B39).
 - **Trait rarity table (B12):** `RS.Configs.Traits.*` are SHARED canon; API is `TraitRegistry.Roll(rng)`, not `RollTrait`.
 - **`UnitStatsCatalog`** = GENERATED cache of resolved base DMG/RNG/SPA at tier 1 / ML 1 / mid-roll / asc 0, **SPA already inverted**.
-  AD-Game owns it; **Farm has no DMG/SPA keys**. ADR-0003.
+  AD-Game owns it; **Farm has no DMG/SPA keys**. ADR-0003. **B67 `3bb9b140` -> `ff870013`: it also carries `Costs`/`GetCost(towerId)` -- the PLACEMENT price the shared hotbar renders HERE, since this Place has no `TowerConfig` to read. The Game's `UnitStatsCatalogValidate` checks `Costs` against the live configs at boot, so this Place can never sit on a stale price; `UIKitHotbar` `ef691df9` -> `5b9f9260` reads it (peso + separators, label HIDDEN when a unit has no entry), retiring B27d's placeholder price. Verified here: Meteor 300 / Farm 150 / Warchief 350 -- Farm and Warchief identical to the Game.**
 - **Boot:** `Server.Bootstrap` asserts the save contract, runs `PlayerDataService.Init()`. **Schema v5** (`91ffab78`, B48; user republishes both)
   from **Beta1_PlayerDataDev1** (prod **Beta1_PlayerData**) — shares the Game's profile.
 - **Scene:** `Workspace.Lobby` blockout hub. **Its presence is the Lobby Place assertion**, paired with `RS.Configs.Towers` being ABSENT.

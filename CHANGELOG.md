@@ -1,4 +1,32 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-16 [both] B67 -- AD-Game (crossing AD-UI with the user's go-ahead): **the hotbar's placement price is REAL now, and it is the SAME number in both Places by construction.**
+
+User: *"display the actual price of the units in the hotbar in the game place"*, then *"make sure its visible in lobby too and make sure its same on both lobby and game at all times."* The second sentence is the whole design problem, and it is why this landed the way it did.
+
+**WHAT WAS THERE BEFORE WAS A PLACEHOLDER RENDERED AS TRUTH.** B27d turned `PlacementPrice` VISIBLE on any filled slot behind `Motion.SHOW_PLACEHOLDER_PRICES`, showing **the number the artist typed into `HotbarSlotV2`** -- the same figure for every unit, in both Places, wrong for all of them. B27d knew it was inventing and said so in the manifest; the switch existed as the way back. **B67 takes the way back.** The gate is retired because the data source it was waiting for now exists.
+
+**WHY THE COST WENT IN `UnitStatsCatalog` AND NOT SOMEWHERE OBVIOUS.** The live price is `TowerConfig.Cost` -- and `TowerConfig` **exists only in the Game**. The Lobby has no tower configs at all (that is exactly why ADR-0003's generated stat cache exists in the first place). So "show the price in the Lobby too" has no answer that reads the real config; something has to carry the number across. The choices were a new shared file, a remote, or the cache that **already** crosses. `UnitStatsCatalog` was picked because it is the only option where *"identical at all times"* is **ENFORCED rather than promised**:
+
+- it is **shared canon**, so both Places' copies are hash-compared at every bootstrap -- a divergence is a drift failure, not a visual one nobody notices;
+- it is **load-bearing-validated** (ADR-0003): `SSS.Server.UnitStatsCatalogValidate` regenerates from the live configs at boot in the Game and errors LOUD on mismatch. **B67 extended that validator to `Costs`**: every entry is compared to the live `TowerConfig.Cost`, and a `Costs` key for a tower that no longer exists is swept. So if someone retunes Archer to 120 and forgets the cache, **the Game refuses to boot quietly** -- the Lobby can never sit on a stale price, because the Game would have screamed first.
+
+A remote would have made the Lobby's price a runtime fetch that can fail, arrive late, or silently show nothing; a new shared file would have added a 43rd entry that nothing validates. This adds neither.
+
+**THE CODE.** `UnitStatsCatalog.Costs` (8 towers) + `GetCost(towerId): number?`. `UIKit.Hotbar` requires the catalog, reads `GetCost(unitId)`, and renders it through a new `formatCost` (peso sign + thousands separators). **A unit with NO cost entry HIDES the label** rather than falling back to the template number -- hide-never-invent, the rule B27d bent. Empty and locked slots still show nothing at all.
+
+**PROVEN LIVE IN BOTH PLACES, and the overlap is the proof that matters:**
+
+- **Game** hotbar: Archer **100**, Necromancer **400**, Warchief **350**, Farm **150**; empty/locked slots showed no price.
+- **Lobby** hotbar: Meteor **300**, Farm **150**, Warchief **350**. Reached honestly -- the loadout was equipped through the real `SetLoadoutSlot` remote, then the character was RESPAWNED to force the `ResetOnSpawn` Hotbar to re-clone, so what was read is a freshly built hotbar and not a stale one.
+- The two units present in **both** runs, **Farm 150 and Warchief 350, read identical in each Place.**
+- The Game's boot validator passed with the new check: `[Test] UnitStatsCatalog OK: 8 towers match live configs (resolved base stats + placement Cost).`
+
+**SHARED CANON, both re-hashed and mirrored in the SAME session** (no stale `deployed.<Place>`; the B58 precedent): `UnitStatsCatalog` **`3bb9b140` -> `ff870013`** (4,484 bytes), `UIKitHotbar` **`ef691df9` -> `5b9f9260`** (21,368 bytes). Byte-identical in both Places AND on disk -- disk canon was rebuilt from the same edits and PROVEN identical by hash before anything was written. Manifest stays at **42 entries**, and the B66 near-miss protocol was followed: the manifest was **re-staged immediately before editing** and the baseline asserted (`SettingsUI == 10f3d48c`, `MovementConfig == 3598e7d0`, `MovementController == 8e995f32`) so B65 and B66 could not be silently reverted.
+
+⚠ **When a tower's `Cost` changes, `UnitStatsCatalog.Costs` must be regenerated and re-hashed in BOTH Places** -- the same standing rule its stat block already carries. The validator will catch a miss, but it catches it by refusing to boot.
+
+No schema change (v6). Remotes unchanged (47). **USER: republish BOTH Places** -- shared canon moved again.
+
 ## 2026-09-16 [both] B66 -- AD-Game (crossing AD-Lobby/AD-UI with the user's go-ahead): **double jump everywhere, and the Game gets the dash -- which cost Q a remap.**
 
 Two movement features, one shared module, one re-hash. Both were the user's explicit call, and one of them overrides a decision the user themselves made at B54.

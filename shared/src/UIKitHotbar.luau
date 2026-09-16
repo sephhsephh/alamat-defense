@@ -34,6 +34,10 @@ local meta = RS:WaitForChild("Configs"):WaitForChild("Meta")
 local ItemCatalog = require(meta:WaitForChild("ItemCatalog"))
 local TierConfig = require(meta:WaitForChild("TierConfig"))
 local LoadoutConfig = require(meta:WaitForChild("LoadoutConfig"))
+-- B67: the ONE shared source of placement cost. See UnitStatsCatalog.Costs for why it lives in the
+-- generated catalog rather than being pushed from the Game -- in short, this controller draws in
+-- BOTH Places and the price must read the same in each at all times.
+local UnitStatsCatalog = require(meta:WaitForChild("UnitStatsCatalog"))
 local Button = require(RS:WaitForChild("Shared"):WaitForChild("UIKit"):WaitForChild("Button"))
 -- Motion: one hover/press curve for the kit, the 45-degree idle sheen, and the wrapper that keeps a
 -- scaling slot from shoving its neighbours along the hotbar row.
@@ -72,6 +76,22 @@ end
 
 local function resolveTemplate(): GuiObject?
 	return resolveFrom(TEMPLATE_PATHS)
+end
+
+-- B67: thousands separators for the placement price, matching the peso styling the template was
+-- authored with ("\u{20B1}67,000"). Deliberately local rather than reusing the Game's
+-- `Client.UI.NumberFormat` -- this is a SHARED module and must not reach into a Place-local one.
+-- Integer input only; placement costs are whole Gold.
+local function formatCost(n: number): string
+	local s = tostring(math.floor(n))
+	-- Insert a comma every three digits from the right. The loop runs at most twice for the values
+	-- this game uses, and gsub-with-a-count is the standard Lua idiom for it.
+	while true do
+		local replaced
+		s, replaced = s:gsub("^(%-?%d+)(%d%d%d)", "%1,%2")
+		if replaced == 0 then break end
+	end
+	return "\u{20B1}" .. s
 end
 
 local function setText(root: Instance, name: string, value: string)
@@ -338,17 +358,27 @@ function Hotbar.attach(container: GuiObject, opts: { [string]: any })
 			if lvl ~= nil then setText(btn, "UnitLevel", "LVL " .. tostring(lvl)) end
 		end
 
-		-- ===== PLACEMENT PRICE: TEMPORARILY VISIBLE (B27c, user override) =====
-		-- Placement cost lives in the GAME's tower configs, which the Lobby does not have, and this
-		-- is a SHARED controller -- so there is still NO real data source and the label shows
-		-- whatever the TEMPLATE AUTHORED. That is a design placeholder, **not a real cost**.
-		-- The standing rule is hide-never-invent; the user explicitly suspended it to see the layout
-		-- while testing. `Motion.SHOW_PLACEHOLDER_PRICES` is the single switch that puts every card
-		-- in both Places back to honest. Only shown on a slot that actually HOLDS a unit -- a price
-		-- floating on an empty slot would be noise on top of fiction.
+		-- ===== PLACEMENT PRICE: REAL DATA SINCE B67 =====
+		-- This used to be the template's AUTHORED PLACEHOLDER ("\u{20B1}67,000"), shown only because the
+		-- user suspended the hide-never-invent rule at B27c to see the layout -- the comment here read
+		-- "there is still NO real data source". There is one now: `UnitStatsCatalog.Costs`, shared
+		-- canon deployed and hash-checked in BOTH Places, and regenerated under the Game's
+		-- load-bearing validator. So the Lobby and the Game show the SAME number, always, by
+		-- construction rather than by convention -- which is what the user asked for.
+		--
+		-- HIDE-NEVER-INVENT IS BACK IN FORCE. A tower missing from the catalog renders NOTHING rather
+		-- than a 0 or a placeholder: a zero claims the tower is free. `Motion.SHOW_PLACEHOLDER_PRICES`
+		-- no longer gates this label (it never described real data); it is left alone for whatever
+		-- else still reads it. Only shown on a slot that actually HOLDS a unit.
 		local price = btn:FindFirstChild("PlacementPrice", true)
 		if price and price:IsA("GuiObject") then
-			price.Visible = Motion.SHOW_PLACEHOLDER_PRICES and showTier or false
+			local cost = (showTier and entry ~= nil) and UnitStatsCatalog.GetCost(entry.TowerId) or nil
+			price.Visible = cost ~= nil
+			if cost ~= nil then
+				-- Same search rule as `UnitLevel` above: setText walks the slot root's DESCENDANTS, so
+				-- it must be given `btn`, never the label itself (B26 lost "LVL 100" to exactly that).
+				setText(btn, "PlacementPrice", formatCost(cost))
+			end
 		end
 
 		-- `Placed/MaxPlacement` is a MATCH-RUNTIME count (how many of this unit are on the board).
