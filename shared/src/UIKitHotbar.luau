@@ -34,10 +34,12 @@ local meta = RS:WaitForChild("Configs"):WaitForChild("Meta")
 local ItemCatalog = require(meta:WaitForChild("ItemCatalog"))
 local TierConfig = require(meta:WaitForChild("TierConfig"))
 local LoadoutConfig = require(meta:WaitForChild("LoadoutConfig"))
--- B67: the ONE shared source of placement cost. See UnitStatsCatalog.Costs for why it lives in the
--- generated catalog rather than being pushed from the Game -- in short, this controller draws in
--- BOTH Places and the price must read the same in each at all times.
-local UnitStatsCatalog = require(meta:WaitForChild("UnitStatsCatalog"))
+-- B68: the placement price is painted by `UIKit.UnitCard`, not here. B67 put the LOOKUP and the
+-- formatting in this file, and then six Lobby screens needed the identical pair -- so it moved to
+-- the kit module that already exists to stop card code being copied. This slot and a Lobby Units
+-- card now run the SAME function over the SAME shared catalog, which is the only way "identical in
+-- both Places at all times" survives the next screen that wants a price.
+local UnitCard = require(RS:WaitForChild("Shared"):WaitForChild("UIKit"):WaitForChild("UnitCard"))
 local Button = require(RS:WaitForChild("Shared"):WaitForChild("UIKit"):WaitForChild("Button"))
 -- Motion: one hover/press curve for the kit, the 45-degree idle sheen, and the wrapper that keeps a
 -- scaling slot from shoving its neighbours along the hotbar row.
@@ -76,22 +78,6 @@ end
 
 local function resolveTemplate(): GuiObject?
 	return resolveFrom(TEMPLATE_PATHS)
-end
-
--- B67: thousands separators for the placement price, matching the peso styling the template was
--- authored with ("\u{20B1}67,000"). Deliberately local rather than reusing the Game's
--- `Client.UI.NumberFormat` -- this is a SHARED module and must not reach into a Place-local one.
--- Integer input only; placement costs are whole Gold.
-local function formatCost(n: number): string
-	local s = tostring(math.floor(n))
-	-- Insert a comma every three digits from the right. The loop runs at most twice for the values
-	-- this game uses, and gsub-with-a-count is the standard Lua idiom for it.
-	while true do
-		local replaced
-		s, replaced = s:gsub("^(%-?%d+)(%d%d%d)", "%1,%2")
-		if replaced == 0 then break end
-	end
-	return "\u{20B1}" .. s
 end
 
 local function setText(root: Instance, name: string, value: string)
@@ -358,28 +344,16 @@ function Hotbar.attach(container: GuiObject, opts: { [string]: any })
 			if lvl ~= nil then setText(btn, "UnitLevel", "LVL " .. tostring(lvl)) end
 		end
 
-		-- ===== PLACEMENT PRICE: REAL DATA SINCE B67 =====
-		-- This used to be the template's AUTHORED PLACEHOLDER ("\u{20B1}67,000"), shown only because the
-		-- user suspended the hide-never-invent rule at B27c to see the layout -- the comment here read
-		-- "there is still NO real data source". There is one now: `UnitStatsCatalog.Costs`, shared
-		-- canon deployed and hash-checked in BOTH Places, and regenerated under the Game's
-		-- load-bearing validator. So the Lobby and the Game show the SAME number, always, by
-		-- construction rather than by convention -- which is what the user asked for.
-		--
-		-- HIDE-NEVER-INVENT IS BACK IN FORCE. A tower missing from the catalog renders NOTHING rather
-		-- than a 0 or a placeholder: a zero claims the tower is free. `Motion.SHOW_PLACEHOLDER_PRICES`
-		-- no longer gates this label (it never described real data); it is left alone for whatever
-		-- else still reads it. Only shown on a slot that actually HOLDS a unit.
-		local price = btn:FindFirstChild("PlacementPrice", true)
-		if price and price:IsA("GuiObject") then
-			local cost = (showTier and entry ~= nil) and UnitStatsCatalog.GetCost(entry.TowerId) or nil
-			price.Visible = cost ~= nil
-			if cost ~= nil then
-				-- Same search rule as `UnitLevel` above: setText walks the slot root's DESCENDANTS, so
-				-- it must be given `btn`, never the label itself (B26 lost "LVL 100" to exactly that).
-				setText(btn, "PlacementPrice", formatCost(cost))
-			end
-		end
+		-- ===== PLACEMENT PRICE: REAL DATA SINCE B67, PAINTED BY THE KIT SINCE B68 =====
+		-- Until B67 this was the template's AUTHORED PLACEHOLDER ("\u{20B1}67,000"), visible only because
+		-- the user suspended hide-never-invent at B27c to judge the layout. The real source is
+		-- `UnitStatsCatalog.Costs`: shared canon, hash-checked in BOTH Places, regenerated under the
+		-- Game's load-bearing validator -- so the two Places show the same number by construction.
+		-- B68 moved the lookup, the peso formatting and the hide rule into `UIKit.UnitCard` so the six
+		-- Lobby card screens share them with this slot instead of each growing their own copy.
+		-- Passing nil is how an EMPTY or LOCKED slot asks for nothing: no unit, no price, and never a 0
+		-- (a zero would claim the tower is free).
+		UnitCard.paintPrice(btn, (showTier and entry ~= nil) and entry.TowerId or nil)
 
 		-- `Placed/MaxPlacement` is a MATCH-RUNTIME count (how many of this unit are on the board).
 		-- The Game HAS that data (`PlacementCountsChanged`), the Lobby never will -- but nothing

@@ -52,4 +52,83 @@ function TraitRegistry.Roll(randomGenerator: Random?): string
 	return "None"
 end
 
+-- ===== PITY (B69) =====
+-- A trait with a `TraitDefinitions.PityCap` is GUARANTEED on the Nth consecutive reroll of a unit
+-- that has not landed it. The counter lives on the UNIT INSTANCE (`UnitInstance.TraitPity`, schema
+-- v7), never on the player, so grinding one tower never advances another's -- and the SERVICE owns
+-- the write, exactly as it owns the trait write. These functions are PURE.
+
+-- Pitied ids, RAREST FIRST. **The order is load-bearing**: if two caps fill on the same reroll the
+-- rarer one must win, or a Godly guarantee could be eaten by a Deadeye one. Sorted by Weight with a
+-- name tiebreak because `pairs()` order is NOT deterministic in Luau -- without the tiebreak this
+-- list could differ between two servers running identical code.
+local PITIED: { string } = {}
+do
+	for id, def in pairs(TraitDefinitions) do
+		if type(def.PityCap) == "number" and def.PityCap > 0 then
+			table.insert(PITIED, id)
+		end
+	end
+	table.sort(PITIED, function(a, b)
+		local wa = TraitDefinitions[a].Weight or math.huge
+		local wb = TraitDefinitions[b].Weight or math.huge
+		if wa ~= wb then
+			return wa < wb
+		end
+		return a < b
+	end)
+end
+
+-- Ids that show a pity bar, rarest first. A COPY -- a caller must not be able to reorder the table
+-- the guarantee reads.
+function TraitRegistry.PitiedTraits(): { string }
+	return table.clone(PITIED)
+end
+
+function TraitRegistry.PityCap(traitId: string?): number?
+	local def = traitId and TraitDefinitions[traitId]
+	return def and def.PityCap or nil
+end
+
+-- Would this unit's next reroll be a GUARANTEE, and of what? Pure lookahead: it writes nothing.
+-- `cap` counts REROLLS, so a counter already at `cap - 1` means this one is the guaranteed roll --
+-- i.e. `PityCap = 75` reads honestly as "at worst, 75 rerolls".
+function TraitRegistry.PendingGuarantee(pity: { [string]: number }?): string?
+	local p = pity or {}
+	for _, id in ipairs(PITIED) do
+		local cap = TraitDefinitions[id].PityCap
+		if cap and ((p[id] or 0) + 1) >= cap then
+			return id
+		end
+	end
+	return nil
+end
+
+-- The rarer of two ids (smaller Weight wins). Used to combine a pity guarantee with the Luck buff's
+-- best-of-N so that NEITHER can make the other worse: a guarantee is a FLOOR, not a ceiling, so a
+-- lucky Godly still beats a guaranteed Deadeye.
+function TraitRegistry.Rarer(a: string?, b: string?): string?
+	if a == nil then return b end
+	if b == nil then return a end
+	local wa = TraitRegistry.Get(a).Weight or math.huge
+	local wb = TraitRegistry.Get(b).Weight or math.huge
+	if wa <= wb then return a end
+	return b
+end
+
+-- Move a unit's pity table on by one reroll. MUTATES and returns it.
+-- Every pitied trait that did NOT land moves one closer; the one that DID land resets to 0 --
+-- whether it was guaranteed or came up naturally, because either way the player just received it.
+-- Call this ONCE PER REROLL (one token spent = one tick), never once per best-of-N candidate.
+function TraitRegistry.AdvancePity(pity: { [string]: number }, landedTraitId: string): { [string]: number }
+	for _, id in ipairs(PITIED) do
+		if id == landedTraitId then
+			pity[id] = 0
+		else
+			pity[id] = (pity[id] or 0) + 1
+		end
+	end
+	return pity
+end
+
 return TraitRegistry

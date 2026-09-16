@@ -37,6 +37,7 @@
   `AscensionRules` is split from the service, and the one authorised line in `UnitsController`.
   Read before touching anything that destroys a player's unit.
 - `trait-reroll.md` — **AD-Traits, LOBBY**: trait reroll (C1, B44). Cost is the `TraitRerollToken` ITEM (not `Currencies.TraitRerolls`). PRE-CHECK→SPEND→ROLL→WRITE. NPC-opened (ADR-0010).
+- `unit-capacity.md` — **AD-Game (Lobby-local), LOBBY**: unit cap 200 +50 per 50k Silver (B72, schema v8). SUMMON-only refusal; other grants overflow. `BuyUnitSlots` + `GetUnitViews.UnitCapacity`.
 - `stat-reroll.md` — **AD-Traits, LOBBY**: stat reroll (C2, B44). Rerolls all 3 StatRolls for `Currencies.StatRerolls` (sources: `economy-map.md`); Worthiness>=100 floors each roll at grade A + resets. NPC-opened.
 - `economy-map.md` — **AD-Meta/AD-Gacha canon, LOBBY**: the faucet↔sink map for every spendable resource (Gold, Silver, TraitRerollToken, StatRerolls, EventTokens) — what grants each and what spends it, in one table. Read before any economy tuning. `Currencies.TraitRerolls` is documented-dead here.
 - `leaderboards.md` — **AD-Meta/AD-Gacha canon, LOBBY**: the global top-N account-LEVEL board (B47). OrderedDataStore keyed by userId, published on ProfileLoaded (Lobby-only, no schema/Game change); `GetLeaderboard` remote + blockout screen. Read before touching the board or adding a ranked metric.

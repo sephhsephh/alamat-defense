@@ -1,5 +1,5 @@
 # Contract: Save Schema
-<!-- owner: game | scope: global | version: 5 | last-verified: 2026-09-02 (B48) -->
+<!-- owner: game | scope: global | version: 8 | last-verified: 2026-09-17 (B72) -->
 
 Canonical implementation: `shared/src/ProfileTemplate.luau` (deployed to
 `ReplicatedStorage.Shared.ProfileTemplate` in every Place). This doc explains it; the
@@ -13,7 +13,7 @@ whole Experience.
 > exact store 2026-08-01** (drift check during the v2 work) — no split-brain. Store target only,
 > unrelated to the schema version.
 
-## v6 shape (current)
+## v8 shape (current)
 
 ```luau
 {
@@ -30,7 +30,9 @@ whole Experience.
 		TowerId: string,
 		MetaLevel: number,            -- 1..100 (clamped defensively on read)
 		XP: number,
-		Trait: string?,
+		ActiveTrait: string?,        -- v7: the ONLY trait anything reads (was `Trait`)
+		StoredTrait: string?,        -- v7: bench slot, moves only on an explicit swap
+		TraitPity: { [string]: number }, -- v7: per-UNIT rolls since each pitied trait; sparse
 		Shiny: boolean,
 		StatRolls: { DMG: number, RNG: number, SPA: number }, -- 0..1 position in range (A3 resolver)
 		Ascension: number,            -- 0..3, Mythic+ only (phase C)
@@ -54,6 +56,8 @@ whole Experience.
 	LuckBuff: { Percent: number, ExpiresAtUtc: number },        -- v6: ONE timed Luck buff; 0/0 = none
 	AutoSell: { [tierName]: true },                             -- v6: Auto Summon toggles; SPARSE, absent = off
 	Purchases: { Ids: { string } },                             -- v6: CAPPED granted-receipt ledger (no double-grant)
+	TraitFilters: { [string]: boolean },                        -- v7: hunted traits (reroll screen); SPARSE
+	UnitSlotsPurchased: number,                                 -- v8: unit-capacity upgrades BOUGHT (a count, not the cap)
 }
 ```
 
@@ -169,6 +173,25 @@ Developer Product receipt ledger.
 - ProfileTemplate hash `91ffab78 → 83633e44`, deployed byte-identical to BOTH Places in one session,
   manifest updated, **41/41 verified in both**.
 
+**Migration 6→7** (`Migrations[6]`, B69 2026-09-16) — *recorded here at B72; B69 did not update this doc.*
+`UnitInstance.Trait` SPLIT into `ActiveTrait` + `StoredTrait`, + per-unit `TraitPity`, + top-level
+`TraitFilters`. **The first step since v1→v2 with REAL work: `Reconcile()` does NOT descend into
+`Units[uuid]`**, so per-unit fields are written by hand; `Trait` is cleared after the copy and pity
+starts at zero. The WIRE field stays `Trait` and always means the ACTIVE one. Hash `83633e44 → 8f6520b4`.
+
+**Migration 7→8** (`Migrations[7]`, B72 2026-09-17): adds top-level `UnitSlotsPurchased` — the number of
+unit-capacity upgrades a player has bought. **A DELIBERATE NO-OP again** (top-level key → `Reconcile()`
+fills it with 0 first). No backfill: everyone starts at the base cap, and a player already over it keeps
+every unit.
+
+- The cap is DERIVED, never stored: `UnitCapacityConfig.CapFor(n) = BaseCap + SlotsPerUpgrade × n`
+  (200 + 50n; 50,000 Silver each, repeatable — user, 2026-09-16). Storing the count means a re-tune
+  re-prices every player consistently. Config is **Lobby-local** (only the Lobby enforces or sells it).
+- ONE writer: the Lobby's `UnitCapacityService` (`Remotes.BuyUnitSlots`, PRE-CHECK → `GrantService.Spend`
+  → write). ONE enforcement point: `SummonService`, **before the spend**. Every other grant (quests, mail,
+  codes, dailies, starter pick, the Game's match rewards) **overflows** past the cap by design.
+- Hash `8f6520b4 → d3d4e63c`, byte-identical in both Places + disk. **Republish BOTH Places together.**
+
 ## Access rules
 
 - Only `Server.Data.PlayerDataService` opens/closes sessions. Everything else reaches data
@@ -185,6 +208,11 @@ Bump `SCHEMA_VERSION` by 1 + add `Migrations[old]` step + update this doc's vers
 PENDING for other Places in `STATE.md`. Never edit or remove an existing migration.
 
 ## Version history
+
+- **v8** (2026-09-17, B72): `UnitSlotsPurchased` (unit capacity). `Migrations[7]` a deliberate no-op.
+  `8f6520b4 → d3d4e63c`, both Places. Proven: Game `Migrated ... forward 1 step(s) to v8`.
+- **v7** (2026-09-16, B69): trait split (`ActiveTrait`/`StoredTrait`) + per-unit `TraitPity` +
+  `TraitFilters`. `Migrations[6]` does real per-unit work. `83633e44 → 8f6520b4`, both Places.
 
 - **v6** (2026-09-08, B55): `LuckBuff` + `AutoSell` + `Purchases` in one bump — the timed gem-pack
   Luck buff, the Auto Summon auto-sell toggles, and the Developer Product receipt ledger.

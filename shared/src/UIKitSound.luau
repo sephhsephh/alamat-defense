@@ -163,7 +163,31 @@ function Sound.playBGM(name: string, opts: { [string]: any }?): boolean
 		end
 	end
 	local s = track :: Sound
-	if s.SoundId == "" then return false end -- unassigned; stay silent rather than fake it
+
+	-- ===== B71: AN UNASSIGNED ID FALLS BACK TOO, NOT JUST A MISSING INSTANCE =====
+	-- The block above falls back to `Default` when the named Sound INSTANCE is absent. But every act
+	-- slot (Stage1_Act1..3) EXISTS in the tree with an empty `SoundId` -- so the fallback could never
+	-- fire, the next line returned false, and the GAME PLACE WAS SILENT EVEN WITH `Default` ASSIGNED.
+	-- This file's own header already claimed the broader behaviour ("an unnamed stage is silent rather
+	-- than broken"); the code only implemented half of it. A missing instance and an unassigned id
+	-- mean exactly the same thing to a designer -- "this act has no track of its own" -- so they now
+	-- resolve the same way.
+	-- Guarded on `name ~= "Default"` so an unassigned Default cannot fall back to itself.
+	if s.SoundId == "" and name ~= "Default" then
+		local fallback = f:FindFirstChild("Default")
+		if fallback and fallback:IsA("Sound") and (fallback :: Sound).SoundId ~= "" then
+			s = fallback :: Sound
+		end
+	end
+	if s.SoundId == "" then return false end -- still unassigned; stay silent rather than fake it
+
+	-- Two different names can now resolve to the SAME Sound (an act with no track, and Default).
+	-- Without this, walking from an act back to "Default" between matches would restart the very
+	-- track already playing -- an audible hitch for a transition the player should not hear at all.
+	if currentBgm == s and s.IsPlaying and opts.restart ~= true then
+		currentBgmName = name
+		return true
+	end
 
 	if currentBgm ~= nil and currentBgm ~= s then
 		fade(currentBgm, 0, tonumber(opts.fadeOut) or Sound.Tuning.BgmFadeOut, true)

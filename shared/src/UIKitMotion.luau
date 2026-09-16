@@ -71,19 +71,18 @@ Motion.Tuning = {
 	ClickSettleTime = 0.16,
 }
 
--- ===== TEMPORARY (B27c, USER-REQUESTED): PLACEHOLDER PRICES ARE VISIBLE =====
--- The standing rule is HIDE, NEVER INVENT -- a fabricated price is exactly the class of lie the
--- acceptance rules exist to prevent. The user has explicitly overridden that FOR TESTING: *"show
--- the prices for now, even if its just made it just to see it visually when testing"*.
+-- ===== B68: `SHOW_PLACEHOLDER_PRICES` IS DELETED, AND THAT IS THE POINT =====
+-- From B27c until B68 this module carried an off-topic boolean: the user had suspended the standing
+-- hide-never-invent rule FOR TESTING (*"show the prices for now, even if its just made it just to
+-- see it visually when testing"*), so `PlacementPrice` rendered whatever the TEMPLATE AUTHORED -- a
+-- design placeholder, the same invented figure on every card, in both Places. It was parked here
+-- because every card consumer already required Motion, which made it the one switch back.
 --
--- So `PlacementPrice` renders with whatever the TEMPLATE AUTHORED, which is a design placeholder and
--- **is not a real cost** -- no Lobby data source for placement cost exists (it lives in the Game's
--- tower configs; proposal `2026-08-16-tower-display-fields-for-uniticon-v2.md`).
---
--- It is parked in this module, off-topic though it is, for one reason: every card consumer already
--- requires Motion, so this is the single switch that flips ALL of them back. When real prices land,
--- set this false, delete this block, and fill the label from the real source.
-Motion.SHOW_PLACEHOLDER_PRICES = true
+-- The instruction attached to it was: "when real prices land, delete this block and fill the label
+-- from the real source". B67 landed the source (`UnitStatsCatalog.Costs`) and B68 took the switch
+-- out along with its last seven readers. The field is gone rather than set false, deliberately: a
+-- dormant flag is an invitation to show a fabricated number again, and `UIKit.UnitCard.paintPrice`
+-- now hides a price it cannot substantiate. DO NOT REINTRODUCE IT.
 
 local function info(time: number): TweenInfo
 	return TweenInfo.new(time, Motion.Tuning.Easing, Motion.Tuning.Direction)

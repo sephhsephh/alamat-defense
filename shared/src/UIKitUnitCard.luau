@@ -1,6 +1,6 @@
 --!strict
 -- UIKitUnitCard.lua (SHARED CANON -- deploy path ReplicatedStorage.Shared.UIKit.UnitCard)
--- Kit CONTROLLER (unit-card presentation). Added B34.
+-- Kit CONTROLLER (unit-card presentation). Added B34; the PLACEMENT PRICE joined it at B68.
 --
 -- The two things every screen that shows a `Kit.UnitIconV2` had to do for itself: frame a model in a
 -- ViewportFrame, and paint the card in its tier's colours. FOUR screens each carried their own copy
@@ -46,6 +46,10 @@ end
 local Motion = loadOptional(optional(script.Parent, "Motion"), "Motion")
 local TierConfig = loadOptional(
 	optional(optional(optional(ReplicatedStorage, "Configs"), "Meta"), "TierConfig"), "TierConfig")
+-- B68: the ONE source of a unit's placement cost, for every card in BOTH Places. Optional like the
+-- other two -- a Place caught mid-deploy must cost the PRICE, never the whole card.
+local UnitStatsCatalog = loadOptional(
+	optional(optional(optional(ReplicatedStorage, "Configs"), "Meta"), "UnitStatsCatalog"), "UnitStatsCatalog")
 
 -- ===== camera framing =====
 -- The ONE definition of how a unit is framed in a ViewportFrame. Tune here and every screen follows.
@@ -143,6 +147,70 @@ function UnitCard.paintTier(root: Instance?, tier: string, opts: PaintOpts?)
 			-- outline at rest and the hover says nothing.
 			hs.Enabled = false
 		end
+	end
+end
+
+-- ===== PLACEMENT PRICE (B68) =====
+-- ONE definition of what a placement cost LOOKS LIKE, for every surface in both Places: the hotbar
+-- slot in the Game, and the Units / Index / Summon / Ascension / trait-reroll / stat-reroll cards in
+-- the Lobby. It lives here for exactly the reason `viewport` and `paintTier` do -- SEVEN painters of
+-- the same field is seven places for it to drift, and "150" on one screen against "\u{20B1}150" on the next
+-- is the kind of drift nobody ever files a bug for.
+--
+-- THE NUMBER is `UnitStatsCatalog.Costs` (B67): shared canon, hash-checked in BOTH Places, and
+-- regenerated against the Game's live `TowerConfig.Cost` by its boot validator. That is what makes
+-- "the same price everywhere" ENFORCED rather than promised -- the Lobby has no tower configs of its
+-- own to read, so nothing else could give the same guarantee.
+--
+-- ===== HIDE, NEVER INVENT -- THIS IS THE RULE B27c SUSPENDED, NOW BACK IN FORCE =====
+-- From B27c until B68 these screens showed `PlacementPrice` filled with **the number the artist
+-- typed into the template** -- the same figure for every unit, in both Places, wrong for all of
+-- them -- gated behind `Motion.SHOW_PLACEHOLDER_PRICES`. That flag is DELETED at B68 along with the
+-- last of its readers. A nil towerId, a non-tower id (Summon chips can be items), or a tower with no
+-- catalog entry now renders NOTHING: not a 0, and never the authored placeholder. A zero would claim
+-- the tower is free; a hidden label claims nothing at all.
+function UnitCard.formatCost(n: number): string
+	local s = tostring(math.floor(n))
+	-- A comma every three digits from the right. Runs at most twice for this game's values;
+	-- gsub-with-a-count is the standard Lua idiom for it.
+	while true do
+		local replaced
+		s, replaced = s:gsub("^(%-?%d+)(%d%d%d)", "%1,%2")
+		if replaced == 0 then break end
+	end
+	return "\u{20B1}" .. s
+end
+
+-- Paint (or hide) `root`'s PlacementPrice for `towerId`. Pass nil to hide -- that is how an empty or
+-- locked hotbar slot, and a card with no unit, ask for nothing rather than for a zero.
+function UnitCard.paintPrice(root: Instance?, towerId: string?)
+	if root == nil then
+		return
+	end
+	local node = root:FindFirstChild("PlacementPrice", true)
+	if node == nil or not node:IsA("GuiObject") then
+		return
+	end
+	local cost: number? = nil
+	if UnitStatsCatalog ~= nil and type(towerId) == "string" and towerId ~= "" then
+		cost = tonumber(UnitStatsCatalog.GetCost(towerId))
+	end
+	node.Visible = cost ~= nil
+	if cost == nil then
+		return
+	end
+	-- `PlacementPrice` is a Frame WRAPPING a TextLabel on both V2 templates, but resolve either shape:
+	-- and do it from the node itself, never by name from the card root. `FindFirstChild(name, true)`
+	-- walks DESCENDANTS ONLY and never matches the instance it is called on -- the exact trap that
+	-- left the authored "LVL 100" on every hotbar slot at B26.
+	local label: TextLabel? = nil
+	if node:IsA("TextLabel") then
+		label = node
+	else
+		label = node:FindFirstChildWhichIsA("TextLabel")
+	end
+	if label ~= nil then
+		label.Text = UnitCard.formatCost(cost :: number)
 	end
 end
 

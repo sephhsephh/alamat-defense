@@ -72,7 +72,7 @@ systems listed in `docs/OWNERSHIP.md`. Every chat mounts this repo.
 4. Append a `CHANGELOG.md` entry (date, place, what, contract impact, open threads).
 5. Refresh `STATE.md` if the project-level picture moved; flip your rows in
    `docs/ROADMAP.md` (the done/partial/planned status board).
-6. `git add -A && git commit -m "[<place>] <summary>"`.
+6. `git add -A && git commit -m "[<place>] <summary>"`. **NO attribution trailers** — no `Co-Authored-By:`, no `Generated with`, no session link (user rule 2026-09-16).
 7. Mirror the essentials into the Place's `ServerStorage.Documentation` (AIState +
    RecentChanges) until that in-Studio doc set is fully retired.
 8. **User advisory (never skip):** end the session by telling the user, in plain terms:

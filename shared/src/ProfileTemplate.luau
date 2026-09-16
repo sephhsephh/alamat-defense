@@ -16,7 +16,7 @@
 
 local ProfileTemplate = {}
 
-ProfileTemplate.SCHEMA_VERSION = 6
+ProfileTemplate.SCHEMA_VERSION = 8
 ProfileTemplate.STORE_NAME = "Beta1_PlayerData" -- one store for the whole Experience (production)
 
 -- Live store name. In Studio ALL data goes to a separate dev store, so playtests and
@@ -34,7 +34,16 @@ export type UnitInstance = {
 	TowerId: string,
 	MetaLevel: number,
 	XP: number,
-	Trait: string?,
+	-- v7 (B69): what used to be ONE `Trait` is now TWO SLOTS. Only `ActiveTrait` is read by the stat
+	-- resolver, the placement-limit override and every display; `StoredTrait` is a bench the player
+	-- swaps into it. A REROLL ALWAYS REPLACES THE ACTIVE ONE -- that is the whole risk of rerolling a
+	-- unit you already like, and it is why the screen confirms first.
+	ActiveTrait: string?,
+	StoredTrait: string?,
+	-- v7 (B69): rolls since THIS unit last landed each pitied trait. Sparse -- only ids carrying a
+	-- `TraitDefinitions.PityCap` ever appear. Per UNIT INSTANCE on purpose: grinding one tower must
+	-- not advance another's, which a player-level counter could not express.
+	TraitPity: { [string]: number },
 	Shiny: boolean,
 	StatRolls: { DMG: number, RNG: number, SPA: number }, -- each a 0..1 position in the stat range (A3 resolver)
 	Ascension: number,   -- 0..3, Mythic+ only (AscensionConfig, phase C)
@@ -113,6 +122,16 @@ export type ProfileData = {
 	Settings: { [string]: any },
 	-- v5 (B48): a CAPPED history of received messages for the Inbox screen. See docs/systems/inbox.md.
 	Inbox: { Messages: { InboxMessage } },
+	-- v7 (B69): the trait-reroll screen's filter grid -- `[traitId] = true` for traits the player is
+	-- HUNTING. Sparse (never write `false`), so a trait added later defaults to un-hunted. Instant Roll
+	-- stops when it lands one of these, and rerolling a unit whose ACTIVE trait is one of these asks
+	-- for confirmation first.
+	TraitFilters: { [string]: boolean },
+	-- v8 (B72): how many unit-capacity upgrades the player has BOUGHT -- a count, never the cap. The
+	-- cap is derived: UnitCapacityConfig.CapFor(n) = BaseCap + SlotsPerUpgrade * n (200 + 50n today),
+	-- so a re-tune re-prices every player consistently. One writer: the Lobby's UnitCapacityService.
+	-- Only a SUMMON is refused at the cap; every other grant overflows past it.
+	UnitSlotsPurchased: number,
 }
 
 -- New players start with NO units. The Lobby's first-join starter choice grants the first
@@ -166,6 +185,12 @@ ProfileTemplate.Template = {
 	-- record of what was granted, a retry is a second grant. The check must live in the PROFILE, not
 	-- in server memory: the retry usually arrives on a different server.
 	Purchases = { Ids = {} },
+
+	-- v7 (B69): see the type above. Sparse; absent means that trait is not being hunted.
+	TraitFilters = {},
+
+	-- v8 (B72): see the type above. 0 = the base cap.
+	UnitSlotsPurchased = 0,
 }
 
 -- Migrations[fromVersion] mutates data from fromVersion to fromVersion + 1.
@@ -260,6 +285,51 @@ end
 -- receipt history to lose. A migration that had to walk every profile's data would be the expensive
 -- kind.
 ProfileTemplate.Migrations[5] = function(_data)
+	-- intentionally empty; see above
+end
+
+-- v6 -> v7: SPLIT `UnitInstance.Trait` into `ActiveTrait` + `StoredTrait`, seed per-unit `TraitPity`,
+-- and add the top-level `TraitFilters` (B69).
+--
+-- *** THIS IS THE FIRST MIGRATION SINCE v1 -> v2 WITH ACTUAL WORK TO DO, and why is worth stating:
+-- `Reconcile()` fills missing TOP-LEVEL keys, but IT DOES NOT DESCEND INTO `Units[uuid]`. So
+-- `TraitFilters` really is free (same as every no-op step above), while every field added to a
+-- UnitInstance has to be written BY HAND, per unit, right here. Do not assume the v2->v6 pattern. ***
+--
+-- `Trait` is CLEARED after the copy, deliberately. Leaving it would create a SECOND source of truth
+-- for "what trait does this unit have", and it would go stale on the very first reroll -- a stale
+-- field that still reads plausibly is exactly the class of lie the acceptance rules exist to prevent.
+--
+-- Pity starts at ZERO for everyone. Back-dating it would mean inventing a roll history that never
+-- happened and crediting rerolls the player never spent.
+ProfileTemplate.Migrations[6] = function(data)
+	local moved, seeded = 0, 0
+	for _, unit in pairs(data.Units or {}) do
+		if type(unit) == "table" then
+			if unit.ActiveTrait == nil and unit.Trait ~= nil then
+				unit.ActiveTrait = unit.Trait
+				moved += 1
+			end
+			unit.Trait = nil
+			-- StoredTrait stays nil: no unit has ever had a second trait, so there is nothing to
+			-- convert and nothing to invent. The bench starts empty.
+			if type(unit.TraitPity) ~= "table" then
+				unit.TraitPity = {}
+				seeded += 1
+			end
+		end
+	end
+	print(string.format("[DATA] v6->v7: %d unit(s) Trait -> ActiveTrait, %d seeded TraitPity", moved, seeded))
+end
+
+-- v7 -> v8: add the top-level `UnitSlotsPurchased` (B72, unit capacity).
+-- *** BACK TO A DELIBERATE NO-OP, SAME REASON AS v2->v3 .. v5->v6. ***
+-- It is a TOP-LEVEL additive key, and `Reconcile()` runs BEFORE `Migrate()`, so it already holds 0
+-- when this executes -- contrast `Migrations[6]`, whose fields sat INSIDE `Units[uuid]`, where
+-- Reconcile() does not reach. Nothing to backfill either: every existing player starts at the base
+-- cap, and a player already OVER it keeps every unit (the cap only refuses new summons).
+-- The step exists because `Migrate()` WARNS AND STOPS at a missing step.
+ProfileTemplate.Migrations[7] = function(_data)
 	-- intentionally empty; see above
 end
 

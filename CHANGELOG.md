@@ -1,4 +1,51 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-17 [both] B72 -- AD-Game (crossing AD-Lobby with the user's go-ahead): **SCHEMA v8 -- unit capacity, backend only.**
+
+The fourth item from the user's 2026-09-16 list, SPLIT as planned: **B72 = schema + config + cap check + purchase remote (this entry); B73 = the two UI surfaces.** Decisions were settled 2026-09-16 and not re-asked: cap 200, +50 per 50,000 Silver, repeatable; sold from both the Units screen and the Shop; at the cap a SUMMON is refused with nothing spent, while every other grant OVERFLOWS.
+
+**Schema v7 -> v8.** `ProfileTemplate` gains top-level `UnitSlotsPurchased` (a COUNT of upgrades, never the cap -- the cap is derived, so a re-tune re-prices everyone consistently). `Migrations[7]` is a **deliberate no-op** again: a top-level key is filled by `Reconcile()` before `Migrate()` runs (contrast B69's `Migrations[6]`, whose fields sat inside `Units[uuid]`). The step still exists because `Migrate()` stops at a gap. `8f6520b4` -> **`d3d4e63c`** (17,444 bytes), byte-identical in BOTH Places and `shared/src`, manifest updated (still 42). `docs/contracts/save-schema.md` was still describing **v6** -- B69 never updated it; it now records v7 AND v8.
+
+**New, Lobby-local:** `RS.Configs.Meta.UnitCapacityConfig` (pure; the 200/50/50000 numbers, `CapFor`, and **`CountUnits` -- THE one pairs-count over the uuid-keyed `Units` dict**) and `SSS.Server.Meta.UnitCapacityService` (**THE one writer of `Data.UnitSlotsPurchased`**; `Remotes.BuyUnitSlots`, a RemoteFunction created at boot by `ensure()`, PRE-CHECK -> `GrantService.Spend` -> write, returns the new cap + balance). Deliberately NOT a `ShopService` stock row -- day-rolled 4-slot stock with `Bought` flags does not fit a permanent repeatable upgrade.
+
+**The cap check lives ONLY in `SummonService`** (new step 1b, AFTER the currency/window validation and BEFORE the spend). The whole batch must fit (an x10 with 5 free slots is refused whole), counted before auto-sell. `GrantService` and the Game's `PlayerInventoryService` are untouched, so rewards overflow. Refusal: `{ reason = "unit_capacity_full", Used, Cap, Need }`. `GetUnitViews` gains `UnitCapacity` (ADR-0004: no second read path). `SummonController` maps the new reason to its status line AND a `UIKit.Notify` error ("You don't have enough space (9 / 9 units)...").
+
+**PROVEN LIVE.** Game: `[DATA] Migrated SuperiorBeing_S's profile forward 1 step(s) to v8` + `Profile v8 loaded`. Lobby, through the real remotes from the Client datamodel: `GetUnitViews.UnitCapacity` = 8 / 200; unfunded buy -> `insufficient_funds`, nothing written; `DevPushRewards Silver:120000` -> buy 200->250 (bal 70,000) -> 250->300 (20,000) -> third refused, purchased stays 2. Then with `BaseCap` **temporarily -91** (cap 9, 8 units): x10 -> `unit_capacity_full used=8 cap=9 need=10`, Gold unchanged; x1 -> granted (9/9, Gold -100); next x1 -> refused, Gold unchanged. `BaseCap` reverted to 200 and re-read. Watchdog 39/39.
+
+⚠ **NOT exercised:** the client-side refusal line/notification by a real click (the screen cannot be opened from the MCP thread). The dev profile now has `UnitSlotsPurchased = 2` (cap 300) -- dev store only.
+
+⚠ **`device_bash` WORKS AGAIN this session**, but git's index refresh cannot delete its own `.git/index.lock` from the VM (deletes are not permitted) -- a `git status` there left a stale lock, parked in `.git/_stale_locks_B72/`. Use `git --no-optional-locks` from the VM, and commit from Windows.
+
+**Git:** B68, B69 and B71 had NOT been committed (HEAD = B70). They land in the same commit as B72.
+
+**USER: republish BOTH Places** -- a schema bump is a both-Places publish. **Next: B73** (Units-screen capacity line + upgrade button, Shop row).
+
+## 2026-09-16 [both] B71 -- AD-Game (crossing AD-Lobby/AD-UI with the user's go-ahead): **the map stays put, the Game finally has music, and the victory popup is gone.**
+
+Three of the four items from the user's list. The fourth (unit capacity) is B72 -- it is a schema bump and needed answers that only arrived at the end of this session.
+
+**1. THE MAP IS NO LONGER TORN DOWN AFTER A MATCH** (*"do not unload the map after the game in game place, only unload the map if a new map is required to be loaded"*). Two halves:
+
+- `MatchDirector`'s CLEANUP no longer calls `MapLoader.UnloadMap()`. Everything belonging to the finished MATCH is still cleared there -- enemies, towers, status effects, summons, economy, tower stat scales -- so what survives is only the map's geometry, lighting mood and music. Nothing stateful leaks forward. **The ERROR path still unloads**, deliberately: a crashed lifecycle may have left the map in a state nobody reasoned about, and a clean slate is the safer answer to a crash than a reused one.
+- `MapLoader.LoadMap` gained a same-map fast path: asked for the map already resident (and whose model still has a `.Parent`), it returns the existing context instead of re-cloning.
+
+⚠ **THAT FAST PATH ALSO FIXES A BUG THE OLD TEAR-DOWN WAS HIDING.** `snapshotLighting()` captures the CURRENT Lighting as the baseline to restore on unload. With the map left resident its mood is already applied -- so a naive reload would snapshot the ALREADY-GRADED lighting as "baseline" and bake the stage's grade one layer deeper on every replay. Reusing the resident context skips the snapshot entirely, which is the only correct answer: the baseline that matters was captured the first time the map loaded.
+
+**2. THE GAME PLACE HAS MUSIC -- AND IT WAS A LOGIC BUG, NOT A MISSING ASSET.** `UIKit.Sound.playBGM` fell back to `BGM.Default` only when the named Sound INSTANCE was absent. But every act slot (`Stage1_Act1..3`) EXISTS in the tree carrying an empty `SoundId`, so the fallback could never fire -- it hit `if s.SoundId == "" then return false end` and went silent. **The Game would have stayed silent even after assigning `Default`.** This file's own header already promised the broader behaviour (*"an unnamed stage is silent rather than broken"*); the code implemented half of it. A missing instance and an unassigned id mean the same thing to a designer, so they now resolve the same way, guarded on `name ~= "Default"` so an unassigned Default cannot fall back to itself.
+
+Second fix in the same function: two names can now resolve to the SAME Sound (an act with no track, and Default), so the already-playing track is kept rather than restarted -- otherwise every act -> between-matches transition audibly re-started the music.
+
+The Game's `BGM.Default` now carries **the user's existing track**, the id copied from the Lobby's own `BGM.Lobby` -- nothing invented, and the only music asset this project owns. The three per-act slots stay EMPTY on purpose and take over the instant an id is pasted in. PROVEN LIVE: `BGM 'Default' PLAYING` at join and `BGM 'Stage1_Act1' PLAYING` in-match, where both previously read *"not started (no SoundId assigned yet)"*. `UIKitSound` **`108ef36e` -> `46ab4d7f`** (10,352 bytes), byte-identical in both Places and on disk; manifest stays at 42.
+
+**3. THE LOBBY'S POST-MATCH VICTORY BANNER IS DELETED** (*"i dont need the match returned ui in the lobby... its unnecessary"*). `StarterGui.ReturnScreen` is gone. Safe to delete outright because **the entire banner was BUILT IN SCRIPT** -- `Instance.new` for the frame, title, subtitle and both buttons -- so the ScreenGui held no authored art to lose, only the LocalScript. A sweep confirmed its Controller was the ONLY consumer of `GetMatchReturn` anywhere in the Lobby. Removing it also removes a standing violation of this project's own "never generate UI in scripts" rule.
+
+`MatchReturnService` is deliberately LEFT ALONE: it is the receiver for the Game->Lobby teleport payload (contract v4) and still serves the remote, so the data survives if a different presentation is ever wanted. Only the popup is gone. The Lobby's boot-script count drops 40 -> 39.
+
+**PROVEN LIVE.** A full match ran to `Defeat -> Cleanup -> WaitingForData` with **no `[MapLoader] Unloaded map` line**, and afterwards `ActiveMap` was still in Workspace with **656 descendants**, `ActiveEnemies` at **0 children** (match state properly cleared), and the stage's 6 lighting effects still applied -- exactly the intended shape.
+
+⚠ **WHAT WAS NOT EXERCISED, AND WHY.** The same-map REUSE branch never ran live: every route to a second `StartMatch` inside one session was refused. `RemoteEvent:FireServer` on `RequestMatchAction` and re-parenting a cloned `MatchLifecycleSmokeTest` were both blocked by the script-capability sandbox (the same wall B64 hit with `require` and B69 with `BindableEvent:Fire`), and the real Settings > "Restart Match" button sits below the viewport in this window with its `Content` ScrollingFrame refusing to scroll to it. The branch is six lines guarded on `MapId` and `.Parent`, and it announces itself with `[MapLoader] Reusing RESIDENT map '<id>'` -- that line appearing on the first replay of an act is the confirmation. **Recorded as unproven rather than implied proven.**
+
+No schema change (still v7). **USER: republish BOTH Places** -- `UIKitSound` is shared canon, and B69's schema bump still needs it.
+
 ## 2026-09-16 [lobby] B70 -- AD-Traits (AD-Game crossing with the user's go-ahead): **the trait-reroll screen, rebuilt to the user's reference flow.**
 
 B69 laid the schema; this is the screen. LOBBY-LOCAL ONLY -- no shared module changed, so there is **no manifest bump, no re-hash and no disk-canon edit** in B70. **THREE new remotes** (`InstantRollTrait`, `SwapTraitSlots`, `SetTraitFilters`), all created at boot by the existing `ensure()` helper like `RerollTrait` before them -- which is why they do not appear in the saved tree. ⚠ **The running count is NOT restated here: the Lobby's `Remotes` folder holds 43 authored entries in the Edit datamodel, which does not match the "47" earlier docs assert, and I did not establish what that figure counts. Three ADDED is measured; the total is not.**
