@@ -1,4 +1,16 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-17 [lobby] B74 -- AD-Game (crossing AD-UI with the user's go-ahead): **unit capacity gets its two screens.**
+
+The UI half of B72 (renumbered after B73 took the trait-reroll work). Lobby-only, no shared canon, no schema change, no new remote.
+
+**Units screen.** New authored `UnitsGUI.Main.Bottom.CapacityBar` (tag `B74Built`): `CapacityLabel` ("UNITS 49 / 350", the count turns red at the cap) and `UpgradeSlotsButton` -- a CLONE of the user's QuickSell button restyled blue, so it matches the art. `UnitsController` paints it from `GetUnitViews().UnitCapacity` inside `loadUnits` (the one read path), and a click goes `UIKit.Confirm` ("Spend 50,000 Silver for +50 unit slots?") -> `BuyUnitSlots` -> repaint from the RETURN VALUE (refusals carry the snapshot too) -> toast. Numbers on the button come from `UnitCapacityConfig`, the same module the server charges by. **PROVEN BY REAL CLICKS:** HUD Units -> the row read 49 / 300 -> upgrade -> Confirm -> BUY -> `[DATA] UnitCapacity BUY ... cap 300 -> 350, paid 50000 Silver (bal 90000)`, label 49 / 350.
+
+**Shop.** New authored `ShopGUI.Main.UnitSlotsRow` (title, capacity line, price, BuyButton styled like the daily slots) beneath the daily grid; the grid's height shrank 60px (its single 300px row still fits). NOT a stock slot (B72's reasoning). `ShopController` fetches the counts via `GetUnitViews` when the shop opens, repaints affordability with the balance, and buys through the same Confirm + remote. Proven: the row rendered "Units 49 / 350 (permanent, repeatable) / 50,000 Silver" and the Confirm opened. ⚠ **The final BUY click inside the shop's Confirm never registered** -- Studio stopped taking mouse input mid-test (NO was dead too; same symptom as B73), so that last step is unverified; it is the same remote call the Units screen proved.
+
+⚠ A first Play caught a Luau "ambiguous syntax" parse error in my ShopController edit (a line starting with `(x :: T).Visible` after a call) -- the whole screen failed to boot; fixed, and the watchdog is back to 39/39. ⚠ **Opening `UIKit.Confirm` from the Shop closed the Shop behind it** (seen live, not investigated) -- the purchase still resolves from the popup, flagged for the user.
+
+**Not done:** B73's skip-animation checkbox is still unclicked (no input again).
+
 ## 2026-09-17 [both] B73 -- AD-Game (crossing AD-Traits/AD-UI with the user's go-ahead): **every trait reroll lands a trait, and rerolls are animated.**
 
 User: *"fix the trait reroll logic, a trait should be guaranteed whenever using, add a trait reroll animation, and an option to skip [it]. add a special animation when user rerolls a good trait (good traits are the ones that have pity meters) ... darken player screen then fade in and fade out the logo of that trait in the middle."* Answers taken this session: just remove None (the user will add more traits later), icon slot with a name fallback, skip = a saved checkbox on the reroll screen. **This took the B73 number, so the unit-capacity UI is now B74.**

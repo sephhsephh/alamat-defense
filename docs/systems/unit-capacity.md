@@ -43,5 +43,15 @@ maps it to the status line **and** a `UIKit.Notify` error.
   (cap 9, 8 units): x10 refused (gold unchanged), x1 granted (9/9), next x1 refused (gold unchanged). Reverted to 200.
 - The client's refusal line/notification was **not click-tested** (the capability sandbox blocks opening the
   screen from the MCP thread); the remote path underneath it was.
-- **B74 (next; B73 went to the trait-reroll work): the two UI surfaces** — a "187 / 200" line + upgrade button on `UnitsController`, and a row in
-  `ShopController`. Authored Instances in StarterGui (tagged builder, B70 pattern) — never script-generated UI.
+- **B74 (UI) — BUILT.** Authored, tag `B74Built`:
+  - **Units screen:** `UnitsGUI.Main.Bottom.CapacityBar` = `CapacityLabel` ("UNITS 49 / 350", red when full) +
+    `UpgradeSlotsButton` (a restyled clone of QuickSell, blue). Painted from `GetUnitViews().UnitCapacity` in
+    `loadUnits`; click -> `UIKit.Confirm` -> `BuyUnitSlots` -> repaint from the RETURN VALUE + toast.
+    **Proven by real clicks:** 300 -> 350, Silver 140,000 -> 90,000, label updated.
+  - **Shop:** `ShopGUI.Main.UnitSlotsRow` (title / capacity / price / BuyButton) under the daily grid (the
+    grid shrank 60px; its one 300px row still fits). Counts via `GetUnitViews` on open; same Confirm + remote.
+    Proven: row renders "Units 49 / 350" and the Confirm opens. ⚠ The final BUY click in the shop was NOT
+    registered -- Studio stopped accepting mouse input mid-test (same symptom as B73); the server call is the
+    same one the Units screen proved.
+  - ⚠ Opening `UIKit.Confirm` from the Shop CLOSES the Shop screen behind it (seen live) -- the purchase
+    still completes from the popup; flagged, not changed.
