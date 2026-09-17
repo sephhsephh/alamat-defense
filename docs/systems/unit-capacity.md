@@ -43,5 +43,5 @@ maps it to the status line **and** a `UIKit.Notify` error.
   (cap 9, 8 units): x10 refused (gold unchanged), x1 granted (9/9), next x1 refused (gold unchanged). Reverted to 200.
 - The client's refusal line/notification was **not click-tested** (the capability sandbox blocks opening the
   screen from the MCP thread); the remote path underneath it was.
-- **B73 (next): the two UI surfaces** — a "187 / 200" line + upgrade button on `UnitsController`, and a row in
+- **B74 (next; B73 went to the trait-reroll work): the two UI surfaces** — a "187 / 200" line + upgrade button on `UnitsController`, and a row in
   `ShopController`. Authored Instances in StarterGui (tagged builder, B70 pattern) — never script-generated UI.

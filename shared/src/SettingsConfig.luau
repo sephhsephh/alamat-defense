@@ -35,6 +35,7 @@ SettingsConfig.Defaults = {
 	SimplifyHealthBar = false, -- when on: no health text, no tween/damage-trail (instant bars)
 	SkipRevealAnim = false,    -- skip the reward reveal animation and show the result at once
 	AlwaysSprint = false,      -- B54: pin sprint ON so the sprint key never has to be pressed
+	SkipTraitRerollAnim = false, -- B73: skip the trait-reroll spin AND the good-trait reveal
 }
 
 -- *** KEY-NAME NOTE: `SoundVolume` IS THE SFX SLIDER. DO NOT RENAME IT TO `SFXVolume`. ***
@@ -67,6 +68,9 @@ SettingsConfig.Schema = {
 	-- The reward reveal lives in the Lobby (ObtainRewardsGUI), so the toggle belongs there. This is
 	-- blueprint B3's original "skip-anim toggle in Settings" ask, finally given a home.
 	{ Key = "SkipRevealAnim", Type = "boolean", Label = "Skip Reward Animation", Category = "Game", Scope = "LobbyOnly" },
+	-- B73: the Trait Reroll screen carries its own checkbox for this; the row here is the same saved
+	-- key, so the two can never disagree (a Preference must be in the Schema or Sanitize drops it).
+	{ Key = "SkipTraitRerollAnim", Type = "boolean", Label = "Skip Trait Reroll Animation", Category = "Game", Scope = "LobbyOnly" },
 
 	-- ===== Performance =====
 	{ Key = "EnableVFX", Type = "boolean", Label = "Enable VFX", Category = "Performance", Scope = "GameOnly" },

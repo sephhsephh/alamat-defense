@@ -83,6 +83,24 @@ which fires `ClientEvents.OpenTraitReroll`. Full instance contract: `docs/specs/
 - **Studio harness:** `DevOpen` (opens with no walk-up), `DevSelect` (a uuid, through the same
   `select()` a click runs), `DevReroll`. All left OFF/empty.
 
+## B73 — every reroll lands a trait, plus animations (user)
+
+- **No more "None" from a reroll.** `TraitRegistry.RollReroll` picks from every trait EXCEPT `None`, at its
+  own `Weight`; `RerollChance` is the same maths for the Trait Index. `None` stays in `TraitDefinitions` (it is
+  what an un-traited unit HAS) and the legacy `Roll` (full table) is untouched. Odds now: Blitz/Sniper 42.6%
+  each, Deadeye 13.3%, Godly 1.6%. **Pity caps 75/600 KEPT** (user adds traits later, which dilutes these).
+  Summons still roll a trait with `Roll` (can be None) — unchanged.
+- **Roll animation** (`Main.RollOverlay`, authored, tag `B73Built`): a ~1.6s reel of trait names slowing onto
+  the result, then "YOU GOT". The panel updates only AFTER it (no spoiler). Click the scrim to skip.
+  Instant Roll animates the FINAL landing once.
+- **Good-trait reveal** = a trait with a `PityCap` (`TraitRegistry.IsSpecial`; server sends `Special`). Lives
+  in its OWN ScreenGui `StarterGui.TraitRevealScreen` (DisplayOrder 150) so the dark backdrop covers the
+  whole screen: darken 0.35s → logo fades in with a pop → hold 1.6s → fades out → lighten. Logo =
+  `TraitDefinitions.<id>.Icon`; **empty Icon shows the trait NAME in rarity colour** (all empty today —
+  paste asset ids to switch). Click to skip. The Trait Index `RowIcon` uses the same Icon.
+- **Skip checkbox** `Panel.SkipAnimToggle` = saved preference `SettingsConfig.SkipTraitRerollAnim`
+  (also a row in Settings → Game, Lobby only). ON skips BOTH animations.
+
 ## Verified live (B44, real Play)
 
 Backend, through the real `RerollTrait` remote invoked from a real client: a reroll spent exactly 1

@@ -29,8 +29,8 @@ function TraitRegistry.GetEffectivePlacementLimit(towerConfig: any, traitId: str
 	return towerConfig.PlacementLimit or 99
 end
 
--- Weighted random trait roll (for the Trait Reroll gacha item).
--- MUST only ever be called on the SERVER -- a client-side roll is a free legendary.
+-- Weighted random trait roll over the WHOLE table, "None" included. Kept for any caller that wants
+-- the old behaviour; the Lobby's reroll uses `RollReroll` below (B73). SERVER ONLY.
 function TraitRegistry.Roll(randomGenerator: Random?): string
 	local rng = randomGenerator or Random.new()
 
@@ -50,6 +50,88 @@ function TraitRegistry.Roll(randomGenerator: Random?): string
 	end
 
 	return "None"
+end
+
+-- ===== REROLLS ALWAYS LAND A TRAIT (B73, user) =====
+-- "a trait should be guaranteed whenever using" -- spending a Trait Reroll must never hand back
+-- "None". So the reroll pool is every trait EXCEPT "None", at its own Weight; "None" stays in the
+-- table because it is still what an un-traited unit HAS. The odds are simply each Weight over the
+-- rerollable total, so a trait added to TraitDefinitions later joins the pool (and dilutes the
+-- others) with no code change -- which is what the user plans to do.
+-- One definition used by the server roll AND the Trait Index, so the screen cannot advertise odds
+-- the roll does not use.
+TraitRegistry.NO_TRAIT = "None"
+
+function TraitRegistry.IsRerollable(traitId: string?): boolean
+	if traitId == nil or traitId == TraitRegistry.NO_TRAIT then
+		return false
+	end
+	local def = TraitDefinitions[traitId]
+	return def ~= nil and (def.Weight or 0) > 0
+end
+
+function TraitRegistry.RerollWeightTotal(): number
+	local total = 0
+	for id, def in pairs(TraitDefinitions) do
+		if TraitRegistry.IsRerollable(id) then
+			total += def.Weight
+		end
+	end
+	return total
+end
+
+-- 0..1 chance that ONE reroll lands `traitId` (before Luck / pity).
+function TraitRegistry.RerollChance(traitId: string?): number
+	if not TraitRegistry.IsRerollable(traitId) then
+		return 0
+	end
+	local total = TraitRegistry.RerollWeightTotal()
+	if total <= 0 then
+		return 0
+	end
+	return TraitDefinitions[traitId :: string].Weight / total
+end
+
+-- The reroll's weighted pick. Never returns "None" unless the table has NO rerollable trait at all,
+-- which is a broken config -- warned loudly rather than silently spending a token on nothing.
+-- MUST only ever be called on the SERVER -- a client-side roll is a free legendary.
+function TraitRegistry.RollReroll(randomGenerator: Random?): string
+	local rng = randomGenerator or Random.new()
+	local total = TraitRegistry.RerollWeightTotal()
+	if total <= 0 then
+		warn("[CONTRACT] TraitRegistry.RollReroll: no rerollable trait has Weight > 0 -- returning None")
+		return TraitRegistry.NO_TRAIT
+	end
+	local roll = rng:NextNumber(0, total)
+	local cumulative = 0
+	local last: string? = nil
+	for id, def in pairs(TraitDefinitions) do
+		if TraitRegistry.IsRerollable(id) then
+			cumulative += def.Weight
+			last = id
+			if roll <= cumulative then
+				return id
+			end
+		end
+	end
+	-- Float edge (roll == total after rounding): the last rerollable id visited, never "None".
+	return last :: string
+end
+
+-- A "GOOD" trait (user, B73) = one with a pity meter. Landing one plays the special reveal.
+function TraitRegistry.IsSpecial(traitId: string?): boolean
+	local def = traitId and TraitDefinitions[traitId]
+	return def ~= nil and type(def.PityCap) == "number" and def.PityCap > 0
+end
+
+-- The trait's logo asset id, or nil when none is set yet (the UI then shows the name instead).
+function TraitRegistry.Icon(traitId: string?): string?
+	local def = traitId and TraitDefinitions[traitId]
+	local icon = def and def.Icon
+	if type(icon) == "string" and icon ~= "" and icon ~= "rbxassetid://0" then
+		return icon
+	end
+	return nil
 end
 
 -- ===== PITY (B69) =====

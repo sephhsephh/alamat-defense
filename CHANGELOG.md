@@ -1,4 +1,24 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-17 [both] B73 -- AD-Game (crossing AD-Traits/AD-UI with the user's go-ahead): **every trait reroll lands a trait, and rerolls are animated.**
+
+User: *"fix the trait reroll logic, a trait should be guaranteed whenever using, add a trait reroll animation, and an option to skip [it]. add a special animation when user rerolls a good trait (good traits are the ones that have pity meters) ... darken player screen then fade in and fade out the logo of that trait in the middle."* Answers taken this session: just remove None (the user will add more traits later), icon slot with a name fallback, skip = a saved checkbox on the reroll screen. **This took the B73 number, so the unit-capacity UI is now B74.**
+
+**1. No more "None".** 1000 of the 1188 reroll weight was `None` -- 84% of tokens bought nothing. `TraitRegistry` (shared) gains `IsRerollable` / `RerollWeightTotal` / `RerollChance` / **`RollReroll`**, which pick from every trait except `None` at its own Weight; `TraitRerollService.rollOnce` (both Reroll and Instant Roll) now uses it, and the Trait Index odds read `RerollChance`, so the screen shows the maths the server uses. The old full-table `Roll` is unchanged (summons still use it; a summoned unit can still be traitless). Odds now Blitz/Sniper 42.6% each, Deadeye 13.3%, Godly 1.6%. ⚠ **Pity caps 75/600 were KEPT** although they were sized for the old pool (~7.5 / ~63 rolls expected now) -- the user will add traits, which dilutes these again; the caps are theirs to retune.
+
+**2. Roll animation.** Authored `TraitRerollScreen.Main.RollOverlay` (tag `B73Built`): a ~1.6s reel of trait names that slows onto the result, then "YOU GOT". The panel's trait text updates only AFTER it, so it cannot spoil the result; `busy` stays set during it. Click the scrim to skip. Instant Roll animates the final landing once.
+
+**3. Good-trait reveal.** "Good" = has a `PityCap` (`TraitRegistry.IsSpecial`; the server adds `Special` to both reroll replies). Built as its OWN ScreenGui `StarterGui.TraitRevealScreen` (DisplayOrder 150): a first version inside the panel's ScreenGui (DisplayOrder 8) left parts of the HUD visually undimmed in a live screenshot, so the backdrop moved above everything. Darken 0.35s -> logo fades in with a pop -> hold 1.6s -> fade out -> lighten; click to skip. Logo = new `TraitDefinitions.<id>.Icon` (EMPTY for all four today -> the trait NAME shows, in rarity colour, with "EPIC TRAIT!" / "LEGENDARY TRAIT!" under it). The Trait Index `RowIcon` uses the same field.
+
+**4. Skip checkbox.** `Panel.SkipAnimToggle` = the saved preference `SettingsConfig.SkipTraitRerollAnim` through the shared `ClientSettings` (so it also appears in Settings -> Game, Lobby only; Settings now shows 8 rows here). ON skips both animations.
+
+**Shared canon re-hashed, byte-identical in BOTH Places + `shared/src`, manifest still 42:** `TraitRegistry` `ad859588` -> **`7e15f405`**, `TraitDefinitions` `b6b6b120` -> **`26f1ad06`**, `SettingsConfig` `2bb4a943` -> **`e7338957`**. No schema change (still v8).
+
+**PROVEN LIVE (Lobby):** 60 real `RerollTrait` calls on one unit -> Blitz 28 / Sniper 23 / Deadeye 8 / Godly 1, **None 0**, `Special` correct on all 60. Through REAL clicks (NPC prompt E -> slot -> picker -> Reroll -> confirm): the reel was captured mid-spin with the panel still showing the old trait; a Deadeye landing played the reveal (property timeline: backdrop 0.12 -> name/rarity fade 0 -> 1 -> backdrop 1 -> hidden, then panel = Deadeye; name shown because Icon is empty). A static staged screenshot checked the layout. Watchdog 39/39, no controller warnings.
+
+⚠ **NOT proven:** the skip checkbox by a real click, and a screenshot of the reveal in its new ScreenGui -- mid-test Studio stopped taking input/screenshots from here (it looked unfocused/minimised), so both stayed unexercised. The code path is one `ClientSettings.Set`; please tick it once and reroll.
+
+**USER:** paste logo asset ids into `TraitDefinitions` `Icon` (BOTH Places -- it is shared; tell the next session so it re-hashes), and **republish BOTH Places** (shared canon + B72's schema v8).
+
 ## 2026-09-17 [both] B72 -- AD-Game (crossing AD-Lobby with the user's go-ahead): **SCHEMA v8 -- unit capacity, backend only.**
 
 The fourth item from the user's 2026-09-16 list, SPLIT as planned: **B72 = schema + config + cap check + purchase remote (this entry); B73 = the two UI surfaces.** Decisions were settled 2026-09-16 and not re-asked: cap 200, +50 per 50,000 Silver, repeatable; sold from both the Units screen and the Shop; at the cap a SUMMON is refused with nothing spent, while every other grant OVERFLOWS.
