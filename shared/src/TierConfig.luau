@@ -19,26 +19,65 @@
 -- at load (see `SecondaryValueScale` below) rather than hand-typed, so the authored table stays
 -- the single source of truth and nobody has to keep a light/dark pair in sync by eye.
 --
--- Palette note: Common..Secret use the Lobby's tuned UI values (the ones actually seen on
--- screen); Exclusive + Bathala keep A3's values since they had no Lobby counterpart.
+-- ===== B77 (2026-09-18): THE PALETTE IS THE USER'S, AND SO IS THE TIER LIST =====
+-- The user authored nine tiers as nine `HotbarSlot#.InnerStroke.UIGradient`s in the new hotbar GUI
+-- and asked for those gradients to BE the tier colours, everywhere, in both Places. So each tier now
+-- carries `Stops` (the authored keypoints, TIMES INCLUDED) and `Rotation` (the authored gradient
+-- angle) -- copying only the colours would have flattened a 45-degree three-stop sheen into an even
+-- left-to-right fade and the hotbar would not have matched the design it was copied from.
+--
+-- `Colors` is DERIVED from `Stops` at load, so every existing caller (colorSequence, BrightestColor,
+-- HoverStrokePaint, seamlessSequence, GetColor...) keeps working with no call-site change.
+--
+-- WARNING: B27's "every tier has at least two colours" DERIVATION IS RETIRED HERE, on purpose.
+-- Common, Uncommon and Epic are authored FLAT by the user; auto-appending a darker shade would have
+-- silently overridden a palette they just hand-tuned. `Darken` stays exported -- it is still the
+-- right tool for a UI that wants a shadow -- it simply no longer edits this table behind their back.
+--
+-- RETIRED TIERS: `Exclusive` and `Bathala` are gone (user, B77). Neither had a weight on any banner,
+-- a catalogued unit or a code reference outside comments, so nothing lost a tier it was using.
 
 local TierConfig = {}
 
 -- Low -> high. Add a tier by adding it here AND to Tiers.
-TierConfig.Order = { "Common", "Rare", "Epic", "Legendary", "Mythic", "Secret", "Exclusive", "Bathala" }
+TierConfig.Order = { "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic", "Limited", "Secret", "Alamat" }
 
+-- Each tier: `Stops` = the user's authored UIGradient keypoints ({ Time, Color3 }, first 0, last 1),
+-- `Rotation` = that gradient's angle. Transcribed from HotbarSlot1..9 in the B77 hotbar GUI, where
+-- slot 1 was Alamat (highest) down to slot 9 Common (lowest).
 TierConfig.Tiers = {
-	Common    = { Colors = { Color3.fromRGB(205, 205, 215) }, SortOrder = 1 },
-	Rare      = { Colors = { Color3.fromRGB(55, 130, 255) },  SortOrder = 2 }, -- blue
-	Epic      = { Colors = { Color3.fromRGB(168, 70, 235) },  SortOrder = 3 }, -- purple
-	Legendary = { Colors = { Color3.fromRGB(255, 205, 55) },  SortOrder = 4 }, -- yellow
-	Mythic    = { Colors = {                                                   -- rainbow
-		Color3.fromRGB(255, 60, 60), Color3.fromRGB(255, 170, 40), Color3.fromRGB(250, 240, 60),
-		Color3.fromRGB(70, 220, 90), Color3.fromRGB(60, 150, 255), Color3.fromRGB(170, 80, 240),
-	}, SortOrder = 5 },
-	Secret    = { Colors = { Color3.fromRGB(255, 45, 45), Color3.fromRGB(90, 0, 0) }, SortOrder = 6 }, -- red + dark red
-	Exclusive = { Colors = { Color3.fromRGB(0, 220, 200) },   SortOrder = 7 },
-	Bathala   = { Colors = { Color3.fromRGB(255, 240, 150) }, SortOrder = 8 },
+	Common    = { SortOrder = 1, Rotation = 0,  Stops = {
+		{ 0.00, Color3.fromRGB(167, 167, 167) }, { 1.00, Color3.fromRGB(167, 167, 167) },
+	} },
+	Uncommon  = { SortOrder = 2, Rotation = 0,  Stops = {
+		{ 0.00, Color3.fromRGB(0, 255, 127) },   { 1.00, Color3.fromRGB(0, 255, 127) },
+	} },
+	Rare      = { SortOrder = 3, Rotation = 0,  Stops = {
+		{ 0.00, Color3.fromRGB(0, 0, 127) },     { 1.00, Color3.fromRGB(0, 85, 255) },
+	} },
+	Epic      = { SortOrder = 4, Rotation = 0,  Stops = {
+		{ 0.00, Color3.fromRGB(85, 0, 255) },    { 1.00, Color3.fromRGB(85, 0, 255) },
+	} },
+	Legendary = { SortOrder = 5, Rotation = 45, Stops = {
+		{ 0.00, Color3.fromRGB(255, 255, 0) },   { 0.50, Color3.fromRGB(255, 170, 0) },
+		{ 1.00, Color3.fromRGB(255, 255, 127) },
+	} },
+	Mythic    = { SortOrder = 6, Rotation = 45, Stops = {
+		{ 0.00, Color3.fromRGB(0, 0, 127) },     { 0.51, Color3.fromRGB(85, 170, 255) },
+		{ 1.00, Color3.fromRGB(170, 85, 255) },
+	} },
+	Limited   = { SortOrder = 7, Rotation = 45, Stops = {
+		{ 0.00, Color3.fromRGB(170, 0, 127) },   { 0.46, Color3.fromRGB(170, 255, 255) },
+		{ 1.00, Color3.fromRGB(85, 0, 127) },
+	} },
+	Secret    = { SortOrder = 8, Rotation = 45, Stops = {
+		{ 0.00, Color3.fromRGB(170, 0, 0) },     { 0.50, Color3.fromRGB(255, 85, 0) },
+		{ 1.00, Color3.fromRGB(85, 0, 0) },
+	} },
+	Alamat    = { SortOrder = 9, Rotation = 45, Stops = {
+		{ 0.00, Color3.fromRGB(255, 255, 0) },   { 0.48, Color3.fromRGB(170, 0, 255) },
+		{ 1.00, Color3.fromRGB(255, 170, 0) },
+	} },
 }
 
 -- ===== THE TWO-COLOUR MINIMUM =====
@@ -68,9 +107,17 @@ end
 -- Appending into `Colors` rather than adding a separate `Secondary` field is the whole point:
 -- `colorSequence`, `seamlessSequence` and `isMultiColor` are unchanged and every tier now animates
 -- instead of sitting flat, with ZERO call-site changes anywhere in either Place.
+-- `Colors` is derived from the authored `Stops`, in order, DUPLICATES COLLAPSED -- a flat tier
+-- authors the same colour twice (a UIGradient needs two keypoints to exist at all), and carrying
+-- that duplicate into `Colors` would make `isMultiColor` claim a flat tier animates.
 for _, tier in pairs(TierConfig.Tiers) do
-	if #tier.Colors == 1 then
-		table.insert(tier.Colors, TierConfig.Darken(tier.Colors[1]))
+	tier.Colors = {}
+	for _, stop in ipairs(tier.Stops) do
+		local colour = stop[2]
+		local last = tier.Colors[#tier.Colors]
+		if last == nil or last ~= colour then
+			table.insert(tier.Colors, colour)
+		end
 	end
 	tier.Color = tier.Colors[1]
 end
@@ -87,13 +134,14 @@ end
 -- (AscensionConfig consumes one dupe per level), so selling it has to feel like giving that up.
 TierConfig.SellValueByTier = {
 	Common    = 10,
+	Uncommon  = 15,
 	Rare      = 25,
 	Epic      = 60,
 	Legendary = 150,
 	Mythic    = 400,
+	Limited   = 700,
 	Secret    = 1000,
-	Exclusive = 1500,
-	Bathala   = 3000,
+	Alamat    = 2500,
 }
 
 local FALLBACK_TIER = "Common"
@@ -189,16 +237,23 @@ function TierConfig.get(tierName: string)
 end
 
 -- Build a ColorSequence for a tier (a single colour still yields a valid flat sequence).
+-- B77: built from the AUTHORED `Stops`, so the times the user set are preserved -- Limited's pale
+-- band sits at 0.46 because they put it there, not at the midpoint an even spread would invent.
 function TierConfig.colorSequence(tierName: string): ColorSequence
-	local colors = TierConfig.get(tierName).Colors
-	if #colors == 1 then
-		return ColorSequence.new(colors[1])
-	end
+	local tier = TierConfig.get(tierName)
 	local kps = {}
-	for i, c in ipairs(colors) do
-		table.insert(kps, ColorSequenceKeypoint.new((i - 1) / (#colors - 1), c))
+	for _, stop in ipairs(tier.Stops) do
+		table.insert(kps, ColorSequenceKeypoint.new(stop[1], stop[2]))
 	end
 	return ColorSequence.new(kps)
+end
+
+-- The tier's gradient exactly as authored: (sequence, rotation). This is what paints a hotbar
+-- slot's InnerStroke, and it is the reason a slot in the Lobby and the same slot in the Game are
+-- the same picture -- both read this, neither hard-codes a colour.
+function TierConfig.GradientFor(tierName: string): (ColorSequence, number)
+	local tier = TierConfig.get(tierName)
+	return TierConfig.colorSequence(tierName), tier.Rotation or 0
 end
 
 -- Whether a tier animates its gradient (more than one colour).

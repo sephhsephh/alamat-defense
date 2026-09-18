@@ -23,6 +23,8 @@
 - (empty — design pillars/economy docs migrate here from Studio progressively)
 
 ## systems/
+- `hotbar.md` — **AD-UI canon, BOTH Places**: the user's authored hotbar (B77) and the 9-tier palette it
+  brought with it. Read before touching `TierConfig` colours or `UIKit.Hotbar`.
 - `hud-currencies.md` — **AD-UI, LOBBY**: the configurable HUD currency bar (B76) — what may be pinned,
   the 3-slot cap, `HudCurrencyConfig`/`HudCurrencyService`, and why an item grant now pings `CurrencyChanged`.
 - `match-end.md` — **AD-Game, GAME**: the B75 match-end item preview + results screen, the stats it reads, and

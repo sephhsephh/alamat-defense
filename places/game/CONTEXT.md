@@ -72,6 +72,7 @@ Boot order in `ReplicationBridge`: data services first; `[DATA]`/`[CONTRACT]` li
 
 - Content: Stage 1 (3 acts), 1 map, 8 towers, 2 enemies, Classic only. Attack anim/VFX/sound asset ids
   are placeholders (slots exist and tolerate nil). Enemies.Behaviors is an empty extension point.
+- **B77: THE HOTBAR IS THE USER'S AUTHORED `StarterGui.Hotbar`** (their `NEW Hotbar`, renamed; the old kit hotbar and `Hotbar - old` are DELETED). `HotbarFrame.Slots.HotbarSlot1..6` + `UnitHoverPreviewTemplate` are painted in place by the shared `UIKit.Hotbar`'s new **V3 path** (`b2287846` -> `55c3df63`), and the tier colours come from `TierConfig` (`eee2b3ad` -> `4aa53b25`), which now carries the user's **nine** tiers with the `Stops`/`Rotation` they authored. Hover tweens `InnerStroke`'s gradient to white. Afford/limit dimming goes through `handle.setOverlay`, never `Main`/`BG` (those nodes are gone). ⚠ a LOCKED slot can still hold an entry (the Lobby's auto-loadout fallback over-fills) — the controller must not clear its dim. `docs/systems/hotbar.md`.
 - `ReturnToLobby` (MatchActionHandler) builds `MatchReturn` (v4) and teleports to the Lobby (**B75: Replay/Next are VOTES over the finished match's own config, remote `MatchEndVotes`; item preview + results screen in `MatchEndUI` — `docs/systems/match-end.md`**);
   `GameConfig.LobbyPlaceId` SET (83342803778137, 2026-07-18 Integration). The payload version
   comes from `GameConfig.TeleportPayloadVersion` (**=4 since B23**) and MUST equal the Lobby's

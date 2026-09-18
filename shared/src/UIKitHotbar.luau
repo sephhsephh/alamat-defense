@@ -114,10 +114,526 @@ local function showModel(vf: ViewportFrame, modelSource: Instance?, towerId: str
 	vf.CurrentCamera = cam
 end
 
+-- ===== B77: THE USER'S AUTHORED HOTBAR (the "V3" slot shape) =====
+-- The user rebuilt the hotbar by hand in the Game Place and will paste the SAME ScreenGui into the
+-- Lobby, so the DESIGN lives in each Place's GUI rather than in a kit template -- and this file stays
+-- the one BEHAVIOUR for both, which is the whole point of the kit.
+--
+-- A V3 container is recognised by holding `HotbarSlot1`; anything else falls through to the V2 path
+-- (the Lobby, until its copy arrives). Keep both until the Lobby is migrated, then delete V2.
+--
+-- What a V3 slot carries, and what fills it:
+--   InnerStroke.UIGradient ... the TIER, from `TierConfig.GradientFor` -- stops AND rotation as authored
+--   ViewportFrame ............ the tower's display model
+--   BottomInfoFrame .......... UnitNameLabel / TierLabel (+ its own gradient) / TraitIcon
+--   UnitLevel ................ "Lv. N"
+--   DeploymentPriceLabel ..... the REAL placement cost from `UnitStatsCatalog` (never a placeholder)
+--   Overlay .................. the dim: locked, empty, and whatever the Place layers on (`setOverlay`)
+--
+-- HOVER (user's spec): the InnerStroke gradient tweens smoothly to WHITE and back. A ColorSequence
+-- cannot be tweened, so a NumberValue is tweened and every keypoint is lerped toward white on its
+-- Changed -- one tween per slot, no RunService loop, and it lands exactly on white or exactly on the
+-- authored tier gradient rather than somewhere in between.
+local TweenService = game:GetService("TweenService")
+local UnitStatsCatalog = require(meta:WaitForChild("UnitStatsCatalog"))
+local StatGradeConfig = require(meta:WaitForChild("StatGradeConfig"))
+local traitsFolder = RS:FindFirstChild("Configs") and RS.Configs:FindFirstChild("Traits")
+local TraitRegistry = (traitsFolder and traitsFolder:FindFirstChild("TraitRegistry"))
+	and require(traitsFolder.TraitRegistry) or nil
+
+local HOVER_TIME = 0.18
+local HOVER_INFO = TweenInfo.new(HOVER_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+-- The tier's authored gradient, lerped `t` of the way to white.
+local function whitened(tierName: string, t: number): ColorSequence
+	local kps = {}
+	for _, stop in ipairs(TierConfig.get(tierName).Stops) do
+		table.insert(kps, ColorSequenceKeypoint.new(stop[1], stop[2]:Lerp(Color3.new(1, 1, 1), t)))
+	end
+	return ColorSequence.new(kps)
+end
+
+-- 1000 -> "\u{20B1}1,000". The peso sign is the game's currency mark; thousands are separated because a
+-- price is read at a glance mid-match and "12000" vs "120000" is one glance too many.
+local function peso(n: number): string
+	local s = tostring(math.floor(n))
+	local out = s:reverse():gsub("(%d%d%d)", "%1,"):reverse()
+	out = out:gsub("^,", "")
+	return "\u{20B1}" .. out
+end
+
+local function short(n: number): string
+	if n >= 1e6 then return string.format("%.2fM", n / 1e6) end
+	if n >= 1e3 then return string.format("%.2fk", n / 1e3) end
+	return string.format("%.4g", n)
+end
+
+-- ===== V3 MODEL SWAP: THE AUTHORED CAMERA IS NOT OURS TO TOUCH (user, B77) =====
+-- `showModel` above builds a Camera and frames it itself. That is right for the V2 kit slot, whose
+-- viewport ships empty -- and WRONG here: the user set these viewports up, so the rule is "the one
+-- already set up should be the one used". This loader therefore NEVER creates, moves or assigns a
+-- Camera; it only swaps the model.
+--
+-- What it does preserve is WHERE the model stands. The authored placeholder rig sits at a specific
+-- pivot and the framing is built around that spot, so the first swap records that pivot on the
+-- ViewportFrame (an attribute, so it survives the placeholder being gone) and every model after it
+-- is pivoted to the same place. Without that, a tower whose model was built at a different origin
+-- would drift out of frame and look like the camera broke.
+-- The camera a viewport is already using: its `CurrentCamera`, or a Camera child that was authored
+-- but never assigned (a Camera sitting in a ViewportFrame renders NOTHING until CurrentCamera
+-- points at it -- an easy thing to miss in the explorer).
+local function cameraFrom(vf: ViewportFrame?): Camera?
+	if vf == nil then return nil end
+	return vf.CurrentCamera or vf:FindFirstChildWhichIsA("Camera")
+end
+
+-- ===== THE USER'S FRAMING, AND WHY IT IS STORED AS ATTRIBUTES =====
+-- The user positioned ONE camera, `HotbarSlot1.ViewportFrame.VPCamera`, and asked for that framing.
+--
+-- WARNING, AND IT COST A PLAYTEST: **A `Camera` INSIDE `StarterGui` DOES NOT REACH `PlayerGui`.**
+-- Cameras do not replicate, so the authored VPCamera is simply absent from the copy the player gets --
+-- `CurrentCamera` reads nil on every slot at runtime and the viewport falls back to Roblox's default
+-- framing (model tiny and low). Cloning "the reference camera" therefore cannot work at runtime: by
+-- then there is nothing to clone.
+--
+-- So the framing travels as ATTRIBUTES, which do replicate and do survive the paste into the other
+-- Place: `HotbarCamCFrame` + `HotbarCamFOV` on the Slots container (`tools/bake_hotbar_camera` in the
+-- session notes -- re-bake after MOVING the authored camera). A viewport that somehow has a live
+-- camera keeps it untouched; otherwise one is built from those numbers.
+local function ensureCamera(vf: ViewportFrame, cf: CFrame?, fov: number?)
+	local own = cameraFrom(vf)
+	if own ~= nil then
+		vf.CurrentCamera = own -- a Camera child that was never assigned renders nothing
+		return
+	end
+	if cf == nil then return end
+	local cam = Instance.new("Camera")
+	cam.Name = "VPCamera"
+	cam.CFrame = cf
+	cam.FieldOfView = fov or 70
+	cam.Parent = vf
+	vf.CurrentCamera = cam
+end
+
+-- `anchorOverride` is the WHERE that goes with the baked camera. The two must travel together: a
+-- shared camera pointed at slot 1's spot, with each slot dropping its model wherever ITS own old
+-- placeholder happened to stand, put five of six models ~59 studs out of frame (caught live, B77).
+local function showModelKeepCamera(vf: ViewportFrame, modelSource: Instance?, towerId: string?, cf: CFrame?, fov: number?, anchorOverride: CFrame?)
+	ensureCamera(vf, cf, fov)
+	local wm = vf:FindFirstChildWhichIsA("WorldModel")
+	if wm == nil then
+		wm = Instance.new("WorldModel")
+		wm.Parent = vf
+	end
+	local anchor: any = anchorOverride
+	if typeof(anchor) ~= "CFrame" then
+		anchor = vf:GetAttribute("HotbarModelPivot")
+	end
+	if typeof(anchor) ~= "CFrame" then
+		local existing = (wm :: Instance):FindFirstChildWhichIsA("Model")
+		if existing then
+			anchor = existing:GetPivot()
+			vf:SetAttribute("HotbarModelPivot", anchor)
+		end
+	end
+	for _, c in ipairs((wm :: Instance):GetChildren()) do
+		c:Destroy()
+	end
+	if not (modelSource and towerId) then return end
+	local src = modelSource:FindFirstChild(towerId) or modelSource:FindFirstChild("Placeholder")
+	if not src then return end
+	local m = src:Clone()
+	-- A display rig must never run code inside a ViewportFrame.
+	for _, d in ipairs(m:GetDescendants()) do
+		if d:IsA("LuaSourceContainer") then d:Destroy() end
+	end
+	m.Parent = wm
+	if typeof(anchor) == "CFrame" and m:IsA("Model") then
+		m:PivotTo(anchor)
+	end
+end
+
+local function attachV3(container: GuiObject, opts: { [string]: any })
+	local screen = container:FindFirstAncestorWhichIsA("ScreenGui")
+
+	-- The authored slots ARE the design, so they are painted in place rather than replaced by kit
+	-- clones (the V2 path's `Kit.HotbarSlotV2` does not exist in this shape). Sorted by the number in
+	-- the name; a GUI shipping fewer than MaxSlots gets clones of slot 1 so the row never has a hole.
+	local authored: { GuiButton } = {}
+	for _, c in ipairs(container:GetChildren()) do
+		if c:IsA("GuiButton") and string.match(c.Name, "^HotbarSlot%d+$") then
+			table.insert(authored, c)
+		end
+	end
+	table.sort(authored, function(a, b)
+		return (tonumber(string.match(a.Name, "%d+")) or 0) < (tonumber(string.match(b.Name, "%d+")) or 0)
+	end)
+	assert(#authored > 0, "UIKit.Hotbar: a V3 container must hold at least HotbarSlot1")
+
+	-- The user's framing: a live camera if one somehow exists (Edit mode, or a Place that builds its
+	-- own), else the baked attributes. Read from the container first so one bake covers every slot.
+	local firstViewport = authored[1]:FindFirstChildWhichIsA("ViewportFrame")
+	local liveCamera = cameraFrom(firstViewport)
+	local camCFrame: CFrame? = if liveCamera then liveCamera.CFrame else nil
+	local camFOV: number? = if liveCamera then liveCamera.FieldOfView else nil
+	if camCFrame == nil then
+		local a = container:GetAttribute("HotbarCamCFrame") or (firstViewport and firstViewport:GetAttribute("HotbarCamCFrame"))
+		local f = container:GetAttribute("HotbarCamFOV") or (firstViewport and firstViewport:GetAttribute("HotbarCamFOV"))
+		if typeof(a) == "CFrame" then
+			camCFrame = a
+			camFOV = if type(f) == "number" then f else 70
+		end
+	end
+	if camCFrame == nil then
+		warn("[UIKit.Hotbar] no viewport framing found -- set HotbarCamCFrame/HotbarCamFOV on the Slots " ..
+			"frame (a Camera authored in StarterGui does NOT reach PlayerGui). Falling back to Roblox's default.")
+	end
+
+	-- ...and the spot that camera is aimed at, so every slot stands its model where slot 1's authored
+	-- one stands. Baked as `HotbarModelPivot` on the same container; in Edit mode (or before a bake) it
+	-- is read live from slot 1's authored model.
+	local camAnchor: any = container:GetAttribute("HotbarModelPivot")
+	if typeof(camAnchor) ~= "CFrame" then
+		local wm = firstViewport and firstViewport:FindFirstChildWhichIsA("WorldModel")
+		local authoredModel = wm and wm:FindFirstChildWhichIsA("Model")
+		camAnchor = authoredModel and authoredModel:GetPivot() or nil
+	end
+
+	local slots: { any } = {}
+	for i = 1, LoadoutConfig.MaxSlots do
+		local btn = authored[i]
+		if btn == nil then
+			btn = authored[1]:Clone()
+			btn.Name = "HotbarSlot" .. i
+			btn.Parent = container
+		end
+		btn.LayoutOrder = i
+		btn.Visible = true
+		-- WARNING: THE AUTHORED BUTTONS SHIP WITH `Active = false`, AND A GuiButton THAT IS NOT ACTIVE
+		-- NEVER FIRES `Activated` -- clicking did nothing while keys 1-6 still worked, because the keys
+		-- come from UserInputService and never touch the button (user, B77). Forced on here rather than
+		-- fixed by hand in the GUI, so the Lobby's pasted copy cannot inherit the same dead click.
+		btn.Active = true
+		local info = btn:FindFirstChild("BottomInfoFrame")
+		local stroke = btn:FindFirstChild("InnerStroke")
+		slots[i] = {
+			Button = btn,
+			Stroke = stroke,
+			Gradient = stroke and stroke:FindFirstChildOfClass("UIGradient") or nil,
+			Viewport = btn:FindFirstChildWhichIsA("ViewportFrame"),
+			Name = info and info:FindFirstChild("UnitNameLabel") or nil,
+			Tier = info and info:FindFirstChild("TierLabel") or nil,
+			Trait = info and info:FindFirstChild("TraitIcon") or nil,
+			Level = btn:FindFirstChild("UnitLevel"),
+			Price = btn:FindFirstChild("DeploymentPriceLabel"),
+			Overlay = btn:FindFirstChild("Overlay"),
+			TierName = "Common",
+			Proxy = Instance.new("NumberValue"),
+			Tween = nil :: Tween?,
+			Conns = {} :: { RBXScriptConnection },
+		}
+	end
+	-- Anything past MaxSlots is a PALETTE SAMPLE the user left in the GUI, not a usable slot.
+	for i = LoadoutConfig.MaxSlots + 1, #authored do
+		authored[i].Visible = false
+	end
+
+	local entries: { [number]: any } = {}
+	local playerLevel = 1
+
+	-- ===== the hover preview =====
+	local preview: GuiObject? = nil
+	local previewSource = screen and screen:FindFirstChild("UnitHoverPreviewTemplate", true)
+	if previewSource and previewSource:IsA("GuiObject") and screen then
+		previewSource.Visible = false -- the master is a design, never a live card
+		preview = previewSource:Clone()
+		;(preview :: GuiObject).Name = "HotbarHoverPreview"
+		;(preview :: GuiObject).Visible = false
+		;(preview :: GuiObject).ZIndex = 50
+		;(preview :: GuiObject).Parent = screen
+	end
+
+	-- B29's rule, kept: a hide must prove it still OWNS the preview, because MouseLeave(previous) is
+	-- NOT guaranteed to arrive before MouseEnter(next) and a stale leave would blank the card the new
+	-- slot just filled.
+	local previewOwner: GuiObject? = nil
+	local function hidePreview(requester: GuiObject?)
+		if requester ~= nil and previewOwner ~= nil and previewOwner ~= requester then
+			return
+		end
+		previewOwner = nil
+		if preview then preview.Visible = false end
+	end
+
+	local function label(root: Instance?, name: string): TextLabel?
+		local n = root and root:FindFirstChild(name, true)
+		return (n and n:IsA("TextLabel")) and n or nil
+	end
+
+	local function paintTierGradient(holder: Instance?, tierName: string)
+		if holder == nil then return end
+		local g = holder:FindFirstChildOfClass("UIGradient")
+		if g == nil then return end
+		local seq, rotation = TierConfig.GradientFor(tierName)
+		g.Color = seq
+		g.Rotation = rotation
+	end
+
+	local function showPreview(slotBtn: GuiObject, entry: any)
+		if not (preview and entry) then return end
+		previewOwner = slotBtn
+		local towerId = entry.TowerId
+		local tierName = entry.Tier or ItemCatalog.GetTier(towerId)
+		local name = entry.Name or ItemCatalog.GetName(towerId)
+		local ascension = tonumber(entry.Ascension) or 0
+
+		local nameLabel = label(preview, "UnitNameLabel")
+		if nameLabel then
+			nameLabel.Text = if ascension > 0 then string.format("%s (A%d)", name, ascension) else name
+		end
+		local tierHolder = preview:FindFirstChild("TierLabel", true)
+		local tierLabel = label(tierHolder, "TierLabel") or label(preview, "TierLabel")
+		if tierLabel then
+			tierLabel.Text = string.upper(tierName)
+			paintTierGradient(tierLabel, tierName)
+		end
+		local levelLabel = label(tierHolder, "UnitLevel") or label(preview, "UnitLevel")
+		if levelLabel then
+			levelLabel.Text = "Lv. " .. tostring(entry.Level or entry.MetaLevel or 1)
+		end
+
+		-- BASE stats (tier 1 / ML 1 / mid-roll / ascension 0) from the shared catalog, plus THIS
+		-- unit's own roll grades. Resolved in-match numbers are deliberately not shown: only the Game
+		-- can compute them, and a card that means two different things in the two Places is worse than
+		-- one that always means "the unit's base line".
+		local base = UnitStatsCatalog.Get(towerId) or {}
+		local rolls = entry.StatRolls or {}
+		local grades = entry.Grades
+		for _, stat in ipairs({ "DMG", "SPA", "RNG" }) do
+			local frame = preview:FindFirstChild(stat .. "StatFrame", true)
+			if frame then
+				local value = (base :: any)[stat]
+				local valueLabel = label(frame, "StatLabel")
+				if valueLabel then
+					valueLabel.Text = if type(value) == "number" then short(value) else "-"
+				end
+				local gradeLabel = label(frame, "StatTier")
+				if gradeLabel then
+					local grade = grades and grades[stat] or nil
+					local colour: Color3? = nil
+					if grade == nil and type((rolls :: any)[stat]) == "number" then
+						grade, colour = StatGradeConfig.GradeForRoll((rolls :: any)[stat])
+					end
+					gradeLabel.Text = grade or "-"
+					if colour then gradeLabel.TextColor3 = colour end
+				end
+			end
+		end
+
+		-- Chips. TRAIT shows the trait's name, SHINY only for a shiny unit, and ELEMENT reads "None"
+		-- until the element system lands (user: "I'm adding elements soon") -- it is wired to
+		-- `entry.Element` already, so the day that field exists the chip fills itself.
+		local chips = preview:FindFirstChild("ElementsTraitsFrame", true)
+		if chips then
+			local traitChip = chips:FindFirstChild("Trait")
+			local traitName = entry.Trait or entry.ActiveTrait
+			if traitChip and traitChip:IsA("GuiObject") then
+				traitChip.Visible = traitName ~= nil and traitName ~= "None"
+				local l = traitChip:FindFirstChildWhichIsA("TextLabel")
+				if l then l.Text = tostring(traitName) end
+			end
+			local elementChip = chips:FindFirstChild("Element")
+			if elementChip and elementChip:IsA("GuiObject") then
+				local l = elementChip:FindFirstChildWhichIsA("TextLabel")
+				if l then l.Text = tostring(entry.Element or "None") end
+			end
+			local shinyChip = chips:FindFirstChild("Shiny")
+			if shinyChip and shinyChip:IsA("GuiObject") then
+				shinyChip.Visible = entry.Shiny == true
+			end
+		end
+
+		local vf = preview:FindFirstChildWhichIsA("ViewportFrame", true)
+		if vf then showModelKeepCamera(vf, opts.ModelSource, towerId, camCFrame, camFOV, camAnchor) end
+		-- THE TIER COLOUR GOES ON `UnitFrame.UIStroke` ONLY (user, B77). The card's own outer strokes are
+		-- the design's frame and stay exactly as authored -- painting them tinted the whole card.
+		local unitFrame = preview:FindFirstChild("UnitFrame", true)
+		local unitStroke = unitFrame and unitFrame:FindFirstChildWhichIsA("UIStroke")
+		if unitStroke then paintTierGradient(unitStroke, tierName) end
+
+		-- Sit ABOVE the hovered slot, clamped so it never runs off either edge.
+		local vp = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1920, 1080)
+		local pw = preview.AbsoluteSize.X > 0 and preview.AbsoluteSize.X or vp.X * 0.22
+		local ph = preview.AbsoluteSize.Y > 0 and preview.AbsoluteSize.Y or vp.Y * 0.28
+		local x = slotBtn.AbsolutePosition.X + slotBtn.AbsoluteSize.X * 0.5 - pw * 0.5
+		local y = slotBtn.AbsolutePosition.Y - ph - 12
+		preview.Position = UDim2.fromOffset(math.clamp(x, 8, math.max(8, vp.X - pw - 8)), math.max(8, y))
+		preview.Visible = true
+	end
+
+	-- ===== painting one slot =====
+	local function paint(i: number)
+		local s = slots[i]
+		if s == nil then return end
+		local entry = entries[i]
+		local unlocked = LoadoutConfig.IsSlotUnlocked(i, playerLevel)
+		local filled = unlocked and entry ~= nil
+
+		local tierName = "Common"
+		if filled then
+			tierName = entry.Tier or ItemCatalog.GetTier(entry.TowerId)
+		end
+		s.TierName = tierName
+		if s.Gradient then
+			local seq, rotation = TierConfig.GradientFor(tierName)
+			s.Gradient.Color = seq
+			s.Gradient.Rotation = rotation
+		end
+
+		if s.Viewport then showModelKeepCamera(s.Viewport, opts.ModelSource, filled and entry.TowerId or nil, camCFrame, camFOV, camAnchor) end
+
+		local nameLabel = s.Name and (s.Name :: any)
+		if nameLabel and nameLabel:IsA("TextLabel") then
+			nameLabel.Text = if filled then (entry.Name or ItemCatalog.GetName(entry.TowerId))
+				elseif unlocked then ""
+				else "LOCKED"
+		end
+		if s.Tier and s.Tier:IsA("TextLabel") then
+			s.Tier.Text = if filled then string.upper(tierName) else ""
+			paintTierGradient(s.Tier, tierName)
+		end
+		if s.Level and s.Level:IsA("TextLabel") then
+			-- A locked slot shows the level it OPENS at, which is the one number that makes a locked
+			-- slot useful instead of merely dark.
+			s.Level.Text = if filled then "Lv. " .. tostring(entry.MetaLevel or entry.Level or 1)
+				elseif unlocked then ""
+				else "Lv. " .. tostring(LoadoutConfig.RequiredLevel(i))
+			s.Level.Visible = filled or not unlocked
+		end
+		if s.Price and s.Price:IsA("TextLabel") then
+			local cost = filled and UnitStatsCatalog.GetCost(entry.TowerId) or nil
+			s.Price.Text = if type(cost) == "number" then peso(cost) else ""
+			s.Price.Visible = type(cost) == "number"
+		end
+		if s.Trait and s.Trait:IsA("ImageLabel") then
+			local traitName = filled and (entry.Trait or entry.ActiveTrait) or nil
+			local icon = (TraitRegistry and traitName) and TraitRegistry.Icon(traitName) or nil
+			s.Trait.Image = icon or s.Trait.Image
+			s.Trait.Visible = icon ~= nil
+		end
+		if s.Overlay and s.Overlay:IsA("GuiObject") then
+			-- The kit owns LOCKED and EMPTY; a Place layers its own states on top with `setOverlay`.
+			s.Overlay.Visible = true
+			s.Overlay.BackgroundColor3 = Color3.new(0, 0, 0)
+			s.Overlay.BackgroundTransparency = if not unlocked then 0.25 elseif entry == nil then 0.55 else 1
+		end
+	end
+
+	-- ===== hover: the gradient goes white and comes back (user's spec) =====
+	local function hover(i: number, on: boolean)
+		local s = slots[i]
+		if s == nil or s.Gradient == nil then return end
+		if s.Tween then s.Tween:Cancel() end
+		local tween = TweenService:Create(s.Proxy, HOVER_INFO, { Value = if on then 1 else 0 })
+		s.Tween = tween
+		tween:Play()
+	end
+
+	for i = 1, LoadoutConfig.MaxSlots do
+		local s = slots[i]
+		s.Proxy.Value = 0
+		table.insert(s.Conns, s.Proxy.Changed:Connect(function(v: number)
+			if s.Gradient then s.Gradient.Color = whitened(s.TierName, v) end
+		end))
+		local btn = s.Button :: GuiButton
+		table.insert(s.Conns, btn.MouseEnter:Connect(function()
+			hover(i, true)
+			local entry = entries[i]
+			if entry and LoadoutConfig.IsSlotUnlocked(i, playerLevel) then
+				showPreview(btn, entry)
+			end
+		end))
+		table.insert(s.Conns, btn.MouseLeave:Connect(function()
+			hover(i, false)
+			hidePreview(btn)
+		end))
+		-- Both events, debounced: `Activated` covers touch and gamepad, `MouseButton1Click` fires even
+		-- on a button whose `Active` was left false somewhere upstream. The 0.05s gate is what stops a
+		-- healthy button (which fires both) from starting placement twice.
+		local lastFire = 0
+		local function click()
+			if os.clock() - lastFire < 0.05 then return end
+			lastFire = os.clock()
+			if not LoadoutConfig.IsSlotUnlocked(i, playerLevel) then return end
+			if type(opts.OnActivated) == "function" then opts.OnActivated(i, entries[i]) end
+		end
+		table.insert(s.Conns, btn.Activated:Connect(click))
+		table.insert(s.Conns, btn.MouseButton1Click:Connect(click))
+	end
+
+	local keyConn = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+		if gameProcessed then return end
+		local i = KEY_FOR_SLOT[input.KeyCode]
+		if i and LoadoutConfig.IsSlotUnlocked(i, playerLevel) and type(opts.OnActivated) == "function" then
+			opts.OnActivated(i, entries[i])
+		end
+	end)
+
+	local handle = {}
+	handle.container = container
+	handle.version = 3
+	function handle.setData(entriesBySlot: { [number]: any }?, level: number?)
+		entries = entriesBySlot or {}
+		playerLevel = level or playerLevel
+		for i = 1, LoadoutConfig.MaxSlots do paint(i) end
+	end
+	function handle.refresh()
+		for i = 1, LoadoutConfig.MaxSlots do paint(i) end
+	end
+	function handle.unlockedSlots(): number
+		return LoadoutConfig.UnlockedSlots(playerLevel)
+	end
+	function handle.slotInstance(i: number): GuiObject?
+		return slots[i] and slots[i].Button or nil
+	end
+	function handle.previewInstance(): GuiObject?
+		return preview
+	end
+	-- A Place's own state on top of the kit's: transparency 1 clears it. The Game uses this for
+	-- "can't afford" and "at placement limit", which only exist mid-match.
+	function handle.setOverlay(i: number, transparency: number, colour: Color3?)
+		local s = slots[i]
+		if s == nil or s.Overlay == nil or not s.Overlay:IsA("GuiObject") then return end
+		s.Overlay.Visible = true
+		s.Overlay.BackgroundTransparency = transparency
+		if colour then s.Overlay.BackgroundColor3 = colour end
+	end
+	function handle.destroy()
+		keyConn:Disconnect()
+		if preview then preview:Destroy(); preview = nil end
+		for _, s in ipairs(slots) do
+			for _, c in ipairs(s.Conns) do c:Disconnect() end
+			if s.Tween then s.Tween:Cancel() end
+			s.Proxy:Destroy()
+		end
+		table.clear(slots)
+	end
+
+	handle.setData({}, playerLevel)
+	print(string.format("[UIKit.Hotbar] V3 attached: %d slot(s) painted from the authored design, %d palette sample(s) hidden.",
+		LoadoutConfig.MaxSlots, math.max(0, #authored - LoadoutConfig.MaxSlots)))
+	return handle
+end
+
 -- Attach the hotbar to a container Frame. Returns a handle.
 function Hotbar.attach(container: GuiObject, opts: { [string]: any })
 	assert(container, "UIKit.Hotbar.attach: container is nil")
 	opts = opts or {}
+
+	-- B77: the user's authored shape drives itself; everything else keeps the V2 kit-clone path.
+	if container:FindFirstChild("HotbarSlot1") then
+		return attachV3(container, opts)
+	end
 	local template = resolveTemplate()
 	assert(template, "UIKit.Hotbar.attach: no HotbarSlot template found in " ..
 		"ReplicatedStorage.UITemplates.Kit / Shared.UIKit.Templates")
