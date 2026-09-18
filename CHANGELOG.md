@@ -1,4 +1,28 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-18 [lobby] B76 -- AD-UI (crossing AD-Lobby/AD-Game for the schema): **the HUD currency bar is the player's to choose.**
+
+Lobby-only UI + **schema v9** (`ProfileTemplate` `d3d4e63c` -> `461fed3e`, byte-identical both Places + disk; manifest still 42). +1 remote `SetHudCurrencies`. `docs/systems/hud-currencies.md`.
+
+**The bar.** It rendered a hardcoded `SHOWN = { Gold, Silver }`. Now the pinned ids come from the PROFILE through the one read path (`GetUnitViews().HudCurrencies`), a pill can be an **ITEM** as well as a currency, and pills are created per id and REUSED (unpinning hides, never destroys). A gear at the end of the bar (with a "Configure currencies" tooltip) opens the picker.
+
+**Display Currencies** (`StarterGui.CurrencyConfigGUI`, tag `B76Built`): two columns of toggle rows built from every `ItemCatalog` entry of Kind Currency or Item (21 today), a search box, a slot counter + fill bar, and an **ALERT** when a 4th is turned on -- **3 slots, refuse-over-swap, both the user's calls**. Adding a catalog entry offers it automatically; `Data.Currencies.TraitRerolls` is deliberately NOT offered (no catalog entry, and the screen spends the TOKEN).
+
+**Server.** New `HudCurrencyService` -- the ONE writer of `Data.HudCurrencies`; it re-Sanitizes every payload, REFUSES a list longer than the cap rather than truncating, cleans a stale list on join, and fires `CurrencyChanged` so the bar re-reads instead of trusting a pushed list. `Migrations[8]` is a deliberate no-op (top-level key, Reconcile runs first).
+
+**A real bug this surfaced:** only CURRENCY grants ever pinged `CurrencyChanged`, so a pinned item pill went stale until a rejoin. `GrantService`'s Item branch and `SpendItems` now announce too (verified: push 2 tokens, pill 6 -> 8 live).
+
+**Proven by real clicks:** gear opens; 4th toggle alerts and stays off; Stat Reroll off + Trait Reroll Token on repainted the bar at once; search "frag" filtered to the 7 fragments; the choice survived a stop/start; `Migrated ... forward 1 step(s) to v9`; watchdog 40/40. **USER REPUBLISHES BOTH PLACES (schema bump).**
+
+## 2026-09-17 [game] B75 -- AD-Game: **match end revamped; Replay and Next finally work.**
+
+Game-only, no shared canon, no schema/teleport change. +1 remote `Remotes.Match.MatchEndVotes`. `docs/systems/match-end.md`.
+
+**Item preview.** After a match every item obtained is shown one at a time (icon pop, name, rarity, Owned: Nx, description, growing top strip; click to continue). `RewardCalculator.GrantForPlayer` now returns `Items` (Gold first, then drops, `Owned` read after the commit).
+
+**Results screen** rebuilt to the user's layout reference (layout only, no borrowed branding): banner, act card, six stat cards, reward tiles, Lobby/Replay/Next, UNIT XP list with portraits and animated bars, player tag, close + Show Results. Authored by a builder (tag `B75Built`); old `Panel`/row templates hidden. `MatchStatsTracker` gained `CashEarned` and finally calls `RecordTowerPlaced` (it never had). `MatchEndPresenter` sends stage/act/mode names and the player's own stats.
+
+**Replay/Next were dead for two reasons:** the old `startStage` loaded EVERY owned unit (Schema rejects > 6) and `NextAct` started while the finished match was still `IsRunning`. Both are now VOTES (every present player of the match) that REPLAY the finished match's own config after waiting for teardown. Next only after a Victory with a next act, never in a Challenge. **Proven live:** Replay restarted Stage1_Act1 (and printed `Reusing RESIDENT map` -- B71's reuse branch, proven at last), Replay kept Insane, Next went Act1 -> Act2. Harnesses back OFF.
+
 ## 2026-09-17 [lobby] B74 -- AD-Game (crossing AD-UI with the user's go-ahead): **unit capacity gets its two screens.**
 
 The UI half of B72 (renumbered after B73 took the trait-reroll work). Lobby-only, no shared canon, no schema change, no new remote.

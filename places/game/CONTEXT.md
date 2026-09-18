@@ -72,7 +72,7 @@ Boot order in `ReplicationBridge`: data services first; `[DATA]`/`[CONTRACT]` li
 
 - Content: Stage 1 (3 acts), 1 map, 8 towers, 2 enemies, Classic only. Attack anim/VFX/sound asset ids
   are placeholders (slots exist and tolerate nil). Enemies.Behaviors is an empty extension point.
-- `ReturnToLobby` (MatchActionHandler) builds `MatchReturn` (v4) and teleports to the Lobby;
+- `ReturnToLobby` (MatchActionHandler) builds `MatchReturn` (v4) and teleports to the Lobby (**B75: Replay/Next are VOTES over the finished match's own config, remote `MatchEndVotes`; item preview + results screen in `MatchEndUI` — `docs/systems/match-end.md`**);
   `GameConfig.LobbyPlaceId` SET (83342803778137, 2026-07-18 Integration). The payload version
   comes from `GameConfig.TeleportPayloadVersion` (**=4 since B23**) and MUST equal the Lobby's
   `LobbyConfig.MatchLaunchVersion`; a mismatch is rejected, never downgraded. **v3 and v4 do NOT

@@ -23,6 +23,10 @@
 - (empty — design pillars/economy docs migrate here from Studio progressively)
 
 ## systems/
+- `hud-currencies.md` — **AD-UI, LOBBY**: the configurable HUD currency bar (B76) — what may be pinned,
+  the 3-slot cap, `HudCurrencyConfig`/`HudCurrencyService`, and why an item grant now pings `CurrencyChanged`.
+- `match-end.md` — **AD-Game, GAME**: the B75 match-end item preview + results screen, the stats it reads, and
+  Replay/Next as VOTES over the finished match's own config (`MatchEndVotes`). Read before touching `MatchActionHandler`.
 - `rewards.md` — **AD-Game canon**: match-end payouts (P5, B18). `RewardCalculator`, the
   difficulty→gold curve in the SHARED `RewardScalingConfig`, why the curve is shared rather than
   per-`StageConfig`, and **the two difficulty scales** (UI 1–100 vs WIRE 100–1000, ADR-0011) —

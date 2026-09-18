@@ -16,7 +16,7 @@
 
 local ProfileTemplate = {}
 
-ProfileTemplate.SCHEMA_VERSION = 8
+ProfileTemplate.SCHEMA_VERSION = 9
 ProfileTemplate.STORE_NAME = "Beta1_PlayerData" -- one store for the whole Experience (production)
 
 -- Live store name. In Studio ALL data goes to a separate dev store, so playtests and
@@ -132,6 +132,14 @@ export type ProfileData = {
 	-- so a re-tune re-prices every player consistently. One writer: the Lobby's UnitCapacityService.
 	-- Only a SUMMON is refused at the cap; every other grant overflows past it.
 	UnitSlotsPurchased: number,
+
+	-- v9 (B76): which balances the player pinned to the Lobby's HUD currency bar, IN DISPLAY ORDER.
+	-- Ids are `ItemCatalog` ids (Kind Currency or Item), so one list covers Gold/Silver AND owned
+	-- items like TraitRerollToken -- the bar reads `Currencies[field]` or `Items[id]` per id.
+	-- Length is capped by `HudCurrencyConfig.MaxSlots` (3 today, the user's call); the LOBBY's
+	-- HudCurrencyService is the one writer and re-Sanitizes before every write, so a forged payload
+	-- can neither overflow the bar nor pin something that is not in the catalog.
+	HudCurrencies: { string },
 }
 
 -- New players start with NO units. The Lobby's first-join starter choice grants the first
@@ -191,6 +199,12 @@ ProfileTemplate.Template = {
 
 	-- v8 (B72): see the type above. 0 = the base cap.
 	UnitSlotsPurchased = 0,
+
+	-- v9 (B76): see the type above. The default pair is what the bar showed before it was
+	-- configurable, so an existing player's HUD does not change under them on the first join after
+	-- this ships. Kept in sync with `HudCurrencyConfig.Defaults` (Lobby-local, cannot be required
+	-- from shared canon -- the GAME Place has no such config).
+	HudCurrencies = { "Gold", "Silver" },
 }
 
 -- Migrations[fromVersion] mutates data from fromVersion to fromVersion + 1.
@@ -330,6 +344,15 @@ end
 -- cap, and a player already OVER it keeps every unit (the cap only refuses new summons).
 -- The step exists because `Migrate()` WARNS AND STOPS at a missing step.
 ProfileTemplate.Migrations[7] = function(_data)
+	-- intentionally empty; see above
+end
+
+-- v8 -> v9: add the top-level `HudCurrencies` (B76, the configurable HUD currency bar).
+-- ANOTHER DELIBERATE NO-OP, for the v7->v8 reason exactly: it is a TOP-LEVEL additive key and
+-- `Reconcile()` runs BEFORE `Migrate()`, so it already holds the default { "Gold", "Silver" } when
+-- this executes. Nothing to backfill -- that default IS what every existing player was already
+-- looking at. The step exists because `Migrate()` WARNS AND STOPS at a missing step.
+ProfileTemplate.Migrations[8] = function(_data)
 	-- intentionally empty; see above
 end
 

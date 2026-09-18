@@ -13,7 +13,7 @@ whole Experience.
 > exact store 2026-08-01** (drift check during the v2 work) — no split-brain. Store target only,
 > unrelated to the schema version.
 
-## v8 shape (current)
+## v9 shape (current)
 
 ```luau
 {
@@ -58,6 +58,7 @@ whole Experience.
 	Purchases: { Ids: { string } },                             -- v6: CAPPED granted-receipt ledger (no double-grant)
 	TraitFilters: { [string]: boolean },                        -- v7: hunted traits (reroll screen); SPARSE
 	UnitSlotsPurchased: number,                                 -- v8: unit-capacity upgrades BOUGHT (a count, not the cap)
+	HudCurrencies: { string },                                  -- v9: ids pinned to the Lobby HUD bar, in display order (max 3)
 }
 ```
 
@@ -209,6 +210,9 @@ PENDING for other Places in `STATE.md`. Never edit or remove an existing migrati
 
 ## Version history
 
+- **v9** (2026-09-18, B76): `HudCurrencies` (the configurable HUD currency bar). `Migrations[8]` a
+  deliberate no-op. `d3d4e63c → 461fed3e`, both Places + disk. Proven: Lobby `Migrated ... forward 1
+  step(s) to v9`. Default `{ "Gold", "Silver" }` = what the bar already showed.
 - **v8** (2026-09-17, B72): `UnitSlotsPurchased` (unit capacity). `Migrations[7]` a deliberate no-op.
   `8f6520b4 → d3d4e63c`, both Places. Proven: Game `Migrated ... forward 1 step(s) to v8`.
 - **v7** (2026-09-16, B69): trait split (`ActiveTrait`/`StoredTrait`) + per-unit `TraitPity` +
