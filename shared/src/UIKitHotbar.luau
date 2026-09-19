@@ -251,6 +251,9 @@ local function showModelKeepCamera(vf: ViewportFrame, modelSource: Instance?, to
 	if typeof(anchor) == "CFrame" and m:IsA("Model") then
 		m:PivotTo(anchor)
 	end
+	-- B78: the unit breathes in its slot. The id comes off the MODEL (`IdleAnim` attribute), so this
+	-- works in both Places and needs no config the Lobby does not have.
+	UnitCard.playIdle(m, nil)
 end
 
 local function attachV3(container: GuiObject, opts: { [string]: any })

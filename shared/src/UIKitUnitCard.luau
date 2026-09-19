@@ -214,4 +214,59 @@ function UnitCard.paintPrice(root: Instance?, towerId: string?)
 	end
 end
 
+-- ===== IDLE IN A VIEWPORT (B78, user) =====
+-- "The idle animations will be played on all the viewport frames that previews a unit."
+--
+-- THE ID TRAVELS ON THE MODEL, NOT IN A CONFIG. The Game's `TowerConfig.Idle.Anim` is copied onto
+-- the spawned rig as the `IdleAnim` attribute, and the display rigs in `TowerModels`/`UnitModels`
+-- carry the same attribute -- so a preview asks the MODEL what its idle is. That is what lets the
+-- LOBBY animate a unit it has no TowerConfig for (it has none, by design), with one authored id.
+--
+-- A ViewportFrame renders a model but does NOT simulate it: a rig inside one only animates if you
+-- load the track on its own Animator and play it there, which is what this does. The rig also needs
+-- an AnimationController (display rigs here have one) or a Humanoid.
+--
+-- Silent by design: no attribute, no animator, or an unauthored id simply means a still model.
+function UnitCard.playIdle(model: Instance?, animId: any): AnimationTrack?
+	if model == nil then
+		return nil
+	end
+	if animId == nil then
+		animId = model:GetAttribute("IdleAnim")
+	end
+	if type(animId) == "number" then
+		animId = "rbxassetid://" .. tostring(math.floor(animId))
+	elseif type(animId) == "string" and animId:match("^%d+$") then
+		animId = "rbxassetid://" .. animId
+	end
+	if type(animId) ~= "string" or animId == "" then
+		return nil
+	end
+
+	local animator: Animator? = nil
+	local humanoid = model:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		animator = humanoid:FindFirstChildOfClass("Animator") or Instance.new("Animator", humanoid)
+	else
+		local controller = model:FindFirstChildOfClass("AnimationController")
+		if controller then
+			animator = controller:FindFirstChildOfClass("Animator") or Instance.new("Animator", controller)
+		end
+	end
+	if animator == nil then
+		return nil
+	end
+
+	local ok, track = pcall(function()
+		local animation = Instance.new("Animation")
+		animation.AnimationId = animId
+		local t = (animator :: Animator):LoadAnimation(animation)
+		t.Looped = true
+		t.Priority = Enum.AnimationPriority.Idle
+		t:Play(0)
+		return t
+	end)
+	return ok and track or nil
+end
+
 return UnitCard

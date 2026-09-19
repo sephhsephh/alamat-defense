@@ -23,6 +23,8 @@
 - (empty — design pillars/economy docs migrate here from Studio progressively)
 
 ## systems/
+- `tower-authoring.md` — **AD-Game canon, READ BEFORE ADDING A TOWER**: attack profiles, the hit list,
+  the animation-marker contract, melee movement, five worked examples and the add-a-tower checklist (B78).
 - `hotbar.md` — **AD-UI canon, BOTH Places**: the user's authored hotbar (B77) and the 9-tier palette it
   brought with it. Read before touching `TierConfig` colours or `UIKit.Hotbar`.
 - `hud-currencies.md` — **AD-UI, LOBBY**: the configurable HUD currency bar (B76) — what may be pinned,

@@ -1,4 +1,20 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-18 [game] B78 -- AD-Game: **towers get an attack FRAMEWORK: idle loops, multi-hit attacks, per-upgrade attack swaps, melee dashes.**
+
+Game-local except two shared kit modules (`UIKitUnitCard` `bedb105e -> 58f014de`, `UIKitHotbar` `23cdfc51 -> 998b2bca`, both Places + disk; manifest still 42). No schema change, no new remote. **`docs/systems/tower-authoring.md` is the canon for adding a tower.**
+
+**THE SHAPE.** A tower now declares `Attacks` ONCE and each tier names one (`Attack = "Basic"`), inheriting the last one named -- so six tiers sharing one attack is one line, and "the attack changes at tier 5" is one more. An attack is a **list of HITS**; each hit carries its own marker/time, weight, targeting, release VFX, optional projectile, impact delay and impact VFX. **Weights sum to 1.0**, so an attack chopped into five ticks still deals exactly one attack's damage and the card never lies.
+
+**WHAT THAT BUYS, IN THE USER'S OWN EXAMPLES:** a mage throwing a bolt (1 hit + projectile); a fire mage with no projectile at all (`ImpactDelay` -- an honest delay instead of an invisible fast projectile); **Meteor's 3 rocks on 3 DIFFERENT enemies** (`Targeting = "Fresh"`, weights ~1/3) that becomes a single full-AoE cataclysm at the top tier; a **5-tick field pulse** over one animation with the field re-scanned every tick (`Targeting = "Area"`); and a **melee knight that dashes to its target and back** -- `MeleeMover` moves the MODEL only, while `TowerController.HomeCFrame` keeps the tower's logical position, so a lunge never buys extra range.
+
+**IDLE.** `Idle = { Anim }` loops whenever a tower is not mid-attack, and the id is copied onto the rig as the `IdleAnim` attribute -- which is how the LOBBY plays it in viewport previews without owning a TowerConfig (`UIKit.UnitCard.playIdle`; a ViewportFrame renders but does not simulate, so the track is loaded on the rig's own Animator).
+
+**New:** `AttackProfile`, `MeleeMover`, `TargetingSystem.SelectTargets`, `RigAnimator.EnsureIdle` (+ number-or-string anim ids), `_Template` tower config, and a boot validator `TowerAttackValidate` (profile refs resolve, weights sum to 1, shapes have their sizes, every hit can fire) -- it prints one line at boot.
+
+**THE BUG THIS SHOOK OUT:** the router decided "animated attack?" from the LEGACY per-tier fields, so the instant a tower moved its attack into a profile those fields vanished and it silently fell back to the instant path -- no animation, no multi-hit, no VFX. It now asks `AttackProfile.Has`.
+
+**Proven live** with `DevDebugAttacks`: `Meteor/Barrage hit 1/3 weight 0.34 -> 73.4 dmg (Fresh)` through `3/3`, and `Babaylan/Pulse hit 1/5 weight 0.20 -> 28.8 dmg (Area)` through `5/5`, repeatedly, across six waves. **Knight could not be proven** -- see STATE: every Play run loaded a STALE copy of that one config file.
+
 ## 2026-09-18 [game] B77 -- AD-UI: **the user's own hotbar, and with it a NINE-TIER palette.**
 
 Shared canon: `TierConfig` `eee2b3ad -> 4aa53b25`, `UIKitHotbar` `b2287846 -> 55c3df63` (both Places + disk, manifest still 42). No schema change, no new remote. `docs/systems/hotbar.md`.
