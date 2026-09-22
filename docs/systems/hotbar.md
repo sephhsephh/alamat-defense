@@ -116,3 +116,39 @@ Warchief/LEGENDARY ₱350, Farm/RARE ₱150 with the exact authored gradients (C
 Mythic rot 45 three-stop…); slots 5-6 LOCKED at 0.25 showing "Lv. 20"/"Lv. 50"; hover turned slot 3's
 gradient fully white; the preview showed Necromancer MYTHIC Lv.20 DMG 28 (D) / SPA 1.1 (B) / RNG 22 (D)
 and Archer with its "Godly" trait chip; clicking slot 1 started placement (ghost + controls up).
+---
+
+## B79 — the slot is never still
+
+**The viewports move now.** Every slot (and the hover preview) calls `UIKit.UnitCard.playIdle` on the
+model it shows. Until B79 that loaded and played a track and the rig still stood there, because **a
+ViewportFrame renders but does not simulate** — nothing advances an Animator inside one. `playIdle`
+now steps it by hand (`Animator:StepAnimations(dt)` on `RenderStepped`, once per Animator, released
+when the rig leaves the DataModel). A rig with no `IdleAnim` attribute plays
+`UnitCard.DefaultIdleAnim` (`rbxassetid://507766666`) instead of standing.
+
+**⚠ The rigs must exist in BOTH Places (user rule).** The Lobby reads `RS.UnitModels`, the Game reads
+`RS.TowerModels`. A unit present in one and missing in the other previews as `Placeholder` on that
+side — which is exactly what every Lobby slot did until the user copied the real models across.
+
+**The tier stroke is alive, and deliberately out of step** (user: "animate the uistroke with tier
+colors, like rotating, at random speed so they dont look that synched. and unique animations of
+colors"). At attach time each slot draws its own:
+
+| | range | what it does |
+| --- | --- | --- |
+| Spin | 6–20 °/s, random direction | rotates the InnerStroke gradient |
+| Scroll | 0.06–0.22 /s | **multi-stop tiers only** — travels the colours around the stroke |
+| Breathe | 0.35–0.8 Hz, random phase, depth 0.22 | **flat tiers only** — lifts the colour toward white and back |
+
+A flat one-colour tier scrolls invisibly, which is why it breathes instead; the choice is made from
+the tier's own gradient, not from a list of tier names. **One `RenderStepped` connection drives all
+six slots** (six would be six schedulers for one clock) and `handle.destroy` disconnects it.
+**A hovered slot keeps spinning but stops writing colour** — the hover tween owns `Gradient.Color`
+while the pointer is on it, and two writers on one property is a fight you see as flicker.
+
+**Proven live (Lobby):** slot 1 Mage rot 177.0→187.5 with offset 0.713→0.991 and a limb travelling
+0.3044 studs in 1.5s; slot 3 Meteor rotating the OTHER way (176.6→163.1); slot 2 Knight on its own
+authored idle (`rbxassetid://125610139973073`), flat COMMON tier at offset 0.000 and breathing.
+
+**Proven live (Game):** slot 1 Archer rot 304.7→317.9 while slot 2 Necromancer ran the OTHER way (108.6→95.8) and slot 3 Knight faster again (318.7→301.4) — three rates, two directions, in one 1.5s sample; Necromancer (multi-stop MYTHIC) scrolled its offset 0.605→0.328 while the two flat tiers held 0.000 and breathed; Archer's rig moved 0.087 studs in that window, Knight's barely at all on its own subtle authored idle.

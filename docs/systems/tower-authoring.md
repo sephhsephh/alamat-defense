@@ -133,8 +133,11 @@ same trip with no travel time.
 1. **Copy `_Template`** to `RS.Configs.Towers.<Id>`; the module name, `Id` and the `ItemCatalog`
    entry must all match.
 2. **Register it** in `TowerConfigRegistry`.
-3. **Add the rig** at `ModelStoragePath` (Game: `TowerModels`; the Lobby's preview rigs live in
-   `UnitModels`). Give it a `PrimaryPart` and an `AnimationController` or `Humanoid`.
+3. **Add the rig IN BOTH PLACES — this is a user rule (B79).** The Game needs it at
+   `ModelStoragePath` (`RS.TowerModels`) to spawn the tower; the LOBBY needs the same rig in
+   `RS.UnitModels` or every card, hotbar slot and preview of that unit draws `Placeholder` instead.
+   **A new unit is not done until it exists in both.** Give it a `PrimaryPart` and an
+   `AnimationController` or `Humanoid`, and stamp the same `IdleAnim` attribute on both copies.
 4. **Fill `Attacks`**: one profile per distinct attack, each with its hit list. Weights sum to 1.
 5. **Fill `Upgrades`**: numbers per tier; name an `Attack` on tier 1 and again wherever it changes.
 6. **Author the clips** and put the marker names from step 4 in them. Set `IdleAnim` on the display
@@ -168,7 +171,7 @@ produced and how it picked its target.
 | `Server.Towers.TargetingSystem` | `SelectTarget` (one) and `SelectTargets` (N, for `Fresh` hits). |
 | `Server.Towers.RigAnimator` | The only place that touches Animators. Accepts number or string ids. |
 | `ServerScriptService.TowerAttackValidate` | Boot-time check of every config. |
-| `Shared.UIKit.UnitCard.playIdle` | Plays a model's `IdleAnim` inside a ViewportFrame (both Places). |
+| `Shared.UIKit.UnitCard.playIdle` | Plays a model's `IdleAnim` inside a ViewportFrame (both Places) and STEPS its Animator every frame; falls back to `UnitCard.DefaultIdleAnim`. |
 
 ## 8. Gotchas paid for in blood
 
@@ -176,6 +179,14 @@ produced and how it picked its target.
   the moment an attack moved into a named profile those tier fields vanished and the tower silently
   fell back to the instant path — no animation, no multi-hit, no VFX. It now asks `AttackProfile.Has`.
 - **A `Camera` inside `StarterGui` does not replicate** (B77) — viewport framing rides as attributes.
+- **A ViewportFrame RENDERS but does not SIMULATE** (B79). Loading and playing an idle track on a rig
+  inside one is not enough: nothing advances the Animator, so the rig stands frozen on frame 0 — the
+  user saw this as "the units in viewport frames are just standing". `UnitCard.playIdle` now calls
+  `Animator:StepAnimations(dt)` every `RenderStepped` for as long as the rig is in the DataModel.
+  Anything else that animates a rig inside a viewport must do the same.
+- **A rig with no `IdleAnim` falls back to `UnitCard.DefaultIdleAnim`** (stock R15 idle, B79), so an
+  unauthored unit previews as a breathing character rather than a statue. Authoring `IdleAnim`
+  replaces it; there is no third state.
 - **Weights that do not sum to 1** make a tower quietly stronger or weaker than its card. The
   validator catches it at boot.
 - **A hit with neither `Marker` nor `At` never fires.** The validator catches that too.

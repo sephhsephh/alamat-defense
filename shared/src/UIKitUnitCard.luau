@@ -214,6 +214,41 @@ function UnitCard.paintPrice(root: Instance?, towerId: string?)
 	end
 end
 
+-- ===== IDLE IN A VIEWPORT (B78; MADE TO ACTUALLY MOVE AT B79) =====
+--
+-- *** WHY THE UNITS JUST STOOD THERE (B79, user) ***
+-- A ViewportFrame RENDERS a model, it does not SIMULATE it. Loading and playing a track on the rig's
+-- Animator is not enough: nothing advances that track, so the rig sits frozen on frame 0 -- which is
+-- exactly "the units in viewport frames are just standing". The fix is to step the Animator by hand,
+-- every frame: `Animator:StepAnimations(dt)`. That is the one thing that makes a viewport rig move,
+-- and it is why this needs a RenderStepped connection rather than a fire-and-forget Play().
+--
+-- The stepper is registered ONCE PER ANIMATOR (a weak-keyed set), so re-showing the same model does
+-- not stack steppers, and it disconnects itself as soon as the rig leaves the DataModel.
+local RunService = game:GetService("RunService")
+
+-- Roblox's stock R15 idle, used when a model has no `IdleAnim` of its own (user, B79: "or just load
+-- a default idle animation if they dont have one"). Override it here the day there is a house idle.
+UnitCard.DefaultIdleAnim = "rbxassetid://507766666"
+
+local stepping: { [Animator]: boolean } = setmetatable({}, { __mode = "k" }) :: any
+
+local function stepForever(animator: Animator, model: Instance)
+	if stepping[animator] then
+		return
+	end
+	stepping[animator] = true
+	local conn: RBXScriptConnection? = nil
+	conn = RunService.RenderStepped:Connect(function(dt)
+		if animator.Parent == nil or not model:IsDescendantOf(game) then
+			stepping[animator] = nil
+			if conn then conn:Disconnect() end
+			return
+		end
+		animator:StepAnimations(dt)
+	end)
+end
+
 -- ===== IDLE IN A VIEWPORT (B78, user) =====
 -- "The idle animations will be played on all the viewport frames that previews a unit."
 --
@@ -233,6 +268,10 @@ function UnitCard.playIdle(model: Instance?, animId: any): AnimationTrack?
 	end
 	if animId == nil then
 		animId = model:GetAttribute("IdleAnim")
+	end
+	if animId == nil then
+		-- No authored idle on this rig: fall back to the stock one so a preview is never a statue.
+		animId = UnitCard.DefaultIdleAnim
 	end
 	if type(animId) == "number" then
 		animId = "rbxassetid://" .. tostring(math.floor(animId))
@@ -266,7 +305,12 @@ function UnitCard.playIdle(model: Instance?, animId: any): AnimationTrack?
 		t:Play(0)
 		return t
 	end)
-	return ok and track or nil
+	if ok and track then
+		-- THE LINE THAT MAKES IT MOVE. Without it the track is playing but nothing advances it.
+		stepForever(animator :: Animator, model)
+		return track
+	end
+	return nil
 end
 
 return UnitCard

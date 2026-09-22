@@ -1,4 +1,30 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-22 [game] B80 -- AD-UI: **the boss bar respects the user's authored image layout.**
+
+Game-local (`Client.UI.HealthBarFX`, `Client.UI.BossHealthUI`, `StarterGui.BossHealth` z-order). No shared canon, no remote, no schema.
+
+**THE BUG (user: "ive already set that desired size and position of images in the roblox studio, but it fails while in game, it overlaps").** The user rebuilt the boss bar as images (gold frame `BarBG`, dark `FillBG`, red `Fill`, and a `DamageTrail` authored to sit inside the frame's channel). `HealthBarFX` still wrote `Size = UDim2.fromScale(ratio, 1)` onto both layers, so at runtime the trail went FULL HEIGHT and spilled over the gold border, and the fill IMAGE was squashed sideways. `BossHealthUI` also forced `Fill = (1,1)` / `Trail = (1, .467)` before that, fighting the layout a second time. And the design PREVIEW bar the user keeps inside `Container` showed in every match as an empty "BOSS 0/0".
+
+**THE FIX.** (1) A Frame layer keeps its authored size and position; only its WIDTH scales (`base.X * ratio`) -- floating enemy bars author (1,1), so they are unchanged. (2) An IMAGE fill is never resized: it is CROPPED with a `UIGradient` transparency mask (`FillMask`, created if absent) tweened through a NumberValue, across the bar's CHANNEL rather than the whole image -- the channel comes from the Fill's `ChannelLeft`/`ChannelRight` attributes if set, else from the authored DamageTrail box. (3) `BossHealthUI` no longer sets sizes, and hides whatever is already in `Container` at boot (the preview). (4) Z-order in both templates: `DamageTrail` 0->1, `Fill` 1->2 -- the trail tied with `FillBG` at 0 and rendered UNDER it, so the damage flash was invisible (proven by holding it full: nothing showed).
+
+**Proven live** with a probe boss: 10k -> 5.5k / 8k / 3k / 2.5k all cropped inside the channel (mask cut 0.761 at 80% = 0.0578 + 0.8785 x 0.8), trail height 56px inside a 120px frame, cream damage sliver visible behind the red during a hit sequence, no preview bar.
+
+## 2026-09-19 [both] B79 -- AD-UI: **the hotbar stops being a still life** — viewport rigs actually animate, and the tier stroke moves.
+
+Shared canon only: `UIKitUnitCard` `58f014de -> 51f55122`, `UIKitHotbar` `998b2bca -> c0091d72` (both Places + disk; manifest still 42). No schema change, no new remote, no new instance. `docs/systems/hotbar.md`.
+
+**THE UNITS WERE FROZEN AND B78 THOUGHT IT HAD FIXED IT.** `playIdle` loaded the track, played it, and every rig still stood there (user: "the units in viewport frames are jsut standing"). The reason is not the animation: **a ViewportFrame RENDERS a model, it does not SIMULATE it** — nothing advances an Animator inside one, so the rig sits on frame 0 forever. The fix is one line that has to run every frame, `Animator:StepAnimations(dt)`, and it is why this needs a `RenderStepped` connection rather than a fire-and-forget `Play()`. It registers ONCE PER ANIMATOR through a weak-keyed set (re-showing a model must not stack steppers) and disconnects itself when the rig leaves the DataModel. **Measured:** a limb travelled 0.3044 studs over 1.5s against 0.0000 before.
+
+**A UNIT WITH NO AUTHORED IDLE IS NO LONGER A STATUE** (user: "or just load a default idle animation if they dont have one"). `UnitCard.DefaultIdleAnim` = `rbxassetid://507766666` (stock R15 idle) is used when a rig carries no `IdleAnim` attribute. One constant to change the day there is a house idle.
+
+**THE REAL MODELS ARE IN THE LOBBY** — the user copied them across from the Game, so `RS.UnitModels` now holds all 8 rigs and B77's "every Lobby viewport draws the placeholder" note is RESOLVED. **⚠ STANDING RULE, NOW IN `CLAUDE.md` (user): a new unit must be copied into BOTH Places** — Game `TowerModels` and Lobby `UnitModels`, same name, same `IdleAnim` — and the user asked to be REMINDED of this every time a unit is created. The Lobby owns no TowerConfig, so a unit missing there previews as `Placeholder` everywhere in the meta game.
+
+**THE TIER STROKE IS ALIVE, AND DELIBERATELY OUT OF STEP** (user: "animate the uistroke with tier colors, like rotating, at random speed so they dont look that synched. and unique animations of colors"). Each slot draws its own spin (6–20 °/s, random direction) at attach time, so the row never rotates as one block. The COLOUR motion is chosen by the tier's own gradient rather than by a list of names: a **multi-stop** tier SCROLLS its `Offset` (0.06–0.22 /s) so its colours travel around the stroke, a **flat** tier BREATHES instead (a sine at 0.35–0.8 Hz with a random phase, lifting the colour 0.22 toward white) — because scrolling a single colour is invisible motion. **ONE `RenderStepped` connection drives all six slots** and `handle.destroy` disconnects it. **A hovered slot keeps spinning but stops writing colour:** the hover tween owns `Gradient.Color` while the pointer is on it, and two writers on one property is a fight you see as flicker.
+
+**Proven live (Game):** slot 1 Archer rot 304.7→317.9, slot 2 Necromancer the other way 108.6→95.8, slot 3 Knight 318.7→301.4 in the same 1.5s sample (three rates, two directions); Necromancer's MYTHIC multi-stop gradient scrolled 0.605→0.328 while the two flat tiers held 0.000 and breathed; Archer's rig travelled 0.087 studs.
+
+**Proven live (Lobby, real equips):** slot 1 Mage rot 177.0→187.5, offset 0.713→0.991, limb +0.3044 studs; slot 3 Meteor rotating the other way 176.6→163.1; slot 2 Knight on the user's own idle (`rbxassetid://125610139973073`), flat COMMON tier holding offset 0.000 and breathing instead.
+
 ## 2026-09-18 [game] B78 -- AD-Game: **towers get an attack FRAMEWORK: idle loops, multi-hit attacks, per-upgrade attack swaps, melee dashes.**
 
 Game-local except two shared kit modules (`UIKitUnitCard` `bedb105e -> 58f014de`, `UIKitHotbar` `23cdfc51 -> 998b2bca`, both Places + disk; manifest still 42). No schema change, no new remote. **`docs/systems/tower-authoring.md` is the canon for adding a tower.**

@@ -120,6 +120,10 @@ up next session. Unlisted new system → add it to OWNERSHIP.md as part of build
   only: read data, clone templates, set text/visibility, wire events. Legacy script-built
   screens get converted opportunistically when next touched.
 - **Looks changed or unusual? ASK THE USER whether they did it** (user rule, 2026-08-16); never "fix" it.
+- **A NEW UNIT LIVES IN BOTH PLACES (user rule, 2026-09-19).** The rig goes in the GAME's
+  `RS.TowerModels` *and* the LOBBY's `RS.UnitModels`, same name, same `IdleAnim` attribute — the
+  Lobby has no TowerConfig, so a unit missing there previews as `Placeholder` in every card, slot and
+  hover popup. **REMIND THE USER OF THIS whenever a new unit is created**, in either Place.
 
 ## Blueprint discipline (how lesser sessions stay on the rails)
 

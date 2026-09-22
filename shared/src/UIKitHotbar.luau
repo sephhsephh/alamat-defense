@@ -144,6 +144,25 @@ local TraitRegistry = (traitsFolder and traitsFolder:FindFirstChild("TraitRegist
 local HOVER_TIME = 0.18
 local HOVER_INFO = TweenInfo.new(HOVER_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 
+-- ===== THE LIVING TIER STROKE (B79, user) =====
+-- "animate the uistroke with tier colors, like rotating, at random speed so they dont look that
+-- synched. and unique animations of colors."
+--
+-- Every slot gets its OWN randomised spin speed, direction and phase, so a row of six never marches
+-- in lockstep -- that synchronised look is what makes an animated UI read as cheap. On top of the
+-- spin, the motion DIFFERS BY WHAT THE TIER IS:
+--   multi-stop tiers (Rare, Legendary, Mythic, Limited, Secret, Alamat) SCROLL their gradient, so
+--       the bands travel around the card and the tier reads as alive
+--   flat tiers (Common, Uncommon, Epic) have nothing to scroll, so they BREATHE instead: the colour
+--       lifts toward white and back on a slow sine, each at its own rate
+-- One RenderStepped connection drives all six slots; the per-slot numbers live on the slot.
+local RunService = game:GetService("RunService")
+
+local SPIN_MIN, SPIN_MAX = 6, 20        -- degrees per second
+local SCROLL_MIN, SCROLL_MAX = 0.06, 0.22 -- gradient offsets per second
+local BREATHE_MIN, BREATHE_MAX = 0.35, 0.8 -- cycles per second
+local BREATHE_DEPTH = 0.22              -- how far a flat tier lifts toward white
+
 -- The tier's authored gradient, lerped `t` of the way to white.
 local function whitened(tierName: string, t: number): ColorSequence
 	local kps = {}
@@ -302,6 +321,7 @@ local function attachV3(container: GuiObject, opts: { [string]: any })
 		camAnchor = authoredModel and authoredModel:GetPivot() or nil
 	end
 
+	local rng = Random.new()
 	local slots: { any } = {}
 	for i = 1, LoadoutConfig.MaxSlots do
 		local btn = authored[i]
@@ -331,6 +351,15 @@ local function attachV3(container: GuiObject, opts: { [string]: any })
 			Price = btn:FindFirstChild("DeploymentPriceLabel"),
 			Overlay = btn:FindFirstChild("Overlay"),
 			TierName = "Common",
+			-- B79: this slot's own motion. Randomised per slot AND per session, so two players' hotbars
+			-- are not in step either.
+			Spin = rng:NextNumber(SPIN_MIN, SPIN_MAX) * (if rng:NextInteger(0, 1) == 0 then 1 else -1),
+			Scroll = rng:NextNumber(SCROLL_MIN, SCROLL_MAX) * (if rng:NextInteger(0, 1) == 0 then 1 else -1),
+			Breathe = rng:NextNumber(BREATHE_MIN, BREATHE_MAX),
+			Phase = rng:NextNumber(0, math.pi * 2),
+			BaseRotation = 0,
+			Multi = false,
+			Hovered = false,
 			Proxy = Instance.new("NumberValue"),
 			Tween = nil :: Tween?,
 			Conns = {} :: { RBXScriptConnection },
@@ -457,7 +486,13 @@ local function attachV3(container: GuiObject, opts: { [string]: any })
 		end
 
 		local vf = preview:FindFirstChildWhichIsA("ViewportFrame", true)
-		if vf then showModelKeepCamera(vf, opts.ModelSource, towerId, camCFrame, camFOV, camAnchor) end
+		if vf then
+			showModelKeepCamera(vf, opts.ModelSource, towerId, camCFrame, camFOV, camAnchor)
+			-- B79: the hover card's unit idles too, not just the slot.
+			local wm = vf:FindFirstChildWhichIsA("WorldModel")
+			local shown = wm and wm:FindFirstChildWhichIsA("Model")
+			if shown then UnitCard.playIdle(shown, nil) end
+		end
 		-- THE TIER COLOUR GOES ON `UnitFrame.UIStroke` ONLY (user, B77). The card's own outer strokes are
 		-- the design's frame and stay exactly as authored -- painting them tinted the whole card.
 		local unitFrame = preview:FindFirstChild("UnitFrame", true)
@@ -491,6 +526,11 @@ local function attachV3(container: GuiObject, opts: { [string]: any })
 			local seq, rotation = TierConfig.GradientFor(tierName)
 			s.Gradient.Color = seq
 			s.Gradient.Rotation = rotation
+			-- B79: the authored rotation is where this tier's spin STARTS from, and whether the tier has
+			-- more than one colour decides whether it scrolls or breathes.
+			s.BaseRotation = rotation
+			s.Multi = TierConfig.isMultiColor(tierName)
+			s.Gradient.Offset = Vector2.new(0, 0)
 		end
 
 		if s.Viewport then showModelKeepCamera(s.Viewport, opts.ModelSource, filled and entry.TowerId or nil, camCFrame, camFOV, camAnchor) end
@@ -550,6 +590,7 @@ local function attachV3(container: GuiObject, opts: { [string]: any })
 		end))
 		local btn = s.Button :: GuiButton
 		table.insert(s.Conns, btn.MouseEnter:Connect(function()
+			s.Hovered = true
 			hover(i, true)
 			local entry = entries[i]
 			if entry and LoadoutConfig.IsSlotUnlocked(i, playerLevel) then
@@ -557,6 +598,7 @@ local function attachV3(container: GuiObject, opts: { [string]: any })
 			end
 		end))
 		table.insert(s.Conns, btn.MouseLeave:Connect(function()
+			s.Hovered = false
 			hover(i, false)
 			hidePreview(btn)
 		end))
@@ -579,6 +621,28 @@ local function attachV3(container: GuiObject, opts: { [string]: any })
 		local i = KEY_FOR_SLOT[input.KeyCode]
 		if i and LoadoutConfig.IsSlotUnlocked(i, playerLevel) and type(opts.OnActivated) == "function" then
 			opts.OnActivated(i, entries[i])
+		end
+	end)
+
+	-- The one clock for every slot's stroke. A hovered slot is skipped for COLOUR only -- the hover
+	-- tween owns `Color` while the mouse is on it -- but keeps spinning, so hovering does not freeze
+	-- the card.
+	local clock = 0
+	local spinConn = RunService.RenderStepped:Connect(function(dt)
+		clock += dt
+		for i = 1, LoadoutConfig.MaxSlots do
+			local s = slots[i]
+			local gradient = s and s.Gradient
+			if gradient then
+				gradient.Rotation = (s.BaseRotation + clock * s.Spin) % 360
+				if s.Multi then
+					-- Bands travel along the stroke. Offset wraps at 1, so this loops seamlessly.
+					gradient.Offset = Vector2.new((clock * s.Scroll) % 1, 0)
+				elseif not s.Hovered then
+					local lift = (math.sin(clock * s.Breathe * math.pi * 2 + s.Phase) * 0.5 + 0.5) * BREATHE_DEPTH
+					gradient.Color = whitened(s.TierName, lift)
+				end
+			end
 		end
 	end)
 
@@ -613,6 +677,7 @@ local function attachV3(container: GuiObject, opts: { [string]: any })
 	end
 	function handle.destroy()
 		keyConn:Disconnect()
+		spinConn:Disconnect()
 		if preview then preview:Destroy(); preview = nil end
 		for _, s in ipairs(slots) do
 			for _, c in ipairs(s.Conns) do c:Disconnect() end
