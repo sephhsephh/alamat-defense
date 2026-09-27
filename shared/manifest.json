@@ -274,14 +274,14 @@
     },
     "UIKitItemIcon": {
       "file": "shared/src/UIKitItemIcon.luau",
-      "hash": "cf4d9eda",
+      "hash": "776247af",
       "owner": "ui",
       "deployPath": "ReplicatedStorage.Shared.UIKit.ItemIcon",
       "deployed": {
-        "Game": "cf4d9eda",
-        "Lobby": "cf4d9eda"
+        "Game": "776247af",
+        "Lobby": "776247af"
       },
-      "comment": "Kit CONTROLLER. Item card: flat ImageLabel icon (items have no model, so NO ViewportFrame), QtyBadge that hides at qty 0, tier border/BG from the shared TierConfig. Requires Configs.Meta.{ItemCatalog,TierConfig} -- both already shared. Promoted 2026-08-06. B26 2026-08-16: MIGRATED TO Kit.ItemIconV2 (prior hash b717ebe9). TEMPLATE_PATHS now resolves ItemIconV2; tier paint moved from BG+UIStrokeWithGradient to the ROOT UIGradient (still animated by the SAME shared seamless animator -- do not write a second); IconImage->ItemIcon, QtyBadge->Amount, and the card now fills ItemName. paintStroke() no longer recolours a tier border -- it TOGGLES the authored UIHoverStroke, so hover keeps the same trigger points and feel. **cf5e57cd -> 5cc07ce2 at B27 2026-08-16 (two user rules).** (1) THE WHOLE CARD SCALES: the UIScale moved from `Main` to the ROOT for the same reason as UIKitButton -- UIHoverStroke and UICorner live on the root and were being left behind. (2) THE HOVER STROKE IS TINTED FROM THE TIER'S **BRIGHTEST** COLOUR via TierConfig.BrightestColor, which ranks by RELATIVE LUMINANCE: never Colors[1] (Mythic would outline red for no reason) and never the derived dark secondary (a dark stroke reads as a shadow, not a highlight). **5cc07ce2 -> 81ac91a4 at B27c:** scaling moved onto UIKitMotion.isolate (a fixed-size wrapper, so a hovered card no longer shoves its grid neighbours), hover/press now use the kit's single Quint curve, the idle gradient runs through Motion (45 degrees, 9s instead of 3s), the card LIFTS above its neighbours while hovered, and destroy() takes the wrapper with it so rebuilds cannot leave empty slots padding the grid. **-> cf4d9eda at B27d:** hover-stroke paint is now one Motion.paintHoverStroke call (3+-colour tiers outline in all their colours).",
+      "comment": "Kit CONTROLLER. Item card: flat ImageLabel icon (items have no model, so NO ViewportFrame), QtyBadge that hides at qty 0, tier border/BG from the shared TierConfig. Requires Configs.Meta.{ItemCatalog,TierConfig} -- both already shared. Promoted 2026-08-06. B26 2026-08-16: MIGRATED TO Kit.ItemIconV2 (prior hash b717ebe9). TEMPLATE_PATHS now resolves ItemIconV2; tier paint moved from BG+UIStrokeWithGradient to the ROOT UIGradient (still animated by the SAME shared seamless animator -- do not write a second); IconImage->ItemIcon, QtyBadge->Amount, and the card now fills ItemName. paintStroke() no longer recolours a tier border -- it TOGGLES the authored UIHoverStroke, so hover keeps the same trigger points and feel. **cf5e57cd -> 5cc07ce2 at B27 2026-08-16 (two user rules).** (1) THE WHOLE CARD SCALES: the UIScale moved from `Main` to the ROOT for the same reason as UIKitButton -- UIHoverStroke and UICorner live on the root and were being left behind. (2) THE HOVER STROKE IS TINTED FROM THE TIER'S **BRIGHTEST** COLOUR via TierConfig.BrightestColor, which ranks by RELATIVE LUMINANCE: never Colors[1] (Mythic would outline red for no reason) and never the derived dark secondary (a dark stroke reads as a shadow, not a highlight). **5cc07ce2 -> 81ac91a4 at B27c:** scaling moved onto UIKitMotion.isolate (a fixed-size wrapper, so a hovered card no longer shoves its grid neighbours), hover/press now use the kit's single Quint curve, the idle gradient runs through Motion (45 degrees, 9s instead of 3s), the card LIFTS above its neighbours while hovered, and destroy() takes the wrapper with it so rebuilds cannot leave empty slots padding the grid. **-> cf4d9eda at B27d:** hover-stroke paint is now one Motion.paintHoverStroke call (3+-colour tiers outline in all their colours). B103: onActivated makes the card Selectable (the kit icon is authored false). cf4d9eda -> 776247af.",
       "kind": "module"
     },
     "UnitStatsCatalog": {
@@ -463,27 +463,27 @@
     },
     "InputMode": {
       "file": "shared/src/InputMode.luau",
-      "hash": "10212f7c",
+      "hash": "a59fca85",
       "owner": "ui",
       "deployPath": "ReplicatedStorage.Shared.InputMode",
       "deployed": {
-        "Game": "10212f7c",
-        "Lobby": "10212f7c"
+        "Game": "a59fca85",
+        "Lobby": "a59fca85"
       },
       "kind": "module",
-      "comment": "Added B97 (console + mobile foundation, manifest 45 -> 47 with GamepadMenus). Which device the player is USING now (last input wins): KeyboardMouse | Gamepad | Touch, a Changed signal, and FocusFirst(root) for gamepad menu focus. Read the mode from here, never TouchEnabled/GamepadEnabled (a device existing is not a device in use). B101: FocusFirst(root, force?) -- force focuses even when the last input was not a pad (the HUD's Y). def31c09 -> 10212f7c."
+      "comment": "Added B97 (console + mobile foundation, manifest 45 -> 47 with GamepadMenus). Which device the player is USING now (last input wins): KeyboardMouse | Gamepad | Touch, a Changed signal, and FocusFirst(root) for gamepad menu focus. Read the mode from here, never TouchEnabled/GamepadEnabled (a device existing is not a device in use). B101: FocusFirst(root, force?) -- force focuses even when the last input was not a pad (the HUD's Y). def31c09 -> 10212f7c. B103: DevForceMode attribute (a Studio test harness -- ships EMPTY); FocusFirst ranks GamepadDefault > normal > Close/Back/Leave, top-left among equals, and never picks a full-screen click-catcher. 10212f7c -> a59fca85."
     },
     "GamepadMenus": {
       "file": "shared/src/GamepadMenus.luau",
-      "hash": "634002bc",
+      "hash": "af5b28ad",
       "owner": "ui",
       "deployPath": "StarterPlayer.StarterPlayerScripts.Client.GamepadMenus",
       "deployed": {
-        "Game": "634002bc",
-        "Lobby": "634002bc"
+        "Game": "af5b28ad",
+        "Lobby": "af5b28ad"
       },
       "kind": "module",
-      "comment": "Added B97. LocalScript, hashed as source. Any GUI root tagged 'GamepadMenu' (CollectionService) gets its first button focused when it opens on a gamepad, and focus cleared when it closes. Tagged at B97: Game 7 roots, Lobby 23. B101: Y (no tagged menu open) focuses the root tagged 'GamepadHud' -- Lobby HUD.Left, Game MatchHUD.RightButtons. 5ddf46d4 -> 4a14225f. B102: 'KeyHint' tag -- keycap labels show their authored key on keyboard, the `Pad` attribute on a pad, hide on touch. 4a14225f -> 634002bc."
+      "comment": "Added B97. LocalScript, hashed as source. Any GUI root tagged 'GamepadMenu' (CollectionService) gets its first button focused when it opens on a gamepad, and focus cleared when it closes. Tagged at B97: Game 7 roots, Lobby 23. B101: Y (no tagged menu open) focuses the root tagged 'GamepadHud' -- Lobby HUD.Left, Game MatchHUD.RightButtons. 5ddf46d4 -> 4a14225f. B102: 'KeyHint' tag -- keycap labels show their authored key on keyboard, the `Pad` attribute on a pad, hide on touch. 4a14225f -> 634002bc. B103: a closing menu hands focus back to the menu under it or clears it, also when Roblox already jumped the selection to the nearest HUD button; re-focuses at 0.3/1/2.5 s for menus that build cards after showing; switching to Touch clears the selection. 634002bc -> af5b28ad."
     },
     "AuthoredFX": {
       "file": "shared/src/AuthoredFX.luau",

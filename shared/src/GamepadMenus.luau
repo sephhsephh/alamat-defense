@@ -6,7 +6,8 @@
 -- CollectionService tag "GamepadMenu" in Studio. That is all. While a player is on a GAMEPAD:
 --   * the moment a tagged menu OPENS (Visible / Enabled all the way up), its first button is
 --     selected, so the stick navigates it at once -- no hunting for the Select button;
---   * when it CLOSES with the selection inside it, the selection is cleared (no ghost focus);
+--   * when it CLOSES with the selection inside it, the focus goes back to the menu still open under
+--     it, or is cleared (no ghost focus -- B103: also when Roblox already jumped it to a HUD button);
 --   * switching TO a gamepad while a menu is open focuses that menu.
 -- A button with attribute GamepadDefault = true is chosen first (e.g. a menu's main action).
 -- Menus that are NOT tagged still work through Roblox's own Select-button navigation.
@@ -55,6 +56,18 @@ local function forget(root: Instance)
 	end
 end
 
+-- B103: when the selected button is hidden, Roblox itself jumps the selection to the NEAREST visible
+-- button (a closing menu handed focus to the HUD's speed buttons, and every "only while nothing is
+-- selected" pad shortcut then went dead). So remember the selection the jump came FROM: a menu that
+-- closes while it held the focus, or whose button was the LAST place the focus moved from (a close
+-- tween can outlast the jump by a second), clears the selection.
+local prevSel: Instance? = nil
+local curSel: Instance? = GuiService.SelectedObject
+GuiService:GetPropertyChangedSignal("SelectedObject"):Connect(function()
+	prevSel = curSel
+	curSel = GuiService.SelectedObject
+end)
+
 local function step()
 	for _, root in ipairs(CollectionService:GetTagged(TAG)) do
 		if root:IsDescendantOf(playerGui) then
@@ -62,12 +75,29 @@ local function step()
 			if open and not wasOpen[root] then
 				wasOpen[root] = true
 				table.insert(openOrder, root)
-				InputMode.FocusFirst(root)
+				local first = InputMode.FocusFirst(root)
+				-- B103: many menus build their cards AFTER they show (the Units grid, a picker) -- so
+				-- look again shortly (a grid behind a server call can take a couple of seconds), unless
+				-- the player has already moved the focus themselves.
+				for _, t in ipairs({ 0.3, 1, 2.5 }) do
+					task.delay(t, function()
+						if wasOpen[root] and GuiService.SelectedObject == first then
+							first = InputMode.FocusFirst(root) or first
+						end
+					end)
+				end
 			elseif not open and wasOpen[root] then
 				forget(root)
 				local sel = GuiService.SelectedObject
-				if sel and sel:IsDescendantOf(root) then
-					GuiService.SelectedObject = nil
+				local jumpedOut = prevSel ~= nil
+					and (prevSel :: Instance):IsDescendantOf(root)
+				if sel and (sel:IsDescendantOf(root) or jumpedOut) then
+					-- B103: hand the focus back to the menu underneath (e.g. the between-waves prompt
+					-- popped over an open Unit Manager), otherwise clear it.
+					local top = openOrder[#openOrder]
+					if not (top and top.Parent and InputMode.FocusFirst(top)) then
+						GuiService.SelectedObject = nil
+					end
 				end
 			end
 		end
@@ -144,6 +174,10 @@ InputMode.Changed:Connect(function(mode: string)
 		if top and top.Parent then
 			InputMode.FocusFirst(top)
 		end
+	elseif mode == "Touch" then
+		-- B103: a pad focus left behind would keep drawing its selection frame under a thumb. (Not on
+		-- KeyboardMouse: a bumped mouse must not throw away a controller player's place in a menu.)
+		GuiService.SelectedObject = nil
 	end
 end)
 

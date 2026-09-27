@@ -1,4 +1,22 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-27 [both] B103 -- AD-UI: **controller pass -- the focus goes where it should, and leaves when it should.**
+
+**CANON (re-hash, count unchanged at 48):** `InputMode` `10212f7c` -> **`a59fca85`**, `GamepadMenus` `634002bc` -> **`af5b28ad`**, `UIKitItemIcon` `cf4d9eda` -> **`776247af`**. Both Places + disk, exact find/replace with base AND result hashes asserted. Game-local: `PlacementController`, `UnitManagerUI`, `HudPanels`. Lobby-local: `UnitsController`, `ItemsController`, `IndexController`, `AscensionController`, `StatRerollController`, `TraitRerollController`. Authored: 19 click-catchers `Selectable = false`, 3 `GamepadDefault` marks. **USER REPUBLISHES BOTH PLACES.**
+
+**TEST HARNESS:** attribute `DevForceMode` on `RS.Shared.InputMode` (`Gamepad` / `Touch` / `KeyboardMouse`) makes every script see that device -- the only way to see the pad/touch UI in Studio, because the tool sends pad keys as keyboard input. **Ships EMPTY** (cleared in both Places at the end of the session).
+
+**FIXED (all found by playing with `DevForceMode = Gamepad`):**
+- **Pad placement aimed 58 px off.** The centre reticle's ray used `AbsolutePosition`, which excludes the top-bar inset even in an `IgnoreGuiInset` ScreenGui; `+ GuiService:GetGuiInset()`. Ghost now lands exactly on the aim point.
+- **Ghost focus after every menu.** When the selected button hides, Roblox jumps the selection to the NEAREST visible button (the match's speed buttons, the Lobby hotbar), so `GamepadMenus` never saw "selection inside the closing menu" -- and every "only while nothing is selected" pad shortcut (L1, L2, R2, Y) went dead after the first popup. It now remembers where the focus jumped FROM, and hands focus back to the menu still open underneath (e.g. Settings over the Unit Manager) or clears it.
+- **L1 / L2 could open their panel but not close it** once focus was inside it. They now also work while the focus is inside their own panel.
+- **A on a Lobby menu's first focus would have closed it.** 17 Lobby menus opened on their full-screen `Overlay`/`Dim`/`Scrim` (click-outside-to-close). Those are now `Selectable = false` (+ the Game's `Settings.Dim` and `UnitManager.DropdownCatcher`), and `FocusFirst` skips any button covering 90 % of the screen as a safety net.
+- **First focus:** `GamepadDefault` > normal > names containing Close/Back/Leave, top-left among equals. Results: Units -> first unit card, Inventory -> first item, Summon -> Summon x1 (`GamepadDefault`), Quests -> first Claim, Play -> Story Mode (was Leave), Unit Manager -> first card (`CardTemplate`/`UnitRowTemplate.SelectButton` marked).
+- **Menus that build their cards after showing** (Units grid, Items behind a server call) are re-focused at 0.3 / 1 / 2.5 s unless the player already moved.
+- **Unit and item cards were unreachable on a pad** (`Kit_UnitIconV2` / `Kit_ItemIconV2` are authored `Selectable = false` because they are also display icons). Every card that DOES something now sets `Selectable = true` where its click is wired (5 unit-card screens + `ItemIcon.onActivated`). The kit templates themselves are unchanged. `Kit_HotbarSlotV2` untouched (user's drift).
+- **Switching to touch** now clears any pad selection (not on keyboard/mouse: a bumped mouse must not lose a controller player's place).
+
+**Proven live:** Game -- L1 opens the Unit Manager on `Card_1.SelectButton`, L1 again closes it and clears focus; Settings opened over it hands focus back to the card on close; touch mode hides all 7 match key hints; keyboard F toggle and 0 new errors. Lobby -- Y focuses `UnitsButton`; Units/Items/Summon/Quests open on the right button; closing Items leaves no ghost focus. **Needs a real controller:** A activating the focused button, B backing out, the stick walking grids; **needs a phone:** layout/touch targets.
+
 ## 2026-09-27 [both] B102 -- AD-UI: **keycap hints follow the device.**
 
 **CANON (re-hash, count 48):** `GamepadMenus` `4a14225f` -> **`634002bc`**, both Places + disk (find/replace with base + result hashes asserted). **USER REPUBLISHES BOTH PLACES.**

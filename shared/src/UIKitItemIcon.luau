@@ -229,6 +229,9 @@ function ItemIcon.attach(card: GuiButton, itemId: string, qty: number?)
 		paintStroke(); refreshScale()
 	end
 	function handle.onActivated(fn: (...any) -> ()): RBXScriptConnection
+		-- B103: Kit_ItemIconV2 is authored Selectable=false (it is also a plain display icon); one that
+		-- DOES something must be reachable on a controller.
+		card.Selectable = true
 		local c = card.Activated:Connect(fn)
 		table.insert(conns, c)
 		return c
