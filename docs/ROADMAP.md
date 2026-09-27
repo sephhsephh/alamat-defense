@@ -805,7 +805,8 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
 - 🟡 **Character animations — B91.** Shared `CharacterAnimConfig` (one `Id` per clip) + `MovementController`. Walk DONE (`140055950289677`); Run (sprint) / Jump / Fall / Idle / DoubleJump / Dash wired and waiting for the user's clips (empty = default / nothing).
 - 🟡 **Movement FX — B92.** Jump / double jump / dash sounds + VFX, authored under `RS.CharacterFX`, relayed to other players. Placeholder dash trail + double-jump puff DONE; SoundIds and the user's own VFX still to come.
 - ✅ **Enemy names + kill FX + summon walk — B94.** Name over the bar (Simplify hides it), authored `RS.EnemyDeathFX` (placeholder burst), summons walk and slowed (Charger 10 / Fighter 6).
-- 🔲 **NEXT, in the user's order (B94):** placement precision + feel -> Hill / flying / Hybrid towers (Anime-TD style) -> console + mobile foundation (reticle placement) -> cleanup audit.
+- ✅ **Placement precision + feel — B95.** Geometry path test (49% false blocks gone), edge assist, panel pop, invalid flash, placed pulse.
+- 🔲 **NEXT, in the user's order (B94):** Hill / flying / Hybrid towers (Anime-TD style) -> console + mobile foundation (reticle placement) -> cleanup audit.
 - 🔲 Event framework (event banner + EventTokens + event quests bundle; Pre-Release first)
 - 🔲 News/update board + banner showcase on join
 - 🔲 Titles (equip UI + overhead) · 🔲 Skins (catalog → model swap both Places)

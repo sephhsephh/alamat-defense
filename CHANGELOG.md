@@ -1,4 +1,16 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-27 [game] B95 -- AD-Game: **placement is precise next to the path, and it helps you hug the edge.**
+
+Game-local, no canon change. Edited: `RS.Shared.PathClearance` (Game-local), `Client.Placement.PlacementController`. New authored: `StarterGui.PlacementControls.Panel.PopScale` (UIScale).
+
+**ROOT CAUSE, MEASURED (user: "can't place close to the path even though it's clear").** B81's `PathClearance` tested every path part as an oriented BOUNDING BOX on its local XZ plane. TestMap's PathDesigns are 39 blocks (21 of them TILTED, so local-XZ is not the ground plane) + **24 UnionOperations** (curves/corners whose box is far larger than the shape). A 1-stud grid over the whole path with the real footprint (r = 1.25): **the box test blocked 1331 points and 648 of them (49%) were clear ground.**
+
+**FIX: real geometry.** `Blocks` now runs `Workspace:GetPartsInPart` with an upright CYLINDER (the footprint, +-6 studs tall, `Include` = PathDesigns, `MaxParts 1`). Same grid: **683 blocked, and 0 points the old rule caught are now missed.** ~6 us per query. The probe is NEVER parented (measured: `GetPartsInPart` works on an unparented part), so nothing replicates or clutters. Client ghost, server `PlacementValidator` and `AutoPlayService` all use it, so they cannot disagree. Precision is now the unions' CollisionFidelity (Default) -- set a curve to PreciseConvexDecomposition if one still blocks early.
+
+**FEEL:** (1) **edge assist** -- a cursor a little onto the path slides the ghost to the nearest placeable spot within 1.5 studs (16 directions x 0.25-stud rings), running the same zone/path/overlap checks; `EDGE_ASSIST_STUDS = 0` turns it off. (2) the placement panel POPS in (authored `PopScale`, Back-out 0.22 s). (3) clicking a red ghost flashes it and jolts the panel, not just a sound. (4) a green ring swells and fades where a tower lands. (5) the status line shows the DisplayName, not the raw id.
+
+**Proven live, real mouse:** cursor on (-34, 0.5, 7) -- blocked by the old rule -- now reads `Placing Archer`. Cursor aimed 0.75 studs INTO the path at (-34, 10.75): the ghost settled at (-34.36, 9.84), a clear spot; clicking placed a real Archer there and the SERVER accepted it. No new errors.
+
 ## 2026-09-27 [game] B94 -- AD-Game + AD-UI + AD-Enemies: **enemy names over their bars, a kill effect you can re-author, and summons that walk.**
 
 Game-local, **no shared canon touched (manifest still 45).** New authored: `RS.UITemplates.EnemyHealthbar.NameText`, `RS.EnemyDeathFX.Default`, `RS.Remotes.EnemyKilled` (RemoteEvent). New script: `StarterPlayerScripts.Client.VFX.EnemyDeathFX` (LocalScript). Edited: `FloatingHealthbars`, `EnemyHealthbars`, `EnemySpawner`, `SummonController`, `Configs.Summons.{Charger,Fighter}`.
