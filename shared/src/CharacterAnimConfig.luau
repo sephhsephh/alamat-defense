@@ -63,9 +63,9 @@ CharacterAnimConfig.Clips = {
 	-- Played by MovementController (empty = nothing extra plays)
 	-- Action2 so the sprint clip sits above Animate's Core walk (and anything at Action); Action3 so a
 	-- dash / double jump beats the sprint clip.
-	Run = { Id = "", Speed = 1.0, Priority = "Action2" } :: Clip,
+	Run = { Id = "120571919442157", Speed = 1.5, Priority = "Action2" } :: Clip,
 	DoubleJump = { Id = "", Speed = 1.0, Priority = "Action3" } :: Clip,
-	Dash = { Id = "", Speed = 1.0, Priority = "Action3", FitToDash = true } :: Clip,
+	Dash = { Id = "89258902903203", Speed = 1.0, Priority = "Action3", FitToDash = false } :: Clip,
 }
 
 -- "rbxassetid://<digits>" for a filled slot, nil for an empty or unreadable one. The ONE place an Id

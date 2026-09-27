@@ -1,4 +1,18 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-27 [both] B92 -- AD-Game: **sounds + effects for jump, double jump and dash -- authored in Studio, seen by everyone.**
+
+**CANON: manifest 44 -> 45.** NEW shared `CharacterFXRelay` (Script, `5fc0e42c`, `SSS.Server`, BOTH Places + `shared/src/`). `MovementController` `09bc0fd4` -> **`79d71a7f`**. **USER'S OWN EDITS, RECORDED (user confirmed, B92):** `MovementConfig` `3598e7d0` -> **`f09bb47f`** (WalkSpeed 16 -> 14, SprintSpeed 56 -> 42) and `CharacterAnimConfig` `38000a8c` -> **`550dd460`** (Run `120571919442157` at Speed 1.5; Dash `89258902903203`, `FitToDash = false`). The user made them in the LOBBY only; the Game was brought to the same bytes this session. `HashShared` (both Places) + `tools/hash_shared.luau` +`CharacterFXRelay`. New authored (Place-local, BOTH Places): `RS.CharacterFX` + `RS.Remotes.CharacterFX` (RemoteEvent). **USER REPUBLISHES BOTH PLACES.** Docs: **`docs/systems/movement.md`** ("Movement FX").
+
+**NOTHING IN CODE NAMES AN ASSET.** `RS.CharacterFX.<Jump|DoubleJump|Dash>` each hold a `Sound` (paste a SoundId; empty = silent) and a `VFX` folder. Per trigger the VFX folder is CLONED: each Attachment goes to the part named by its `Part` attribute (default HumanoidRootPart), a Trail/Beam goes to the HumanoidRootPart; an emitter with `EmitCount` bursts, anything else is switched on for the folder's `ActiveTime`; then it all cleans itself up (measured: 0 leftovers). `MuteStockSound = "Jumping"` on Jump silences Roblox's own jump sound ONLY while a custom SoundId is set (measured 0.65 -> 0).
+
+**PLACEHOLDER EFFECTS (user: "until I make my own"):** Dash = a white `Trail` from shoulder to shin with `FaceCamera = true` + a dust kick at the feet. **⚠ FaceCamera IS LOAD-BEARING:** without it the ribbon lies along the dash direction and is EDGE-ON to the usual behind-the-player camera -- the first screenshot showed only the dust. Double jump = a smoke puff + a downward spray of sparkles at the feet, left in mid-air where the jump happened (emitted particles are world-space). Only built-in `rbxasset://textures/particles/*` textures. **A shockwave-ring version was tried and dropped:** `explosion01_shockwave_color.dds` showed nothing in a live capture.
+
+**OTHER PLAYERS SEE AND HEAR IT (user, B92).** The local client plays at once (no lag) and `FireServer(action)`; `CharacterFXRelay` accepts only the three action names, rate-limits per player per action (Jump/DoubleJump 0.15 s, Dash 0.5 s), ignores a player with no character, and `FireClient`s every OTHER player, who plays it on that character. Nothing it touches is gameplay state.
+
+**Proven live, BOTH Places:** a jump + `DevDoubleJump` + `DevDash` put `Feet` / `Trail` / `TrailTop` / `TrailBottom` on the HumanoidRootPart, and a server-side listener received `Jump, DoubleJump, Dash` in both. Relay DIAG line printed in both; no new warnings. **NOT PROVEN:** the second client actually drawing it -- Studio tooling has one client. Test with 2 players in Studio's Test tab.
+
+Open threads: `RS.CharacterFX` is Place-local ART (the manifest's template hasher only reads GUI properties) -- **edit it in one Place, copy it to the other**, like unit rigs.
+
 ## 2026-09-27 [both] B91 -- AD-Game: **the player character gets its OWN animations, one config field per clip.**
 
 **CANON: manifest 43 -> 44.** NEW shared `CharacterAnimConfig` (`38000a8c`, `RS.Configs.Global`, BOTH Places + `shared/src/`). `MovementController` `8e995f32` -> **`09bc0fd4`** (both Places + disk, byte-identical). `MovementConfig` untouched (`3598e7d0`). `HashShared` (both Places) + `tools/hash_shared.luau` gained the new entry. **USER REPUBLISHES BOTH PLACES.** Docs: **`docs/systems/movement.md`** (new "Character animations" section).

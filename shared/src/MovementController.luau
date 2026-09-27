@@ -5,7 +5,8 @@ script:SetAttribute("BootComplete", false)
 -- Sprint + dash + double jump, ALL in BOTH Places. Added B54 (sprint + Lobby dash); B66 extended the
 -- dash to the Game and added the double jump, both at the user's request. B91: the player character's
 -- OWN animations (walk / sprint-run / jump / fall / idle / double jump / dash) -- ids in the shared
--- CharacterAnimConfig, one field per clip; see "character animations" below.
+-- CharacterAnimConfig, one field per clip; see "character animations" below. B92: sounds + VFX for jump /
+-- double jump / dash, authored under RS.CharacterFX and relayed to other players; see "movement FX".
 --
 -- ===== ONE BINDING SERVES THREE PLATFORMS =====
 -- Everything goes through ContextActionService -- the FIRST use of CAS in this project. BindAction
@@ -40,6 +41,7 @@ script:SetAttribute("BootComplete", false)
 
 local ContentProvider = game:GetService("ContentProvider")
 local ContextActionService = game:GetService("ContextActionService")
+local Debris = game:GetService("Debris")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -278,6 +280,139 @@ local function updateSprintClip()
 	end
 end
 
+-- ===== movement FX: sounds + VFX for jump / double jump / dash (B92) =====
+-- NOTHING here names an asset. Every sound and effect is an AUTHORED instance the user edits in
+-- Studio, under ReplicatedStorage.CharacterFX.<Jump|DoubleJump|Dash>:
+--   Sound  (Sound)  -- cloned into the HumanoidRootPart and played. Empty SoundId = silent, by design.
+--   VFX    (Folder) -- cloned per trigger. Each Attachment goes to the character part named by its
+--                     `Part` attribute (default HumanoidRootPart); anything else (Trail / Beam) goes to
+--                     the HumanoidRootPart. A ParticleEmitter with an `EmitCount` attribute bursts that
+--                     many particles; one without it, and every Trail / Beam, is switched ON for the
+--                     folder's `ActiveTime` seconds. The clone cleans itself up afterwards.
+--   Folder attribute `MuteStockSound` (string) -- the name of Roblox's own character sound to silence
+--                     while a custom SoundId is set (Jump uses "Jumping").
+-- A missing folder, empty Sound or empty VFX folder is normal and plays nothing.
+--
+-- OTHER PLAYERS see and hear it too (user, B92): the local client plays it at once (no lag), then
+-- tells the server through RS.Remotes.CharacterFX; the shared CharacterFXRelay rate-limits and forwards
+-- it to every OTHER client, which plays it on that player's character.
+local FX_ACTIONS = { Jump = true, DoubleJump = true, Dash = true }
+local fxRemote: RemoteEvent? = nil
+
+local function muteStockSound(def: Instance, root: BasePart, sound: Sound?)
+	local stockName = def:GetAttribute("MuteStockSound")
+	if typeof(stockName) ~= "string" or sound == nil or sound.SoundId == "" then
+		return
+	end
+	local stock = root:FindFirstChild(stockName)
+	if stock and stock:IsA("Sound") then
+		stock.Volume = 0
+	end
+end
+
+local function playFX(character: Model?, action: string)
+	if character == nil or not FX_ACTIONS[action] then
+		return
+	end
+	local fxRoot = ReplicatedStorage:FindFirstChild("CharacterFX")
+	local def = fxRoot and fxRoot:FindFirstChild(action)
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if def == nil or root == nil or not root:IsA("BasePart") then
+		return
+	end
+	local activeTime = tonumber(def:GetAttribute("ActiveTime")) or 0.2
+
+	local template = def:FindFirstChild("Sound")
+	local sound = if template and template:IsA("Sound") then template else nil
+	muteStockSound(def, root, sound)
+	if sound and sound.SoundId ~= "" then
+		local s = sound:Clone()
+		s.Parent = root
+		s:Play()
+		Debris:AddItem(s, math.max(s.TimeLength, 3) + 0.5)
+	end
+
+	local vfx = def:FindFirstChild("VFX")
+	if vfx == nil or #vfx:GetChildren() == 0 then
+		return
+	end
+	local clone = vfx:Clone()
+	local placed = {}
+	for _, child in ipairs(clone:GetChildren()) do
+		local target: Instance = root
+		if child:IsA("Attachment") then
+			local partName = child:GetAttribute("Part")
+			local part = if typeof(partName) == "string" then character:FindFirstChild(partName) else nil
+			if part and part:IsA("BasePart") then
+				target = part
+			end
+		end
+		child.Parent = target
+		table.insert(placed, child)
+	end
+	clone:Destroy()
+
+	local linger = 0
+	local switched = {}
+	for _, item in ipairs(placed) do
+		local all = item:GetDescendants()
+		table.insert(all, item)
+		for _, d in ipairs(all) do
+			if d:IsA("ParticleEmitter") then
+				linger = math.max(linger, d.Lifetime.Max)
+				local count = tonumber(d:GetAttribute("EmitCount"))
+				if count and count > 0 then
+					d:Emit(count)
+				else
+					d.Enabled = true
+					table.insert(switched, d)
+				end
+			elseif d:IsA("Trail") then
+				linger = math.max(linger, d.Lifetime)
+				d.Enabled = true
+				table.insert(switched, d)
+			elseif d:IsA("Beam") then
+				d.Enabled = true
+				table.insert(switched, d)
+			end
+		end
+	end
+	task.delay(activeTime, function()
+		for _, d in ipairs(switched) do
+			if d.Parent then
+				(d :: any).Enabled = false
+			end
+		end
+	end)
+	for _, item in ipairs(placed) do
+		Debris:AddItem(item, activeTime + linger + 0.25)
+	end
+end
+
+-- Local trigger: play now, then let the server forward it to everyone else.
+local function fireFX(action: string)
+	playFX(player.Character, action)
+	local r = fxRemote
+	if r then
+		r:FireServer(action)
+	end
+end
+
+task.spawn(function()
+	local remotes = ReplicatedStorage:WaitForChild("Remotes", 10)
+	local r = remotes and remotes:WaitForChild("CharacterFX", 10)
+	if r == nil or not r:IsA("RemoteEvent") then
+		warn("[DIAG] MovementController: RS.Remotes.CharacterFX missing -- movement FX play locally only.")
+		return
+	end
+	fxRemote = r
+	r.OnClientEvent:Connect(function(who: any, action: any)
+		if typeof(who) == "Instance" and who:IsA("Player") and who ~= player and type(action) == "string" then
+			playFX(who.Character, action)
+		end
+	end)
+end)
+
 -- Horizontal burst in the direction the player is MOVING, falling back to the way they FACE when
 -- standing still (a dash that does nothing because you were idle feels broken).
 local function dashDirection(): Vector3?
@@ -310,6 +445,7 @@ local function doDash()
 	dashing = true
 	lastDashAt = os.clock()
 	playOneShot("Dash", if clipOf("Dash").FitToDash then MovementConfig.DashDuration else nil)
+	fireFX("Dash")
 	local speed = MovementConfig.DashSpeed
 	local until_ = os.clock() + MovementConfig.DashDuration
 	local conn: RBXScriptConnection? = nil
@@ -383,6 +519,7 @@ local function tryDoubleJump()
 	-- it was entered.
 	root.AssemblyLinearVelocity = Vector3.new(v.X, jumpVelocity(h) * MovementConfig.DoubleJumpPowerScale, v.Z)
 	playOneShot("DoubleJump")
+	fireFX("DoubleJump")
 end
 
 -- ===== character lifecycle =====
@@ -405,6 +542,7 @@ local function onCharacter(character: Model)
 		table.insert(humanoidConns, h.Jumping:Connect(function(active: boolean)
 			if active then
 				lastJumpAt = os.clock()
+				fireFX("Jump")
 			end
 		end))
 		table.insert(humanoidConns, h.StateChanged:Connect(function(_old, new)

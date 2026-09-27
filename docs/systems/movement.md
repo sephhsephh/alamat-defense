@@ -83,3 +83,12 @@ Walk / Run / Jump / Fall / Idle / DoubleJump / Dash. Empty = Roblox default (Ani
 - Every id is preloaded; a failed id falls back and warns ONCE per session. Rig must be R15 (both Places).
 - Verify: the `[DIAG] CharacterAnim ready (R15): Walk=custom, ...` line, then
   `Animator.AnimationPlayed` (names `AD_Run` / `AD_DoubleJump` / `AD_Dash`, and their `Priority`).
+
+## Movement FX (B92)
+`RS.CharacterFX.<Jump|DoubleJump|Dash>` (authored, BOTH Places -- copy after editing): a `Sound`
+(empty SoundId = silent) + a `VFX` folder, cloned per trigger. Attachment `Part` attribute picks the body
+part (default HumanoidRootPart); emitter `EmitCount` = burst, otherwise on for the folder's `ActiveTime`;
+Trails/Beams on for `ActiveTime`. Jump's `MuteStockSound = "Jumping"` silences Roblox's jump sound while a
+custom one is set. Dash's placeholder Trail needs `FaceCamera = true` (edge-on to the camera otherwise).
+Other players: client plays locally, then `RS.Remotes.CharacterFX` -> shared `CharacterFXRelay`
+(rate-limited, three action names only) -> every other client.

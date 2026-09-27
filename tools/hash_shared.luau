@@ -291,6 +291,8 @@ local MODULES = {
 	QuestRegistry = "ReplicatedStorage.Configs.Meta.QuestRegistry",
 	-- Promoted B91 (AD-Game): the player character's own animation ids, read by MovementController.
 	CharacterAnimConfig = "ReplicatedStorage.Configs.Global.CharacterAnimConfig",
+	-- Promoted B92 (AD-Game): forwards jump / double jump / dash FX to other clients. Script, hashed as source.
+	CharacterFXRelay = "ServerScriptService.Server.CharacterFXRelay",
 }
 
 -- GuiObject subtrees. Promoted by AD-UI 2026-08-06; a Place that has not received the kit

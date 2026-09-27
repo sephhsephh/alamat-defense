@@ -17,8 +17,8 @@ local MovementConfig = {}
 -- WalkSpeed is Roblox's default 16. The controller restores exactly this on un-sprint rather than
 -- assuming the Humanoid still holds it, so anything else that touches WalkSpeed cannot strand a
 -- player at sprint speed.
-MovementConfig.WalkSpeed = 16
-MovementConfig.SprintSpeed = 56
+MovementConfig.WalkSpeed = 14
+MovementConfig.SprintSpeed = 42
 
 -- ===== Dash (BOTH Places since B66) =====
 -- A short horizontal burst in the direction the player is moving (or facing, when standing still).

@@ -415,39 +415,51 @@
     },
     "MovementConfig": {
       "file": "shared/src/MovementConfig.luau",
-      "hash": "3598e7d0",
+      "hash": "f09bb47f",
       "owner": "game",
       "deployPath": "ReplicatedStorage.Configs.Global.MovementConfig",
       "deployed": {
-        "Game": "3598e7d0",
-        "Lobby": "3598e7d0"
+        "Game": "f09bb47f",
+        "Lobby": "f09bb47f"
       },
-      "comment": "9c7cbd32 -> 19421017 at B58 2026-09-14 (AD-Integration): the USER re-tuned movement feel in the LOBBY Studio -- SprintSpeed 26 -> 56 and DashSpeed 70 -> 300, two values, nothing else. AD-Integration did not author this; the bootstrap drift check caught the Lobby at 40/41, the user confirmed the change was theirs and said to KEEP it, and B58 RECORDED it: shared/src was rebuilt from the disk canon with exactly those two edits and PROVED byte-identical to the live Lobby copy by hash (2350 bytes, 19421017) before anything was written. The GAME was then brought to the same bytes in the same session, so unlike B22's ItemCatalog there is no stale deployed.<Place> left behind -- both Places and disk are 19421017. Same precedent, same stance: a user-authored value change is RECORDED as canon, never reverted and never \"fixed\". Added B54 (sprint + dash). PURE movement-feel knobs shared by both Places: WalkSpeed/SprintSpeed (sprint is a TOGGLE, both Places) and the LOBBY-only dash (DashSpeed/Duration/Cooldown). DashPlaces gates the dash by Place name the same way SettingsConfig's Scope gates a settings row -- a Place difference is a FIELD, never a second file. B66: dash extended to the GAME (user overrode their own B54 Lobby-only call; revert = set DashPlaces.Game = nil) and DOUBLE JUMP added for both Places. 19421017 -> 3598e7d0.",
+      "comment": "9c7cbd32 -> 19421017 at B58 2026-09-14 (AD-Integration): the USER re-tuned movement feel in the LOBBY Studio -- SprintSpeed 26 -> 56 and DashSpeed 70 -> 300, two values, nothing else. AD-Integration did not author this; the bootstrap drift check caught the Lobby at 40/41, the user confirmed the change was theirs and said to KEEP it, and B58 RECORDED it: shared/src was rebuilt from the disk canon with exactly those two edits and PROVED byte-identical to the live Lobby copy by hash (2350 bytes, 19421017) before anything was written. The GAME was then brought to the same bytes in the same session, so unlike B22's ItemCatalog there is no stale deployed.<Place> left behind -- both Places and disk are 19421017. Same precedent, same stance: a user-authored value change is RECORDED as canon, never reverted and never \"fixed\". Added B54 (sprint + dash). PURE movement-feel knobs shared by both Places: WalkSpeed/SprintSpeed (sprint is a TOGGLE, both Places) and the LOBBY-only dash (DashSpeed/Duration/Cooldown). DashPlaces gates the dash by Place name the same way SettingsConfig's Scope gates a settings row -- a Place difference is a FIELD, never a second file. B66: dash extended to the GAME (user overrode their own B54 Lobby-only call; revert = set DashPlaces.Game = nil) and DOUBLE JUMP added for both Places. 19421017 -> 3598e7d0. B92: the USER re-tuned WalkSpeed 16 -> 14 and SprintSpeed 56 -> 42 in the LOBBY; confirmed theirs and RECORDED, the Game brought to the same bytes. 3598e7d0 -> f09bb47f.",
       "kind": "module"
     },
     "MovementController": {
       "file": "shared/src/MovementController.luau",
-      "hash": "09bc0fd4",
+      "hash": "79d71a7f",
       "owner": "game",
       "deployPath": "StarterPlayer.StarterPlayerScripts.Client.MovementController",
       "deployed": {
-        "Game": "09bc0fd4",
-        "Lobby": "09bc0fd4"
+        "Game": "79d71a7f",
+        "Lobby": "79d71a7f"
       },
-      "comment": "Added B54. Sprint (BOTH Places, a TOGGLE) + dash (LOBBY only, gated by MovementConfig.DashPlaces). LocalScript, hashed as source -- same precedent as UIKitBootstrap/SettingsUI. The FIRST ContextActionService use in the project: one BindAction carries keyboard + gamepad + a generated mobile touch button, so there is no per-platform branch. Deployed at an IDENTICAL path in both Places (the ClientSettings precedent), which is why promotion cost zero consumer edits. B66: double jump on the ordinary jump input (UserInputService.JumpRequest, so Space/gamepad A/mobile all work with no extra binding), once per airborne stretch, re-armed on landing; dash now also bound in the Game. e2668274 -> 8e995f32. B91: the player character's own animations (Walk into both Animate walk/run slots; sprint-Run, DoubleJump, Dash as owned tracks), ids from the new shared CharacterAnimConfig. 8e995f32 -> 09bc0fd4.",
+      "comment": "Added B54. Sprint (BOTH Places, a TOGGLE) + dash (LOBBY only, gated by MovementConfig.DashPlaces). LocalScript, hashed as source -- same precedent as UIKitBootstrap/SettingsUI. The FIRST ContextActionService use in the project: one BindAction carries keyboard + gamepad + a generated mobile touch button, so there is no per-platform branch. Deployed at an IDENTICAL path in both Places (the ClientSettings precedent), which is why promotion cost zero consumer edits. B66: double jump on the ordinary jump input (UserInputService.JumpRequest, so Space/gamepad A/mobile all work with no extra binding), once per airborne stretch, re-armed on landing; dash now also bound in the Game. e2668274 -> 8e995f32. B91: the player character's own animations (Walk into both Animate walk/run slots; sprint-Run, DoubleJump, Dash as owned tracks), ids from the new shared CharacterAnimConfig. 8e995f32 -> 09bc0fd4. B92: jump / double jump / dash sounds + VFX from the authored RS.CharacterFX, played locally and relayed to other clients via RS.Remotes.CharacterFX. 09bc0fd4 -> 79d71a7f.",
       "kind": "module"
     },
     "CharacterAnimConfig": {
       "file": "shared/src/CharacterAnimConfig.luau",
-      "hash": "38000a8c",
+      "hash": "550dd460",
       "owner": "game",
       "deployPath": "ReplicatedStorage.Configs.Global.CharacterAnimConfig",
       "deployed": {
-        "Game": "38000a8c",
-        "Lobby": "38000a8c"
+        "Game": "550dd460",
+        "Lobby": "550dd460"
       },
       "kind": "module",
-      "comment": "Added B91 (AD-Game, manifest 43 -> 44). The PLAYER character's animation ids, ONE Id field per clip (Walk/Run/Jump/Fall/Idle/DoubleJump/Dash); empty = Roblox default or nothing. PURE, read only by MovementController. A separate module from MovementConfig on purpose (user, B91): clips are added one at a time, and each addition should not re-hash the movement-feel numbers. One set for BOTH Places; a per-Place field can be added later additively."
+      "comment": "Added B91 (AD-Game, manifest 43 -> 44). The PLAYER character's animation ids, ONE Id field per clip (Walk/Run/Jump/Fall/Idle/DoubleJump/Dash); empty = Roblox default or nothing. PURE, read only by MovementController. A separate module from MovementConfig on purpose (user, B91): clips are added one at a time, and each addition should not re-hash the movement-feel numbers. One set for BOTH Places; a per-Place field can be added later additively. B92: the USER filled Run (120571919442157, Speed 1.5) and Dash (89258902903203, FitToDash false) in the LOBBY; recorded, Game synced. 38000a8c -> 550dd460."
+    },
+    "CharacterFXRelay": {
+      "file": "shared/src/CharacterFXRelay.luau",
+      "hash": "5fc0e42c",
+      "owner": "game",
+      "deployPath": "ServerScriptService.Server.CharacterFXRelay",
+      "deployed": {
+        "Game": "5fc0e42c",
+        "Lobby": "5fc0e42c"
+      },
+      "kind": "module",
+      "comment": "Added B92 (AD-Game, manifest 44 -> 45). Script, hashed as source (the MovementController precedent). Forwards a player's Jump / DoubleJump / Dash FX to every OTHER client (the sender already played them locally). Only those three names pass; rate-limited per player per action; touches no gameplay state. Needs RS.Remotes.CharacterFX (authored RemoteEvent, both Places)."
     },
     "SettingsService": {
       "file": "shared/src/SettingsService.luau",
