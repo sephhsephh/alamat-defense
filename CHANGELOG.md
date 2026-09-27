@@ -1,4 +1,20 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-27 [game] B99 -- AD-UI: **console in a match -- select towers and open the side panels from the pad.**
+
+Game-local, no canon change. Edited: `TowerSelectionUI`, `HudPanels`, `UnitManagerUI`; tags/attributes in StarterGui.
+
+**PAD MAP IN A MATCH (all new except the tower-panel keys, which already existed):**
+- **R2** -- select the tower at the CENTRE of the screen (aim with the camera, like pad placement); R2 on empty ground deselects.
+- **L1** -- Unit Manager (the pad's F). **L2** -- Stage Info (the pad's C). Both only while no menu owns pad focus.
+- **D-pad Left/Right** -- pick a unit to place (B97); **A / X / B** while placing -- place / rotate / cancel (B97).
+- With a tower selected its panel is tagged `GamepadMenu`, so the stick walks every button; **`UpgradeButton` has `GamepadDefault = true`**, so A still means Upgrade.
+
+**⚠ THE D-PAD UP/DOWN ARE NOT OURS:** Studio refuses `DPadUp` as "permanently bound to a CoreGUI core action", so the panels went on L1/L2 instead. (D-pad Left/Right were accepted and work.)
+
+**Tag fixes:** B97 had tagged `UnitManager.Panel` and `TowerSelection.Panel` -- both are LEGACY frames that never show; the live containers are `UnitManager.Root` and `TowerSelection.Root` (B86/B87). Retagged, plus `MatchHUD.StageInfoPanel`. Game now has 8 tagged roots.
+
+**Proven live (virtual pad keys):** R2 aimed at an Archer -> `TowerSelection.Root` visible; R2 at empty ground -> hidden. L1 -> `UnitManager.Root` visible at x 0.995; L2 -> `StageInfoPanel` open and the Unit Manager closed (one side panel at a time, B89). Real-controller focus behaviour still unverified (the tool sends pad keys as keyboard input).
+
 ## 2026-09-27 [both] B98 -- AD-Game: **cleanup pass -- the Knight track flood is FIXED, retired scripts leave the client.**
 
 No shared canon touched (manifest 47). Edited: Game `SSS.Server.Towers.RigAnimator`. Moved (reversible, NOT deleted): Game `Client.UI.Hotbar_RETIRED_2026-08-06` + `Client.UI.NotificationController_RETIRED_2026-08-20`, Lobby `StarterPlayerScripts.NotificationController_RETIRED_2026-08-20` -> `ServerStorage.Archive.Retired_B98` in each Place (attribute `MovedFrom` records where each came from).
