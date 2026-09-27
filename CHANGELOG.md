@@ -1,4 +1,20 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-27 [game] B96 -- AD-Game + AD-Enemies: **Hill and Hybrid towers, and the first flying enemy.**
+
+Game-local, no shared canon (manifest 45). New: `RS.Shared.TowerPlacementRules` (Game-local), `Configs.Enemies.Common.Manananggal` + `ServerStorage.Enemies.Common.Manananggal` (PLACEHOLDER = tinted Grunt rig), TestMap `TowerZones.Hill1` / `Hill2` (PLACEHOLDER 8x5x8 rock platforms, `ZoneType = "Hill"`). Edited: `PlacementValidator`, `AutoPlayService`, `PlacementController`, `TargetingSystem`, `TowerController`, `AttackSequencer`, `AttackResolver`, `EnemyController`, `SummonController`, `EnemyConfigRegistry`, `Stage1_Act1_Waves`, every tower config (+`Placement`).
+
+**THE RULES (user, B94: "Anime-TD style"), ONE MODULE for ghost, server, AutoPlay and combat:** `TowerConfig.Placement` = Ground | Hill | Hybrid (missing = Ground) decides WHERE; `CanHitFlying` (missing = derived: Ground no, Hill/Hybrid yes) decides WHAT. Two separate fields on purpose. A zone is Ground unless it has `ZoneType = "Hill"` (or a `Hill*` name); zones may overlap and the one whose TOP is nearest the point wins, so a hill top on the ground zone reads Hill.
+
+**DEFAULT ASSIGNMENTS (my call, one field each -- CHANGE FREELY):** Knight / Warchief / Necromancer = **Ground**; Archer / Babaylan / Farm = **Hybrid**; Mage / Meteor = **Hill**. So Mage and Meteor now need a hill: on TestMap that means the two placeholder hills.
+
+**FLYING:** an enemy with `Behaviors = { "Flying" }` (or `Flying = true`) rides `FlyHeight` (default 7) above the path and gets a `Flying` attribute. `TargetingSystem` skips it for a tower with `CanHitFlying = false` (new optional arg, nil = old behaviour for every other caller), `AttackResolver` lets a Ground unit's blast pass under it, and summons ignore it. Abilities (Nuke, StatusBurst) still hit everything. `Manananggal` (80 hp, speed 1.2) joins Act 1 waves 3/7/11/14 (2/3/4/5) -- remove a `flyers(...)` entry to take it out.
+
+**Rejections:** server reason `WrongTerrain`; the ghost says "Mage can only be placed on a Hill" / "Knight can only be placed on the Ground". AutoPlay now also samples a 3x3 grid on every Hill top.
+
+**Proven live (AutoPlay, TestMap):** 5 flyers spawned at **8.1 studs** over the ground, **5 killed, 0 leaked** (the Archer is the only air-capable damage dealer in that loadout). Towers carried `Placement`/`CanHitFlying` attributes as assigned; AutoPlay put Farms (Hybrid) ON the hills (y 6.6). Rules check on the live map: Knight hill=WrongTerrain / ground=ok; Mage hill=ok / ground=WrongTerrain; Archer both ok. No new warnings (only the known Knight 64-track flood + UnitStatsCatalog note).
+
+**NOT PROVEN:** that a Knight never damages a flyer -- enforced in code (targeting + blast filter), not attributed per tower live.
+
 ## 2026-09-27 [game] B95 -- AD-Game: **placement is precise next to the path, and it helps you hug the edge.**
 
 Game-local, no canon change. Edited: `RS.Shared.PathClearance` (Game-local), `Client.Placement.PlacementController`. New authored: `StarterGui.PlacementControls.Panel.PopScale` (UIScale).
