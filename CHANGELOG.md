@@ -1,4 +1,14 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-27 [both] B93 -- AD-Game: **the custom walk vanished in the Lobby -- a Place SETTING, not code. Now it can't fail silently.**
+
+**CANON:** `MovementController` `79d71a7f` -> **`162d449a`** (both Places + disk). Manifest count unchanged (45). **USER REPUBLISHES BOTH PLACES.**
+
+**ROOT CAUSE, MEASURED:** in the LOBBY, `StarterPlayer.AllowCustomAnimations` reads **false** (the Game reads true). Roblox's Animate (`configureAnimationSet`, line ~298) only reads its config children when that flag is on; otherwise it builds its OWN `Animation` instances from built-in ids. Live proof: `walk.WalkAnim` still said `140055950289677`, but the tracks actually playing were `walk:507777826` / `run:507767714` with **nil-parent** Animations -- Animate's fallback. Run / Dash kept working because MovementController plays those itself.
+
+**THE PROPERTY IS NOT SCRIPT-WRITABLE** (`lacking capability RobloxScript` from execute_luau), so it cannot be fixed from code. **USER ACTION:** Lobby -> Game Settings -> Avatar -> Animation -> Player Choice (whatever makes `AllowCustomAnimations` true -- the Game Place is the working reference). Nothing in code changed WHAT plays.
+
+**THE SAFETY NET:** `setupCharacterAnims` now reads the flag and warns ONCE per session when it is off: `[DIAG] CharacterAnim: StarterPlayer.AllowCustomAnimations is OFF in this Place -- ...`. Proven live in the Lobby (printed once, next to the ready line); the Game prints nothing.
+
 ## 2026-09-27 [both] B92 -- AD-Game: **sounds + effects for jump, double jump and dash -- authored in Studio, seen by everyone.**
 
 **CANON: manifest 44 -> 45.** NEW shared `CharacterFXRelay` (Script, `5fc0e42c`, `SSS.Server`, BOTH Places + `shared/src/`). `MovementController` `09bc0fd4` -> **`79d71a7f`**. **USER'S OWN EDITS, RECORDED (user confirmed, B92):** `MovementConfig` `3598e7d0` -> **`f09bb47f`** (WalkSpeed 16 -> 14, SprintSpeed 56 -> 42) and `CharacterAnimConfig` `38000a8c` -> **`550dd460`** (Run `120571919442157` at Speed 1.5; Dash `89258902903203`, `FitToDash = false`). The user made them in the LOBBY only; the Game was brought to the same bytes this session. `HashShared` (both Places) + `tools/hash_shared.luau` +`CharacterFXRelay`. New authored (Place-local, BOTH Places): `RS.CharacterFX` + `RS.Remotes.CharacterFX` (RemoteEvent). **USER REPUBLISHES BOTH PLACES.** Docs: **`docs/systems/movement.md`** ("Movement FX").

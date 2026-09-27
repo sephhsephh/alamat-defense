@@ -154,6 +154,7 @@ local OWNED_SLOTS = { "Run", "DoubleJump", "Dash" }
 
 local idVerdict: { [string]: boolean } = {} -- asset id -> loads? Per SESSION: a bad id warns once.
 local rigWarned = false
+local allowWarned = false
 local ownedTracks: { [string]: AnimationTrack } = {}
 local animGen = 0 -- bumped per character, so a slow preload for a dead character never writes into the new one
 
@@ -207,6 +208,18 @@ local function setupCharacterAnims(character: Model, h: Humanoid)
 					.. " NO custom clip (Roblox defaults stay).", h.RigType.Name, CharacterAnimConfig.RigType))
 			end
 			return
+		end
+		-- B93: with StarterPlayer.AllowCustomAnimations OFF, Roblox's Animate skips every child we write
+		-- and plays its built-in defaults -- the custom walk vanished SILENTLY in the Lobby that way. The
+		-- property is not script-writable (Game Settings -> Avatar), so say it once instead.
+		local okAllow, allow = pcall(function()
+			return (game:GetService("StarterPlayer") :: any).AllowCustomAnimations
+		end)
+		if okAllow and allow == false and not allowWarned then
+			allowWarned = true
+			warn("[DIAG] CharacterAnim: StarterPlayer.AllowCustomAnimations is OFF in this Place -- Roblox's Animate"
+				.. " IGNORES the custom Walk/Jump/Fall/Idle ids and plays its defaults. Turn it on in Game Settings ->"
+				.. " Avatar (Animation: Player Choice). Run / DoubleJump / Dash are unaffected.")
 		end
 		local summary = {}
 		local animate = character:WaitForChild("Animate", 10)

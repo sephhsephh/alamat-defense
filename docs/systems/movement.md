@@ -92,3 +92,6 @@ Trails/Beams on for `ActiveTime`. Jump's `MuteStockSound = "Jumping"` silences R
 custom one is set. Dash's placeholder Trail needs `FaceCamera = true` (edge-on to the camera otherwise).
 Other players: client plays locally, then `RS.Remotes.CharacterFX` -> shared `CharacterFXRelay`
 (rate-limited, three action names only) -> every other client.
+
+**⚠ Walk/Jump/Fall/Idle need `StarterPlayer.AllowCustomAnimations = true`** (Game Settings -> Avatar; not
+script-writable). Off = Animate plays Roblox defaults and ignores our ids; the controller warns once (B93).
