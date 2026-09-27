@@ -56,7 +56,7 @@ everything untradeable at launch).
 - 🟡 Art: attack anim/VFX/sound ids placeholder; weapon grips approximate
 - ✅ Monetization (B48, AD-Meta): paid track = **permanent gamepass unlock**, WIRED. `BattlepassConfig.GamePassId` + `BattlepassService` ownership sync (`UserOwnsGamePassAsync` on load + `PromptGamePassPurchaseFinished`) + client `PromptGamePassPurchase`. `Owned` stays the one writer's field. **User creates the gamepass + sets the id.** 🔲 level-skip products (5/10/50) still unbuilt.
 - 🟡 Content: 1 map, 2 enemies, 8 towers, 1 stage — pipeline proven, content thin
-- 🔲 Enemy behaviors (Flying/Splitting/Shielding) · 🔲 Endless + BossRush modes
+- 🔲 Enemy behaviors (Flying = planned after placement, B94 plan / Splitting / Shielding) · 🔲 Endless + BossRush modes
 - 🔲 Persistence round-trip test (PENDING in STATE.md)
 - 💭 Spatial partitioning for enemy queries
 
@@ -804,6 +804,8 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
 - ✅ **Movement — B54.** Sprint TOGGLE on Shift/ButtonL3 in BOTH Places, dash on Q/ButtonR1 in the LOBBY only, via the project's FIRST `ContextActionService` use: ONE `BindAction` carries keyboard + gamepad + a generated mobile touch button, so there is **no per-platform branch**. `MovementConfig` + `MovementController` are shared canon; `AlwaysSprint` is settings row 7. Animations DEFERRED (user). `movement.md`.
 - 🟡 **Character animations — B91.** Shared `CharacterAnimConfig` (one `Id` per clip) + `MovementController`. Walk DONE (`140055950289677`); Run (sprint) / Jump / Fall / Idle / DoubleJump / Dash wired and waiting for the user's clips (empty = default / nothing).
 - 🟡 **Movement FX — B92.** Jump / double jump / dash sounds + VFX, authored under `RS.CharacterFX`, relayed to other players. Placeholder dash trail + double-jump puff DONE; SoundIds and the user's own VFX still to come.
+- ✅ **Enemy names + kill FX + summon walk — B94.** Name over the bar (Simplify hides it), authored `RS.EnemyDeathFX` (placeholder burst), summons walk and slowed (Charger 10 / Fighter 6).
+- 🔲 **NEXT, in the user's order (B94):** placement precision + feel -> Hill / flying / Hybrid towers (Anime-TD style) -> console + mobile foundation (reticle placement) -> cleanup audit.
 - 🔲 Event framework (event banner + EventTokens + event quests bundle; Pre-Release first)
 - 🔲 News/update board + banner showcase on join
 - 🔲 Titles (equip UI + overhead) · 🔲 Skins (catalog → model swap both Places)

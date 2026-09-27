@@ -1,4 +1,16 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-27 [game] B94 -- AD-Game + AD-UI + AD-Enemies: **enemy names over their bars, a kill effect you can re-author, and summons that walk.**
+
+Game-local, **no shared canon touched (manifest still 45).** New authored: `RS.UITemplates.EnemyHealthbar.NameText`, `RS.EnemyDeathFX.Default`, `RS.Remotes.EnemyKilled` (RemoteEvent). New script: `StarterPlayerScripts.Client.VFX.EnemyDeathFX` (LocalScript). Edited: `FloatingHealthbars`, `EnemyHealthbars`, `EnemySpawner`, `SummonController`, `Configs.Summons.{Charger,Fighter}`.
+
+**PLAN AGREED WITH THE USER (B94), one batch per session, in this order:** B94 quick wins (this) -> **placement precision + feel** -> **Hill / flying / Hybrid** (Anime-TD style: Ground = ground placement, hits ground; Hill = hill zones, hits ground AND flying; Hybrid = either, hits both -- stored as TWO fields, placement + CanHitFlying) -> **console + mobile foundation** (gamepad: center-screen reticle places towers, A place / B cancel / D-pad+bumpers pick slots; menus on Roblox's gamepad UI selection) -> **cleanup audit**. New standing rule in CLAUDE.md: every new feature ships for PC + console + mobile.
+
+**ENEMY NAMES.** An authored `NameText` above the bar shows the enemy's `DisplayName` attribute (EnemyController already wrote it). `FloatingHealthbars` gained `ShowName`; enemies pass true, summons don't. **Simplify Health Bar hides the name together with the HP number** (user ask). Measured live: 3 of 3 Grunts `name=Grunt nameVisible=true`. Bosses keep the centre-screen bar only.
+
+**KILL EFFECT, RE-AUTHORABLE.** `RS.EnemyDeathFX.Default` = `Sound` (empty = silent) + `VFX` (an Attachment `Burst` with a smoke puff + red sparks placeholder). An optional `RS.EnemyDeathFX.<EnemyId>` folder (e.g. `FarmBoss`) overrides it for one enemy. Same rules as `RS.CharacterFX` (`EmitCount` = burst, `ActiveTime`, self-cleaning). **⚠ THE FIRST DESIGN WATCHED `Health` REACH 0 AND FIRED ZERO TIMES in 40 s of kills:** `EnemySpawner` destroys the model in the same frame it dies, so the final attribute never replicates. It is now a remote: `EnemySpawner`'s `Died` handler fires `Remotes.EnemyKilled(enemyId, position)` (kills only, never leaks). Measured: **32 effects / 64 emitters in 35 s of AutoPlay**, 0 carriers left afterwards.
+
+**SUMMONS WALK AND ARE SLOWER.** `SummonController` plays `Config.Animations.Walk` through `RigAnimator` (looped, server-owned, replicates free) at game speed, and **freezes it (speed 0) while a Fighter stands still to attack**. Placeholder id = Roblox's default R15 walk `913402848` (the Grunt uses it too) -- one field per summon to swap. Speeds (user: too fast): **Charger 16 -> 10, Fighter 9 -> 6**. Measured: live Chargers playing `913402848@1.00`.
+
 ## 2026-09-27 [both] B93 -- AD-Game: **the custom walk vanished in the Lobby -- a Place SETTING, not code. Now it can't fail silently.**
 
 **CANON:** `MovementController` `79d71a7f` -> **`162d449a`** (both Places + disk). Manifest count unchanged (45). **USER REPUBLISHES BOTH PLACES.**
