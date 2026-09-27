@@ -36,6 +36,14 @@ SettingsConfig.Defaults = {
 	SkipRevealAnim = false,    -- skip the reward reveal animation and show the result at once
 	AlwaysSprint = false,      -- B54: pin sprint ON so the sprint key never has to be pressed
 	SkipTraitRerollAnim = false, -- B73: skip the trait-reroll spin AND the good-trait reveal
+	-- B87: the Unit Manager's AUTOMATION row. These are the four standing rules the player sets
+	-- once and expects the match to obey without touching a unit again. They live HERE rather than
+	-- in a match-scoped table precisely so they SURVIVE the match -- "auto-upgrade new units" that
+	-- forgets itself every wave is worse than not having it.
+	StrictUpgradeOrder = false,     -- auto-upgrade waits for priority 1 instead of skipping to 2
+	StrictQueueOrder = false,       -- queued targets are served one tower at a time, in order
+	AutoUpgradeNewUnits = false,    -- a newly placed unit starts with Auto Upgrade already on
+	AutoAbilitiesNewUnits = false,  -- a newly placed unit starts with auto-cast already on
 }
 
 -- *** KEY-NAME NOTE: `SoundVolume` IS THE SFX SLIDER. DO NOT RENAME IT TO `SFXVolume`. ***
@@ -65,6 +73,13 @@ SettingsConfig.Schema = {
 	{ Key = "AlwaysSprint", Type = "boolean", Label = "Always Sprint", Category = "Game" },
 	{ Key = "AutoSkipWave", Type = "boolean", Label = "Auto Skip Wave", Category = "Game", Scope = "GameOnly" },
 	{ Key = "ShowHealthBar", Type = "boolean", Label = "Show Health Bar", Category = "Game", Scope = "GameOnly" },
+	-- B87 AUTOMATION. The Unit Manager carries its own buttons for these four, and the rows here are
+	-- THE SAME SAVED KEYS, so the two surfaces can never disagree -- and a Preference that is not in
+	-- this Schema is dropped by Sanitize, so they have to be here to persist at all.
+	{ Key = "StrictUpgradeOrder", Type = "boolean", Label = "Strict Upgrade Order", Category = "Game", Scope = "GameOnly" },
+	{ Key = "StrictQueueOrder", Type = "boolean", Label = "Strict Queue Order", Category = "Game", Scope = "GameOnly" },
+	{ Key = "AutoUpgradeNewUnits", Type = "boolean", Label = "Auto-Upgrade New Units", Category = "Game", Scope = "GameOnly" },
+	{ Key = "AutoAbilitiesNewUnits", Type = "boolean", Label = "Auto Abilities on New Units", Category = "Game", Scope = "GameOnly" },
 	-- The reward reveal lives in the Lobby (ObtainRewardsGUI), so the toggle belongs there. This is
 	-- blueprint B3's original "skip-anim toggle in Settings" ask, finally given a home.
 	{ Key = "SkipRevealAnim", Type = "boolean", Label = "Skip Reward Animation", Category = "Game", Scope = "LobbyOnly" },

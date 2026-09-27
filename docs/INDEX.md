@@ -27,6 +27,22 @@
   the animation-marker contract, melee movement, five worked examples and the add-a-tower checklist (B78).
 - `hotbar.md` — **AD-UI canon, BOTH Places**: the user's authored hotbar (B77) and the 9-tier palette it
   brought with it. Read before touching `TierConfig` colours or `UIKit.Hotbar`.
+- `stage-info.md` — **AD-UI + AD-Game, GAME**: the B88 sectioned Stage Info — session vs profile lifetimes,
+  the enemies-seen index (no schema bump), why enemy portraits are blank, and why there is no stage pity.
+- `unit-manager.md` — **AD-UI + AD-Game, GAME**: the B87 card grid — per-card lock / priority / sell,
+  Auto Upgrade with its priority number, the targeting dropdown, and the Automation row (four saved
+  SettingsConfig preferences, not match state). Read before touching Sell All or auto-upgrade order.
+- `unit-selection.md` — **AD-UI + AD-Game, GAME**: the selected-unit panel (B86) — portrait viewport, current-to-next
+  stat rows, the live combat tiles (and why DPS is theoretical while eDPS is measured), the clickable upgrade bar
+  with its colour code and click-buys/hold-queues rule, and the shared tooltip system.
+- `match-hud.md` — **AD-UI + AD-Game, GAME**: the B81 reference-layout match HUD (stat bar, wave banner, pinned quests,
+  stage tag, Stage Info, placeholders), **Auto Play**, the no-building-on-`PathDesigns` rule, the placement ghost
+  and the **boss health billboard** (B84, authored `RS.UITemplates.BossHealthbar`).
+- `tower-vfx.md` — **AD-Game + art, GAME**: the per-tower VFX template tree (B82) — Release / Telegraph /
+  Projectile / Impact per tower and per attack, the attach modes, the fallback order, and why Impact/Telegraph
+  anchor at the target's FEET (B84). Read before authoring effects.
+- `match-audio.md` — **AD-Game, GAME**: every match sound (B81) — wave tick, next wave, boss warning + boss BGM, kills,
+  cash, placement — and the per-hit `ReleaseSound` / `Projectile.Sound` / `ImpactSound` attack sounds.
 - `hud-currencies.md` — **AD-UI, LOBBY**: the configurable HUD currency bar (B76) — what may be pinned,
   the 3-slot cap, `HudCurrencyConfig`/`HudCurrencyService`, and why an item grant now pings `CurrencyChanged`.
 - `match-end.md` — **AD-Game, GAME**: the B75 match-end item preview + results screen, the stats it reads, and

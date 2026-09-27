@@ -121,11 +121,11 @@ and Archer with its "Godly" trait chip; clicking slot 1 started placement (ghost
 ## B79 — the slot is never still
 
 **The viewports move now.** Every slot (and the hover preview) calls `UIKit.UnitCard.playIdle` on the
-model it shows. Until B79 that loaded and played a track and the rig still stood there, because **a
-ViewportFrame renders but does not simulate** — nothing advances an Animator inside one. `playIdle`
-now steps it by hand (`Animator:StepAnimations(dt)` on `RenderStepped`, once per Animator, released
-when the rig leaves the DataModel). A rig with no `IdleAnim` attribute plays
-`UnitCard.DefaultIdleAnim` (`rbxassetid://507766666`) instead of standing.
+model it shows. The rigs stood still because none carried an `IdleAnim`, so nothing played; a rig
+with no `IdleAnim` now plays `UnitCard.DefaultIdleAnim` (`rbxassetid://507766666`).
+⚠ **CORRECTED B81:** B79 also added an `Animator:StepAnimations` loop, believing a ViewportFrame never
+advances an Animator. It does, for a rig inside a `WorldModel` — and `StepAnimations` is plugin-only,
+so it threw every frame in a real client. Removed (`UIKitUnitCard` `51f55122 -> 20f03a39`).
 
 **⚠ The rigs must exist in BOTH Places (user rule).** The Lobby reads `RS.UnitModels`, the Game reads
 `RS.TowerModels`. A unit present in one and missing in the other previews as `Placeholder` on that
@@ -152,3 +152,84 @@ while the pointer is on it, and two writers on one property is a fight you see a
 authored idle (`rbxassetid://125610139973073`), flat COMMON tier at offset 0.000 and breathing.
 
 **Proven live (Game):** slot 1 Archer rot 304.7→317.9 while slot 2 Necromancer ran the OTHER way (108.6→95.8) and slot 3 Knight faster again (318.7→301.4) — three rates, two directions, in one 1.5s sample; Necromancer (multi-stop MYTHIC) scrolled its offset 0.605→0.328 while the two flat tiers held 0.000 and breathed; Archer's rig moved 0.087 studs in that window, Knight's barely at all on its own subtle authored idle.
+
+## The selected slot lifts (B85, GAME only)
+
+User: "when a slot is selected, the selected card will slight shift upwards, add animation when a
+hotbar is selected and deselected."
+
+The selected card rises **0.14 × its own height** (≈23px at 1080p), on `Back/Out` over 0.18s so it
+overshoots a touch and settles, and drops back on `Quad/Out` over 0.12s — a little faster down than
+up. It also takes `ZIndex + 1` while lifted, so it draws over its neighbours and over the "YOUR
+UNITS" banner, and the authored ZIndex is restored on the way down. Nothing clips it: neither
+`HotbarFrame`, `Slots` nor the slot itself has `ClipsDescendants` set.
+
+It hangs off `PlacementController.StateChanged` — the same signal the B83 placed-unit counter uses —
+so click, the 1–6 keys and every route out of placement all move it, and the counter and the lift can
+never disagree about which slot is armed.
+
+### ⚠ The `UIListLayout` owns slot positions, so the lift needs a bake first
+
+**Writing `Position` on a slot does nothing while the authored `UIListLayout` is parented, and nor
+does writing `AnchorPoint`** — both measured live, the slot stayed at the same `AbsolutePosition`
+through each. A `UIScale` *does* grow the card, but the layout then reflows the row and shoves the
+neighbours sideways (10px, measured), which is not a lift.
+
+So `HotbarController.freeSlots()` **bakes the layout's own result** rather than replacing it:
+
+1. wait until the row has actually been laid out (`AbsoluteSize > 0` — it is 0 for a frame or two at
+   boot, and a GUI that boots mid-match must still get its turn, so it retries),
+2. read each slot's laid-out centre and convert it to a **scale** position inside `Slots`,
+3. **detach** the `UIListLayout` (kept in a local, never destroyed),
+4. write the scale positions onto the slots — which only sticks once step 3 has happened.
+
+At rest the row is **pixel-identical** to what the layout produced, and it stays responsive because
+the layout was scale-based end to end (slots `0.15` wide, padding `0.01`): a scale position is
+exactly what it was computing. Proven live — the bake produced `0.10 / 0.26 / 0.42 / 0.58 / 0.74 /
+0.90`, and slots 2 and 3 landed on `672.72` and `818.64`, the same pixels they occupied before.
+
+**The authored `UIListLayout` in StarterGui is never touched** — only the live PlayerGui copy's is
+detached — so the design in Studio is still the thing that ships: change the padding or a slot's
+width there and the next bake reads the new result. The lift *distance* is the one measured value,
+so a resize recomputes that and nothing else; re-baking positions on resize would be wrong, because
+a slot that happened to be lifted would bake its lifted position as its resting one.
+
+**The Lobby does not get this** — it has no placement, so nothing ever selects a slot there, and its
+`UIListLayout` is left alone. This is Game-local controller code; the shared `UIKit.Hotbar` is
+untouched (it only ever *reads* `slotBtn.AbsolutePosition`, to park the hover preview — which means
+the preview follows a lifted card for free).
+
+**Proven live:** clicking the Archer lifted slot 1 by 23.1px to `ZIndex 2` with its counter showing a
+maxed red `1/1`, while slots 2–6 stayed at `845.5`; the card visibly cleared the banner in a
+screenshot, and everything returned to `845.5 / ZIndex 1` when placement ended.
+
+
+## The framing is shared canon now (B87)
+
+User: *"change the camera position of viewport frames to match the closeness and orientation of the
+ones in hotbar. not a wholebody view."*
+
+The hotbar's hand-posed camera is baked as `HotbarCamCFrame` / `HotbarCamFOV` / `HotbarModelPivot` on
+the `Slots` frame (because a `Camera` inside `StarterGui` does not replicate — that story is above).
+B87 lifted the reusable part of that pose into **`UIKit.UnitCard.Framing`**, so every rig preview in
+both Places frames the same way:
+
+```
+Relative = HotbarModelPivot:ToObjectSpace(HotbarCamCFrame)   -- 1.16 studs out, 0.70 up
+FieldOfView = 70
+```
+
+`UnitCard.viewport` pivots the model to an anchor and hangs the camera off it by `Relative` — exactly
+what the hotbar's own `showModelKeepCamera` does. The old framing computed a distance that fitted the
+whole bounding box, which is a full-body shot by construction.
+
+⚠ **It is a fixed pose, not a fit.** A rig far from standard R15 proportions will frame differently.
+The fix is the same one the hotbar already needs: re-pose the authored camera, re-bake, and paste the
+new components into `UnitCard.Framing`.
+
+**The hotbar itself is unaffected** — it keeps using its own baked camera directly and never called
+`UnitCard.viewport`.
+
+⚠ **Roblox's FOV is VERTICAL**, so a viewport's aspect ratio still changes how the same camera reads:
+a wide frame shows the same unit with more empty room beside it. Match the slot's 0.83 aspect if you
+want a card to look like a hotbar slot.

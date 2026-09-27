@@ -141,7 +141,8 @@ same trip with no travel time.
 4. **Fill `Attacks`**: one profile per distinct attack, each with its hit list. Weights sum to 1.
 5. **Fill `Upgrades`**: numbers per tier; name an `Attack` on tier 1 and again wherever it changes.
 6. **Author the clips** and put the marker names from step 4 in them. Set `IdleAnim` on the display
-   rig (an attribute) so previews animate.
+   rig (an attribute) so previews animate. **Author its VFX folder** at
+   `VFXTemplates.Towers.<Id>` when you have art — until then it plays the house defaults (`tower-vfx.md`).
 7. **Price it** in `UnitStatsCatalog` (`Costs`) — the validator at boot checks the cache against the
    live config, so a mismatch is caught immediately.
 8. **Boot the Place.** `[TowerValidate]` prints one line: either OK, or exactly what is wrong.
@@ -171,7 +172,8 @@ produced and how it picked its target.
 | `Server.Towers.TargetingSystem` | `SelectTarget` (one) and `SelectTargets` (N, for `Fresh` hits). |
 | `Server.Towers.RigAnimator` | The only place that touches Animators. Accepts number or string ids. |
 | `ServerScriptService.TowerAttackValidate` | Boot-time check of every config. |
-| `Shared.UIKit.UnitCard.playIdle` | Plays a model's `IdleAnim` inside a ViewportFrame (both Places) and STEPS its Animator every frame; falls back to `UnitCard.DefaultIdleAnim`. |
+| `Shared.UIKit.UnitCard.playIdle` | Plays a model's `IdleAnim` inside a ViewportFrame's WorldModel (both Places); falls back to `UnitCard.DefaultIdleAnim`. |
+| `Client.Audio.GameSfx` | Plays `ReleaseSound` / `Projectile.Sound` / `ImpactSound` as 3D sounds (B81; see `match-audio.md`). |
 
 ## 8. Gotchas paid for in blood
 
@@ -179,14 +181,47 @@ produced and how it picked its target.
   the moment an attack moved into a named profile those tier fields vanished and the tower silently
   fell back to the instant path — no animation, no multi-hit, no VFX. It now asks `AttackProfile.Has`.
 - **A `Camera` inside `StarterGui` does not replicate** (B77) — viewport framing rides as attributes.
-- **A ViewportFrame RENDERS but does not SIMULATE** (B79). Loading and playing an idle track on a rig
-  inside one is not enough: nothing advances the Animator, so the rig stands frozen on frame 0 — the
-  user saw this as "the units in viewport frames are just standing". `UnitCard.playIdle` now calls
-  `Animator:StepAnimations(dt)` every `RenderStepped` for as long as the rig is in the DataModel.
-  Anything else that animates a rig inside a viewport must do the same.
+- **A viewport rig animates only inside a `WorldModel`** (corrected B81). B79 claimed a ViewportFrame
+  never advances an Animator and added a `StepAnimations` loop — wrong: a rig in a WorldModel is
+  animated by the engine, and `StepAnimations` is **plugin-only** (it threw every frame in a real
+  client). The units "just standing" was simply no `IdleAnim` on any rig; the default idle fixed it.
+  If a preview will not animate, check for the WorldModel — never add a stepper.
 - **A rig with no `IdleAnim` falls back to `UnitCard.DefaultIdleAnim`** (stock R15 idle, B79), so an
   unauthored unit previews as a breathing character rather than a statue. Authoring `IdleAnim`
   replaces it; there is no third state.
 - **Weights that do not sum to 1** make a tower quietly stronger or weaker than its card. The
   validator catches it at boot.
 - **A hit with neither `Marker` nor `At` never fires.** The validator catches that too.
+
+
+---
+
+## 9. Sounds on an attack (B81)
+
+Any hit may carry sounds — all optional, all cosmetic:
+
+```lua
+ReleaseSound = "Atk_MagicCast",                                   -- at the tower, on release
+Projectile   = { Speed = 60, VFX = "MageOrb", ArcHeight = 8, Sound = "Atk_Fireball" }, -- flies with it
+ImpactSound  = "Atk_Explosion",                                   -- where the hit lands
+```
+
+Each value is the **name of a Sound under `SoundService.SFX`** (recommended: one id, tuned in Studio)
+or an **asset id**. `ProjectileSound` on the hit equals `Projectile.Sound`. They play even with VFX
+off. The Mage is the worked example. Full list of match sounds: `match-audio.md`.
+
+## 10. VFX on an attack (B82)
+
+Effects are AUTHORED, never coded. A hit's `ReleaseVFX` / `TelegraphVFX` / `ImpactVFX` and its
+`Projectile.VFX` name a template in `ReplicatedStorage.VFXTemplates`; naming nothing falls back to
+the tower's own folder and then the house defaults, so **a new tower looks alive before any art
+exists**. Full rules, attach modes and the authoring contract: `tower-vfx.md`. The boot line
+`[TowerVFX]` reports which ids resolved to a template of their own.
+
+## 11. Placement rules a new tower inherits (B81)
+
+- **Never on the path.** `Shared.PathClearance` blocks any footprint touching the map's `PathDesigns`,
+  client ghost and server alike. Your `Footprint` is the radius it tests.
+- **FullAoe anchored on the tower** draws its attack shape as a circle out to `Range` when placing
+  and when selected — nothing to author.
+- **The ghost plays the idle** (`Idle.Anim` → rig `IdleAnim` → stock idle) while the player places it.

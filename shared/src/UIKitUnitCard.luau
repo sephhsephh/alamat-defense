@@ -53,14 +53,36 @@ local UnitStatsCatalog = loadOptional(
 
 -- ===== camera framing =====
 -- The ONE definition of how a unit is framed in a ViewportFrame. Tune here and every screen follows.
+-- ===== FRAMING (B87: the hotbar's close-up, everywhere) =====
+-- User: "change the camera position of viewport frames to match the closeness and orientation of the
+-- ones in hotbar. not a wholebody view."
+--
+-- The old framing FITTED THE WHOLE BOUNDING BOX -- it solved for a distance that put the entire rig
+-- on screen, which is a full-body shot by construction and drew every unit as a tiny doll. The
+-- hotbar never did that: the user posed ONE camera by hand and B77 baked its placement as attributes
+-- (`HotbarCamCFrame` / `HotbarCamFOV` / `HotbarModelPivot` on the Slots frame, because a Camera
+-- inside StarterGui does not replicate -- see UIKit.Hotbar for that whole story).
+--
+-- `Relative` below is that baked pose reduced to the only part worth reusing: where the camera sits
+-- RELATIVE TO THE MODEL'S PIVOT (`HotbarModelPivot:ToObjectSpace(HotbarCamCFrame)`). 1.16 studs out,
+-- 0.70 up, angled in -- a head-and-shoulders shot rather than a fit. Because it is relative, it
+-- reproduces the hotbar's look on any rig without caring where the viewport's world happens to be.
+--
+-- ⚠ IT IS A FIXED POSE, NOT A FIT. A rig much larger or smaller than a standard R15 body will frame
+-- differently -- that is the same deal the hotbar already lives with, and the fix is the same one:
+-- re-pose the hotbar camera and re-bake, then paste the new components here.
 UnitCard.Framing = {
-	FieldOfView = 40,
-	-- Pull back a little past the exact fit so a model never kisses the frame edge, plus a small
-	-- constant so a TINY model does not end up with the camera inside it.
-	DistancePadding = 1.3,
-	DistanceBias = 2,
-	-- Lift the camera a touch so the model is seen very slightly from above rather than dead-on.
-	HeightFraction = 0.05,
+	FieldOfView = 70,
+	Relative = CFrame.new(
+		-0.376606, 0.698460, -0.848190,
+		-0.913143, 0.096428, -0.396071,
+		0.000000, 0.971619, 0.236551,
+		0.407640, 0.216005, -0.887227
+	),
+	-- Where the model is put inside the viewport's own little world. Any anchor works (a WorldModel
+	-- has no relationship to the real Workspace); it exists so the camera has something to sit
+	-- relative to, and so two cards never disagree about where "here" is.
+	Anchor = CFrame.new(0, 0, 0),
 }
 
 -- Put `model` in `vf` and frame it. The caller owns WHERE the model came from -- that is the single
@@ -85,18 +107,12 @@ function UnitCard.viewport(vf: ViewportFrame?, model: Model?): boolean
 	end
 	model.Parent = wm
 
-	local cf, size = model:GetBoundingBox()
-	local center = cf.Position
-	-- Face the model the way it faces in the world. HumanoidRootPart first, PrimaryPart as the
-	-- fallback, and a fixed forward vector if it has neither -- a model with no root is still worth
-	-- showing from a sane angle rather than not at all.
-	local root = model:FindFirstChild("HumanoidRootPart") or model.PrimaryPart
-	local facing = root and (root :: any).CFrame.LookVector or Vector3.new(0, 0, -1)
-
 	local f = UnitCard.Framing
-	local maxExtent = math.max(size.X, size.Y, size.Z)
-	local dist = (maxExtent * 0.5) / math.tan(math.rad(f.FieldOfView / 2)) * f.DistancePadding
-		+ f.DistanceBias
+
+	-- Park the model on the anchor, then hang the camera off it by the baked relative pose. This is
+	-- exactly what the hotbar does (`m:PivotTo(anchor)` + the baked camera) -- the model's own pivot
+	-- is the reference point, so a rig is framed the same way wherever it was standing before.
+	model:PivotTo(f.Anchor)
 
 	-- A ViewportFrame has NO camera by default, so one is created on demand and reused. Without this
 	-- the frame renders empty and it looks exactly like a missing model.
@@ -106,7 +122,7 @@ function UnitCard.viewport(vf: ViewportFrame?, model: Model?): boolean
 		cam.Parent = vf
 	end
 	cam.FieldOfView = f.FieldOfView
-	cam.CFrame = CFrame.lookAt(center + facing * dist + Vector3.new(0, size.Y * f.HeightFraction, 0), center)
+	cam.CFrame = f.Anchor * f.Relative
 	vf.CurrentCamera = cam
 	return true
 end
@@ -214,40 +230,21 @@ function UnitCard.paintPrice(root: Instance?, towerId: string?)
 	end
 end
 
--- ===== IDLE IN A VIEWPORT (B78; MADE TO ACTUALLY MOVE AT B79) =====
+-- ===== IDLE IN A VIEWPORT (B78; default idle B79; stepper REMOVED B81) =====
 --
--- *** WHY THE UNITS JUST STOOD THERE (B79, user) ***
--- A ViewportFrame RENDERS a model, it does not SIMULATE it. Loading and playing a track on the rig's
--- Animator is not enough: nothing advances that track, so the rig sits frozen on frame 0 -- which is
--- exactly "the units in viewport frames are just standing". The fix is to step the Animator by hand,
--- every frame: `Animator:StepAnimations(dt)`. That is the one thing that makes a viewport rig move,
--- and it is why this needs a RenderStepped connection rather than a fire-and-forget Play().
---
--- The stepper is registered ONCE PER ANIMATOR (a weak-keyed set), so re-showing the same model does
--- not stack steppers, and it disconnects itself as soon as the rig leaves the DataModel.
-local RunService = game:GetService("RunService")
+-- *** WHY THE UNITS JUST STOOD THERE (B79, user) -- AND THE WRONG FIX THAT SHIPPED WITH IT ***
+-- The rigs stood still because none of them carried an `IdleAnim`, so `playIdle` returned early and
+-- nothing played at all. The DEFAULT IDLE below is the fix. B79 ALSO added a RenderStepped loop
+-- calling the Animator's StepAnimations method, on the belief that a ViewportFrame never advances an
+-- Animator. That was wrong twice over: a rig inside a `WorldModel` (which `viewport()` creates, and
+-- the hotbar slots use) is animated by the engine like any Workspace rig, and StepAnimations is a
+-- PLUGIN-ONLY API -- in a real client it throws "lacking capability Plugin" EVERY FRAME. It was
+-- caught in the B81 console and removed. Do not bring it back: a rig that will not animate in a
+-- viewport is missing its WorldModel, not a stepper.
 
 -- Roblox's stock R15 idle, used when a model has no `IdleAnim` of its own (user, B79: "or just load
 -- a default idle animation if they dont have one"). Override it here the day there is a house idle.
 UnitCard.DefaultIdleAnim = "rbxassetid://507766666"
-
-local stepping: { [Animator]: boolean } = setmetatable({}, { __mode = "k" }) :: any
-
-local function stepForever(animator: Animator, model: Instance)
-	if stepping[animator] then
-		return
-	end
-	stepping[animator] = true
-	local conn: RBXScriptConnection? = nil
-	conn = RunService.RenderStepped:Connect(function(dt)
-		if animator.Parent == nil or not model:IsDescendantOf(game) then
-			stepping[animator] = nil
-			if conn then conn:Disconnect() end
-			return
-		end
-		animator:StepAnimations(dt)
-	end)
-end
 
 -- ===== IDLE IN A VIEWPORT (B78, user) =====
 -- "The idle animations will be played on all the viewport frames that previews a unit."
@@ -257,9 +254,9 @@ end
 -- carry the same attribute -- so a preview asks the MODEL what its idle is. That is what lets the
 -- LOBBY animate a unit it has no TowerConfig for (it has none, by design), with one authored id.
 --
--- A ViewportFrame renders a model but does NOT simulate it: a rig inside one only animates if you
--- load the track on its own Animator and play it there, which is what this does. The rig also needs
--- an AnimationController (display rigs here have one) or a Humanoid.
+-- The rig must sit inside a WorldModel in the ViewportFrame (`viewport()` makes one) -- that is
+-- what lets the engine animate it -- and needs an AnimationController or a Humanoid. The track is
+-- loaded on the rig's own Animator.
 --
 -- Silent by design: no attribute, no animator, or an unauthored id simply means a still model.
 function UnitCard.playIdle(model: Instance?, animId: any): AnimationTrack?
@@ -306,8 +303,6 @@ function UnitCard.playIdle(model: Instance?, animId: any): AnimationTrack?
 		return t
 	end)
 	if ok and track then
-		-- THE LINE THAT MAKES IT MOVE. Without it the track is playing but nothing advances it.
-		stepForever(animator :: Animator, model)
 		return track
 	end
 	return nil
