@@ -461,6 +461,30 @@
       "kind": "module",
       "comment": "Added B92 (AD-Game, manifest 44 -> 45). Script, hashed as source (the MovementController precedent). Forwards a player's Jump / DoubleJump / Dash FX to every OTHER client (the sender already played them locally). Only those three names pass; rate-limited per player per action; touches no gameplay state. Needs RS.Remotes.CharacterFX (authored RemoteEvent, both Places)."
     },
+    "InputMode": {
+      "file": "shared/src/InputMode.luau",
+      "hash": "def31c09",
+      "owner": "ui",
+      "deployPath": "ReplicatedStorage.Shared.InputMode",
+      "deployed": {
+        "Game": "def31c09",
+        "Lobby": "def31c09"
+      },
+      "kind": "module",
+      "comment": "Added B97 (console + mobile foundation, manifest 45 -> 47 with GamepadMenus). Which device the player is USING now (last input wins): KeyboardMouse | Gamepad | Touch, a Changed signal, and FocusFirst(root) for gamepad menu focus. Read the mode from here, never TouchEnabled/GamepadEnabled (a device existing is not a device in use)."
+    },
+    "GamepadMenus": {
+      "file": "shared/src/GamepadMenus.luau",
+      "hash": "5ddf46d4",
+      "owner": "ui",
+      "deployPath": "StarterPlayer.StarterPlayerScripts.Client.GamepadMenus",
+      "deployed": {
+        "Game": "5ddf46d4",
+        "Lobby": "5ddf46d4"
+      },
+      "kind": "module",
+      "comment": "Added B97. LocalScript, hashed as source. Any GUI root tagged 'GamepadMenu' (CollectionService) gets its first button focused when it opens on a gamepad, and focus cleared when it closes. Tagged at B97: Game 7 roots, Lobby 23."
+    },
     "SettingsService": {
       "file": "shared/src/SettingsService.luau",
       "hash": "8b3b1a72",

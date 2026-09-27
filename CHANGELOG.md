@@ -1,4 +1,18 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-27 [both] B97 -- AD-UI + AD-Game: **the console + mobile foundation.**
+
+**CANON: manifest 45 -> 47.** NEW shared `InputMode` (`def31c09`, `RS.Shared`) + `GamepadMenus` (LocalScript, `5ddf46d4`, `StarterPlayerScripts.Client`), byte-identical in BOTH Places + `shared/src/`; `HashShared` (both) + `tools/hash_shared.luau` updated. Game-local: `PlacementController`, `StarterGui.Hotbar.HotbarController`, authored `StarterGui.PlacementControls.Reticle`. **USER REPUBLISHES BOTH PLACES.**
+
+**STANDING RULE (user, 2026-09-27, now in CLAUDE.md):** every new feature ships for PC + console + mobile; PC is the main platform. **Read the device from `InputMode.Get()`** (last input wins) -- never from TouchEnabled/GamepadEnabled.
+
+**MENUS, BOTH PLACES -- tag, don't code.** Tag a menu root `GamepadMenu` (CollectionService) in Studio: on a gamepad, its first button is selected the moment it opens (a button with attribute `GamepadDefault = true` wins) and focus is cleared when it closes. Tagged now: **Game 7** (Settings.Panel, UnitManager.Panel, MatchEnd.Panel, MatchEnd.Results, TowerSelection.Panel, WavePrep.Root, ConfirmationPopupUI) and **Lobby 23** (every menu ScreenGui + Index/Ascension/TraitReroll/StatReroll Main, Settings.Panel, PlayGUI.Main, StarterChoiceScreen.Root). Untagged screens still work through Roblox's own Select-button navigation.
+
+**PLACEMENT ON A PAD (user's choice: centre reticle).** D-pad Right/Left starts placing the next/previous hotbar unit (skips empty and level-locked slots; again while placing = the neighbour). On gamepad AND touch the placement point is the authored centre-screen `Reticle` (move the camera to aim), shown only while placing. A = place, X = rotate, B = cancel, bound via ContextActionService ONLY while placing at High priority and SUNK -- so A no longer also jumps. The PLACE/ROTATE/CANCEL caps show the authored keyboard letters, A/X/B on a pad, and hide on touch (tap the button).
+
+**Proven live:** D-pad Right -> `Ghost_Archer`, again -> `Ghost_Necromancer`; `[GamepadMenus] Ready` in both Places, 23 tagged roots cloned into the Lobby PlayerGui, 0 errors in either. **NOT PROVEN -- tooling limit:** the studio tool sends pad keys as KEYBOARD input and refuses ButtonB, so the reticle / A-X-B caps / menu auto-focus were not seen switching with a real controller. **Test with a real pad** (or Studio's device emulator).
+
+**Still to do for full console (next sessions):** HUD hotkey badges (F, C, J, K) have no pad equivalent yet; Unit Manager / Tower Selection actions (E/X/T/Z/V/C) need pad binds; mobile layout pass on small screens.
+
 ## 2026-09-27 [game] B96 -- AD-Game + AD-Enemies: **Hill and Hybrid towers, and the first flying enemy.**
 
 Game-local, no shared canon (manifest 45). New: `RS.Shared.TowerPlacementRules` (Game-local), `Configs.Enemies.Common.Manananggal` + `ServerStorage.Enemies.Common.Manananggal` (PLACEHOLDER = tinted Grunt rig), TestMap `TowerZones.Hill1` / `Hill2` (PLACEHOLDER 8x5x8 rock platforms, `ZoneType = "Hill"`). Edited: `PlacementValidator`, `AutoPlayService`, `PlacementController`, `TargetingSystem`, `TowerController`, `AttackSequencer`, `AttackResolver`, `EnemyController`, `SummonController`, `EnemyConfigRegistry`, `Stage1_Act1_Waves`, every tower config (+`Placement`).

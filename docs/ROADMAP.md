@@ -807,7 +807,8 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
 - ✅ **Enemy names + kill FX + summon walk — B94.** Name over the bar (Simplify hides it), authored `RS.EnemyDeathFX` (placeholder burst), summons walk and slowed (Charger 10 / Fighter 6).
 - ✅ **Placement precision + feel — B95.** Geometry path test (49% false blocks gone), edge assist, panel pop, invalid flash, placed pulse.
 - ✅ **Hill / Hybrid towers + flying enemies — B96.** `TowerPlacementRules`; Manananggal (placeholder rig); 2 placeholder hills on TestMap.
-- 🔲 **NEXT, in the user's order (B94):** console + mobile foundation (reticle placement) -> cleanup audit.
+- 🟡 **Console + mobile foundation — B97.** `InputMode`, `GamepadMenus` (tag-driven focus), pad placement (D-pad, reticle, A/X/B). TODO: HUD + tower-panel pad binds, mobile layout pass.
+- 🔲 **NEXT, in the user's order (B94):** cleanup audit.
 - 🔲 Event framework (event banner + EventTokens + event quests bundle; Pre-Release first)
 - 🔲 News/update board + banner showcase on join
 - 🔲 Titles (equip UI + overhead) · 🔲 Skins (catalog → model swap both Places)

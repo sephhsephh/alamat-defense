@@ -298,3 +298,8 @@ capture, and a slide would fight the veil.
 - **A new template beside an old one is an ADDITION and does not move any hash.** That is why the V2
   set can sit in the Lobby with drift green. Adoption is what costs: it moves consumers, adds
   manifest entries, retires the v1 rows and must land in BOTH Places in ONE session.
+
+## Console / mobile (B97)
+`RS.Shared.InputMode` says which device is in use (`Get()` / `Changed` / `FocusFirst(root)`). Tag any menu root
+`GamepadMenu` (CollectionService) and `GamepadMenus` focuses its first button on open for pad players
+(`GamepadDefault = true` on a button to choose it). Every new screen: tag it, and give every hotkey a pad path.

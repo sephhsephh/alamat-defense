@@ -293,6 +293,9 @@ local MODULES = {
 	CharacterAnimConfig = "ReplicatedStorage.Configs.Global.CharacterAnimConfig",
 	-- Promoted B92 (AD-Game): forwards jump / double jump / dash FX to other clients. Script, hashed as source.
 	CharacterFXRelay = "ServerScriptService.Server.CharacterFXRelay",
+	-- Promoted B97 (AD-UI): console/mobile foundation -- input mode + focus-on-open for tagged menus.
+	InputMode = "ReplicatedStorage.Shared.InputMode",
+	GamepadMenus = "StarterPlayer.StarterPlayerScripts.Client.GamepadMenus",
 }
 
 -- GuiObject subtrees. Promoted by AD-UI 2026-08-06; a Place that has not received the kit
