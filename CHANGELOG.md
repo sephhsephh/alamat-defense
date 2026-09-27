@@ -1,4 +1,22 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-27 [game] B89 -- AD-UI: **Stage Info slides in from the right like the Unit Manager, and only one side panel can be open at a time.**
+
+Game-local, no canon change (manifest still 43). New: `Client.UI.SidePanelBus` (Module). Docs: **`docs/systems/stage-info.md`**, **`docs/systems/unit-manager.md`**.
+
+**STAGE INFO IS NOW THE UNIT MANAGER'S TWIN, DELIBERATELY.** Same geometry (`AnchorPoint (1, 0.5)`, `Size (0.46, 0.86)`, `PANEL_Y = 0.55`), same `Quart Out` 0.35s slide, same `Visible = false` after the close tween. Two panels that live in the same corner of the screen and arrive by different rules read as one of them being broken, and the player cannot tell which. The authored `StageInfoPanel` was re-anchored to match rather than the script nudging a centred panel sideways -- position is authored, motion is scripted.
+
+**⚠ THE CLOSED POSITION IS DERIVED FROM `PANEL_WIDTH`, NOT TYPED.** B88's lesson applied before it could be re-learned: a panel anchored on its RIGHT edge has to travel its OWN WIDTH past the viewport to clear it, so `STAGE_CLOSED_POS` is `1 + PANEL_WIDTH + 0.04` and nothing in the file states `1.5` twice. A hand-typed closed position is exactly how B88's Unit Manager ended up covering ~307px of screen for a whole batch.
+
+**MUTUAL EXCLUSION IS A BUS, NOT A CROSS-REFERENCE.** `Client.UI.SidePanelBus` is modelled on `SelectionBus`: a panel calls `SidePanelBus.Opened("StageInfo")` when it slides in and registers `SidePanelBus.CloseWhenOthersOpen("StageInfo", close)` once at setup. **Neither UI module requires the other** -- `HudPanels` and `UnitManagerUI` are complete strangers, and a third right-side panel joins the rule with two lines and zero edits to the existing two. Having each panel reach into the other's frame would be two places to keep in sync and a require cycle waiting to happen.
+
+**⚠ THE TOGGLES READ A FLAG NOW, NOT `Visible`.** Both Stage Info toggles tested `not stageInfo.Visible`, which was true and cheap right up until `Visible` became *the close tween's result* 0.35s later. During the close the panel still reads `Visible = true`, so the next press would "open" what was already leaving. `stageOpen` is the INTENT; `Visible` is the CONSEQUENCE, and a toggle must read the first.
+
+**⚠ THE PANELS COVER THE HUD'S RIGHT BUTTON COLUMN, SO F AND C ARE HOW YOU SWITCH.** `RightButtons` sits at x 1597-1904 and an open panel occupies 1027-1910 on a 1919-wide screen, so the button that opened a panel is underneath it. That is what the user's own reference screenshots do, and it is why the hotkeys matter rather than being a shortcut: **F** hands over to the Unit Manager, **C** hands back, one in as the other goes out.
+
+**⚠ DRAGGING `UnitManager.Root` IN STUDIO HAS NO RUNTIME EFFECT (flagged, not "fixed").** Its authored position reads `{1, 900}, {0.5, 0}`, which is not a value B87, B88 or this batch set -- so it was most likely dragged in Studio between sessions. `UnitManagerUI` overwrites it at boot, so it is cosmetic in the explorer and invisible in play. **`PANEL_Y` / `OPEN_POS` in the script own that position**; moving the panel for real means changing those numbers, not the frame.
+
+**Proven live:** both panels park at **`overlapPx = 0`** (`x = 1996` against a 1919-wide viewport) with nothing on screen while shut; Stage Info slid in to `x = 1027` and held there for 2.5s; pressing **F** with Stage Info open logged **`HANDOFF OK: Unit Manager in, Stage Info out`**, and **C** handed it straight back. No console errors either way.
+
 ## 2026-09-27 [game] B88 -- AD-UI + AD-Game: **Stage Info rebuilt into sections, and the Unit Manager stops blocking the screen.**
 
 Game-local, no canon change (manifest still 43). New: `Server.Meta.StageInfoService` (Module, self-starting on require), remote `Match.GetStageInfo`, and the authored `StageInfoPanel` section templates (`B88Built`). Docs: **`docs/systems/stage-info.md`**.

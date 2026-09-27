@@ -1,6 +1,6 @@
 # Stage Info (GAME)
 
-<!-- owner: AD-UI + AD-Game | scope: game | rebuilt: B88 -->
+<!-- owner: AD-UI + AD-Game | scope: game | rebuilt: B88 | slide-in + panel bus: B89 -->
 
 Opens with **C** (or the HUD's STAGE INFO button) during a match. Rebuilt at **B88** from the user's
 reference: seven sections instead of the single rich-text blob it used to be.
@@ -93,3 +93,23 @@ All seven sections built and read back from the live client:
 - `Enemy Index`: read `Met on this act = 1 / 2` mid-match with the boss still showing `???`, then
   **`2 / 2` in a later match** once the boss had been met — the profile counter surviving the match.
 - `Chosen Modifiers (0)`: "None for this run."
+
+## It slides in from the right (B89)
+
+The panel is the **Unit Manager's twin**: `AnchorPoint (1, 0.5)`, `Size (0.46, 0.86)`, `PANEL_Y = 0.55`,
+and a 0.35s `Quart Out` slide between `STAGE_OPEN_POS` and `STAGE_CLOSED_POS`. Two panels that live in
+the same corner and arrive by different rules read as one of them being broken, and the player cannot
+tell which one.
+
+The geometry is **authored** on `StarterGui.MatchHUD.StageInfoPanel`; only the motion is scripted.
+
+**The closed position is derived from `PANEL_WIDTH`, never typed** -- see
+[`unit-manager.md`](unit-manager.md) for why, and for the ~307px of screen a hand-typed one cost.
+
+**The toggles read `stageOpen`, not `stageInfo.Visible`.** `Visible` is set `false` by the close
+tween's `Completed` callback, so mid-close the panel still reads visible and a `not Visible` test
+would try to open what was already leaving. `stageOpen` is the intent; `Visible` is the consequence.
+
+Only one right-side panel is open at a time, through `Client.UI.SidePanelBus` --
+[`unit-manager.md`](unit-manager.md#the-side-panel-bus) has the contract. **F** hands over to the Unit
+Manager, **C** hands back.

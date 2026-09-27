@@ -29,9 +29,12 @@
   brought with it. Read before touching `TierConfig` colours or `UIKit.Hotbar`.
 - `stage-info.md` — **AD-UI + AD-Game, GAME**: the B88 sectioned Stage Info — session vs profile lifetimes,
   the enemies-seen index (no schema bump), why enemy portraits are blank, and why there is no stage pity.
+  **B89: it slides in from the right like the Unit Manager, and the two are mutually exclusive.**
 - `unit-manager.md` — **AD-UI + AD-Game, GAME**: the B87 card grid — per-card lock / priority / sell,
   Auto Upgrade with its priority number, the targeting dropdown, and the Automation row (four saved
   SettingsConfig preferences, not match state). Read before touching Sell All or auto-upgrade order.
+  **Also THE side-panel rules (B88/B89): a right-anchored panel's closed position is derived from its own
+  width, and `SidePanelBus` keeps one panel open at a time. Read before adding a right-side panel.**
 - `unit-selection.md` — **AD-UI + AD-Game, GAME**: the selected-unit panel (B86) — portrait viewport, current-to-next
   stat rows, the live combat tiles (and why DPS is theoretical while eDPS is measured), the clickable upgrade bar
   with its colour code and click-buys/hold-queues rule, and the shared tooltip system.

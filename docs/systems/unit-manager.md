@@ -1,6 +1,6 @@
 # The Unit Manager (GAME)
 
-<!-- owner: AD-UI + AD-Game | scope: game | rebuilt: B87 -->
+<!-- owner: AD-UI + AD-Game | scope: game | rebuilt: B87 | overlap fix B88 | panel bus: B89 -->
 
 Opens with **F** or the HUD's UNIT MANAGER button. Every unit this player has placed on the current
 map, as a grid of cards, so they can be managed without hunting for them in the world.
@@ -108,3 +108,45 @@ preferences on their next click.
   branches on a setting that is confirmed to reach the server, but watching auto-upgrade actually
   hold cash for a priority-1 unit needs a match arranged so the next upgrade is unaffordable — the
   same wave income that defeated the B86 refusal test gets in the way.
+
+## Sliding in from the right, and the closed-position rule
+
+`PANEL_WIDTH = 0.46`, `PANEL_Y = 0.55`, `AnchorPoint (1, 0.5)`, a 0.35s `Quart Out` tween between
+`OPEN_POS` and `CLOSED_POS`. Stage Info uses the same numbers (`docs/systems/stage-info.md`).
+
+### ⚠ The closed position is DERIVED from `PANEL_WIDTH`
+
+The panel is anchored on its **right edge**, so to leave the screen it has to travel its **own width**
+past the viewport, not merely past `1.0`. B87 kept the `1.30` that suited the narrow row list it
+replaced; against a `0.46`-wide panel that left `0.84 .. 1.00` on screen -- **~307px of permanently
+covered view, eating clicks with the manager closed**, which is how the user found it.
+
+`CLOSED_POS` is now computed as `1 + PANEL_WIDTH + 0.04` so it cannot drift again, and the panel also
+sets **`Visible = false` after the close tween**: position is the look, `Visible` is the guarantee, and
+a player cannot see what is stealing their click. Measured after: **0px**.
+
+### The side-panel bus
+
+`Client.UI.SidePanelBus` (B89), modelled on `SelectionBus`:
+
+| Call | Does |
+| --- | --- |
+| `SidePanelBus.Opened(id)` | announce that this panel just slid in |
+| `SidePanelBus.CloseWhenOthersOpen(id, close)` | run `close` whenever a *different* panel announces |
+
+Each panel registers once at setup. **Neither UI module requires the other** -- `UnitManagerUI` and
+`HudPanels` are strangers, so a third right-side panel joins the rule in two lines with no edits to
+the existing two, and there is no require cycle to untangle.
+
+### ⚠ Dragging `UnitManager.Root` in Studio does nothing at runtime
+
+`UnitManagerUI` writes the position at boot, so the authored value is cosmetic in the explorer and
+invisible in play. **`PANEL_Y` / `OPEN_POS` in the script own it** -- move the panel there, not in the
+Explorer. (Its authored value currently reads `{1, 900}, {0.5, 0}`, which no batch set.)
+
+### The panels cover the HUD's right button column
+
+`RightButtons` sits at x 1597-1904 and an open panel occupies 1027-1910 on a 1919-wide screen, so the
+button that opened a panel is underneath it. That is what the reference screenshots do, which is why
+**F** (Unit Manager) and **C** (Stage Info) are the real way to switch -- one slides in as the other
+goes out.
