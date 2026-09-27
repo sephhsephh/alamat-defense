@@ -1,4 +1,14 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-27 [both] B98 -- AD-Game: **cleanup pass -- the Knight track flood is FIXED, retired scripts leave the client.**
+
+No shared canon touched (manifest 47). Edited: Game `SSS.Server.Towers.RigAnimator`. Moved (reversible, NOT deleted): Game `Client.UI.Hotbar_RETIRED_2026-08-06` + `Client.UI.NotificationController_RETIRED_2026-08-20`, Lobby `StarterPlayerScripts.NotificationController_RETIRED_2026-08-20` -> `ServerStorage.Archive.Retired_B98` in each Place (attribute `MovedFrom` records where each came from).
+
+**THE "AnimationTrack limit of 64 tracks exceeded for 'Knight'" FLOOD -- ROOT CAUSE FOUND AND FIXED.** `RigAnimator`'s cache was a WEAK-KEYED table keyed by the Animator INSTANCE. An Instance used as a weak key is not kept alive by the DataModel: when no Lua reference to the wrapper remains, the GC drops the entry while the Animator lives on, so the next `EnsureIdle` reloaded the idle. **Measured before:** a live server Knight had **25 copies of its idle `125610139973073` playing at once** (others 10-20), climbing to the engine's 64 cap. **After** (strong table, entry dropped on the Animator's AncestryChanged out of the game): every tower **exactly 1** idle track after 55 s of AutoPlay, **0** flood warnings. General lesson for the project: **never key a weak table by a Roblox Instance** -- the two remaining `__mode = "k"` tables (TowerCombatStats, SummonController) key Lua controller tables, which is safe.
+
+**Retired scripts:** both were unreferenced (grep'd every script in both Places) but still sat in StarterPlayerScripts, so every player downloaded them. Game boot after the move: **0 errors / 0 new warnings**.
+
+**Audited and deliberately LEFT (user's call):** SSS test harnesses (`MatchLifecycleSmokeTest`, `MetaConfigTest`, `ColdProfileMatchTest` are Studio-gated; `AutoPlaceForEndScreenTest`, `MatchEndVerify` are `ENABLED = false`) -- dev tools, harmless live. `ServerStorage.Archive` contents; the stray `VFXTemplates.Towers.Knight/Attacks/Cast` folder; `Kit_HotbarSlotV2` drift; the `UnitStatsCatalog` Knight.SPA note. **Known duplication I introduced:** `EnemyDeathFX` repeats ~40 lines of `MovementController`'s FX player -- fold both into one shared `AuthoredFX` module when MovementController is next touched. `CLAUDE.md` (158) and both CONTEXT.md files are over their caps -- trimming them is a docs session.
+
 ## 2026-09-27 [both] B97 -- AD-UI + AD-Game: **the console + mobile foundation.**
 
 **CANON: manifest 45 -> 47.** NEW shared `InputMode` (`def31c09`, `RS.Shared`) + `GamepadMenus` (LocalScript, `5ddf46d4`, `StarterPlayerScripts.Client`), byte-identical in BOTH Places + `shared/src/`; `HashShared` (both) + `tools/hash_shared.luau` updated. Game-local: `PlacementController`, `StarterGui.Hotbar.HotbarController`, authored `StarterGui.PlacementControls.Reticle`. **USER REPUBLISHES BOTH PLACES.**

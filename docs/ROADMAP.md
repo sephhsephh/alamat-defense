@@ -808,7 +808,7 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
 - ✅ **Placement precision + feel — B95.** Geometry path test (49% false blocks gone), edge assist, panel pop, invalid flash, placed pulse.
 - ✅ **Hill / Hybrid towers + flying enemies — B96.** `TowerPlacementRules`; Manananggal (placeholder rig); 2 placeholder hills on TestMap.
 - 🟡 **Console + mobile foundation — B97.** `InputMode`, `GamepadMenus` (tag-driven focus), pad placement (D-pad, reticle, A/X/B). TODO: HUD + tower-panel pad binds, mobile layout pass.
-- 🔲 **NEXT, in the user's order (B94):** cleanup audit.
+- ✅ **Cleanup pass — B98.** Knight 64-track flood fixed (weak Instance-keyed cache), retired scripts archived. Follow-ups: shared `AuthoredFX`, doc-cap trims.
 - 🔲 Event framework (event banner + EventTokens + event quests bundle; Pre-Release first)
 - 🔲 News/update board + banner showcase on join
 - 🔲 Titles (equip UI + overhead) · 🔲 Skins (catalog → model swap both Places)
