@@ -427,15 +427,27 @@
     },
     "MovementController": {
       "file": "shared/src/MovementController.luau",
-      "hash": "8e995f32",
+      "hash": "09bc0fd4",
       "owner": "game",
       "deployPath": "StarterPlayer.StarterPlayerScripts.Client.MovementController",
       "deployed": {
-        "Game": "8e995f32",
-        "Lobby": "8e995f32"
+        "Game": "09bc0fd4",
+        "Lobby": "09bc0fd4"
       },
-      "comment": "Added B54. Sprint (BOTH Places, a TOGGLE) + dash (LOBBY only, gated by MovementConfig.DashPlaces). LocalScript, hashed as source -- same precedent as UIKitBootstrap/SettingsUI. The FIRST ContextActionService use in the project: one BindAction carries keyboard + gamepad + a generated mobile touch button, so there is no per-platform branch. Deployed at an IDENTICAL path in both Places (the ClientSettings precedent), which is why promotion cost zero consumer edits. B66: double jump on the ordinary jump input (UserInputService.JumpRequest, so Space/gamepad A/mobile all work with no extra binding), once per airborne stretch, re-armed on landing; dash now also bound in the Game. e2668274 -> 8e995f32.",
+      "comment": "Added B54. Sprint (BOTH Places, a TOGGLE) + dash (LOBBY only, gated by MovementConfig.DashPlaces). LocalScript, hashed as source -- same precedent as UIKitBootstrap/SettingsUI. The FIRST ContextActionService use in the project: one BindAction carries keyboard + gamepad + a generated mobile touch button, so there is no per-platform branch. Deployed at an IDENTICAL path in both Places (the ClientSettings precedent), which is why promotion cost zero consumer edits. B66: double jump on the ordinary jump input (UserInputService.JumpRequest, so Space/gamepad A/mobile all work with no extra binding), once per airborne stretch, re-armed on landing; dash now also bound in the Game. e2668274 -> 8e995f32. B91: the player character's own animations (Walk into both Animate walk/run slots; sprint-Run, DoubleJump, Dash as owned tracks), ids from the new shared CharacterAnimConfig. 8e995f32 -> 09bc0fd4.",
       "kind": "module"
+    },
+    "CharacterAnimConfig": {
+      "file": "shared/src/CharacterAnimConfig.luau",
+      "hash": "38000a8c",
+      "owner": "game",
+      "deployPath": "ReplicatedStorage.Configs.Global.CharacterAnimConfig",
+      "deployed": {
+        "Game": "38000a8c",
+        "Lobby": "38000a8c"
+      },
+      "kind": "module",
+      "comment": "Added B91 (AD-Game, manifest 43 -> 44). The PLAYER character's animation ids, ONE Id field per clip (Walk/Run/Jump/Fall/Idle/DoubleJump/Dash); empty = Roblox default or nothing. PURE, read only by MovementController. A separate module from MovementConfig on purpose (user, B91): clips are added one at a time, and each addition should not re-hash the movement-feel numbers. One set for BOTH Places; a per-Place field can be added later additively."
     },
     "SettingsService": {
       "file": "shared/src/SettingsService.luau",

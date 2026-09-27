@@ -289,6 +289,8 @@ local MODULES = {
 	-- Promoted B81 (AD-UI + AD-Meta): the daily quest rules. The GAME's Pinned Quests panel must roll the
 	-- SAME day's set the Lobby assigns; the Lobby's QuestService stays the one writer of Data.Quests.
 	QuestRegistry = "ReplicatedStorage.Configs.Meta.QuestRegistry",
+	-- Promoted B91 (AD-Game): the player character's own animation ids, read by MovementController.
+	CharacterAnimConfig = "ReplicatedStorage.Configs.Global.CharacterAnimConfig",
 }
 
 -- GuiObject subtrees. Promoted by AD-UI 2026-08-06; a Place that has not received the kit

@@ -1,4 +1,4 @@
-# movement -- sprint (both Places) + dash (Lobby only)
+# movement -- sprint, dash, double jump + the character's own animations (both Places)
 <!-- owner: AD-Game | scope: shared canon, BOTH Places | added: 2026-09-08 (B54) -->
 
 Sprint and dash, added at the user's request (B54). Two shared-canon modules, no Place branch:
@@ -68,4 +68,18 @@ gamepad button or touch button runs -- tooling cannot synthesise a key press
 lesson, again). Click the real row instead: `user_mouse_input` with
 `instance_path = "LocalPlayer.PlayerGui.Settings.Panel.Content.AlwaysSprint.Toggle"`.
 
-Animations are a DEFERRED follow-up (user: "I'll add the sprinting and dash animation later").
+## Character animations (B91)
+Ids live in the shared **`CharacterAnimConfig`** (`RS.Configs.Global`), ONE `Id` field per clip:
+Walk / Run / Jump / Fall / Idle / DoubleJump / Dash. Empty = Roblox default (Animate slots) or nothing
+(Run / DoubleJump / Dash). To change a clip: edit that one field, re-hash, copy to the other Place.
+- **Walk -> `walk.WalkAnim` AND `run.RunAnim`.** Stock R15 Animate plays its RUN slot at our speed 16
+  (walk only below ~6.7 studs/s), so Walk has to fill both to be seen (user, B91: "Walk = normal").
+- **Run = the SPRINT clip**, played by `MovementController` (looped, `Action2`) only while sprinting,
+  grounded and moving -- at its own `Speed`, not Animate's ~3.7x time-warp.
+- **DoubleJump / Dash** are one-shots at `Action3`, fired by `tryDoubleJump` / `doDash` (so the `Dev*`
+  harness drives them). `FitToDash` scales the dash clip to `DashDuration`.
+- Writes happen on every `CharacterAdded`. Animate listens to each Animation's `Changed`, so a late
+  write still takes (measured). Animate plays its clips at `Core` whatever they were published at.
+- Every id is preloaded; a failed id falls back and warns ONCE per session. Rig must be R15 (both Places).
+- Verify: the `[DIAG] CharacterAnim ready (R15): Walk=custom, ...` line, then
+  `Animator.AnimationPlayed` (names `AD_Run` / `AD_DoubleJump` / `AD_Dash`, and their `Priority`).

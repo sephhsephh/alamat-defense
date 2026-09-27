@@ -3,7 +3,9 @@ script:SetAttribute("BootComplete", false)
 -- MovementController (SHARED CANON -- deploy path
 -- StarterPlayer.StarterPlayerScripts.Client.MovementController)
 -- Sprint + dash + double jump, ALL in BOTH Places. Added B54 (sprint + Lobby dash); B66 extended the
--- dash to the Game and added the double jump, both at the user's request.
+-- dash to the Game and added the double jump, both at the user's request. B91: the player character's
+-- OWN animations (walk / sprint-run / jump / fall / idle / double jump / dash) -- ids in the shared
+-- CharacterAnimConfig, one field per clip; see "character animations" below.
 --
 -- ===== ONE BINDING SERVES THREE PLATFORMS =====
 -- Everything goes through ContextActionService -- the FIRST use of CAS in this project. BindAction
@@ -36,6 +38,7 @@ script:SetAttribute("BootComplete", false)
 -- be validating a number the client can set anyway. The Lobby is a social space with nothing to win,
 -- and the Game gets sprint only -- no dash -- so nothing here can cross a placement zone it shouldn't.
 
+local ContentProvider = game:GetService("ContentProvider")
 local ContextActionService = game:GetService("ContextActionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -43,6 +46,7 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 local MovementConfig = require(ReplicatedStorage.Configs.Global.MovementConfig)
+local CharacterAnimConfig = require(ReplicatedStorage.Configs.Global.CharacterAnimConfig)
 local SettingsConfig = require(ReplicatedStorage.Configs.Global.SettingsConfig)
 -- Sibling module: `optionalSibling` rules (B32) -- never a bare WaitForChild on a sibling, which
 -- would hang this script forever if the folder were ever renamed.
@@ -121,6 +125,159 @@ local function onSprintAction(_action: string, state: Enum.UserInputState): Enum
 	return Enum.ContextActionResult.Sink
 end
 
+-- ===== character animations (B91) =====
+-- Every id lives in CharacterAnimConfig -- ONE field per clip; nothing below names an asset.
+--
+-- Walk / Jump / Fall / Idle ride Roblox's OWN stock `Animate` script: we overwrite the AnimationId on
+-- its Animation children and Animate keeps its state machine and blending. An empty slot is simply
+-- never written, which is exactly "keep Roblox's default". MEASURED B91: Animate listens to each
+-- Animation's Changed, so a write AFTER it has booted still takes -- even on the clip playing right now.
+--
+-- Run (sprint) / DoubleJump / Dash are NOT Animate states. Their tracks are loaded onto the
+-- character's Animator here and played by the same functions the sprint toggle, the dash and the
+-- double jump already run. An empty slot loads no track, so the action plays NOTHING (user, B91).
+--
+-- Every id is PRELOADED before use. One that fails to load is treated as empty (fallback kept) and
+-- warned about ONCE per session -- never a T-pose, never a warning per respawn.
+
+-- Config slot -> the Animate children it overwrites. Walk fills BOTH walk and run: Animate blends
+-- those two by speed and plays the RUN slot at our normal WalkSpeed of 16 (CharacterAnimConfig header).
+local ANIMATE_SLOTS: { { slot: string, targets: { { string } } } } = {
+	{ slot = "Walk", targets = { { "walk", "WalkAnim" }, { "run", "RunAnim" } } },
+	{ slot = "Jump", targets = { { "jump", "JumpAnim" } } },
+	{ slot = "Fall", targets = { { "fall", "FallAnim" } } },
+	{ slot = "Idle", targets = { { "idle", "Animation1" }, { "idle", "Animation2" } } },
+}
+local OWNED_SLOTS = { "Run", "DoubleJump", "Dash" }
+
+local idVerdict: { [string]: boolean } = {} -- asset id -> loads? Per SESSION: a bad id warns once.
+local rigWarned = false
+local ownedTracks: { [string]: AnimationTrack } = {}
+local animGen = 0 -- bumped per character, so a slow preload for a dead character never writes into the new one
+
+local function clipOf(slot: string): CharacterAnimConfig.Clip
+	return (CharacterAnimConfig.Clips :: any)[slot]
+end
+
+local function usableId(slot: string): string?
+	local id = CharacterAnimConfig.AssetId(slot)
+	if id == nil then
+		return nil -- empty slot: normal, silent
+	end
+	local verdict = idVerdict[id]
+	if verdict == nil then
+		local probe = Instance.new("Animation")
+		probe.AnimationId = id
+		local loaded = true
+		local ok = pcall(function()
+			ContentProvider:PreloadAsync({ probe }, function(_content: string, status: Enum.AssetFetchStatus)
+				if status ~= Enum.AssetFetchStatus.Success then
+					loaded = false
+				end
+			end)
+		end)
+		verdict = ok and loaded
+		idVerdict[id] = verdict
+		if not verdict then
+			warn(string.format("[DIAG] CharacterAnim: %s id %s did not load -- keeping the fallback for this session."
+				.. " Check the id, that the experience owner owns the clip, and that it is published.", slot, id))
+		end
+	end
+	return if verdict then id else nil
+end
+
+local function priorityOf(name: string?): Enum.AnimationPriority
+	local ok, p = pcall(function()
+		return (Enum.AnimationPriority :: any)[name or "Action"]
+	end)
+	return if ok and p then p else Enum.AnimationPriority.Action
+end
+
+local function setupCharacterAnims(character: Model, h: Humanoid)
+	animGen += 1
+	local gen = animGen
+	table.clear(ownedTracks)
+	task.spawn(function()
+		if h.RigType.Name ~= CharacterAnimConfig.RigType then
+			if not rigWarned then
+				rigWarned = true
+				warn(string.format("[DIAG] CharacterAnim: character is %s but the clips are authored for %s -- writing"
+					.. " NO custom clip (Roblox defaults stay).", h.RigType.Name, CharacterAnimConfig.RigType))
+			end
+			return
+		end
+		local summary = {}
+		local animate = character:WaitForChild("Animate", 10)
+		for _, entry in ipairs(ANIMATE_SLOTS) do
+			local id = usableId(entry.slot)
+			if gen ~= animGen then
+				return
+			end
+			if id and animate then
+				for _, target in ipairs(entry.targets) do
+					local folder = animate:FindFirstChild(target[1])
+					local anim = folder and folder:FindFirstChild(target[2])
+					if anim and anim:IsA("Animation") then
+						anim.AnimationId = id
+					end
+				end
+			end
+			table.insert(summary, entry.slot .. "=" .. (if id then "custom" else "default"))
+		end
+		local animator = h:FindFirstChildOfClass("Animator") or h:WaitForChild("Animator", 10)
+		for _, slot in ipairs(OWNED_SLOTS) do
+			local id = usableId(slot)
+			if gen ~= animGen then
+				return
+			end
+			if id and animator and animator:IsA("Animator") then
+				local anim = Instance.new("Animation")
+				anim.Name = "AD_" .. slot
+				anim.AnimationId = id
+				local track = animator:LoadAnimation(anim)
+				track.Priority = priorityOf(clipOf(slot).Priority)
+				track.Looped = slot == "Run"
+				ownedTracks[slot] = track
+			end
+			table.insert(summary, slot .. "=" .. (if id then "custom" else "none"))
+		end
+		print("[DIAG] CharacterAnim ready (" .. h.RigType.Name .. "): " .. table.concat(summary, ", "))
+	end)
+end
+
+-- A one-shot clip for an action. No track (empty or failed slot) = play nothing, by design.
+local function playOneShot(slot: string, fitSeconds: number?)
+	local track = ownedTracks[slot]
+	if track == nil then
+		return
+	end
+	local speed = clipOf(slot).Speed or 1
+	if fitSeconds ~= nil and fitSeconds > 0 and track.Length > 0 then
+		speed = track.Length / fitSeconds
+	end
+	track:Play(0.05, 1, speed)
+end
+
+-- The sprint clip plays only while sprint is on (toggle OR AlwaysSprint), the character is grounded
+-- and it is actually moving. Everything else (standing still, jumping, falling) is Animate's.
+local function updateSprintClip()
+	local track = ownedTracks.Run
+	if track == nil then
+		return
+	end
+	local h = humanoid
+	local want = false
+	if h ~= nil and h.Health > 0 and (sprinting or alwaysSprint()) and h.MoveDirection.Magnitude > 0.1 then
+		local state = h:GetState()
+		want = state == Enum.HumanoidStateType.Running or state == Enum.HumanoidStateType.RunningNoPhysics
+	end
+	if want and not track.IsPlaying then
+		track:Play(0.15, 1, clipOf("Run").Speed or 1)
+	elseif not want and track.IsPlaying then
+		track:Stop(0.15)
+	end
+end
+
 -- Horizontal burst in the direction the player is MOVING, falling back to the way they FACE when
 -- standing still (a dash that does nothing because you were idle feels broken).
 local function dashDirection(): Vector3?
@@ -152,6 +309,7 @@ local function doDash()
 	end
 	dashing = true
 	lastDashAt = os.clock()
+	playOneShot("Dash", if clipOf("Dash").FitToDash then MovementConfig.DashDuration else nil)
 	local speed = MovementConfig.DashSpeed
 	local until_ = os.clock() + MovementConfig.DashDuration
 	local conn: RBXScriptConnection? = nil
@@ -224,6 +382,7 @@ local function tryDoubleJump()
 	-- adding to a rising one gives a rocket. A flat set makes the second jump feel identical however
 	-- it was entered.
 	root.AssemblyLinearVelocity = Vector3.new(v.X, jumpVelocity(h) * MovementConfig.DoubleJumpPowerScale, v.Z)
+	playOneShot("DoubleJump")
 end
 
 -- ===== character lifecycle =====
@@ -242,6 +401,7 @@ local function onCharacter(character: Model)
 
 	local h = humanoid
 	if h then
+		setupCharacterAnims(character, h)
 		table.insert(humanoidConns, h.Jumping:Connect(function(active: boolean)
 			if active then
 				lastJumpAt = os.clock()
@@ -269,6 +429,8 @@ if player.Character then
 	task.spawn(onCharacter, player.Character)
 end
 player.CharacterAdded:Connect(onCharacter)
+
+RunService.Heartbeat:Connect(updateSprintClip)
 
 -- The double jump rides the ORDINARY jump input -- no binding of its own, so Space, gamepad A and
 -- the mobile jump button all work with no per-platform branch.

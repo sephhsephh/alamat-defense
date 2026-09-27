@@ -1,4 +1,30 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-27 [both] B91 -- AD-Game: **the player character gets its OWN animations, one config field per clip.**
+
+**CANON: manifest 43 -> 44.** NEW shared `CharacterAnimConfig` (`38000a8c`, `RS.Configs.Global`, BOTH Places + `shared/src/`). `MovementController` `8e995f32` -> **`09bc0fd4`** (both Places + disk, byte-identical). `MovementConfig` untouched (`3598e7d0`). `HashShared` (both Places) + `tools/hash_shared.luau` gained the new entry. **USER REPUBLISHES BOTH PLACES.** Docs: **`docs/systems/movement.md`** (new "Character animations" section).
+
+**ONE FIELD PER CLIP.** `CharacterAnimConfig.Clips.<Walk|Run|Jump|Fall|Idle|DoubleJump|Dash>.Id`. Accepts `"123"`, `"rbxassetid://123"` or a number; `AssetId(slot)` is the one place an id is interpreted. Only Walk is filled (`140055950289677`, the user's). Jump/Fall/Idle were added as empty slots so a future clip is also a one-field change.
+
+**USER DECISIONS (B91):** a new module rather than MovementConfig fields; ONE set for both Places (no per-Place field yet -- adding one later is additive); **Walk = normal movement, Run = SPRINT**; empty Dash / DoubleJump play NOTHING (no stand-in); the Animation/VFX Testing Area stays scratch.
+
+**⚠ WHY WALK FILLS BOTH ANIMATE SLOTS -- MEASURED, READ THIS BEFORE "FIXING" IT.** Roblox's stock R15 `Animate` (`setRunSpeed`) blends `walk` and `run` by speed: walk only below ~6.7 studs/s, run only above ~13.5. Our WalkSpeed is 16, so a clip in `walk.WalkAnim` alone is almost never seen on keyboard. So Walk is written into `walk.WalkAnim` AND `run.RunAnim`. Measured at 16: `140055950289677` at weight 1.00, speed 1.09x. At sprint 56 Animate time-warps it to ~3.7-3.8x (measured 3.72 / 3.81), which is exactly why sprint gets its OWN clip:
+
+**RUN IS NOT AN ANIMATE SLOT.** `MovementController` loads it onto the Animator and plays it (looped, `Action2`) only while sprint is on (toggle OR `AlwaysSprint`), the Humanoid is `Running` and `MoveDirection > 0.1`; it plays at the config's `Speed`, not Animate's time-warp. Empty Run = sprint keeps showing the Walk clip. **Dash / DoubleJump** are one-shots at `Action3`, fired from `doDash` / `tryDoubleJump` -- so the `DevDash` / `DevDoubleJump` harness drives them too. `FitToDash = true` scales the dash clip to `DashDuration`.
+
+**TIMING, MEASURED (not assumed):** Animate hooks every Animation's `Changed`, so writing an id AFTER Animate has booted takes immediately -- even on the clip playing at that moment (idle swapped mid-play, B91 probe). The controller writes on every `CharacterAdded`.
+
+**⚠ PUBLISHED PRIORITY DOES NOT MATTER FOR ANIMATE SLOTS.** The walk was published at `Action`, but Animate plays everything it owns at **`Core`** (measured: `WalkAnim prio=Core`). Our own tracks set their priority in code.
+
+**A BAD ID NEVER T-POSES.** Each id is `ContentProvider:PreloadAsync`'d first; a failure is treated as empty (fallback kept) and warned ONCE per session. Proven with `Fall = "1"`: one `[DIAG] CharacterAnim: Fall id rbxassetid://1 did not load` line, `fall.FallAnim` still `507767968`, and after a forced respawn the ready line printed again with NO second warning. A rig mismatch (`RigType` vs Humanoid) writes nothing and warns once.
+
+**Rig:** BOTH Places spawn **R15** (Play, `Humanoid.RigType`), and the walk clip is R15 (its KeyframeSequence poses UpperTorso/LowerTorso/...; 1.625 s, looped, 40 keyframes).
+
+**Proven live (Game, stand-in ids restored afterwards):** Run=`913376220`, DoubleJump=`507765000`, Dash=`522638767` -> `AD_Run` played at `Action2` while sprint-moving and stopped for the jump, re-starting on landing; `AD_DoubleJump` at `Action3` on the second Space; `AD_Dash` at `Action3`, **speed 6.82 on a 1.50 s clip, stopped after 0.232 s** (0.22 s dash + fade). **With the real canon (only Walk filled), both Places:** ready line `Walk=custom, Jump=default, Fall=default, Idle=default, Run=none, DoubleJump=none, Dash=none`, a `DevDash` started NO extra track, zero warnings, all `Dev*` attributes back to false.
+
+**Drift found at bootstrap, USER'S OWN, LEFT AS-IS (user, B91):** `Kit_HotbarSlotV2` hashes `f5a7f240` (Game) / `6f14cfb6` (Lobby) against manifest `cd5a2aa0`. Both now carry a baked `ViewportFrame.WorldModel.SuperiorBeing_S` avatar; they differ from EACH OTHER on `Main.BackgroundTransparency` (1 vs 0.99) and `UIHoverStroke.Thickness` (0.035 vs 0.015). Not reconciled; the manifest was not touched for it.
+
+Open threads: the user's next clips go in ONE field each (then re-hash + copy to the other Place). The Knight.SPA catalog warning and the Knight 64-track flood are pre-existing and untouched.
+
 ## 2026-09-27 [game] B90 -- AD-UI + AD-Game: **the pinned-quests drawer, and towers stop forgetting where they were looking.**
 
 Game-local, no canon change (manifest still 43). New authored instance: `MatchHUD.PinnedQuests.CollapseButton` (`B90Built`). Docs: **`docs/systems/match-hud.md`**, **`docs/systems/tower-authoring.md`**.
