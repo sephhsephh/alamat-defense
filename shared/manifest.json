@@ -475,15 +475,15 @@
     },
     "GamepadMenus": {
       "file": "shared/src/GamepadMenus.luau",
-      "hash": "4a14225f",
+      "hash": "634002bc",
       "owner": "ui",
       "deployPath": "StarterPlayer.StarterPlayerScripts.Client.GamepadMenus",
       "deployed": {
-        "Game": "4a14225f",
-        "Lobby": "4a14225f"
+        "Game": "634002bc",
+        "Lobby": "634002bc"
       },
       "kind": "module",
-      "comment": "Added B97. LocalScript, hashed as source. Any GUI root tagged 'GamepadMenu' (CollectionService) gets its first button focused when it opens on a gamepad, and focus cleared when it closes. Tagged at B97: Game 7 roots, Lobby 23. B101: Y (no tagged menu open) focuses the root tagged 'GamepadHud' -- Lobby HUD.Left, Game MatchHUD.RightButtons. 5ddf46d4 -> 4a14225f."
+      "comment": "Added B97. LocalScript, hashed as source. Any GUI root tagged 'GamepadMenu' (CollectionService) gets its first button focused when it opens on a gamepad, and focus cleared when it closes. Tagged at B97: Game 7 roots, Lobby 23. B101: Y (no tagged menu open) focuses the root tagged 'GamepadHud' -- Lobby HUD.Left, Game MatchHUD.RightButtons. 5ddf46d4 -> 4a14225f. B102: 'KeyHint' tag -- keycap labels show their authored key on keyboard, the `Pad` attribute on a pad, hide on touch. 4a14225f -> 634002bc."
     },
     "AuthoredFX": {
       "file": "shared/src/AuthoredFX.luau",

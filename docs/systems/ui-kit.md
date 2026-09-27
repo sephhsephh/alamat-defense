@@ -305,3 +305,4 @@ capture, and a slide would fight the veil.
 (`GamepadDefault = true` on a button to choose it). Every new screen: tag it, and give every hotkey a pad path.
 **Match pad map (B99):** R2 select tower at screen centre, L1 Unit Manager, L2 Stage Info, D-pad L/R pick a unit, A/X/B place/rotate/cancel. D-pad Up is Roblox core -- do not bind it.
 **HUD on a pad (B101):** tag the HUD button root `GamepadHud`; Y focuses it. **Buttons must be `Selectable = true`** -- the Lobby HUD had been authored false and was unreachable.
+**Key hints (B102):** tag a keycap TextLabel `KeyHint`, set `Pad` (e.g. "L1") -- keyboard/pad/touch handled; `HideParent` hides the chip.

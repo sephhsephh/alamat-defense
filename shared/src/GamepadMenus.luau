@@ -16,6 +16,10 @@
 -- every HUD button. Y again, or B, leaves it. Y is skipped while a tagged menu is open, which is
 -- also what keeps the Game's tower panel (Y = cycle targeting) working.
 --
+-- B102: KEY HINTS. Tag a keycap TextLabel "KeyHint" and it follows the device: keyboard shows its
+-- AUTHORED text, a pad shows its `Pad` attribute (e.g. "L1"; missing/empty = hidden on a pad), touch
+-- hides it. `HideParent = true` hides/shows the label's parent instead (a whole chip or hint row).
+--
 -- Polled (every 0.15 s) rather than wired to every Visible/Enabled signal up each ancestor chain:
 -- a menu can be opened by toggling ANY ancestor, and a poll over a couple of dozen roots is cheap.
 
@@ -90,7 +94,51 @@ UserInputService.InputBegan:Connect(function(input: InputObject, processed: bool
 	end
 end)
 
+local HINT_TAG = "KeyHint"
+local function paintHint(label: Instance)
+	if not label:IsA("TextLabel") or not label:IsDescendantOf(playerGui) then
+		return
+	end
+	if label:GetAttribute("Keyboard") == nil then
+		label:SetAttribute("Keyboard", label.Text) -- remember the authored keyboard cap once
+	end
+	local mode = InputMode.Get()
+	local pad = label:GetAttribute("Pad")
+	local show = true
+	if mode == "Touch" then
+		show = false
+	elseif mode == "Gamepad" then
+		show = type(pad) == "string" and pad ~= ""
+		if show then
+			label.Text = pad :: string
+		end
+	else
+		label.Text = tostring(label:GetAttribute("Keyboard"))
+	end
+	local target: Instance? = if label:GetAttribute("HideParent") == true then label.Parent else label
+	if target and target:IsA("GuiObject") then
+		-- Only ever undo a hide WE did, so a chip a controller script hides on purpose stays hidden.
+		if show and target:GetAttribute("HintHidden") == true then
+			target.Visible = true
+			target:SetAttribute("HintHidden", nil)
+		elseif not show and target.Visible then
+			target.Visible = false
+			target:SetAttribute("HintHidden", true)
+		end
+	end
+end
+local function paintAllHints()
+	for _, label in ipairs(CollectionService:GetTagged(HINT_TAG)) do
+		paintHint(label)
+	end
+end
+CollectionService:GetInstanceAddedSignal(HINT_TAG):Connect(function(label)
+	task.defer(paintHint, label) -- a GUI cloned into PlayerGui arrives tagged
+end)
+task.defer(paintAllHints)
+
 InputMode.Changed:Connect(function(mode: string)
+	paintAllHints()
 	if mode == "Gamepad" then
 		local top = openOrder[#openOrder]
 		if top and top.Parent then

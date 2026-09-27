@@ -1,4 +1,14 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-27 [both] B102 -- AD-UI: **keycap hints follow the device.**
+
+**CANON (re-hash, count 48):** `GamepadMenus` `4a14225f` -> **`634002bc`**, both Places + disk (find/replace with base + result hashes asserted). **USER REPUBLISHES BOTH PLACES.**
+
+**`KeyHint` TAG:** a keycap TextLabel tagged `KeyHint` shows its AUTHORED text on keyboard (remembered in a `Keyboard` attribute the first time), its `Pad` attribute on a controller (missing/empty = hidden on a pad), and hides on touch. `HideParent = true` hides the whole chip/hint instead. It only ever un-hides what IT hid (`HintHidden`), so a chip a controller script hides on purpose stays hidden.
+
+**Tagged (Game):** Unit Manager `F` -> pad **L1**, Stage Info `C` -> **L2**, `J` / `K` (coming-soon) -> hidden on pad; tower panel hints `E` -> **A**, `T` -> **Y**, `Z` -> hidden on pad. The placement caps are NOT tagged -- `PlacementController` already swaps those (B97). Lobby: no keycap labels exist.
+
+**Proven live (keyboard):** all 7 hints painted with their authored letters, `Keyboard`/`Pad` attributes set, visible, 0 errors. The pad/touch swap needs a real device to see (tool limitation, as B97).
+
 ## 2026-09-27 [both] B101 -- AD-UI: **the HUD on a controller -- and why no HUD button could ever be reached.**
 
 **CANON (re-hash, count unchanged at 48):** `InputMode` `def31c09` -> **`10212f7c`** (`FocusFirst(root, force?)`), `GamepadMenus` `5ddf46d4` -> **`4a14225f`** (the HUD's Y). Both Places + disk, applied by exact find/replace with the base AND result hashes asserted. **USER REPUBLISHES BOTH PLACES.**
