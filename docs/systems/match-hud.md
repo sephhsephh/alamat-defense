@@ -59,6 +59,25 @@ one writer of `Data.Quests`. The panel shows the pinned quest, else the first un
 the honest answer). The client retries for ~30 s because the profile can still be loading when the
 HUD boots. Refreshed again 2 s after Victory/Defeat.
 
+### The drawer (B90)
+
+A `<` tab on the panel's right edge (`PinnedQuests.CollapseButton`, tagged `B90Built`) slides the
+whole panel off to the left; the tab flips to `>` and brings it back. 0.28 s `Quart Out`.
+
+**The closed X is derived from the panel's own width**, and that is what keeps the tab reachable.
+This panel is anchored on its LEFT edge, so it has to travel exactly its own width to clear the
+screen — the mirror of the rule the two right-side panels follow (`unit-manager.md`). The tab is
+parented *at* the panel's right edge (`Position {1, 0}`), so that one width lands it flush on
+`x = 0`: the panel is gone, the tab is still there. A tab that left with the panel would be a
+one-way door.
+
+It deliberately does **not** take B89's `Visible = false` rule. The tab is a child of the panel, so
+hiding the panel would hide the only way back — and it does not need to, because a parked panel's
+right edge lands exactly on `x = 0`, leaving nothing on screen to eat a click.
+
+The toggle reads a `questOpen` flag, never the panel's `Position`: a toggle that tests the thing the
+tween is still moving fights its own animation.
+
 ## Stage Info (button or C)
 
 Built from configs the client already has: `StageRegistry`, `WaveListRegistry`, `EnemyConfigRegistry`.

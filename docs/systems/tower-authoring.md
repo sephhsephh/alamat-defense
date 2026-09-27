@@ -113,6 +113,23 @@ The dash stops `StandOff` studs short of the enemy and faces it. The whole trip 
 fitted inside `AnimLength`, so the tower is home before it may fire again. `Style = "Teleport"` is the
 same trip with no travel time.
 
+### ⚠ The return keeps its facing (B90)
+
+**A tower goes home to `HomeCFrame`'s POSITION, wearing the facing it already has** — never
+`HomeCFrame` whole. That CFrame carries the rotation the tower was *placed* with, and `TowerManager`
+places with `CFrame.new(position)`, so returning to it verbatim swung every melee tower back to world
+-Z at the end of every swing. The player only sees it when nothing else is in range, which is why it
+reads as "it forgets where it was looking after a kill". `MeleeMover.homePose()` is the one place
+this is decided, and `SnapHome` uses it too.
+
+Position is authority, facing is not: the entire point of `HomeCFrame` is that range, auras, selling,
+the placement grid and the client's range ring answer from it, and none of them care which way the
+model points.
+
+**Ranged towers were never affected** — `TowerController:Step` returns early with no target and never
+writes rotation, so they already held their facing (measured: 0.00° of drift across a 5 s idle). If a
+tower ever *does* revert, look at whatever moved the model last, not at `FaceTarget`.
+
 ---
 
 ## 5. Five worked examples

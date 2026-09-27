@@ -1,4 +1,22 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-27 [game] B90 -- AD-UI + AD-Game: **the pinned-quests drawer, and towers stop forgetting where they were looking.**
+
+Game-local, no canon change (manifest still 43). New authored instance: `MatchHUD.PinnedQuests.CollapseButton` (`B90Built`). Docs: **`docs/systems/match-hud.md`**, **`docs/systems/tower-authoring.md`**.
+
+**A "<" TAB SLIDES THE PINNED QUESTS PANEL OFF TO THE LEFT.** Click it and the whole panel travels out past the screen edge; the tab flips to ">" and brings it back. 0.28s `Quart Out`, and `questOpen` is the intent the toggle reads -- B89's lesson, one batch later: a toggle that tests the property the tween is still moving fights its own animation.
+
+**⚠ THE CLOSED X IS DERIVED FROM THE PANEL'S OWN WIDTH, AND THAT IS WHAT KEEPS THE TAB REACHABLE.** This panel is anchored on its LEFT edge, so it has to travel exactly its own width to clear the screen -- the mirror of the B88/B89 rule for the two right-side panels. The tab is parented AT the panel's right edge (`Position {1, 0}`), so that one width lands it flush on `x = 0`: the panel is gone, the tab is still there. **A tab that left with the panel would be a one-way door**, and no amount of styling fixes a control the player can no longer reach.
+
+**IT DELIBERATELY DOES NOT FOLLOW B89's `Visible = false` RULE.** The tab is a CHILD of the panel, so hiding the panel would hide the only way back. It does not need the rule anyway: parked, the panel's right edge lands exactly on `x = 0`, so there is no off-screen frame left over to eat a click. Measured: **panel at `abs x = -326`, right edge `0`, 0px on screen**, tab at `x = 0` reading `">"`; reopening put it back at exactly `(15, 233)`.
+
+**⚠ A TOWER NOW KEEPS THE DIRECTION IT LAST LOOKED -- AND THE CULPRIT WAS THE MELEE DASH, NOT THE TARGETING (user-reported).** `MeleeMover` returned the model to `HomeCFrame`, which carries the rotation the tower was PLACED with (`TowerManager` places with `CFrame.new(position)`, so that is world -Z, yaw 0). So a Knight swung back to yaw 0 at the end of every single swing. You only ever SEE it when nothing else is in range -- which is exactly how the user described it, and exactly why it read as "after killing its enemy". The return now goes to home's **POSITION** with the facing the rig already has: `homePose()` takes `home.Position` and the model's own flattened `LookVector`. **Position is authority, facing is not** -- the whole point of `HomeCFrame` (B78) is that range, auras, selling and the client's range ring answer from it, and none of those care which way the model is pointing.
+
+**RANGED TOWERS WERE ALREADY CORRECT, AND THAT WAS WORTH MEASURING BEFORE CHANGING ANYTHING.** `TowerController:Step` returns early when there is no target and never writes rotation, so a ranged tower already held its facing -- confirmed live on a Necromancer: **0.00 deg of drift across a 5-second idle**. Had the fix been applied to `FaceTarget` instead, it would have "fixed" code that was not broken and left the dash still snapping.
+
+**Proven live:** a Knight's distance-from-home / yaw sampled every 0.2s -- `0.0/-127  2.1/-126  2.1/-126  0.0/-123 ... 0.0/-88  2.6/-88  2.6/-88  0.0/-88  0.0/-88`. It dashes out 2-4 studs and returns to **0.0000 studs of drift** every time, while the yaw never once comes back to 0 (its placement facing). A settled Knight held **`-179.9` for 8 s** with nothing in range, and three sibling Knights that never engaged all still read yaw `0.0` -- the same rig, the same placement rotation, the difference being only whether it had ever had a target.
+
+⚠ **NOT MINE, FLAGGED NOT FIXED:** `[CONTRACT] UnitStatsCatalog is STALE -- Knight.SPA: catalog=1.4 live=5.4`. The Knight's speed-per-attack was changed somewhere outside this batch; the catalog the Lobby reads still says 1.4. Regenerating it is a one-liner but it is the USER's balance value, so it is reported rather than reconciled.
+
 ## 2026-09-27 [game] B89 -- AD-UI: **Stage Info slides in from the right like the Unit Manager, and only one side panel can be open at a time.**
 
 Game-local, no canon change (manifest still 43). New: `Client.UI.SidePanelBus` (Module). Docs: **`docs/systems/stage-info.md`**, **`docs/systems/unit-manager.md`**.
