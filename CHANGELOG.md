@@ -1,4 +1,12 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-27 [both] B100 -- AD-Game: **one authored-FX player instead of two copies.**
+
+**CANON: manifest 47 -> 48.** NEW shared `AuthoredFX` (`f6a6afda`, `RS.Shared`, both Places + disk). `MovementController` `162d449a` -> **`89552a9b`** (both Places + disk). Game-local: `Client.VFX.EnemyDeathFX` now calls it. `HashShared` (both) + `tools/hash_shared.luau` +`AuthoredFX`. **USER REPUBLISHES BOTH PLACES.**
+
+The B98 follow-up: `MovementController`'s jump/double-jump/dash FX player and the Game's `EnemyDeathFX` each carried ~60 lines of the same Sound + VFX folder logic. Now both call `AuthoredFX.Play(def, root, character?)`; the rules (Attachment `Part`, emitter `EmitCount`, `ActiveTime`, `MuteStockSound`) live once. **No behaviour change intended.** MovementController was rewritten by exact find/replace from the deployed `162d449a` and the result asserted equal to the disk canon's hash before it was written.
+
+**Proven live:** Game -- DevDash put `Sound, TrailBottom, TrailTop, Feet, Trail` on the HumanoidRootPart (**a `Sound` now appears: the user has filled a SoundId since B92**), and AutoPlay produced **37 enemy death effects in 40 s**; Lobby -- jump + DevDoubleJump + DevDash put `Feet, Sound, TrailTop, TrailBottom, Feet, Trail`. 0 errors in either Place.
+
 ## 2026-09-27 [game] B99 -- AD-UI: **console in a match -- select towers and open the side panels from the pad.**
 
 Game-local, no canon change. Edited: `TowerSelectionUI`, `HudPanels`, `UnitManagerUI`; tags/attributes in StarterGui.

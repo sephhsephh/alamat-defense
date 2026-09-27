@@ -296,6 +296,8 @@ local MODULES = {
 	-- Promoted B97 (AD-UI): console/mobile foundation -- input mode + focus-on-open for tagged menus.
 	InputMode = "ReplicatedStorage.Shared.InputMode",
 	GamepadMenus = "StarterPlayer.StarterPlayerScripts.Client.GamepadMenus",
+	-- Promoted B100: the one authored-FX player (MovementController + EnemyDeathFX).
+	AuthoredFX = "ReplicatedStorage.Shared.AuthoredFX",
 }
 
 -- GuiObject subtrees. Promoted by AD-UI 2026-08-06; a Place that has not received the kit

@@ -427,14 +427,14 @@
     },
     "MovementController": {
       "file": "shared/src/MovementController.luau",
-      "hash": "162d449a",
+      "hash": "89552a9b",
       "owner": "game",
       "deployPath": "StarterPlayer.StarterPlayerScripts.Client.MovementController",
       "deployed": {
-        "Game": "162d449a",
-        "Lobby": "162d449a"
+        "Game": "89552a9b",
+        "Lobby": "89552a9b"
       },
-      "comment": "Added B54. Sprint (BOTH Places, a TOGGLE) + dash (LOBBY only, gated by MovementConfig.DashPlaces). LocalScript, hashed as source -- same precedent as UIKitBootstrap/SettingsUI. The FIRST ContextActionService use in the project: one BindAction carries keyboard + gamepad + a generated mobile touch button, so there is no per-platform branch. Deployed at an IDENTICAL path in both Places (the ClientSettings precedent), which is why promotion cost zero consumer edits. B66: double jump on the ordinary jump input (UserInputService.JumpRequest, so Space/gamepad A/mobile all work with no extra binding), once per airborne stretch, re-armed on landing; dash now also bound in the Game. e2668274 -> 8e995f32. B91: the player character's own animations (Walk into both Animate walk/run slots; sprint-Run, DoubleJump, Dash as owned tracks), ids from the new shared CharacterAnimConfig. 8e995f32 -> 09bc0fd4. B92: jump / double jump / dash sounds + VFX from the authored RS.CharacterFX, played locally and relayed to other clients via RS.Remotes.CharacterFX. 09bc0fd4 -> 79d71a7f. B93: warns once when StarterPlayer.AllowCustomAnimations is off (Animate then ignores the custom Walk/Jump/Fall/Idle). 79d71a7f -> 162d449a.",
+      "comment": "Added B54. Sprint (BOTH Places, a TOGGLE) + dash (LOBBY only, gated by MovementConfig.DashPlaces). LocalScript, hashed as source -- same precedent as UIKitBootstrap/SettingsUI. The FIRST ContextActionService use in the project: one BindAction carries keyboard + gamepad + a generated mobile touch button, so there is no per-platform branch. Deployed at an IDENTICAL path in both Places (the ClientSettings precedent), which is why promotion cost zero consumer edits. B66: double jump on the ordinary jump input (UserInputService.JumpRequest, so Space/gamepad A/mobile all work with no extra binding), once per airborne stretch, re-armed on landing; dash now also bound in the Game. e2668274 -> 8e995f32. B91: the player character's own animations (Walk into both Animate walk/run slots; sprint-Run, DoubleJump, Dash as owned tracks), ids from the new shared CharacterAnimConfig. 8e995f32 -> 09bc0fd4. B92: jump / double jump / dash sounds + VFX from the authored RS.CharacterFX, played locally and relayed to other clients via RS.Remotes.CharacterFX. 09bc0fd4 -> 79d71a7f. B93: warns once when StarterPlayer.AllowCustomAnimations is off (Animate then ignores the custom Walk/Jump/Fall/Idle). 79d71a7f -> 162d449a. B100: the FX player moved into the shared AuthoredFX module (no behaviour change). 162d449a -> 89552a9b.",
       "kind": "module"
     },
     "CharacterAnimConfig": {
@@ -484,6 +484,18 @@
       },
       "kind": "module",
       "comment": "Added B97. LocalScript, hashed as source. Any GUI root tagged 'GamepadMenu' (CollectionService) gets its first button focused when it opens on a gamepad, and focus cleared when it closes. Tagged at B97: Game 7 roots, Lobby 23."
+    },
+    "AuthoredFX": {
+      "file": "shared/src/AuthoredFX.luau",
+      "hash": "f6a6afda",
+      "owner": "game",
+      "deployPath": "ReplicatedStorage.Shared.AuthoredFX",
+      "deployed": {
+        "Game": "f6a6afda",
+        "Lobby": "f6a6afda"
+      },
+      "kind": "module",
+      "comment": "Added B100 (manifest 47 -> 48). The ONE player for designer-authored effect folders (Sound + VFX; Part / EmitCount / ActiveTime / MuteStockSound attributes). MovementController (RS.CharacterFX, both Places) and the Game's EnemyDeathFX (RS.EnemyDeathFX) both call AuthoredFX.Play; before B100 each had its own copy (the duplication flagged at B98)."
     },
     "SettingsService": {
       "file": "shared/src/SettingsService.luau",

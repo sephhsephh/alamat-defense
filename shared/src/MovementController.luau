@@ -41,7 +41,6 @@ script:SetAttribute("BootComplete", false)
 
 local ContentProvider = game:GetService("ContentProvider")
 local ContextActionService = game:GetService("ContextActionService")
-local Debris = game:GetService("Debris")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -49,6 +48,7 @@ local UserInputService = game:GetService("UserInputService")
 
 local MovementConfig = require(ReplicatedStorage.Configs.Global.MovementConfig)
 local CharacterAnimConfig = require(ReplicatedStorage.Configs.Global.CharacterAnimConfig)
+local AuthoredFX = require(ReplicatedStorage.Shared.AuthoredFX) -- B100
 local SettingsConfig = require(ReplicatedStorage.Configs.Global.SettingsConfig)
 -- Sibling module: `optionalSibling` rules (B32) -- never a bare WaitForChild on a sibling, which
 -- would hang this script forever if the folder were ever renamed.
@@ -312,17 +312,6 @@ end
 local FX_ACTIONS = { Jump = true, DoubleJump = true, Dash = true }
 local fxRemote: RemoteEvent? = nil
 
-local function muteStockSound(def: Instance, root: BasePart, sound: Sound?)
-	local stockName = def:GetAttribute("MuteStockSound")
-	if typeof(stockName) ~= "string" or sound == nil or sound.SoundId == "" then
-		return
-	end
-	local stock = root:FindFirstChild(stockName)
-	if stock and stock:IsA("Sound") then
-		stock.Volume = 0
-	end
-end
-
 local function playFX(character: Model?, action: string)
 	if character == nil or not FX_ACTIONS[action] then
 		return
@@ -333,73 +322,8 @@ local function playFX(character: Model?, action: string)
 	if def == nil or root == nil or not root:IsA("BasePart") then
 		return
 	end
-	local activeTime = tonumber(def:GetAttribute("ActiveTime")) or 0.2
-
-	local template = def:FindFirstChild("Sound")
-	local sound = if template and template:IsA("Sound") then template else nil
-	muteStockSound(def, root, sound)
-	if sound and sound.SoundId ~= "" then
-		local s = sound:Clone()
-		s.Parent = root
-		s:Play()
-		Debris:AddItem(s, math.max(s.TimeLength, 3) + 0.5)
-	end
-
-	local vfx = def:FindFirstChild("VFX")
-	if vfx == nil or #vfx:GetChildren() == 0 then
-		return
-	end
-	local clone = vfx:Clone()
-	local placed = {}
-	for _, child in ipairs(clone:GetChildren()) do
-		local target: Instance = root
-		if child:IsA("Attachment") then
-			local partName = child:GetAttribute("Part")
-			local part = if typeof(partName) == "string" then character:FindFirstChild(partName) else nil
-			if part and part:IsA("BasePart") then
-				target = part
-			end
-		end
-		child.Parent = target
-		table.insert(placed, child)
-	end
-	clone:Destroy()
-
-	local linger = 0
-	local switched = {}
-	for _, item in ipairs(placed) do
-		local all = item:GetDescendants()
-		table.insert(all, item)
-		for _, d in ipairs(all) do
-			if d:IsA("ParticleEmitter") then
-				linger = math.max(linger, d.Lifetime.Max)
-				local count = tonumber(d:GetAttribute("EmitCount"))
-				if count and count > 0 then
-					d:Emit(count)
-				else
-					d.Enabled = true
-					table.insert(switched, d)
-				end
-			elseif d:IsA("Trail") then
-				linger = math.max(linger, d.Lifetime)
-				d.Enabled = true
-				table.insert(switched, d)
-			elseif d:IsA("Beam") then
-				d.Enabled = true
-				table.insert(switched, d)
-			end
-		end
-	end
-	task.delay(activeTime, function()
-		for _, d in ipairs(switched) do
-			if d.Parent then
-				(d :: any).Enabled = false
-			end
-		end
-	end)
-	for _, item in ipairs(placed) do
-		Debris:AddItem(item, activeTime + linger + 0.25)
-	end
+	-- B100: the shared player (RS.Shared.AuthoredFX) -- the Game's EnemyDeathFX uses the same one.
+	AuthoredFX.Play(def, root, character)
 end
 
 -- Local trigger: play now, then let the server forward it to everyone else.
