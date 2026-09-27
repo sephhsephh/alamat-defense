@@ -1,4 +1,14 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-27 [both] B101 -- AD-UI: **the HUD on a controller -- and why no HUD button could ever be reached.**
+
+**CANON (re-hash, count unchanged at 48):** `InputMode` `def31c09` -> **`10212f7c`** (`FocusFirst(root, force?)`), `GamepadMenus` `5ddf46d4` -> **`4a14225f`** (the HUD's Y). Both Places + disk, applied by exact find/replace with the base AND result hashes asserted. **USER REPUBLISHES BOTH PLACES.**
+
+**Y = THE HUD.** With no tagged menu open, Y puts pad focus on the root tagged `GamepadHud` (new tag): **Lobby `HUD.Left`**, **Game `MatchHUD.RightButtons`**. Y again (or B) leaves. Y is skipped while a tagged menu is open, so the Game's tower panel keeps Y = cycle targeting.
+
+**⚠ FOUND: THE LOBBY HUD WAS UNREACHABLE ON A PAD.** Every `HUD.Left` / `HUD.Right` button, all six hotbar slots (both Places) and the Units screen's `UnitIconV2` card were authored `Selectable = false` -- Roblox's gamepad selection skips those entirely, so neither Y nor the Select button could ever land on them. **Set to `Selectable = true`: 16 Lobby buttons, 6 Game hotbar slots.** (19 were false in the Lobby; the 3 `CurrencyTemplate` rows were left alone -- they are labels.) Every NEW button must stay Selectable for console.
+
+**Proven live (Lobby):** Y -> `GuiService.SelectedObject = HUD.Left.Buttons.UnitsButton`. **Not provable with this tool:** A activating the focused button -- the tool sends pad keys as keyboard input, which Roblox's core does not treat as a GUI "activate". Check with a real pad.
+
 ## 2026-09-27 [both] B100 -- AD-Game: **one authored-FX player instead of two copies.**
 
 **CANON: manifest 47 -> 48.** NEW shared `AuthoredFX` (`f6a6afda`, `RS.Shared`, both Places + disk). `MovementController` `162d449a` -> **`89552a9b`** (both Places + disk). Game-local: `Client.VFX.EnemyDeathFX` now calls it. `HashShared` (both) + `tools/hash_shared.luau` +`AuthoredFX`. **USER REPUBLISHES BOTH PLACES.**

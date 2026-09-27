@@ -463,27 +463,27 @@
     },
     "InputMode": {
       "file": "shared/src/InputMode.luau",
-      "hash": "def31c09",
+      "hash": "10212f7c",
       "owner": "ui",
       "deployPath": "ReplicatedStorage.Shared.InputMode",
       "deployed": {
-        "Game": "def31c09",
-        "Lobby": "def31c09"
+        "Game": "10212f7c",
+        "Lobby": "10212f7c"
       },
       "kind": "module",
-      "comment": "Added B97 (console + mobile foundation, manifest 45 -> 47 with GamepadMenus). Which device the player is USING now (last input wins): KeyboardMouse | Gamepad | Touch, a Changed signal, and FocusFirst(root) for gamepad menu focus. Read the mode from here, never TouchEnabled/GamepadEnabled (a device existing is not a device in use)."
+      "comment": "Added B97 (console + mobile foundation, manifest 45 -> 47 with GamepadMenus). Which device the player is USING now (last input wins): KeyboardMouse | Gamepad | Touch, a Changed signal, and FocusFirst(root) for gamepad menu focus. Read the mode from here, never TouchEnabled/GamepadEnabled (a device existing is not a device in use). B101: FocusFirst(root, force?) -- force focuses even when the last input was not a pad (the HUD's Y). def31c09 -> 10212f7c."
     },
     "GamepadMenus": {
       "file": "shared/src/GamepadMenus.luau",
-      "hash": "5ddf46d4",
+      "hash": "4a14225f",
       "owner": "ui",
       "deployPath": "StarterPlayer.StarterPlayerScripts.Client.GamepadMenus",
       "deployed": {
-        "Game": "5ddf46d4",
-        "Lobby": "5ddf46d4"
+        "Game": "4a14225f",
+        "Lobby": "4a14225f"
       },
       "kind": "module",
-      "comment": "Added B97. LocalScript, hashed as source. Any GUI root tagged 'GamepadMenu' (CollectionService) gets its first button focused when it opens on a gamepad, and focus cleared when it closes. Tagged at B97: Game 7 roots, Lobby 23."
+      "comment": "Added B97. LocalScript, hashed as source. Any GUI root tagged 'GamepadMenu' (CollectionService) gets its first button focused when it opens on a gamepad, and focus cleared when it closes. Tagged at B97: Game 7 roots, Lobby 23. B101: Y (no tagged menu open) focuses the root tagged 'GamepadHud' -- Lobby HUD.Left, Game MatchHUD.RightButtons. 5ddf46d4 -> 4a14225f."
     },
     "AuthoredFX": {
       "file": "shared/src/AuthoredFX.luau",

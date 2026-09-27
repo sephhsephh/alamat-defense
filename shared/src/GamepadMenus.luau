@@ -11,6 +11,11 @@
 -- A button with attribute GamepadDefault = true is chosen first (e.g. a menu's main action).
 -- Menus that are NOT tagged still work through Roblox's own Select-button navigation.
 --
+-- B101: THE HUD. Press Y (with no tagged menu open) to put the pad's focus on the root tagged
+-- "GamepadHud" (the Lobby's left button column, the match's right buttons) -- then the stick walks
+-- every HUD button. Y again, or B, leaves it. Y is skipped while a tagged menu is open, which is
+-- also what keeps the Game's tower panel (Y = cycle targeting) working.
+--
 -- Polled (every 0.15 s) rather than wired to every Visible/Enabled signal up each ancestor chain:
 -- a menu can be opened by toggling ANY ancestor, and a poll over a couple of dozen roots is cheap.
 
@@ -18,6 +23,7 @@ local CollectionService = game:GetService("CollectionService")
 local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
 
 local InputMode = require(ReplicatedStorage.Shared.InputMode)
 
@@ -65,6 +71,24 @@ local function step()
 end
 
 CollectionService:GetInstanceRemovedSignal(TAG):Connect(forget)
+
+local HUD_TAG = "GamepadHud"
+UserInputService.InputBegan:Connect(function(input: InputObject, processed: boolean)
+	if processed or input.KeyCode ~= Enum.KeyCode.ButtonY or #openOrder > 0 then
+		return
+	end
+	local sel = GuiService.SelectedObject
+	if sel ~= nil then
+		GuiService.SelectedObject = nil -- Y again: leave the HUD
+		return
+	end
+	for _, root in ipairs(CollectionService:GetTagged(HUD_TAG)) do
+		if root:IsDescendantOf(playerGui) and isOpen(root) then
+			InputMode.FocusFirst(root, true)
+			return
+		end
+	end
+end)
 
 InputMode.Changed:Connect(function(mode: string)
 	if mode == "Gamepad" then

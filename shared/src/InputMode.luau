@@ -11,8 +11,9 @@
 --   InputMode.Get()        -> "KeyboardMouse" | "Gamepad" | "Touch"   (last input wins)
 --   InputMode.IsGamepad()  -> boolean
 --   InputMode.Changed      -> Signal (newMode)
---   InputMode.FocusFirst(root) -> on a gamepad, select the first visible button under `root`
---                                  (a button with attribute GamepadDefault = true wins). Returns it.
+--   InputMode.FocusFirst(root, force?) -> on a gamepad (or always, with force), select the first
+--                                  visible button under `root` (a button with attribute
+--                                  GamepadDefault = true wins). Returns it.
 
 local GuiService = game:GetService("GuiService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -80,8 +81,8 @@ local function shown(g: GuiObject): boolean
 	return g.AbsoluteSize.X > 0 and g.AbsoluteSize.Y > 0
 end
 
-function InputMode.FocusFirst(root: Instance): GuiObject?
-	if current ~= "Gamepad" then
+function InputMode.FocusFirst(root: Instance, force: boolean?): GuiObject?
+	if current ~= "Gamepad" and not force then
 		return nil
 	end
 	local best: GuiObject? = nil
