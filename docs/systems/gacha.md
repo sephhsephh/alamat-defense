@@ -99,7 +99,7 @@ so shipping a banner is dropping in a file. Shape is the blueprint's, and `Valid
 
 Shipped: **`Standard`** — Gold, 100/pull, `Pool = "AllSummonable"` (every `Kind == "Tower"` catalog
 entry, grouped by tier), `PityRef = "Default"`, `LuckMult = 1`, always open.
-Rates: Common .60 · Rare .25 · Epic .10 · Legendary .04 · Mythic .00995 · **Secret .00005**.
+Rates (B106): Common .37 · **Uncommon .30** · Rare .18 · Epic .10 · Legendary .04 · Mythic .00995 · **Secret .00005** (was Common .60 / Rare .25 with no Uncommon; Epic+ and every pity tier unchanged).
 
 `Featured = { Count = 3, RotationPeriod = 3600, Boost = 5 }` — 3 ids redrawn hourly, deterministic
 from `Slot` + `RngForSlot(slot, bannerId)`, **secrets excluded** (blueprint). Server and client

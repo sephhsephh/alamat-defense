@@ -1,4 +1,10 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-28 [lobby] B106 pt6 -- AD-Gacha: **Uncommon gets a Standard-banner rate (user: "balance it for me").**
+
+Lobby-local `RS.Configs.Banners.Standard` only (not shared canon). Rates now **Common .37 / Uncommon .30 / Rare .18 / Epic .10 / Legendary .04 / Mythic .00995 / Secret .00005** (sum 1.00). Uncommon sits on the ladder between Common and Rare; **Epic and above are untouched**, so every pity tier and the Mythic/Secret odds are exactly as before -- the 0.30 came out of Common (.60 -> .37) and Rare (.25 -> .18). `AutoSellConfig` derives its tiers from banner weights, so the Auto Summon panel grows an Uncommon row on its own. `docs/systems/gacha.md` updated.
+
+**Proven live (Lobby Play):** `AutoSellService ready (... 7 awardable tier(s): Common, Uncommon, Rare, Epic, Legendary, Mythic, Secret)`; 5 x10 pulls through the real `RequestSummon` remote (Gold via `DevPushRewards`, cleared after) returned **Common 22 / Uncommon 13 / Rare 7 / Epic 3 / Legendary 5** -- Uncommons now land. Index shows 18 towers. ⚠ The dev profile now owns those 50 test units.
+
 ## 2026-09-28 [game] B106 pt5 -- AD-Game: **live verification of the 10 roster units + the P-pack (after the user restarted a wedged Studio).**
 
 No code change. Studio ids rotated on the restart (Game `9caa8751...`, Lobby `88c1526d...`); the reopened place held every pt3/pt4 edit (hashes `105b6460` / `391fb3f2`, 18-tower registry, 6 new passive modules).
