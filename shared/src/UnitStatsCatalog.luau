@@ -66,6 +66,10 @@ UnitStatsCatalog.Stats = {
 	Aswang        = { DMG = 60, RNG = 14, SPA = 1.9 },
 	Tiyanak       = { DMG = 70, RNG = 13, SPA = 2 },
 	Batibat       = { DMG = 55, RNG = 16, SPA = 1.8 },
+	Mayari_LunarEclipse = { DMG = 78, RNG = 30, SPA = 2.2 },
+	Apolaki_Zenith = { DMG = 59, RNG = 24, SPA = 1.4 },
+	Bathala_Ascended = { DMG = 91, RNG = 26, SPA = 2 },
+	Bakunawa_Eclipse = { DMG = 143, RNG = 22, SPA = 2.2 },
 }
 
 -- The resolved base stats for a tower, or nil if it is not in the catalog.
@@ -131,6 +135,10 @@ UnitStatsCatalog.Costs = {
 	Aswang        = 550,
 	Tiyanak       = 525,
 	Batibat       = 575,
+	Mayari_LunarEclipse = 450,
+	Apolaki_Zenith = 450,
+	Bathala_Ascended = 700,
+	Bakunawa_Eclipse = 750,
 }
 
 -- The placement cost for a tower, or nil if it is not in the catalog. Callers HIDE on nil rather
@@ -183,6 +191,10 @@ UnitStatsCatalog.Placement = {
 	Aswang        = "Ground",
 	Tiyanak       = "Ground",
 	Batibat       = "Ground",
+	Mayari_LunarEclipse = "Hill",
+	Apolaki_Zenith = "Hill",
+	Bathala_Ascended = "Hybrid",
+	Bakunawa_Eclipse = "Hybrid",
 }
 
 -- "Ground" | "Hill" | "Hybrid", or nil if the tower is not in the catalog (callers HIDE on nil).

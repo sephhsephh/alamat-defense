@@ -23,6 +23,7 @@
 - `unit-roster.md` — **B106 DRAFT, the unit roadmap**: 27 new Philippine-myth units per tier, balance bands, passive catalogue (C/P/S tags), evolved forms, new systems + build order, and the B106 renames of the 8 old towers.
 
 ## systems/
+- `evolution.md` — **B106, AD-Gacha + AD-Game, BOTH Places**: evolved forms, the recipe registry (`Check` = the rule), `GrantService.EvolveUnit` (the write), the Evolve NPC screen, how to add a form.
 - `tower-authoring.md` — **AD-Game canon, READ BEFORE ADDING A TOWER**: attack profiles, the hit list,
   the animation-marker contract, melee movement, five worked examples and the add-a-tower checklist (B78).
 - `hotbar.md` — **AD-UI canon, BOTH Places**: the user's authored hotbar (B77) and the 9-tier palette it

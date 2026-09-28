@@ -59,6 +59,12 @@ ItemCatalog.Entries = {
 	Aswang        = { Kind = "Tower", Tier = "Secret", Name = "Aswang", Description = "Shapeshifter: dog, bird, human each wave.", Icon = { Model = { "TowerModels", "Aswang" } }, Tradeable = false },
 	Tiyanak       = { Kind = "Tower", Tier = "Secret", Name = "Tiyanak", Description = "Stuns newcomers; bites ignore armor.", Icon = { Model = { "TowerModels", "Tiyanak" } }, Tradeable = false },
 	Batibat       = { Kind = "Tower", Tier = "Secret", Name = "Batibat", Description = "Slows even bosses; puts enemies to sleep.", Icon = { Model = { "TowerModels", "Batibat" } }, Tradeable = false },
+	-- B106 EVOLVED FORMS -- never summoned (`Summonable = false`, honoured by the Lobby's BannerRegistry);
+	-- reached only through Configs/Evolutions/<BaseId> in the Lobby. `EvolvedFrom` names the base unit.
+	Mayari_LunarEclipse = { Kind = "Tower", Tier = "Mythic", Name = "Mayari (Lunar Eclipse)", Description = "Evolved Mayari: +30% damage; crits Weaken.", Icon = { Model = { "TowerModels", "Mayari_LunarEclipse" } }, Tradeable = false, Summonable = false, EvolvedFrom = "Mayari" },
+	Apolaki_Zenith = { Kind = "Tower", Tier = "Mythic", Name = "Apolaki (Zenith)", Description = "Evolved Apolaki: +30% damage; Rising Sun to +80%.", Icon = { Model = { "TowerModels", "Apolaki_Zenith" } }, Tradeable = false, Summonable = false, EvolvedFrom = "Apolaki" },
+	Bathala_Ascended = { Kind = "Tower", Tier = "Alamat", Name = "Bathala (Ascended)", Description = "Evolved Bathala: +30% damage; all your towers 10% faster.", Icon = { Model = { "TowerModels", "Bathala_Ascended" } }, Tradeable = false, Summonable = false, EvolvedFrom = "Bathala" },
+	Bakunawa_Eclipse = { Kind = "Tower", Tier = "Alamat", Name = "Bakunawa (Eclipse)", Description = "Evolved Bakunawa: +30% damage; Eclipse every 5th attack.", Icon = { Model = { "TowerModels", "Bakunawa_Eclipse" } }, Tradeable = false, Summonable = false, EvolvedFrom = "Bakunawa" },
 
 	-- ===== Currencies =====
 	-- StatRerolls added B45 (AD-Game, user-approved): C2's stat reroll SPENDS Currencies.StatRerolls,
@@ -75,6 +81,8 @@ ItemCatalog.Entries = {
 	BannerTicket     = { Kind = "Item", Tier = "Rare",      Name = "Banner Ticket",      Description = "A free banner pull.",       Icon = { Image = "rbxassetid://6731922404" }, MaxOwned = 9999, Tradeable = false },
 	TraitRerollToken = { Kind = "Item", Tier = "Epic",      Name = "Trait Reroll Token", Description = "Reroll a unit's trait.",     Icon = { Image = "rbxassetid://12590248124" }, MaxOwned = 9999, Tradeable = false },
 	GoldenSeed       = { Kind = "Item", Tier = "Legendary", Name = "Golden Seed",        Description = "Rare crafting material.",    Icon = { Image = "rbxassetid://124757602236693" }, MaxOwned = 9999, Tradeable = false },
+	-- B106: evolution relic. Drops from the Stage 1 boss act (Stage1_Act3 DropTable). Icon PLACEHOLDER (user).
+	ScarecrowCrown   = { Kind = "Item", Tier = "Legendary", Name = "Scarecrow Crown",    Description = "Relic of the Scarecrow King; used to evolve units.", Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
 
 	-- ===== Crafting materials (Phase D / D1): fragments -> colour artifacts (2:1) -> Rainbow (all 7). =====
 	-- 7 ROYGBIV fragment colours. 2 fragments of a colour craft that colour's artifact; all 7 colour
