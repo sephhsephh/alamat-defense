@@ -1,4 +1,23 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-28 [game] B106 pt2 -- AD-Game: **the 8 towers get their rarity's tier count, re-spread to the tier's DPS band (user-approved numbers).**
+
+Game-local only (tower configs; no canon change -- tier 1 is unchanged for every tower, so `UnitStatsCatalog` stays `5f05dd93`). Rule (user): minimum upgrade tiers Common 5, +1 per rarity up. Tier 1 kept exactly; Damage climbs geometrically and SPA linearly to the rarity's final DPS; Range/crit/radius/falloff interpolate; upgrade costs keep TODAY'S AVERAGE per tier (total grows with tier count). Attack/shape changes moved to the FINAL tier (Bantong Cone, Bulalakaw Cataclysm); on-hit effects unlock ~60% up (Handyong Burn T3, Oryol Weaken T5, Babaylan Slow T5).
+
+| Tower | Tiers | Final | Final DPS | Upgrade total |
+| --- | --- | --- | --- | --- |
+| Handyong | 5 | 48 / 2.0s | 24 | 450 |
+| Bantong | 5 | 98 / 4.1s (Cone + Stun) | 23.9 | 760 |
+| Oryol | 7 | 72 / 1.6s | 45 (was 53 -- retuned DOWN) | 1,575 |
+| Lakapati | 7 | 300 income/wave | -- | 1,125 |
+| Babaylan | 8 | 116 / 2.1s FullAoe | 55.2 (was 24 -- retuned UP) | 2,095 |
+| Bulalakaw | 9 | 102 / 1.2s Cataclysm | 85 | 3,005 |
+| Urduja | 9 | 72 / 0.8s | 90 | 3,600 |
+| Magwayen | 10 | 104 / 0.9s | 115.6 | 4,280 |
+
+⚠ Mid tiers are WEAKER than before for units that used to max at tier 3 (e.g. Handyong T3 20 -> 6.8 DPS) -- accepted by the user as the cost of a smooth climb. ⚠ Handyong T1 `UpgradeCost` 75 -> 70 (the approved table).
+
+**Proven live:** a probe Script resolved every tier through the real `TowerStatResolver` (numbers above, all exact); `[TowerValidate] OK: 8 tower config(s)`; with Auto Play on, a real match upgraded Handyong and Lakapati to **tier 4** and Magwayen to tier 3 through the normal upgrade path. Validator still shows only the user's known `Bantong.SPA 1.4 vs 5.4`. Probe removed.
+
 ## 2026-09-28 [both] B106 -- AD-Game/AD-Gacha: **unit-roster design, the 8 towers RENAMED to named myth figures, Hybrid = ground-only, MovementConfig drift adopted.**
 
 **CANON (re-hash, count unchanged at 48):** `ItemCatalog` `2ee5f976` -> **`87f4a631`**, `UnitStatsCatalog` `94321bc4` -> **`5f05dd93`**, `MovementConfig` `f09bb47f` -> **`cfe5ff13`**. Both Places + disk, byte-identical (FNV computed in each Place and on disk). **USER REPUBLISHES BOTH PLACES.** Bootstrap drift check was 41/41 Game, **40/41 Lobby -- `MovementConfig` differed (dash 75/1s/1s cd, double jump x2.0)**; the user confirmed it was THEIR tune and asked for it to become canon, so the Game + disk were brought to it.

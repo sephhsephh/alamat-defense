@@ -88,7 +88,7 @@ Support units are judged by the buff they give, not their DPS.
 ⚠ **Existing units are already out of band:** Mage/Oryol (Rare) does **53**, while Babaylan (Epic) does 24
 FullAoe. It's FullAoe so it's partly fair, but Babaylan reads weak for Epic. Retune while renaming? (§8)
 
-**Tier minimums are decided (§0).** Every unit has 3 today, so each existing tower gains tiers in the
+**BUILT for the 8 existing towers at B106 pt2** (see CHANGELOG for the table). **Tier minimums are decided (§0).** Every unit has 3 today, so each existing tower gains tiers in the
 rename batch (Handyong/Bantong 5, Oryol/Lakapati 7, Babaylan 8, Bulalakaw/Urduja 9, Magwayen 10). The DPS
 band applies to the LAST tier; earlier tiers climb to it.
 
