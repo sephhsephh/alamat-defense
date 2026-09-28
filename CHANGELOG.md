@@ -1,4 +1,12 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-28 [game] B106 pt5 -- AD-Game: **live verification of the 10 roster units + the P-pack (after the user restarted a wedged Studio).**
+
+No code change. Studio ids rotated on the restart (Game `9caa8751...`, Lobby `88c1526d...`); the reopened place held every pt3/pt4 edit (hashes `105b6460` / `391fb3f2`, 18-tower registry, 6 new passive modules).
+
+**Proven live (Auto Play, DevDebugAttacks, two runs on Stage1_Act1):** `[TowerValidate] OK: 18 tower config(s)`, `MetaConfig OK: 39 entries`. **Bantong One Strike** -- `[Passive] Bantong BonusVs FirstHit x1.60` on every fresh enemy caught, never twice on the same one. **Nuno sa Punso** -- 25, then 43 live enemies carrying `Status_Weaken` from a unit that never attacks. **Siyokoy** -- `Siyokoy/Grasp ... 31.0 dmg`, 1,799 / 2,370 damage on the Scarecrow King, Slow on the field. **Kapre** -- 20,341 damage, 70 kills at T4. **Amomongo** -- 3,066 damage, 7 kills (under the 10 Frenzy needs). **Sarimanok** -- 221 damage, 2 kills. Plus pt3's Duwende CashOnKill, Baltog BonusVs Boss and Mangkukulam Sumpa x5.
+**⚠ NOT OBSERVED:** Handyong's Flying bonus (not in these loadouts), Amomongo's Frenzy (needs 10 kills), Mambabarang/Santelmo hits and Swarm spread -- **both are Hill units and TestMap's hill zones sit ~38 studs from the path** (Mambabarang measured at 38.6 from the nearest enemy, Range 21); a map fact, not a code one. CrowdScaling / the crit aura print nothing, so their buffs were not measured directly.
+Harness restored (`desired` back to the old five), `DevDebugAttacks` cleared.
+
 ## 2026-09-28 [both] B106 pt4 -- AD-Game: **4 more P-pack passives, status `Swarm`, and 5 more units (Kapre, Nuno sa Punso, Sarimanok, Mambabarang, Amomongo). ⚠ NOT YET VERIFIED LIVE.**
 
 **CANON (re-hash, count unchanged at 48):** `ItemCatalog` `8e15d800` -> **`105b6460`** (39 entries), `UnitStatsCatalog` `dfc83c36` -> **`391fb3f2`**. Both Places + disk, byte-identical. **USER REPUBLISHES BOTH PLACES.** Bootstrap re-check this turn: every pt3 edit survived the Studio disconnect (hashes, 13-tower registry, BonusVs, Sumpa, rigs, harness restored, DevDebugAttacks off).
