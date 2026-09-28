@@ -61,6 +61,11 @@ UnitStatsCatalog.Stats = {
 	Lalahon       = { DMG = 50, RNG = 20, SPA = 2 },
 	Bathala       = { DMG = 70, RNG = 26, SPA = 2 },
 	Bakunawa      = { DMG = 110, RNG = 22, SPA = 2.2 },
+	Tikbalang     = { DMG = 30, RNG = 11, SPA = 1.9 },
+	AmanSinaya    = { DMG = 70, RNG = 14, SPA = 2 },
+	Aswang        = { DMG = 60, RNG = 14, SPA = 1.9 },
+	Tiyanak       = { DMG = 70, RNG = 13, SPA = 2 },
+	Batibat       = { DMG = 55, RNG = 16, SPA = 1.8 },
 }
 
 -- The resolved base stats for a tower, or nil if it is not in the catalog.
@@ -121,6 +126,11 @@ UnitStatsCatalog.Costs = {
 	Lalahon       = 525,
 	Bathala       = 700,
 	Bakunawa      = 750,
+	Tikbalang     = 250,
+	AmanSinaya    = 475,
+	Aswang        = 550,
+	Tiyanak       = 525,
+	Batibat       = 575,
 }
 
 -- The placement cost for a tower, or nil if it is not in the catalog. Callers HIDE on nil rather
@@ -168,6 +178,11 @@ UnitStatsCatalog.Placement = {
 	Lalahon       = "Hill",
 	Bathala       = "Hybrid",
 	Bakunawa      = "Hybrid",
+	Tikbalang     = "Ground",
+	AmanSinaya    = "Ground",
+	Aswang        = "Ground",
+	Tiyanak       = "Ground",
+	Batibat       = "Ground",
 }
 
 -- "Ground" | "Hill" | "Hybrid", or nil if the tower is not in the catalog (callers HIDE on nil).

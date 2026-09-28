@@ -1,4 +1,19 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-28 [both] B106 pt8 -- AD-Game: **S2 forced movement, S7 form swap, Sleep, and the last 5 roster units (Tikbalang, Aman Sinaya, Aswang, Tiyanak, Batibat). The whole B106 roster minus evolution is now built.**
+
+**CANON (re-hash, count unchanged at 48):** `ItemCatalog` `b79df9a4` -> **`06bb1217`** (57 entries), `UnitStatsCatalog` `7d1442ff` -> **`a2a34269`**. Both Places + disk. **USER REPUBLISHES BOTH PLACES.** ⚠ **The Secret pool is no longer empty** -- Standard's `Secret .00005` weight now lands Aswang / Tiyanak / Batibat instead of falling down a tier (the boot `[CONTRACT]` note about an empty Secret pool goes away).
+
+**ENGINE (Game):**
+- **S2 -- `EnemyController:PushBack(studs)`**: moves an enemy BACK along its own waypoints (rewinding `CurrentWaypointIndex` round corners, never past the first waypoint), keeps facing, returns studs moved.
+- **S7 -- attack override**: `AttackProfile.Resolve(config, tier, stats, override)` + `AttackSequencer` passes `tower.AttackOverride`; a named attack from `config.Attacks` REPLACES the tier's.
+- **`StatusEffectManager.BreakOnDamage(target)`**, called from `EnemyController:TakeDamage` -- removes any status whose def sets `BreaksOnDamage = true`.
+
+**PASSIVES:** `Knockback` (OnHitLanded: Chance, Studs, optional Status, SkipBosses) · `FormCycle` (per wave: sets AttackOverride + CanHitFlying + model `Form` attribute) · `EnterRangeStatus` (first time each enemy enters range) · `ArmorPierce` (adds Armor / DamageTakenMult back, so the hit ignores armor exactly) · `SleepAura` (every Interval: the furthest-along non-boss in range that is not the tower's own target falls asleep). **Status `Sleep`** (Speed 0, Ignore, BreaksOnDamage).
+
+**UNITS:** **Tikbalang** (Rare 7; Teleport melee; 20% Knockback 6 studs + 0.6 s daze) · **Aman Sinaya** (`AmanSinaya`, Mythic 10; wide Box wave, Knockback 2 -> 4 studs every hit, Slow 50%, T10 Tsunami, Great Wave = range Nuke x6) · **Aswang** (Secret 12, limit 1; Dog / Bird / Human form each wave -- Bird CAN hit flyers from the ground; KillStack 2%/40%) · **Tiyanak** (Secret 12; stuns each newcomer once, ArmorPierce) · **Batibat** (Secret 12, limit 1; Slow aura that hits BOSSES too, SleepAura 3 s every 3 s, targets Last).
+
+**Proven live (Game, Auto Play + a temporary cash probe Script, removed):** `[TowerValidate] OK: 36 tower config(s)`. **Aman Sinaya** 216 x `Knockback` and 39,342 dmg / 107 kills; **Tikbalang** `Knockback 6 studs + Stun`; **Aswang** `FormCycle -> Dog / Bird (CanHitFlying true) / Human` cycling wave by wave, model `Form = Dog`; **Tiyanak** 29 x `EnterRangeStatus Stun`, 21,224 dmg; **Batibat** 24 x `SleepAura -> Grunt`, grunts carrying `Status_Sleep` / `Status_Slow`, 36,905 dmg / 115 kills. Not observed: Batibat's slow on a BOSS specifically, ArmorPierce's number (Grunts have 0 armor). Harness restored, DevDebugAttacks cleared.
+
 ## 2026-09-28 [both] B106 pt7 -- AD-Game: **S1 (the on-attack / on-hit hooks), 7 more passives, status `Judged`, and 13 more units -- the roster now reaches every tier through Alamat.**
 
 **CANON (re-hash, count unchanged at 48):** `ItemCatalog` `105b6460` -> **`b79df9a4`** (52 entries), `UnitStatsCatalog` `391fb3f2` -> **`7d1442ff`**. Both Places + disk, byte-identical. **USER REPUBLISHES BOTH PLACES.**

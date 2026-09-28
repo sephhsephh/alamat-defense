@@ -54,6 +54,11 @@ ItemCatalog.Entries = {
 	Lalahon       = { Kind = "Tower", Tier = "Limited", Name = "Lalahon", Description = "Volcanic field burn; burning kills pay.", Icon = { Model = { "TowerModels", "Lalahon" } }, Tradeable = false },
 	Bathala       = { Kind = "Tower", Tier = "Alamat", Name = "Bathala", Description = "The creator: buffs every ally, judges every enemy.", Icon = { Model = { "TowerModels", "Bathala" } }, Tradeable = false },
 	Bakunawa      = { Kind = "Tower", Tier = "Alamat", Name = "Bakunawa", Description = "Moon-eater; every 7th attack eclipses the map.", Icon = { Model = { "TowerModels", "Bakunawa" } }, Tradeable = false },
+	Tikbalang     = { Kind = "Tower", Tier = "Rare", Name = "Tikbalang", Description = "Teleporting trickster; throws enemies back.", Icon = { Model = { "TowerModels", "Tikbalang" } }, Tradeable = false },
+	AmanSinaya    = { Kind = "Tower", Tier = "Mythic", Name = "Aman Sinaya", Description = "Sea goddess; waves push enemies back.", Icon = { Model = { "TowerModels", "AmanSinaya" } }, Tradeable = false },
+	Aswang        = { Kind = "Tower", Tier = "Secret", Name = "Aswang", Description = "Shapeshifter: dog, bird, human each wave.", Icon = { Model = { "TowerModels", "Aswang" } }, Tradeable = false },
+	Tiyanak       = { Kind = "Tower", Tier = "Secret", Name = "Tiyanak", Description = "Stuns newcomers; bites ignore armor.", Icon = { Model = { "TowerModels", "Tiyanak" } }, Tradeable = false },
+	Batibat       = { Kind = "Tower", Tier = "Secret", Name = "Batibat", Description = "Slows even bosses; puts enemies to sleep.", Icon = { Model = { "TowerModels", "Batibat" } }, Tradeable = false },
 
 	-- ===== Currencies =====
 	-- StatRerolls added B45 (AD-Game, user-approved): C2's stat reroll SPENDS Currencies.StatRerolls,
