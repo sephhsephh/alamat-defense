@@ -6,7 +6,7 @@
 ## Snapshot
 
 Data-driven Roblox tower defense (Filipino myth theme). ~70% of the core loop as a two-Place vertical
-slice: full match lifecycle (Stage 1, Acts 1–3), 8 towers (**renamed B106**: Handyong, Bantong, Oryol, Lakapati, Babaylan, Bulalakaw, Urduja, Magwayen — roadmap `docs/design/unit-roster.md`), passives/abilities/summons, progression +
+slice: full match lifecycle (Stage 1, Acts 1–3), **40 tower configs after B106** (8 renamed originals + 28 roster units across all 9 tiers + 4 evolved forms, all on PLACEHOLDER rigs — `docs/design/unit-roster.md`; evolution `docs/systems/evolution.md`; ~27 passives/hooks in `tower-authoring.md` §10b), passives/abilities/summons, progression +
 match-end rewards, **ProfileStore persistence (schema v8)**, a shared UI kit + **audio/confirm layer**,
 and the gacha engine (Standard + Event + Selection banners; ascension AND selling dupes both live).
 

@@ -70,6 +70,7 @@ Boot order in `ReplicationBridge`: data services first; `[DATA]`/`[CONTRACT]` li
 
 ## Current state / known gaps
 
+- **B106 (whole batch): 40 tower configs** -- 28 new roster units (Common..Alamat) + 4 evolved forms on placeholder rigs; new passive hooks `OnAttack`/`OnHitLanded`, `EnemyController:PushBack`, `tower.AttackOverride`, status `BreaksOnDamage`; statuses Sumpa/Swarm/Judged/Sleep. Catalog of passives: `tower-authoring.md` §10b.
 - **B106: the 8 towers were RENAMED, ids included** -- Handyong (was Archer), Bantong (Knight), Oryol (Mage), Lakapati (Farm), Babaylan, Bulalakaw (Meteor), Urduja (Warchief), Magwayen (Necromancer). Roster plan: `docs/design/unit-roster.md`. Hybrid now stands on GROUND zones only (it differs from Ground only in CanHitFlying).
 - Content: Stage 1 (3 acts), 1 map, 8 towers, 2 enemies, Classic only. Attack anim/VFX/sound asset ids
   are placeholders (slots exist and tolerate nil). Enemies.Behaviors is an empty extension point.
