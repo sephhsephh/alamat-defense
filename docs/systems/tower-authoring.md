@@ -237,7 +237,7 @@ exists**. Full rules, attach modes and the authoring contract: `tower-vfx.md`. T
 
 ## 10b. Passives available (B106)
 
-`BonusVs` { Condition = Status|Flying|Boss|FirstHit|Element, Mult } · `CashOnKill` { Chance, Cash } · `AllyDamageAura` · `SummonOnKill` · `FarmIncome`. Statuses: Slow, Burn, Stun, Weaken, **Sumpa** (stacking DamageTaken x1.08, 5 stacks). `[Passive]` lines print under `DevDebugAttacks`.
+`BonusVs` { Condition = Status|Flying|Boss|FirstHit|Element, Mult } · `CashOnKill` { Chance, Cash } · `CrowdScaling` { PerEnemy, Max } · `EnemyStatusAura` { Status, Duration, Potency, Interval, SkipBosses } · `KillFrenzy` { Kills, Stat, Mult, Duration } · `StatusSpreadOnKill` { Status, Count, Radius, Duration, RequireCarrier } · `AllyDamageAura` { Stat, Mult, Add } · `SummonOnKill` · `FarmIncome`. **Per-tier numbers go in `<Param>ByTier = {...}`, never as tier stat fields** (the resolver scales unknown numeric fields). Statuses: Slow, Burn, Stun, Weaken, **Sumpa** (stacking DamageTaken x1.08, 5 stacks), **Swarm** (stacking DoT). `[Passive]` lines print under `DevDebugAttacks`.
 
 ## 11. Placement rules a new tower inherits (B81)
 

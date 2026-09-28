@@ -36,6 +36,11 @@ ItemCatalog.Entries = {
 	Santelmo    = { Kind = "Tower", Tier = "Uncommon",  Name = "Santelmo",    Description = "Two burning wisps per attack.",          Icon = { Model = { "TowerModels", "Santelmo" } },    Tradeable = false },
 	Mangkukulam = { Kind = "Tower", Tier = "Uncommon",  Name = "Mangkukulam", Description = "Stacks Sumpa: enemies take more damage.", Icon = { Model = { "TowerModels", "Mangkukulam" } }, Tradeable = false },
 	Siyokoy     = { Kind = "Tower", Tier = "Uncommon",  Name = "Siyokoy",     Description = "Drowning grab; slows, punishes slowed.", Icon = { Model = { "TowerModels", "Siyokoy" } },     Tradeable = false },
+	Kapre       = { Kind = "Tower", Tier = "Rare",      Name = "Kapre",       Description = "Smoke cone; stronger in a crowd.",       Icon = { Model = { "TowerModels", "Kapre" } },       Tradeable = false },
+	NunoSaPunso = { Kind = "Tower", Tier = "Rare",      Name = "Nuno sa Punso", Description = "Support: weakens every enemy in range.", Icon = { Model = { "TowerModels", "NunoSaPunso" } }, Tradeable = false },
+	Sarimanok   = { Kind = "Tower", Tier = "Rare",      Name = "Sarimanok",   Description = "Support: allies in range crit more.",    Icon = { Model = { "TowerModels", "Sarimanok" } },   Tradeable = false },
+	Mambabarang = { Kind = "Tower", Tier = "Epic",      Name = "Mambabarang", Description = "Insect swarm DoT that spreads on kills.", Icon = { Model = { "TowerModels", "Mambabarang" } }, Tradeable = false },
+	Amomongo    = { Kind = "Tower", Tier = "Epic",      Name = "Amomongo",    Description = "Melee claws; frenzies every 10 kills.",  Icon = { Model = { "TowerModels", "Amomongo" } },    Tradeable = false },
 
 	-- ===== Currencies =====
 	-- StatRerolls added B45 (AD-Game, user-approved): C2's stat reroll SPENDS Currencies.StatRerolls,

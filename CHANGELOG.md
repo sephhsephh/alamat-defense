@@ -1,4 +1,28 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-28 [both] B106 pt4 -- AD-Game: **4 more P-pack passives, status `Swarm`, and 5 more units (Kapre, Nuno sa Punso, Sarimanok, Mambabarang, Amomongo). ⚠ NOT YET VERIFIED LIVE.**
+
+**CANON (re-hash, count unchanged at 48):** `ItemCatalog` `8e15d800` -> **`105b6460`** (39 entries), `UnitStatsCatalog` `dfc83c36` -> **`391fb3f2`**. Both Places + disk, byte-identical. **USER REPUBLISHES BOTH PLACES.** Bootstrap re-check this turn: every pt3 edit survived the Studio disconnect (hashes, 13-tower registry, BonusVs, Sumpa, rigs, harness restored, DevDebugAttacks off).
+
+**1. P-PACK (Game, `Server.Towers.Passives`).** Every new passive accepts `<Param>ByTier = { t1, t2, ... }` (read at the tower's `MatchTier`; the last entry covers later tiers) -- per-tier numbers must NOT be tier stat fields, because `TowerStatResolver` scales unknown numeric fields by meta/trait.
+- **`CrowdScaling`** (Kapre): self Damage buff +`PerEnemy` per enemy in range, cap `Max`, refreshed every `Interval`.
+- **`EnemyStatusAura`** (Nuno sa Punso; later Batibat/Bathala): applies `Status` (+`Duration`/`Potency`/`DamagePerTick`) to every enemy in range every `Interval`; skips flyers when the tower cannot hit them; `SkipBosses` optional.
+- **`KillFrenzy`** (Amomongo): every `Kills` kills, self buff `Stat` x`Mult` for `Duration` (default SPA x0.7).
+- **`StatusSpreadOnKill`** (Mambabarang): on a kill, `Status` jumps to the `Count` nearest enemies within `Radius`. ⚠ `EnemyController:Kill` CLEARS every effect BEFORE the kill is dispatched, so "did the corpse carry it" cannot be read at OnKill -- `RequireCarrier = true` records it in `ModifyOutgoingDamage` at the tower's last hit instead (off by default).
+- **`AllyDamageAura` gained `Add`** (flat, e.g. CritChance +0.10) and `MultByTier` / `AddByTier`.
+- **New status `Swarm`**: stacking DoT (5 stacks, tick 0.5 s, DamagePerTick per stack, set per tier by OnHitEffects).
+
+**2. UNITS** (placeholder rigs in BOTH Places, `Placeholder`/`PlaceholderOf` attributes; seeds added to `MatchLifecycleSmokeTest`):
+
+| Unit | Tier | Place / Elem | Cost / Limit | Attack | T1 -> final | Passive |
+| --- | --- | --- | --- | --- | --- | --- |
+| Kapre | Rare (7) | Ground / Nature | 250 / 3 | `Smoke` Cone from the tower, Slow 50% | 28/2.2 -> 76/1.9 (40 DPS before Looming) | CrowdScaling +5%/enemy, max +40% |
+| Nuno sa Punso (`NunoSaPunso`) | Rare (7) | Ground / Nature, **Support** | 225 / 2 | none | Range 14 -> 22 | EnemyStatusAura Weaken, Potency 1.0 -> 1.7 by tier |
+| Sarimanok | Rare (7) | Hill / Light | 250 / 2 | `Peck` | 12/1.5 -> 40/1.3 (31) | AllyDamageAura CritChance +0.05 -> +0.12 |
+| Mambabarang | Epic (8) | Hill / Dark | 325 / 3 | `Hive`; T8 **`Plague`** (3 x Fresh) | 24/1.4 -> 70/1.3 (54 + Swarm) | Swarm on hit; StatusSpreadOnKill 2 -> 4 targets |
+| Amomongo | Epic (8) | Ground / Nature | 300 / 3 | `Claw` melee Dash; T8 **`Rend`** (2 slashes) | 40/2.6 -> 150/2.2 (68) | KillFrenzy every 10 kills SPA x0.7 6 s |
+
+**⚠ UNVERIFIED:** Studio's Play button is WEDGED ("Start play hasn't finished yet" on every attempt since pt3) -- the edits are in the Edit datamodel and on disk, but no boot/match has run them. `MatchLifecycleSmokeTest.desired` is left on a TEMP test list (`Siyokoy, Bantong, Kapre, NunoSaPunso`) for that run -- **restore it to the old five after verifying.**
+
 ## 2026-09-28 [both] B106 pt3 -- AD-Game: **the first P-pack passives + the first 5 roster units (Baltog, Duwende, Santelmo, Mangkukulam, Siyokoy).**
 
 **CANON (re-hash, count unchanged at 48):** `ItemCatalog` `87f4a631` -> **`8e15d800`** (+5 Tower entries, 34 total), `UnitStatsCatalog` `5f05dd93` -> **`dfc83c36`** (+5 Stats/Costs/Placement rows). Both Places + disk, byte-identical. **USER REPUBLISHES BOTH PLACES.**
