@@ -70,6 +70,7 @@ Boot order in `ReplicationBridge`: data services first; `[DATA]`/`[CONTRACT]` li
 
 ## Current state / known gaps
 
+- **B106: the 8 towers were RENAMED, ids included** -- Handyong (was Archer), Bantong (Knight), Oryol (Mage), Lakapati (Farm), Babaylan, Bulalakaw (Meteor), Urduja (Warchief), Magwayen (Necromancer). Roster plan: `docs/design/unit-roster.md`. Hybrid now stands on GROUND zones only (it differs from Ground only in CanHitFlying).
 - Content: Stage 1 (3 acts), 1 map, 8 towers, 2 enemies, Classic only. Attack anim/VFX/sound asset ids
   are placeholders (slots exist and tolerate nil). Enemies.Behaviors is an empty extension point.
 - **B78: TOWER ATTACKS ARE A DATA FRAMEWORK.** `Attacks` declared once per tower + `Attack = "<name>"` per tier (inherited downward); an attack is a HIT LIST (marker/time, weight summing to 1, `Targeting` Primary/Fresh/Area, ReleaseVFX, optional Projectile, ImpactDelay, ImpactVFX, per-hit shape override). `Server.Towers.AttackProfile` resolves it, `AttackSequencer` runs it, `MeleeMover` does the dash (model only -- `TowerController.HomeCFrame` is the logical position, so `GetPosition()` never moves), `TargetingSystem.SelectTargets` picks N distinct enemies for `Fresh` hits. `Idle` loops when not attacking and is mirrored to the rig as the `IdleAnim` attribute for viewport previews in both Places. Boot check: `TowerAttackValidate`. Debug: `ServerStorage` attribute `DevDebugAttacks`. **Adding a tower = copy `Configs.Towers._Template` + read `docs/systems/tower-authoring.md`; no new code.**

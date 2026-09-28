@@ -24,9 +24,9 @@ MovementConfig.SprintSpeed = 42
 -- A short horizontal burst in the direction the player is moving (or facing, when standing still).
 -- DashSpeed is studs/second applied for DashDuration, then released; the cooldown starts at the
 -- moment the dash BEGINS, so the usable gap is (DashCooldown - DashDuration).
-MovementConfig.DashSpeed = 300
-MovementConfig.DashDuration = 0.22
-MovementConfig.DashCooldown = 1.5
+MovementConfig.DashSpeed = 75
+MovementConfig.DashDuration = 1
+MovementConfig.DashCooldown = 1
 
 -- Keep the burst horizontal. A dash that inherits the camera's pitch launches the player off the
 -- lobby floor or drills them into it, which reads as a bug rather than a dash.
@@ -67,7 +67,7 @@ MovementConfig.DoubleJumpPlaces = { Lobby = true, Game = true }
 -- Scale on the character's OWN jump strength, never an absolute number: Roblox characters may use
 -- either JumpPower or JumpHeight, and a hardcoded velocity would feel wrong the moment either is
 -- retuned. 1.0 = the second jump is as strong as the first.
-MovementConfig.DoubleJumpPowerScale = 1.0
+MovementConfig.DoubleJumpPowerScale = 2.0
 
 -- The jump key REPEATS while held, and JumpRequest fires on every repeat. Without a re-arm window
 -- one press would spend the first jump AND the double instantly, which reads as a single tall jump.

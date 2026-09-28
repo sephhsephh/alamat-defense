@@ -20,7 +20,7 @@
 - `teleport.md` — Lobby→Game / Game→Lobby TeleportData payloads (owner: Lobby). **v2**
 
 ## design/
-- (empty — design pillars/economy docs migrate here from Studio progressively)
+- `unit-roster.md` — **B106 DRAFT, the unit roadmap**: 27 new Philippine-myth units per tier, balance bands, passive catalogue (C/P/S tags), evolved forms, new systems + build order, and the B106 renames of the 8 old towers.
 
 ## systems/
 - `tower-authoring.md` — **AD-Game canon, READ BEFORE ADDING A TOWER**: attack profiles, the hit list,

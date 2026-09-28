@@ -22,14 +22,14 @@ local TierConfig = require(script.Parent.TierConfig)
 -- Tier assignment for the 8 existing towers per blueprint phase-a-foundations.md section 3 (tunable).
 ItemCatalog.Entries = {
 	-- ===== Towers =====
-	Archer      = { Kind = "Tower", Tier = "Common",    Name = "Archer",      Description = "Baseline small-circle AoE archer.",     Icon = { Model = { "TowerModels", "Archer" } },      Tradeable = false },
-	Knight      = { Kind = "Tower", Tier = "Common",    Name = "Knight",      Description = "Melee box/cone bruiser.",              Icon = { Model = { "TowerModels", "Knight" } },      Tradeable = false },
-	Mage        = { Kind = "Tower", Tier = "Rare",      Name = "Mage",        Description = "Ranged burst caster.",                Icon = { Model = { "TowerModels", "Mage" } },        Tradeable = false },
-	Farm        = { Kind = "Tower", Tier = "Rare",      Name = "Farm",        Description = "Support: per-wave income + range aura.", Icon = { Model = { "TowerModels", "Farm" } },       Tradeable = false },
+	Handyong    = { Kind = "Tower", Tier = "Common",    Name = "Handyong",      Description = "Baseline small-circle AoE archer.",     Icon = { Model = { "TowerModels", "Handyong" } },      Tradeable = false },
+	Bantong     = { Kind = "Tower", Tier = "Common",    Name = "Bantong",      Description = "Melee box/cone bruiser.",              Icon = { Model = { "TowerModels", "Bantong" } },      Tradeable = false },
+	Oryol       = { Kind = "Tower", Tier = "Rare",      Name = "Oryol",        Description = "Ranged burst caster.",                Icon = { Model = { "TowerModels", "Oryol" } },        Tradeable = false },
+	Lakapati    = { Kind = "Tower", Tier = "Rare",      Name = "Lakapati",        Description = "Support: per-wave income + range aura.", Icon = { Model = { "TowerModels", "Lakapati" } },       Tradeable = false },
 	Babaylan    = { Kind = "Tower", Tier = "Epic",      Name = "Babaylan",    Description = "Full-AoE support attacker.",           Icon = { Model = { "TowerModels", "Babaylan" } },    Tradeable = false },
-	Meteor      = { Kind = "Tower", Tier = "Legendary", Name = "Meteor",      Description = "Map-wide Nuke ability.",              Icon = { Model = { "TowerModels", "Meteor" } },      Tradeable = false },
-	Warchief    = { Kind = "Tower", Tier = "Legendary", Name = "Warchief",    Description = "War Cry self-buff + ally damage aura.", Icon = { Model = { "TowerModels", "Warchief" } },   Tradeable = false },
-	Necromancer = { Kind = "Tower", Tier = "Mythic",    Name = "Necromancer", Description = "Summon-on-kill chargers.",            Icon = { Model = { "TowerModels", "Necromancer" } }, Tradeable = false },
+	Bulalakaw   = { Kind = "Tower", Tier = "Legendary", Name = "Bulalakaw",      Description = "Map-wide Nuke ability.",              Icon = { Model = { "TowerModels", "Bulalakaw" } },      Tradeable = false },
+	Urduja      = { Kind = "Tower", Tier = "Legendary", Name = "Urduja",    Description = "War Cry self-buff + ally damage aura.", Icon = { Model = { "TowerModels", "Urduja" } },   Tradeable = false },
+	Magwayen    = { Kind = "Tower", Tier = "Mythic",    Name = "Magwayen", Description = "Summon-on-kill chargers.",            Icon = { Model = { "TowerModels", "Magwayen" } }, Tradeable = false },
 
 	-- ===== Currencies =====
 	-- StatRerolls added B45 (AD-Game, user-approved): C2's stat reroll SPENDS Currencies.StatRerolls,

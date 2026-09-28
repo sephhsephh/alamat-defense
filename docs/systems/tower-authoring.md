@@ -237,6 +237,8 @@ exists**. Full rules, attach modes and the authoring contract: `tower-vfx.md`. T
 
 ## 11. Placement rules a new tower inherits (B81)
 
+- **Where it stands (B106):** `Placement = "Ground"` ground zones, cannot hit flying · `"Hill"` hill zones only · `"Hybrid"` **ground zones only, but CAN hit flying**. `CanHitFlying` still overrides.
+
 - **Never on the path.** `Shared.PathClearance` blocks any footprint touching the map's `PathDesigns`,
   client ghost and server alike. Your `Footprint` is the radius it tests.
 - **FullAoe anchored on the tower** draws its attack shape as a circle out to `Range` when placing

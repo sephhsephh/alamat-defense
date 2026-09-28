@@ -28,16 +28,16 @@ UnitStatsCatalog.REFERENCE = {
 	Ascension = 0,
 }
 
--- towerId -> { DMG?, RNG, SPA? }. Support towers (Farm) have no DMG/SPA -- those keys are absent.
+-- towerId -> { DMG?, RNG, SPA? }. Support towers (Lakapati) have no DMG/SPA -- those keys are absent.
 UnitStatsCatalog.Stats = {
-	Archer      = { DMG = 15, RNG = 20, SPA = 6 },
-	Knight      = { DMG = 35, RNG = 10, SPA = 1.4 },
-	Mage        = { DMG = 30, RNG = 18, SPA = 2 },
-	Farm        = { RNG = 18 },
+	Handyong    = { DMG = 15, RNG = 20, SPA = 6 },
+	Bantong     = { DMG = 35, RNG = 10, SPA = 1.4 },
+	Oryol       = { DMG = 30, RNG = 18, SPA = 2 },
+	Lakapati    = { RNG = 18 },
 	Babaylan    = { DMG = 20, RNG = 22, SPA = 2.5 },
-	Meteor      = { DMG = 30, RNG = 24, SPA = 1.4 },
-	Warchief    = { DMG = 25, RNG = 18, SPA = 1 },
-	Necromancer = { DMG = 28, RNG = 22, SPA = 1.1 },
+	Bulalakaw   = { DMG = 30, RNG = 24, SPA = 1.4 },
+	Urduja      = { DMG = 25, RNG = 18, SPA = 1 },
+	Magwayen    = { DMG = 28, RNG = 22, SPA = 1.1 },
 }
 
 -- The resolved base stats for a tower, or nil if it is not in the catalog.
@@ -67,14 +67,14 @@ end
 -- `SSS.Server.UnitStatsCatalogValidate` FAILS THE GAME'S BOOT if any value here disagrees with the
 -- live `TowerConfig.Cost`, so a stale price cannot ship silently.
 UnitStatsCatalog.Costs = {
-	Archer      = 100,
-	Knight      = 150,
-	Mage        = 200,
-	Farm        = 150,
+	Handyong    = 100,
+	Bantong     = 150,
+	Oryol       = 200,
+	Lakapati    = 150,
 	Babaylan    = 300,
-	Meteor      = 300,
-	Warchief    = 350,
-	Necromancer = 400,
+	Bulalakaw   = 300,
+	Urduja      = 350,
+	Magwayen    = 400,
 }
 
 -- The placement cost for a tower, or nil if it is not in the catalog. Callers HIDE on nil rather
@@ -85,20 +85,20 @@ end
 
 -- ===== PLACEMENT TYPE (B105, user) =====
 -- towerId -> WHERE the unit may stand: "Ground" (beside the path), "Hill" (on hill zones) or
--- "Hybrid" (either). Shown as a chip on the hotbar hover card in BOTH Places, so -- like Costs --
+-- "Hybrid" (ground zones only, but can hit flying -- B106). Shown as a chip on the hotbar hover card in BOTH Places, so -- like Costs --
 -- it has to be one shared number the Lobby can read. The truth is `TowerConfig.Placement` in the
 -- Game (read through TowerPlacementRules.PlacementOf, which defaults to "Ground");
 -- `SSS.Server.UnitStatsCatalogValidate` FAILS THE GAME'S BOOT if any value here disagrees.
 -- !! GENERATED, like `Stats` and `Costs`.
 UnitStatsCatalog.Placement = {
-	Archer      = "Hybrid",
-	Knight      = "Ground",
-	Mage        = "Hill",
-	Farm        = "Hybrid",
+	Handyong    = "Hybrid",
+	Bantong     = "Ground",
+	Oryol       = "Hill",
+	Lakapati    = "Hybrid",
 	Babaylan    = "Hybrid",
-	Meteor      = "Hill",
-	Warchief    = "Ground",
-	Necromancer = "Ground",
+	Bulalakaw   = "Hill",
+	Urduja      = "Ground",
+	Magwayen    = "Ground",
 }
 
 -- "Ground" | "Hill" | "Hybrid", or nil if the tower is not in the catalog (callers HIDE on nil).
