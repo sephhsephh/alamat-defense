@@ -48,6 +48,19 @@ UnitStatsCatalog.Stats = {
 	Sarimanok   = { DMG = 12, RNG = 20, SPA = 1.5 },
 	Mambabarang = { DMG = 24, RNG = 18, SPA = 1.4 },
 	Amomongo    = { DMG = 40, RNG = 9, SPA = 2.6 },
+	Engkanto      = { DMG = 26, RNG = 20, SPA = 1.5 },
+	Sigbin        = { DMG = 30, RNG = 18, SPA = 1.6 },
+	LamAng        = { DMG = 45, RNG = 11, SPA = 2.2 },
+	BernardoCarpio = { DMG = 60, RNG = 12, SPA = 3.2 },
+	MariaMakiling = { DMG = 15, RNG = 18, SPA = 1.6 },
+	Minokawa      = { DMG = 36, RNG = 24, SPA = 1.8 },
+	Apolaki       = { DMG = 45, RNG = 24, SPA = 1.4 },
+	Mayari        = { DMG = 60, RNG = 30, SPA = 2.2 },
+	Sidapa        = { DMG = 45, RNG = 20, SPA = 1.3 },
+	Tala          = { DMG = 50, RNG = 26, SPA = 1.4 },
+	Lalahon       = { DMG = 50, RNG = 20, SPA = 2 },
+	Bathala       = { DMG = 70, RNG = 26, SPA = 2 },
+	Bakunawa      = { DMG = 110, RNG = 22, SPA = 2.2 },
 }
 
 -- The resolved base stats for a tower, or nil if it is not in the catalog.
@@ -95,6 +108,19 @@ UnitStatsCatalog.Costs = {
 	Sarimanok   = 250,
 	Mambabarang = 325,
 	Amomongo    = 300,
+	Engkanto      = 300,
+	Sigbin        = 300,
+	LamAng        = 375,
+	BernardoCarpio = 400,
+	MariaMakiling = 350,
+	Minokawa      = 400,
+	Apolaki       = 450,
+	Mayari        = 450,
+	Sidapa        = 475,
+	Tala          = 500,
+	Lalahon       = 525,
+	Bathala       = 700,
+	Bakunawa      = 750,
 }
 
 -- The placement cost for a tower, or nil if it is not in the catalog. Callers HIDE on nil rather
@@ -129,6 +155,19 @@ UnitStatsCatalog.Placement = {
 	Sarimanok   = "Hill",
 	Mambabarang = "Hill",
 	Amomongo    = "Ground",
+	Engkanto      = "Hybrid",
+	Sigbin        = "Hybrid",
+	LamAng        = "Ground",
+	BernardoCarpio = "Ground",
+	MariaMakiling = "Hybrid",
+	Minokawa      = "Hill",
+	Apolaki       = "Hill",
+	Mayari        = "Hill",
+	Sidapa        = "Hybrid",
+	Tala          = "Hill",
+	Lalahon       = "Hill",
+	Bathala       = "Hybrid",
+	Bakunawa      = "Hybrid",
 }
 
 -- "Ground" | "Hill" | "Hybrid", or nil if the tower is not in the catalog (callers HIDE on nil).
