@@ -38,6 +38,11 @@ UnitStatsCatalog.Stats = {
 	Bulalakaw   = { DMG = 30, RNG = 24, SPA = 1.4 },
 	Urduja      = { DMG = 25, RNG = 18, SPA = 1 },
 	Magwayen    = { DMG = 28, RNG = 22, SPA = 1.1 },
+	Baltog      = { DMG = 30, RNG = 9, SPA = 4.5 },
+	Duwende     = { DMG = 8, RNG = 16, SPA = 1 },
+	Santelmo    = { DMG = 16, RNG = 20, SPA = 1.6 },
+	Mangkukulam = { DMG = 10, RNG = 18, SPA = 1.5 },
+	Siyokoy     = { DMG = 20, RNG = 11, SPA = 2 },
 }
 
 -- The resolved base stats for a tower, or nil if it is not in the catalog.
@@ -75,6 +80,11 @@ UnitStatsCatalog.Costs = {
 	Bulalakaw   = 300,
 	Urduja      = 350,
 	Magwayen    = 400,
+	Baltog      = 125,
+	Duwende     = 175,
+	Santelmo    = 200,
+	Mangkukulam = 175,
+	Siyokoy     = 175,
 }
 
 -- The placement cost for a tower, or nil if it is not in the catalog. Callers HIDE on nil rather
@@ -99,6 +109,11 @@ UnitStatsCatalog.Placement = {
 	Bulalakaw   = "Hill",
 	Urduja      = "Ground",
 	Magwayen    = "Ground",
+	Baltog      = "Ground",
+	Duwende     = "Hybrid",
+	Santelmo    = "Hill",
+	Mangkukulam = "Hybrid",
+	Siyokoy     = "Ground",
 }
 
 -- "Ground" | "Hill" | "Hybrid", or nil if the tower is not in the catalog (callers HIDE on nil).

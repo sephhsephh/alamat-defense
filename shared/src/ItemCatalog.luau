@@ -30,6 +30,12 @@ ItemCatalog.Entries = {
 	Bulalakaw   = { Kind = "Tower", Tier = "Legendary", Name = "Bulalakaw",      Description = "Map-wide Nuke ability.",              Icon = { Model = { "TowerModels", "Bulalakaw" } },      Tradeable = false },
 	Urduja      = { Kind = "Tower", Tier = "Legendary", Name = "Urduja",    Description = "War Cry self-buff + ally damage aura.", Icon = { Model = { "TowerModels", "Urduja" } },   Tradeable = false },
 	Magwayen    = { Kind = "Tower", Tier = "Mythic",    Name = "Magwayen", Description = "Summon-on-kill chargers.",            Icon = { Model = { "TowerModels", "Magwayen" } }, Tradeable = false },
+	-- B106 roster (docs/design/unit-roster.md) -- placeholder rigs until the real ones land.
+	Baltog      = { Kind = "Tower", Tier = "Common",    Name = "Baltog",      Description = "Melee grappler; +40% vs bosses.",        Icon = { Model = { "TowerModels", "Baltog" } },      Tradeable = false },
+	Duwende     = { Kind = "Tower", Tier = "Uncommon",  Name = "Duwende",     Description = "Fast pebbles; lucky pesos on kills.",    Icon = { Model = { "TowerModels", "Duwende" } },     Tradeable = false },
+	Santelmo    = { Kind = "Tower", Tier = "Uncommon",  Name = "Santelmo",    Description = "Two burning wisps per attack.",          Icon = { Model = { "TowerModels", "Santelmo" } },    Tradeable = false },
+	Mangkukulam = { Kind = "Tower", Tier = "Uncommon",  Name = "Mangkukulam", Description = "Stacks Sumpa: enemies take more damage.", Icon = { Model = { "TowerModels", "Mangkukulam" } }, Tradeable = false },
+	Siyokoy     = { Kind = "Tower", Tier = "Uncommon",  Name = "Siyokoy",     Description = "Drowning grab; slows, punishes slowed.", Icon = { Model = { "TowerModels", "Siyokoy" } },     Tradeable = false },
 
 	-- ===== Currencies =====
 	-- StatRerolls added B45 (AD-Game, user-approved): C2's stat reroll SPENDS Currencies.StatRerolls,

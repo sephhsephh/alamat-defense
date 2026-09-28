@@ -230,6 +230,8 @@ boss/act drops" needs new stages/bosses first. The first evolution can use Stage
 
 ## 7. Build order (after approval)
 
+**Status (B106 pt3):** step 0 DONE (renames), tier expansion DONE, P-pack STARTED (`BonusVs`, `CashOnKill`, status `Sumpa`), units BUILT with placeholder rigs: **Baltog, Duwende, Santelmo, Mangkukulam, Siyokoy**.
+
 0. **Renames** (§2) — one mechanical batch, both Places, dev profile reset. No new mechanics.
 1. **P-pack + all-config units** — Baltog, Duwende, Santelmo, Mangkukulam, Siyokoy, Kapre, Nuno sa Punso,
    Sarimanok, Mambabarang, Amomongo, Maria Makiling, Lam-ang, Minokawa, Apolaki, Mayari, Sidapa, Lalahon,

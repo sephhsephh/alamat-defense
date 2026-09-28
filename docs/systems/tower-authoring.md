@@ -235,6 +235,10 @@ the tower's own folder and then the house defaults, so **a new tower looks alive
 exists**. Full rules, attach modes and the authoring contract: `tower-vfx.md`. The boot line
 `[TowerVFX]` reports which ids resolved to a template of their own.
 
+## 10b. Passives available (B106)
+
+`BonusVs` { Condition = Status|Flying|Boss|FirstHit|Element, Mult } · `CashOnKill` { Chance, Cash } · `AllyDamageAura` · `SummonOnKill` · `FarmIncome`. Statuses: Slow, Burn, Stun, Weaken, **Sumpa** (stacking DamageTaken x1.08, 5 stacks). `[Passive]` lines print under `DevDebugAttacks`.
+
 ## 11. Placement rules a new tower inherits (B81)
 
 - **Where it stands (B106):** `Placement = "Ground"` ground zones, cannot hit flying · `"Hill"` hill zones only · `"Hybrid"` **ground zones only, but CAN hit flying**. `CanHitFlying` still overrides.

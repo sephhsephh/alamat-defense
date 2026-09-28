@@ -1,4 +1,30 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-28 [both] B106 pt3 -- AD-Game: **the first P-pack passives + the first 5 roster units (Baltog, Duwende, Santelmo, Mangkukulam, Siyokoy).**
+
+**CANON (re-hash, count unchanged at 48):** `ItemCatalog` `87f4a631` -> **`8e15d800`** (+5 Tower entries, 34 total), `UnitStatsCatalog` `5f05dd93` -> **`dfc83c36`** (+5 Stats/Costs/Placement rows). Both Places + disk, byte-identical. **USER REPUBLISHES BOTH PLACES.**
+
+**1. P-PACK (Game, `Server.Towers.Passives`).**
+- **`BonusVs`** REPLACES `BonusVsStatus` (module deleted, registry line swapped). `Params.Condition` = `Status` / `Flying` / `Boss` / `FirstHit` / `Element` + `Mult` (+ `Status` / `Element`). FirstHit = first time THIS tower damages that enemy (weak-keyed set). Several lines on one tower multiply.
+- **`CashOnKill`** (`Chance`, `Cash`) -- pays through `EconomyManager.AddCash(..., "Passive")`.
+- Both print a `[Passive]` line when `ServerStorage.DevDebugAttacks` is on (same switch as `[Attack]`).
+- **New status `Sumpa`** (`RS.Configs.StatusEffects.Sumpa`, registered): stacking DamageTaken x1.08 per stack, 5 stacks (x1.47), 4 s, refresh on stack.
+- Existing towers: Handyong -> `BonusVs Status=Burn x1.5` + **new `BonusVs Flying x1.3`**; Bulalakaw -> `BonusVs Status=Burn x1.5`; Bantong -> **new `BonusVs FirstHit x1.6`** ("One Strike"). `_Template` comment updated.
+
+**2. FIVE NEW UNITS (configs + `TowerConfigRegistry`, B78 attack profiles, tier counts per the B106 minimums):**
+
+| Unit | Tier | Place / Elem | Cost / Limit | Attack | T1 -> final | Passive / status |
+| --- | --- | --- | --- | --- | --- | --- |
+| Baltog | Common (5) | Ground / Neutral | 125 / 4 | `Grapple`, melee Dash, Box on target | 30/4.5s -> 100/4.0s (25 DPS) | BonusVs Boss x1.4 |
+| Duwende | Uncommon (6) | Hybrid / Nature | 175 / 4 | `Pebble`, projectile Circle | 8/1.0s -> 24/0.9s (26.7) | CashOnKill 20% +10 |
+| Santelmo | Uncommon (6) | Hill / Fire | 200 / 3 | `Wisps`, 2 x `Fresh` 0.5 | 16/1.6s -> 48/1.5s (32) | Burn 40% on hit; BonusVs Burn x1.25 |
+| Mangkukulam | Uncommon (6) | Hybrid / Dark | 175 / 3 | `Hex`, projectile Circle, falloff 1.0 | 10/1.5s -> 38/1.4s (27) | Sumpa on every hit |
+| Siyokoy | Uncommon (6) | Ground / Water | 175 / 4 | `Grasp`, Box from the tower | 20/2.0s -> 60/1.8s (33) | Slow 35%; BonusVs Slow x1.3 |
+
+**PLACEHOLDER RIGS (user rule: both Places):** each is a clone of an existing rig with `Placeholder = true` + `PlaceholderOf` attributes -- Game `RS.TowerModels.<Id>` AND Lobby `RS.UnitModels.<Id>`, same source rig in both (Baltog/Siyokoy <- Bantong, Duwende <- Handyong, Santelmo/Mangkukulam <- Oryol), so the `IdleAnim` attribute matches. **Replace the rigs + author anims** (every attack still fires on its `At` fallback). No VFX folders yet (house defaults). `MatchLifecycleSmokeTest` seed gained the 5 ids (MetaLevel 1); its `desired` list is back to the old five.
+
+**Proven live (Game, Auto Play, DevDebugAttacks):** `[TowerValidate] OK: 13 tower config(s)`; `MetaConfig OK: 34 entries`; `[Attack] Duwende/Pebble ... 8.0 dmg`, `Mangkukulam/Hex ... 10.0`, `Baltog/Grapple ... 30.0`; `[Passive] Duwende CashOnKill +10` (3 times); `[Passive] Baltog BonusVs Boss x1.40` on the Act-1 test waves' FarmBosses; enemy models carried `Status_Sumpa=5` (bosses, capped) and 2-3 (grunts). Placement tier-up to T4/T5 via Auto Play on Siyokoy/Handyong. Lobby: 40/40 boot, **Index shows 13 catalogued towers**.
+**⚠ UNPROVEN:** Santelmo never fired -- Auto Play put it on the test map's hill with every enemy 21-31 studs away (Range 20): a MAP-GEOMETRY fact, not a code one; Siyokoy's own hits, Bantong FirstHit and Handyong Flying were not observed (the MetaLevel-100 Godly Handyong seed killed everything first, and the third run could not start -- **Studio stuck on "Start play hasn't finished yet"**). **⚠ GACHA GAP:** Uncommon has NO rate on the Standard banner and is not an AutoSell tier, so the 4 Uncommons are catalogued but NOT summonable yet (S-Gacha, user's call).
+
 ## 2026-09-28 [game] B106 pt2 -- AD-Game: **the 8 towers get their rarity's tier count, re-spread to the tier's DPS band (user-approved numbers).**
 
 Game-local only (tower configs; no canon change -- tier 1 is unchanged for every tower, so `UnitStatsCatalog` stays `5f05dd93`). Rule (user): minimum upgrade tiers Common 5, +1 per rarity up. Tier 1 kept exactly; Damage climbs geometrically and SPA linearly to the rarity's final DPS; Range/crit/radius/falloff interpolate; upgrade costs keep TODAY'S AVERAGE per tier (total grows with tier count). Attack/shape changes moved to the FINAL tier (Bantong Cone, Bulalakaw Cataclysm); on-hit effects unlock ~60% up (Handyong Burn T3, Oryol Weaken T5, Babaylan Slow T5).
