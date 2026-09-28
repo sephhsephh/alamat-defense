@@ -77,6 +77,22 @@ Attributes on the ROOT tune how it is used:
 
 Per ParticleEmitter: `EmitCount` (default 16) and `EmitDelay` seconds.
 
+### Impact / Telegraph size follows the attack's shape (B104)
+
+The server sends the radius each hit covers (`AttackShapeRegistry.VisualRadius`: Circle `ShapeRadius`,
+Box `(Width + Length) / 4`, Cone `Length / 2`, FullAoe `Range`), and the client scales the clone by
+**radius / `BaseRadius`** before it emits -- particle size, speed and acceleration, parts, attachments,
+beams, lights. So one effect fits every tier: author it at any size, then set on the ROOT:
+
+| Attribute | Meaning |
+| --- | --- |
+| `BaseRadius` | the shape radius the art LOOKS right for (default 3). Knight's Slash impact = 5. |
+| `ScaleToShape` | `false` = never resize this template |
+| `MinScale` / `MaxScale` | clamps, default 0.5 / 4 |
+
+Release and Projectile effects are never scaled. The scale is uniform (a particle cannot stretch on
+one axis). The impact still lands at the target's feet.
+
 **Rig attachments beat offsets.** Put an Attachment named `Muzzle` on the tower rig and every
 `Attach = "Muzzle"` effect fires from exactly there, per tower, with no numbers in any config.
 

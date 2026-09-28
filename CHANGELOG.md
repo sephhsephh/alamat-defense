@@ -1,4 +1,18 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-28 [game] B104 -- AD-Game: **impact / telegraph VFX scale with the attack's shape.**
+
+Game-local, no canon change. Edited: `RS.Shared.AttackShapes.{AttackShapeRegistry, Circle, Box, Cone, FullAoe}`, `Server.Towers.AttackSequencer`, `Client.VFX.VFXPlayer`, `Client.VFX.VFXController`. Authored: `VFXTemplates.Towers.Knight.Attacks.Slash.Impact` `BaseRadius = 5`. **USER REPUBLISHES THE GAME.**
+
+User: "make it so that the size of vfx of impact scales with the attacks shaperadius ... or attack shape width length etc.. ex the knight vfx".
+
+- **`AttackShapeRegistry.VisualRadius(stats)`** -- one radius per shape, each shape module owns its rule: Circle = `ShapeRadius`; Box = (Width + Length) / 4; Cone = Length / 2; FullAoe = `Range`. A new shape without one falls back to `ShapeRadius`.
+- **`AttackSequencer`** builds the hit's stats (tier + per-hit `Shape` override) BEFORE the telegraph and sends `ctx.Size` on Impact and Telegraph (Release / Projectile unchanged).
+- **`VFXPlayer`** scales the clone by `Size / BaseRadius` before it emits: particle Size / Speed / Acceleration, part sizes + positions about the root, attachment positions, beam widths + curves, SpecialMesh scale, light range (capped 60). Root attributes: **`BaseRadius`** (the radius the art was made for, default 3), **`ScaleToShape = false`** (opt out), **`MinScale` / `MaxScale`** (default 0.5 / 4). Uniform only -- a particle cannot stretch on one axis, so Box/Cone use one radius.
+- **Knight:** the user's Slash impact reads as a ~5-stud circle (its `ground1` is 10 wide), so `BaseRadius = 5`: tiers 1-2 (Circle 3) play at **0.6x**, tier 3 (Cone, length 14 -> 7) at **1.4x**. Tune by changing that one number.
+- **Position is unchanged:** the impact still lands at the target's feet (B84), also for a tower-anchored Box/Cone.
+
+**Proven live:** Knight's Impact event arrived with `Size = 3`; direct spawns of its template at radius 3 / 5 / 7 / 40 gave scale 0.60 / 1.00 / 1.40 / 4.00 (clamped), `ground1` 6 / 10 / 14 / 40 studs, rock speed 108 / 180 / 252 / 720. 0 errors.
+
 ## 2026-09-27 [both] B103 -- AD-UI: **controller pass -- the focus goes where it should, and leaves when it should.**
 
 **CANON (re-hash, count unchanged at 48):** `InputMode` `10212f7c` -> **`a59fca85`**, `GamepadMenus` `634002bc` -> **`af5b28ad`**, `UIKitItemIcon` `cf4d9eda` -> **`776247af`**. Both Places + disk, exact find/replace with base AND result hashes asserted. Game-local: `PlacementController`, `UnitManagerUI`, `HudPanels`. Lobby-local: `UnitsController`, `ItemsController`, `IndexController`, `AscensionController`, `StatRerollController`, `TraitRerollController`. Authored: 19 click-catchers `Selectable = false`, 3 `GamepadDefault` marks. **USER REPUBLISHES BOTH PLACES.**
