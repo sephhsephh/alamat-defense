@@ -44,6 +44,12 @@ local Button = require(RS:WaitForChild("Shared"):WaitForChild("UIKit"):WaitForCh
 -- Motion: one hover/press curve for the kit, the 45-degree idle sheen, and the wrapper that keeps a
 -- scaling slot from shoving its neighbours along the hotbar row.
 local Motion = require(RS.Shared.UIKit:WaitForChild("Motion"))
+-- B105: hover / click SFX on the V3 slots. Optional like UIKit.Button's: a Place without the Sound
+-- module stays silent instead of failing to require. Assign the audio in Studio on
+-- SoundService.UI.HotbarHover / .HotbarClick (empty SoundId = silent).
+local soundModule = RS.Shared.UIKit:FindFirstChild("Sound")
+local Sound = (soundModule and require(soundModule) :: any) or { play = function() end }
+local HOVER_SFX, CLICK_SFX = "HotbarHover", "HotbarClick"
 
 local Hotbar = {}
 
@@ -479,6 +485,15 @@ local function attachV3(container: GuiObject, opts: { [string]: any })
 				local l = elementChip:FindFirstChildWhichIsA("TextLabel")
 				if l then l.Text = tostring(entry.Element or "None") end
 			end
+			-- B105: WHERE the unit stands (Ground / Hill / Hybrid), from the shared catalog so both
+			-- Places read the same word. No catalog entry = the chip hides rather than guessing.
+			local placementChip = chips:FindFirstChild("Placement")
+			if placementChip and placementChip:IsA("GuiObject") then
+				local placement = UnitStatsCatalog.GetPlacement(towerId)
+				placementChip.Visible = placement ~= nil
+				local l = placementChip:FindFirstChildWhichIsA("TextLabel")
+				if l and placement then l.Text = placement end
+			end
 			local shinyChip = chips:FindFirstChild("Shiny")
 			if shinyChip and shinyChip:IsA("GuiObject") then
 				shinyChip.Visible = entry.Shiny == true
@@ -592,6 +607,7 @@ local function attachV3(container: GuiObject, opts: { [string]: any })
 		table.insert(s.Conns, btn.MouseEnter:Connect(function()
 			s.Hovered = true
 			hover(i, true)
+			Sound.play(HOVER_SFX, "UI")
 			local entry = entries[i]
 			if entry and LoadoutConfig.IsSlotUnlocked(i, playerLevel) then
 				showPreview(btn, entry)
@@ -610,6 +626,7 @@ local function attachV3(container: GuiObject, opts: { [string]: any })
 			if os.clock() - lastFire < 0.05 then return end
 			lastFire = os.clock()
 			if not LoadoutConfig.IsSlotUnlocked(i, playerLevel) then return end
+			Sound.play(CLICK_SFX, "UI")
 			if type(opts.OnActivated) == "function" then opts.OnActivated(i, entries[i]) end
 		end
 		table.insert(s.Conns, btn.Activated:Connect(click))
@@ -620,6 +637,7 @@ local function attachV3(container: GuiObject, opts: { [string]: any })
 		if gameProcessed then return end
 		local i = KEY_FOR_SLOT[input.KeyCode]
 		if i and LoadoutConfig.IsSlotUnlocked(i, playerLevel) and type(opts.OnActivated) == "function" then
+			Sound.play(CLICK_SFX, "UI") -- keys 1-6 "activate" a slot too (user: "clicking or activating")
 			opts.OnActivated(i, entries[i])
 		end
 	end)

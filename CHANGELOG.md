@@ -1,4 +1,18 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-28 [both] B105 -- AD-UI/AD-Game: **placement type on the unit cards, tower-VFX sounds, hotbar SFX.**
+
+**CANON (re-hash, count unchanged at 48):** `UnitStatsCatalog` `ff870013` -> **`94321bc4`**, `UIKitHotbar` `c0091d72` -> **`f330b74f`**. Both Places + disk, exact find/replace with base AND result hashes asserted. Game-local: `TowerSelectionUI`, `UnitStatsCatalogValidate`, `Client.Audio.GameSfx`, `Client.VFX.VFXPlayer`, `Client.VFX.VFXController`. **USER REPUBLISHES BOTH PLACES.**
+
+**1. GROUND / HILL / HYBRID ON THE CARDS (user).**
+- Hotbar hover card (`StarterGui.Hotbar.UnitHoverPreviewTemplate.ElementsTraitsFrame`, both Places): new authored chip **`Placement`** (a copy of `Element`). Chips now ordered Trait 1 / Element 2 / Placement 3 / Shiny 4, each 0.23 wide so four fit. Text comes from the NEW shared `UnitStatsCatalog.Placement` (the Lobby cannot read the Game's tower configs); the Game's boot validator now fails if it disagrees with `TowerPlacementRules.PlacementOf`.
+- Selected-unit panel (`TowerSelection.Root.PortraitCard.Badges`, Game): new authored **`PlacementBadge`** under Trait + Element (LayoutOrder 3), glyph `GND` / `HILL` / `HYB`, tooltip "<type> unit" + where it may stand + whether it hits flyers. Read straight from the config.
+
+**2. EVERY TOWER EFFECT CAN CARRY ITS OWN SOUND (user).** A `Sound` anywhere inside a Release / Projectile / Impact (or Telegraph) template now plays with that effect -- through `GameSfx`, so it is on the **SFX volume group**, 3D roll-off, capped per sound, and **still heard with VFX switched off**. A projectile's sound flies with the bolt. Placeholder `Sound` named **`SFX`** (empty SoundId, Volume 0.5) added to **all 26** Release/Projectile/Impact templates under `VFXTemplates.Towers` (incl. `_Default`) -- paste an id to use it. The config's named `ReleaseSound`/`ImpactSound` still work alongside. (`VFXPlayer.Spawn` gained `Silent`, so a clone never plays its sound twice; lifecycle templates are unchanged.)
+
+**3. HOTBAR SFX (user).** Hovering a slot plays `SoundService.UI.HotbarHover`; clicking/activating it (mouse, touch, pad, keys 1-6) plays `UI.HotbarClick`. Both NEW authored Sounds in both Places, on the UI group, pre-filled with the Lobby's Hover / Click ids so they work now -- replace the ids to customise.
+
+**Proven live:** Game -- hover card for Knight shows `None` + `Ground`; the selected Archer's badge reads `HYB`; one MouseEnter = 1 hover sound, one Activated = 1 click sound; with ids pasted client-side into Archer's `Impact.SFX` / `Projectile.SFX`, 15 s of play produced 3 impact sounds and projectile sounds riding each bolt; validator: Placement check passes (only the known Knight.SPA 1.4 vs 5.4 mismatch -- the user's balance value, untouched). Lobby -- hover sound plays; chip present (the Lobby test profile had an empty loadout, so the card itself did not open). 0 new errors.
+
 ## 2026-09-28 [game] B104 -- AD-Game: **impact / telegraph VFX scale with the attack's shape.**
 
 Game-local, no canon change. Edited: `RS.Shared.AttackShapes.{AttackShapeRegistry, Circle, Box, Cone, FullAoe}`, `Server.Towers.AttackSequencer`, `Client.VFX.VFXPlayer`, `Client.VFX.VFXController`. Authored: `VFXTemplates.Towers.Knight.Attacks.Slash.Impact` `BaseRadius = 5`. **USER REPUBLISHES THE GAME.**

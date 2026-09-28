@@ -36,6 +36,14 @@ shipped `Impact` template therefore carries `Offset = (0, 0.25, 0)` -- just clea
 an authored ground effect should keep its Offset small for the same reason. Measured live: impact
 0.24-0.25 studs above a Grunt's feet (bounding box 2.02-2.06 studs tall).
 
+## Sounds on an effect (B105)
+
+Put a `Sound` anywhere inside a Release / Projectile / Impact / Telegraph template and it plays with
+that effect -- every shipped template already has an empty one named `SFX`; paste a SoundId. It
+plays through `GameSfx` (SFX volume group, 3D roll-off, per-sound cap) and is **heard even with VFX
+off**; a projectile's sound travels with the bolt. The config's `ReleaseSound` / `ImpactSound` (named
+sounds in `SoundService.SFX`) still work and play alongside.
+
 ## How an effect is chosen
 
 For a hit's `ReleaseVFX = "MageCast"` on Mage's `Cast` attack, first match wins:

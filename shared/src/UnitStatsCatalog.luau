@@ -83,4 +83,27 @@ function UnitStatsCatalog.GetCost(towerId: string): number?
 	return UnitStatsCatalog.Costs[towerId]
 end
 
+-- ===== PLACEMENT TYPE (B105, user) =====
+-- towerId -> WHERE the unit may stand: "Ground" (beside the path), "Hill" (on hill zones) or
+-- "Hybrid" (either). Shown as a chip on the hotbar hover card in BOTH Places, so -- like Costs --
+-- it has to be one shared number the Lobby can read. The truth is `TowerConfig.Placement` in the
+-- Game (read through TowerPlacementRules.PlacementOf, which defaults to "Ground");
+-- `SSS.Server.UnitStatsCatalogValidate` FAILS THE GAME'S BOOT if any value here disagrees.
+-- !! GENERATED, like `Stats` and `Costs`.
+UnitStatsCatalog.Placement = {
+	Archer      = "Hybrid",
+	Knight      = "Ground",
+	Mage        = "Hill",
+	Farm        = "Hybrid",
+	Babaylan    = "Hybrid",
+	Meteor      = "Hill",
+	Warchief    = "Ground",
+	Necromancer = "Ground",
+}
+
+-- "Ground" | "Hill" | "Hybrid", or nil if the tower is not in the catalog (callers HIDE on nil).
+function UnitStatsCatalog.GetPlacement(towerId: string): string?
+	return UnitStatsCatalog.Placement[towerId]
+end
+
 return UnitStatsCatalog
