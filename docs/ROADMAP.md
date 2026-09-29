@@ -18,6 +18,7 @@ everything untradeable at launch).
 - ✅ Towers: placement, per-tier attacks, 9 targeting modes, traits, meta-level scaling,
   auto-upgrade + Unit Manager, sell/upgrade UI
 - ✅ Abilities: passives, actives + Q/C UI, summons · ✅ status effects + elements
+- ✅ **Unit roster — B106.** 8 old towers renamed to myth figures + 27 new units across all nine tiers (40 tower configs incl. 4 evolved forms), min upgrade tiers Common 5 → Alamat 13, ~20 generic passives (`tower-authoring.md` 10b), new hooks `OnAttack`/`OnHitLanded`, forced movement, attack override, statuses Sumpa/Swarm/Judged/Sleep. Hybrid = ground placement + hits flying. Design: `docs/design/unit-roster.md`. 🔲 real rigs/anims/VFX for every new unit (placeholders, both Places).
 - ✅ **Account levelling (B41).** `AddPlayerXP` applies `PlayerLevelConfig.ApplyXP` and writes BOTH
   `PlayerXP` and `PlayerLevel` — the ONE account-XP path. `PlayerLevelConfig` promoted to shared canon
   (manifest **35 → 36**, `2e99d041`, `TOOLVERSION B41-1`). Broken since B33: the rollover was
@@ -814,9 +815,7 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
 - 🔲 Titles (equip UI + overhead) · 🔲 Skins (catalog → model swap both Places)
 
 ### Phase F — Endgame & social
-- 🔲 Evolution NPC/UI (recipe per tower: artifacts + tower-specific drops w/ pity +
-  Takedowns counter + Silver → "(Awakened)" instance preserving Trait/Shiny/Stats;
-  Bathala-tier results) — needs C+D mature
+- 🟡 **Evolution — B106 pt9-pt12.** `RS.Configs.Evolutions` + `EvolutionRegistry` (Check = THE rule), `GrantService.EvolveUnit` (THE write; preserves trait/rolls/level/ascension/worthiness; loadout slot swapped in place), NPC `NPC_Evolve` + authored screen. Gates: materials (Rainbow + a colour fragment + the Act 3 relic `ScarecrowCrown`), owns-unit, sacrifice, max level, takedowns (`Worthiness x 50`). **4 forms:** Mayari (Lunar Eclipse), Apolaki (Zenith), Bathala (Ascended), Bakunawa (Eclipse). Verified end to end (Crown drop -> Lobby -> click Evolve -> evolved unit wins a match). 🔲 forms for the other Mythic+ units; 🔲 per-drop pity; 🔲 more relic stages. `evolution.md`.
 - 🔲 Spirits (attach to units, stat boosts + passives; act-specific drops)
 - 🔲 Endless mode + global leaderboards (waves/summons/level)
 - 🔲 AFK rewards · 🔲 Team presets · 🔲 Group/like milestone rewards
