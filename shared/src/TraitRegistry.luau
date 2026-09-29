@@ -8,11 +8,30 @@ local TraitDefinitions = require(script.Parent.TraitDefinitions)
 
 local TraitRegistry = {}
 
+-- ===== LEGACY IDS (B108) =====
+-- The B12-era traits were replaced by the B108 set. A unit that still STORES an old id reads as its
+-- replacement everywhere (stats, names, icons, pity), so no save breaks; the Lobby also rewrites stored
+-- ids on profile load. Never remove an entry -- an old save may still carry it.
+TraitRegistry.LEGACY = {
+	Blitz = "Tempest",
+	Sniper = "Hawkeye",
+	Deadeye = "Sharpshot",
+	Godly = "Anointed",
+}
+
+-- The current id for `traitId` (legacy ids mapped; anything else unchanged).
+function TraitRegistry.Canonical(traitId: string?): string?
+	if traitId == nil then
+		return nil
+	end
+	return TraitRegistry.LEGACY[traitId] or traitId
+end
+
 function TraitRegistry.Get(traitId: string?): any
 	if not traitId then
 		return TraitDefinitions.None
 	end
-	return TraitDefinitions[traitId] or TraitDefinitions.None
+	return TraitDefinitions[TraitRegistry.Canonical(traitId) :: string] or TraitDefinitions.None
 end
 
 function TraitRegistry.GetAll(): { [string]: any }
@@ -66,7 +85,7 @@ function TraitRegistry.IsRerollable(traitId: string?): boolean
 	if traitId == nil or traitId == TraitRegistry.NO_TRAIT then
 		return false
 	end
-	local def = TraitDefinitions[traitId]
+	local def = TraitDefinitions[TraitRegistry.Canonical(traitId) :: string]
 	return def ~= nil and (def.Weight or 0) > 0
 end
 
@@ -89,7 +108,7 @@ function TraitRegistry.RerollChance(traitId: string?): number
 	if total <= 0 then
 		return 0
 	end
-	return TraitDefinitions[traitId :: string].Weight / total
+	return TraitDefinitions[TraitRegistry.Canonical(traitId) :: string].Weight / total
 end
 
 -- The reroll's weighted pick. Never returns "None" unless the table has NO rerollable trait at all,
@@ -120,13 +139,13 @@ end
 
 -- A "GOOD" trait (user, B73) = one with a pity meter. Landing one plays the special reveal.
 function TraitRegistry.IsSpecial(traitId: string?): boolean
-	local def = traitId and TraitDefinitions[traitId]
+	local def = traitId and TraitDefinitions[TraitRegistry.Canonical(traitId) :: string]
 	return def ~= nil and type(def.PityCap) == "number" and def.PityCap > 0
 end
 
 -- The trait's logo asset id, or nil when none is set yet (the UI then shows the name instead).
 function TraitRegistry.Icon(traitId: string?): string?
-	local def = traitId and TraitDefinitions[traitId]
+	local def = traitId and TraitDefinitions[TraitRegistry.Canonical(traitId) :: string]
 	local icon = def and def.Icon
 	if type(icon) == "string" and icon ~= "" and icon ~= "rbxassetid://0" then
 		return icon
@@ -168,7 +187,7 @@ function TraitRegistry.PitiedTraits(): { string }
 end
 
 function TraitRegistry.PityCap(traitId: string?): number?
-	local def = traitId and TraitDefinitions[traitId]
+	local def = traitId and TraitDefinitions[TraitRegistry.Canonical(traitId) :: string]
 	return def and def.PityCap or nil
 end
 

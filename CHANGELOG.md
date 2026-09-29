@@ -1,4 +1,14 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-30 [both] B108 pt3 -- AD-Traits: **the trait set is replaced by our own 11 traits (user-approved), with every effect wired and measured in a real match.**
+
+Reference: the user's trait list link. Our names, shifted numbers; three ranked families. Table + hooks: `docs/systems/trait-reroll.md`.
+
+**CANON (re-hash, count unchanged at 48):** `TraitDefinitions` `26f1ad06` -> **`79e9547e`** (full replacement), `TraitRegistry` `7e15f405` -> **`bd07c3c3`** (`LEGACY` map + `Canonical`, all lookups canonicalised), `UIKitHotbar` `80ad2b6d` -> **`75dffb7a`** (hover card shows `DisplayName`, not the id). Disk = Game = Lobby, pre-edit hashes checked. **USER REPUBLISHES BOTH PLACES.**
+
+**Game-local hooks:** `TowerStatResolver` applies `StatAdds` after multipliers and `IncomeMult` to IncomePerWave; `TowerController` gains `GetStepCost(tier)` (THE upgrade-price rule, trait discount on non-support units) + `UpgradeCostMult`/`CashMult` fields and a `UpgradeCostMult` model attribute; `TowerRequestHandler`'s multi-tier jump uses `GetStepCost`; `MatchDirector` passes the killer's `CashMult` into `EconomyManager.GrantKillReward(..., cashMult)`; `RewardCalculator` applies the unit's `XPMult`; `TowerSelectionUI` shows the discounted price (3 spots). **Lobby-local:** `UnitDiscoveryService` rewrites legacy trait ids on load; `TraitRerollController` stat line fixed for SPA ("-5% SPA") and lists crit/XP/cash/cost perks.
+
+**Proven live:** Lobby -- `Traits: rewrote 7 legacy trait id(s)`; 200 real `RerollTrait` calls: Might I 16%, Keen I 14%, Hasty I 12.5%, Sage 10.5%, Might II 9.5%, Hasty II 9%, Hawkeye 8.5%, ... Sharpshot 0.5% -- **0 legacy/None landed**, pity now tracks Sharpshot/Diwata/Anointed, an old Blitz read back as Tempest. Trait Index lists the new set with 15.60% / 10.00% odds (screenshot). Game match (seeded traits): **Anointed via the legacy `Godly` id** Damage 632.9 vs 180.8 (x3.5), SPA x0.90, Range x1.10, placement limit 1; **Bountiful** Bantong step cost 189 vs 210 (x0.9, attribute 0.9), kill cash on a 10-cash Grunt = 12; Lakapati (farm) income 138 vs 120 (+15%) with NO upgrade discount; **Sharpshot** crit 0.05 -> 0.45, crit dmg 2.0 -> 2.5; **Hawkeye** crit +0.05, Range 20 -> 26; **Hasty III** SPA x0.880; **Sage** Magwayen's XP lookup = x1.5. Victory 15/15. Harness restored (seeds back, probes gone, no TEMP markers).
+
 ## 2026-09-29 [lobby] B108 pt2 -- AD-UI/AD-Gacha: **Auto Summon moved off the pity bars; the Index's data layer (discovery + lore).**
 
 Lobby-local, no canon change.

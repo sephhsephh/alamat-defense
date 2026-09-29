@@ -478,7 +478,8 @@ local function attachV3(container: GuiObject, opts: { [string]: any })
 			if traitChip and traitChip:IsA("GuiObject") then
 				traitChip.Visible = traitName ~= nil and traitName ~= "None"
 				local l = traitChip:FindFirstChildWhichIsA("TextLabel")
-				if l then l.Text = tostring(traitName) end
+				-- B108: the trait's DISPLAY name ("Might II"), not its id ("Might2"); legacy ids resolve too.
+				if l then l.Text = (TraitRegistry and traitName and TraitRegistry.Get(traitName).DisplayName) or tostring(traitName) end
 			end
 			local elementChip = chips:FindFirstChild("Element")
 			if elementChip and elementChip:IsA("GuiObject") then

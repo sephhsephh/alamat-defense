@@ -1,120 +1,106 @@
 --!strict
--- TraitDefinitions.lua
--- Traits: permanent per-tower modifiers earned via Lobby reroll gacha. One per tower.
--- See architecture doc section 15.
+-- TraitDefinitions.lua (SHARED CANON)
+-- Traits: permanent per-unit modifiers earned via the Lobby's trait reroll (and, rarely, on summon).
 --
--- Two distinct kinds of effect, deliberately separated:
---   StatMultipliers        -- pure numbers, fed into TowerStatResolver's third layer
---   PlacementLimitOverride -- a NON-stat property; this is why traits can't just be a
---                             multiplier table (Godly makes a tower stronger but rarer)
+-- ===== B108: THE TRAIT SET WAS REPLACED (user-approved) =====
+-- Our own 11 traits (three of them RANKED I/II/III), modelled on a reference list but with our own
+-- names and shifted numbers. The four B12-era traits map onto them through `TraitRegistry.LEGACY`
+-- (Blitz -> Tempest, Sniper -> Hawkeye, Deadeye -> Sharpshot, Godly -> Anointed), so a unit that still
+-- stores an old id reads as its new trait everywhere, and the Lobby rewrites stored ids on load.
 --
--- Multipliers are expressed as FINAL multipliers, not percentages:
---   "+300% damage" = 4.0   (original 100% + 300% more)
---   "+100% attack speed" = 2.0
---   "+50% range" = 1.5
+-- ===== WEIGHT =====
+-- Rerollable weights are in HUNDREDTHS OF A PERCENT and sum to 10,000, so `Weight / 100` IS the
+-- percent the Trait Index shows (Might I = 1560 -> 15.6%). A ranked family rolls Rank I 60% / II 30%
+-- / III 10% of its share (Might 26% -> 15.6 / 7.8 / 2.6).
+-- `None` is only used by the full-table `TraitRegistry.Roll` (trait-on-summon). Its weight keeps a
+-- summon's trait chance where it was before B108: 10000 / (10000 + 53191) = 15.8% (was 188/1188).
 --
--- SPA (Seconds Per Attack) is INVERTED in TowerStatResolver (stored as seconds-between-attacks),
--- so an SPA multiplier of 2.0 correctly means "attacks twice as fast," not "twice the delay."
--- (Note the real floor is the attack animation length -- Blitz can't push cadence below it.)
---
--- ===== PityCap (B69) -- ONLY on the top two rarities =====
--- A trait with a `PityCap` is GUARANTEED on the Nth consecutive reroll of a unit that has not landed
--- it. The counter is PER UNIT INSTANCE and per trait (`UnitInstance.TraitPity`), so grinding one
--- tower never advances another's, and it RESETS to 0 the moment that trait lands -- pitied or not.
---
--- It lives HERE, beside `Weight`, because this file is already the single definition of trait rarity
--- (see TraitRegistry's header): a cap stored anywhere else could drift from the weight it exists to
--- compensate for, and the two only make sense read together.
---
--- *** THESE TWO NUMBERS ARE PLACEHOLDERS AND ARE THE USER'S CALL. ***
--- Set at B69 as ~1.5x the expected rolls when "None" was still in the reroll pool (1188 weight).
--- B73 (user): a reroll ALWAYS lands a trait now, so the pool is 188 and the odds are
---   Deadeye  25/188 = 13.3%  -> ~7.5 rolls expected   (cap 75 kept)
---   Godly     3/188 = 1.60%  -> ~63 rolls expected    (cap 600 kept)
--- The caps were KEPT on purpose (user, B73: "i will be adding more traits in the future") -- every new
--- trait dilutes these odds, so the caps are left for the user to retune once the table is final.
--- Retune by editing the one number; nothing else changes. A longer cap makes the trait rarer in
--- PRACTICE without touching Weight (which would also move the odds shown on the Trait Index).
--- Blitz and Sniper deliberately have NO cap: they are the common outcomes, and a pity bar on a common
--- outcome is noise.
---
--- ===== Weight and "None" (B73) =====
--- `None` keeps its entry (it is what an un-traited unit HAS) but is EXCLUDED from rerolls -- see
--- TraitRegistry.RollReroll. Its Weight only matters to the legacy full-table `Roll`.
---
--- ===== Icon (B73) =====
--- The trait's logo, shown by the special "good trait" reveal and the Trait Index. Paste an
--- `rbxassetid://...` here. EMPTY = no logo yet: the UI shows the trait NAME in its rarity colour
--- instead, so an empty Icon is never a broken screen.
--- "Good" traits (the special reveal) are exactly the ones with a PityCap.
+-- ===== EFFECT FIELDS (every one optional) =====
+--   StatMultipliers  FINAL multipliers fed into TowerStatResolver's trait layer. SPA is INVERTED there
+--                    (stored as seconds between attacks), so "-20% SPA" is written `1 / 0.8`.
+--   StatAdds         ADDED after multipliers: CritChance +0.40 = +40 percentage points of crit.
+--   XPMult           unit XP earned from a match (RewardCalculator).
+--   CashMult         cash from enemies THIS unit kills (MatchDirector -> EconomyManager).
+--   UpgradeCostMult  in-match upgrade cost of a NON-support unit (TowerController:GetStepCost).
+--   IncomeMult       a support unit's IncomePerWave (TowerStatResolver).
+--   PlacementLimitOverride  a NON-stat property: the unit may only be placed this many times.
+--   PityCap          guaranteed on the Nth consecutive reroll of a unit that has not landed it (per
+--                    unit, per trait -- `UnitInstance.TraitPity`). Only the top three have one; those
+--                    are also the "good" traits that play the special reveal. PLACEHOLDERS, ~1.5x the
+--                    expected rolls; the user's call.
+--   Family / Rank    ranked traits (Might/Keen/Hasty). Display only; each rank is its own id.
+--   Icon             `rbxassetid://...`; EMPTY = the UI shows the name in the Rarity colour instead.
+--   Rarity           a TierConfig tier name, used for the trait's COLOUR only.
 
-local TraitDefinitions = {
+local function spa(pctFaster: number): number
+	-- "-X% SPA" (seconds between attacks shrink by X%) as the resolver's inverted multiplier.
+	return 1 / (1 - pctFaster)
+end
+
+local TraitDefinitions: { [string]: any } = {
 
 	None = {
 		Id = "None",
 		DisplayName = "None",
 		Rarity = "Common",
-		Weight = 1000, -- legacy full-table Roll only; rerolls NEVER land None (B73)
+		Weight = 53191, -- full-table Roll (summon) only; rerolls NEVER land None (B73)
 		StatMultipliers = {},
 	},
 
-	Blitz = {
-		Id = "Blitz",
-		DisplayName = "Blitz",
-		Rarity = "Rare",
-		Weight = 80,
-		Icon = "", -- B73: paste a logo asset id
-		Description = "+100% attack speed.",
-		StatMultipliers = {
-			SPA = 2.0,
-		},
-	},
+	-- ===== RANKED (26% each family) =====
+	Might1 = { Id = "Might1", DisplayName = "Might I", Family = "Might", Rank = 1, Rarity = "Common", Weight = 1560, Icon = "",
+		Description = "+5% Damage.", StatMultipliers = { Damage = 1.05 } },
+	Might2 = { Id = "Might2", DisplayName = "Might II", Family = "Might", Rank = 2, Rarity = "Uncommon", Weight = 780, Icon = "",
+		Description = "+9% Damage.", StatMultipliers = { Damage = 1.09 } },
+	Might3 = { Id = "Might3", DisplayName = "Might III", Family = "Might", Rank = 3, Rarity = "Rare", Weight = 260, Icon = "",
+		Description = "+14% Damage.", StatMultipliers = { Damage = 1.14 } },
 
-	Sniper = {
-		Id = "Sniper",
-		DisplayName = "Sniper",
-		Rarity = "Rare",
-		Weight = 80,
-		Icon = "", -- B73: paste a logo asset id
-		Description = "+80% range, +25% damage, but -20% attack speed.",
-		StatMultipliers = {
-			Range = 1.8,
-			Damage = 1.25,
-			SPA = 0.8,
-		},
-	},
+	Keen1 = { Id = "Keen1", DisplayName = "Keen I", Family = "Keen", Rank = 1, Rarity = "Common", Weight = 1560, Icon = "",
+		Description = "+5% Range.", StatMultipliers = { Range = 1.05 } },
+	Keen2 = { Id = "Keen2", DisplayName = "Keen II", Family = "Keen", Rank = 2, Rarity = "Uncommon", Weight = 780, Icon = "",
+		Description = "+9% Range.", StatMultipliers = { Range = 1.09 } },
+	Keen3 = { Id = "Keen3", DisplayName = "Keen III", Family = "Keen", Rank = 3, Rarity = "Rare", Weight = 260, Icon = "",
+		Description = "+14% Range.", StatMultipliers = { Range = 1.14 } },
 
-	Deadeye = {
-		Id = "Deadeye",
-		DisplayName = "Deadeye",
-		Rarity = "Epic",
-		Weight = 25,
-		PityCap = 75,   -- PLACEHOLDER (B69, user's call); ~7.5 rolls expected since B73 (25/188)
-		Icon = "", -- B73: paste a logo asset id (special reveal shows the name until then)
-		Description = "+150% crit chance, +50% crit damage.",
-		StatMultipliers = {
-			CritChance = 2.5,
-			CritMultiplier = 1.5,
-		},
-	},
+	Hasty1 = { Id = "Hasty1", DisplayName = "Hasty I", Family = "Hasty", Rank = 1, Rarity = "Common", Weight = 1560, Icon = "",
+		Description = "-5% SPA (attacks faster).", StatMultipliers = { SPA = spa(0.05) } },
+	Hasty2 = { Id = "Hasty2", DisplayName = "Hasty II", Family = "Hasty", Rank = 2, Rarity = "Uncommon", Weight = 780, Icon = "",
+		Description = "-8% SPA (attacks faster).", StatMultipliers = { SPA = spa(0.08) } },
+	Hasty3 = { Id = "Hasty3", DisplayName = "Hasty III", Family = "Hasty", Rank = 3, Rarity = "Rare", Weight = 260, Icon = "",
+		Description = "-12% SPA (attacks faster).", StatMultipliers = { SPA = spa(0.12) } },
 
-	Godly = {
-		Id = "Godly",
-		DisplayName = "Godly",
-		Rarity = "Legendary",
-		Weight = 3,
-		PityCap = 600,  -- PLACEHOLDER (B69, user's call); ~63 rolls expected since B73 (3/188)
-		Icon = "", -- B73: paste a logo asset id (special reveal shows the name until then)
-		Description = "+300% damage, +50% range, +100% crit chance -- but you may only place ONE.",
-		StatMultipliers = {
-			Damage = 4.0,
-			Range = 1.5,
-			CritChance = 2.0,
-		},
-		-- The defining trade-off: massive power, but this tower's placement limit becomes 1
-		-- regardless of what TowerConfig.PlacementLimit says.
-		PlacementLimitOverride = 1,
-	},
+	-- ===== SINGLE TRAITS =====
+	Sage = { Id = "Sage", DisplayName = "Sage", Rarity = "Rare", Weight = 1000, Icon = "",
+		Description = "+50% unit XP from matches.", StatMultipliers = {}, XPMult = 1.5 },
+
+	Hawkeye = { Id = "Hawkeye", DisplayName = "Hawkeye", Rarity = "Epic", Weight = 650, Icon = "",
+		Description = "+30% Range, +5% crit chance.", StatMultipliers = { Range = 1.3 }, StatAdds = { CritChance = 0.05 } },
+
+	Bountiful = { Id = "Bountiful", DisplayName = "Bountiful", Rarity = "Epic", Weight = 250, Icon = "",
+		Description = "+20% cash from this unit's kills and -10% upgrade cost. Farms: +15% income instead.",
+		StatMultipliers = {}, CashMult = 1.2, UpgradeCostMult = 0.9, IncomeMult = 1.15 },
+
+	Tempest = { Id = "Tempest", DisplayName = "Tempest", Rarity = "Legendary", Weight = 185, Icon = "",
+		Description = "-20% SPA (attacks much faster).", StatMultipliers = { SPA = spa(0.20) } },
+
+	Anito = { Id = "Anito", DisplayName = "Anito", Rarity = "Mythic", Weight = 50, Icon = "",
+		Description = "+12% Damage, -5% SPA, +15% Range.",
+		StatMultipliers = { Damage = 1.12, SPA = spa(0.05), Range = 1.15 } },
+
+	Sharpshot = { Id = "Sharpshot", DisplayName = "Sharpshot", Rarity = "Mythic", Weight = 37.5, PityCap = 400, Icon = "",
+		Description = "+40% crit chance, +50% crit damage.",
+		StatMultipliers = {}, StatAdds = { CritChance = 0.40, CritMultiplier = 0.5 } },
+
+	Diwata = { Id = "Diwata", DisplayName = "Diwata", Rarity = "Secret", Weight = 17.5, PityCap = 850, Icon = "",
+		Description = "+20% Damage, -18% SPA, +8% Range.",
+		StatMultipliers = { Damage = 1.2, SPA = spa(0.18), Range = 1.08 } },
+
+	Anointed = { Id = "Anointed", DisplayName = "Anointed", Rarity = "Alamat", Weight = 10, PityCap = 1500, Icon = "",
+		Description = "+250% Damage, -10% SPA, +10% Range -- but you may only place ONE.",
+		StatMultipliers = { Damage = 3.5, SPA = spa(0.10), Range = 1.1 },
+		-- The defining trade-off (as Godly before it): massive power, but this unit's placement limit
+		-- becomes 1 regardless of what its TowerConfig says.
+		PlacementLimitOverride = 1 },
 }
 
 return TraitDefinitions

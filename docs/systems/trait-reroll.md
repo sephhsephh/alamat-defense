@@ -9,6 +9,24 @@ ascension (C3) is AD-Gacha's, and **stat reroll (C2) + worthiness are still AD-T
 Copies **ADR-0010's NPC-opened-screen shape** exactly — the blueprint already specified "NPC → UI" for
 C1, so this is the consistent path, the same shape ascension moved to at B11.
 
+## B108: THE TRAIT SET (user-approved, replaces the B12 four)
+
+| Trait | Reroll chance | Effect | Pity |
+|---|---|---|---|
+| Might I / II / III | 15.6 / 7.8 / 2.6% | +5 / 9 / 14% Damage | |
+| Keen I / II / III | 15.6 / 7.8 / 2.6% | +5 / 9 / 14% Range | |
+| Hasty I / II / III | 15.6 / 7.8 / 2.6% | -5 / 8 / 12% SPA | |
+| Sage | 10% | +50% unit XP from matches (`RewardCalculator`) | |
+| Hawkeye | 6.5% | +30% Range, +5% crit (additive) | |
+| Bountiful | 2.5% | +20% kill cash (`MatchDirector` -> `GrantKillReward` cashMult), -10% upgrade cost (`TowerController:GetStepCost`, non-support); farms +15% income | |
+| Tempest | 1.85% | -20% SPA | |
+| Anito | 0.5% | +12% Damage, -5% SPA, +15% Range | |
+| Sharpshot | 0.375% | +40% crit, +50% crit dmg (`StatAdds`) | 400 |
+| Diwata | 0.175% | +20% Damage, -18% SPA, +8% Range | 850 |
+| Anointed | 0.1% | +250% Damage, -10% SPA, +10% Range, placement limit 1 | 1500 |
+
+Legacy ids resolve through `TraitRegistry.LEGACY` (Blitz->Tempest, Sniper->Hawkeye, Deadeye->Sharpshot, Godly->Anointed) and the Lobby's `UnitDiscoveryService` rewrites stored ids (active, stored, pity keys, filters) on profile load. Pity caps are PLACEHOLDERS (~1.5x expected rolls). Summon trait chance unchanged at 15.8% (`None` weight 53191). The reroll screen's stat line shows SPA as "-5% SPA" and lists crit/XP/cash/cost perks.
+
 ## Where everything lives
 
 | Thing | Path | Notes |
