@@ -1,4 +1,24 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-29 [game] B106 pt13 -- AD-Game: **every Legendary+ active proven; two engine bugs fixed (nukes skipped enemies, auto-actives fired at nothing).**
+
+No canon change. Game-local.
+
+**FIX 1 -- kills skipped the next enemy.** `EnemySpawner.GetActiveEnemies()` returns the LIVE array, and a killing blow removes that enemy from it synchronously, so an `ipairs` loop that deals damage skips the enemy after every kill. Measured: Bathala's map-wide *Word of Bathala* hit **6 of 9** and **2 of 3** live enemies. Fixed by iterating `table.clone(...)` in the two damaging loops: `Abilities.Nuke` (every Nuke: Bulalakaw, Bernardo, Minokawa, Aman Sinaya, Bathala, Bakunawa) and `Passives.EveryNthAttack` (Bakunawa's Eclipse MapStrike). Audited every other caller: targeting, auras, status spreads, SleepAura and EnterRangeStatus don't damage inside the loop; `SummonController` already copies; `AttackResolver` passes the list to `AttackShapeRegistry`, which builds its own hit list. **Pre-B106 behaviour changed:** Bulalakaw's Meteor Strike was affected too.
+
+**FIX 2 -- auto-activation burnt cooldowns on nothing.** `TowerController:StepAbility` fires the moment the cooldown ends unless the ability defines `ShouldAutoActivate`, and none did. Lam-ang's *Rooster's Crow* fired on placement with 0 enemies in range; Apolaki's *High Noon* fired with 0 in range 6 times in one match. Added `ShouldAutoActivate` to all three modules: `Nuke` / `StatusBurst` wait for a live enemy in their Scope (Map = any live enemy, Range = within the tower's Range); `TempStatBuff` waits for one inside the tower's Range (any live enemy if the tower has no Range stat). Manual activation is unchanged. Doc: `tower-authoring.md` 10b.
+
+**Proven live (Game, 4 Auto Play matches, runtime probe Script wrapping `Activate` in the same server VM + cash probe; all removed):**
+- **After fix 1: `hit == inScope` on every Nuke** -- Bathala 10/10, 3/3; Aman Sinaya *Great Wave* (Range) 10/10 in range of 16 live, 4/4; Minokawa *Swallow the Moon* 12/12, 5/5, 6/6; Bakunawa *Devour* 3/3; Bernardo *Lindol* (Range) 6/6 in range of 7. Bakunawa `EveryNthAttack #7 / #14 / #21 / #28 MapStrike 581 x9 / 714 x5 / 809 x6 / 817 x11`.
+- **Damage = tower Damage x Mult** in every line (e.g. `Damage 126.0 x 10 = 1260`, `167.9 x 6 = 1007`).
+- **After fix 2:** every activation logged `inScope >= 1`.
+- **StatusBurst:** Sidapa *Death's Toll* put `Status_Weaken` on 5/5 and 7/7; Maria Makiling *Mountain Mist* put `Status_Slow` on 11/11 (bosses included); Lam-ang *Rooster's Crow* stunned the Manananggal / Grunt in range. Its one `0` was a **FarmBoss, which lists `Immunities = { Stun }`** (by design).
+- **TempStatBuff:** Apolaki *High Noon* SPA **1.4 -> 0.84** (x0.6).
+- Not individually fired: Mayari's *Lunar Veil*, the evolved forms' copies, Urduja's *War Cry*. Each uses a module + scope proven above (`StatusBurst` Map Slow = Maria's; `TempStatBuff` = Apolaki's).
+
+Harness restored: probes destroyed, `DevDebugAttacks` cleared, `desired` back to `{ Handyong, Magwayen, Bantong, Lakapati, Bulalakaw }`; a sweep found no `B106 TEMP` marker.
+
+**B106 verification list is now EMPTY.** What remains is the user's: republish both Places, real rigs for the placeholder units, move `NPC_Evolve`, TestMap hill placement.
+
 ## 2026-09-29 [both] B106 pt12 -- AD-Gacha/AD-Game: **the evolution loop is proven end to end: Crown drops in Act 3, reaches the Lobby, and the Evolve screen works by click.**
 
 No canon change.
