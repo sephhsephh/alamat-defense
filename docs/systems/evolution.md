@@ -17,7 +17,7 @@ B106 gates, approved in the design session).
 | Lobby `RS.Configs.Evolutions.EvolutionRegistry` | Auto-scans the folder; **`Check(data, uuid, sacrificeUuid)` is THE rule** (screen and server both call it). |
 | Lobby `GrantService.EvolveUnit` | **THE write**: re-Check -> sacrifice must pass `UnitConsumeRules.Reason` -> `SpendItems` (+Silver) -> new record PRESERVING trait (active + stored + pity), shiny, rolls, level/XP, ascension, worthiness, lock/favourite -> new uuid replaces the old IN PLACE in `Data.Loadout` -> base (and sacrifice) deleted. |
 | Lobby `SSS.Server.Meta.EvolutionService` | Remotes `GetEvolutionInfo` / `EvolveUnit(uuid, sacrificeUuid?)`; one evolve in flight per player. |
-| Lobby `StarterGui.Evolution` + `EvolutionController` | A clone of the authored Crafting screen (`EvolveTemplate` rows); `Main` tagged `GamepadMenu`. Auto-picks the lowest eligible sacrifice and confirms (`UIKit.Confirm`). |
+| Lobby `StarterGui.Evolution` + `EvolutionController` | A clone of the authored Crafting screen (`EvolveTemplate` rows); `Main` tagged `GamepadMenu`. Auto-picks the lowest eligible sacrifice and confirms (`UIKit.Confirm`). A row whose requirements are not met does NOT open the confirm: it shows `Not ready yet -- <have/need>` (the server re-checks regardless). |
 
 **Takedowns** have no per-unit kill counter in the save; they are read from `Worthiness` x
 `EvolutionRegistry.KILLS_PER_WORTHINESS` (50, mirrors the Game's `WorthinessConfig.PointsPerKill` 0.02), so the

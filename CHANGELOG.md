@@ -1,4 +1,18 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-29 [both] B106 pt12 -- AD-Gacha/AD-Game: **the evolution loop is proven end to end: Crown drops in Act 3, reaches the Lobby, and the Evolve screen works by click.**
+
+No canon change.
+
+- **FIX (Lobby) -- `StarterGui.Evolution.EvolutionController`:** a dimmed (not-ready) row used to open the Evolve confirm anyway; saying Yes then came back `Missing materials.` from the server. Now the button shows `Not ready yet -- <the row's have/need text>` and never opens the confirm. Server behaviour unchanged (it still re-checks). Doc: `evolution.md`.
+
+**Proven live:**
+- **Evolve by click (Lobby Play):** materials via `DevPushRewards` (`Mayari:1, ArtifactRainbow:1, FragmentViolet:20, ScarecrowCrown:1`). The screen listed 5 rows (Bakunawa, Apolaki, Bathala -- auto-picked sacrifice `Consumes Magwayen` -- and two Mayari). Clicking Mayari's **EVOLVE** opened `ConfirmationPopupUI` with `Evolve Mayari into Mayari (Lunar Eclipse)? The materials will be used up.`, Yes `Evolve (1)` countdown then **Yes** -> toast **`Mayari evolved into Mayari (Lunar Eclipse)!`**, the list refreshed to 4 rows with every material at 0. Before the fix, the second Mayari's button opened the confirm and Yes returned `Missing materials.`; **after the fix** the same click showed `Not ready yet -- Rainbow Artifact 0/1 · Violet Fragment 0/20 · Scarecrow Crown 0/1 · Own Apolaki` and the popup stayed closed.
+- **Crown drop (Game Play, `DevStageId = Stage1_Act3`, Crown chance TEMPORARILY 1.0 to prove the pipe in one run):** `[Test] smoke match STAGE: Stage1_Act3`, Victory 15/15 waves, lives 3/3; **`[DATA] Drop: ScarecrowCrown x1 -> Data.Items.ScarecrowCrown = 1`**. After stopping (save), the Lobby's `GetEvolutionInfo` reported **`ScarecrowCrown = 1`** -- Game -> profile -> Lobby works. Chance back to **0.15**; `DevStageId`, loadout, cash probe all restored; a sweep found no `B106 TEMP` marker left in the Game place.
+
+**NOTE (tool quirk, not a bug):** a one-shot MCP `mouseButtonClick` on the Evolve button did not register; an explicit down/up pair did.
+
+**STILL NOT VERIFIED:** the Legendary+ actives.
+
 ## 2026-09-29 [game] B106 pt11 -- AD-Game: **evolved forms proven in a real match; SiblingBonus now sees an evolved sibling.**
 
 No canon change. Game-local only.
