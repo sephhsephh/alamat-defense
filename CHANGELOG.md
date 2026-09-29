@@ -1,4 +1,36 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-29 [both] B107 -- AD-Game/AD-Gacha: **every Mythic+ unit can evolve: +8 forms (12 total), plus two display fixes the runs turned up.**
+
+**CANON (re-hash, count unchanged at 48):** `ItemCatalog` `0d97d08a` -> **`5e9dba43`** (+8 evolved towers, `Summonable = false` / `EvolvedFrom`; 70 entries), `UnitStatsCatalog` `ab745a1d` -> **`1ad9341a`** (+8 Stats/Costs/Placement rows). Applied as the SAME anchor inserts to disk, Game and Lobby; the pre-edit hash was checked in each Place before writing, and all three copies hash identical. **USER REPUBLISHES BOTH PLACES.**
+
+**THE 8 FORMS (user-approved design; each = the base config, +30% Damage on every tier (rounded), + ONE mechanic built from an existing passive -- no new engine code):**
+
+| Form (Id) | Mechanic | Recipe (all + Rainbow x1) | Gate |
+| --- | --- | --- | --- |
+| Magwayen (Soulferry) `Magwayen_Soulferry` | souls return at 100% of the enemy's HP (was 60%) | Indigo 20, Crown 1 | sacrifice Legendary+ |
+| Sidapa (Last Measure) `Sidapa_LastMeasure` | Execute threshold +5 pts (15-23%) | Violet 20, Crown 1 | 2,500 takedowns |
+| Aman Sinaya (Riptide) `AmanSinaya_Riptide` | Great Wave Scope Range -> Map | Blue 20, Crown 1 | max level |
+| Tala (Morning Star) `Tala_MorningStar` | Constellation every 2nd attack (was 3rd) | Indigo 25, Crown 2 | owns Mayari |
+| Lalahon (Caldera) `Lalahon_Caldera` | + StatusSpreadOnKill Burn -> 3 (RequireCarrier) | Red 25, Crown 2 | max level |
+| Aswang (Blood Moon) `Aswang_BloodMoon` | Feeding cap +40% -> +80% | Violet 30, Crown 2 | 5,000 takedowns |
+| Tiyanak (Changeling) `Tiyanak_Changeling` | + BonusVs Stun x1.4 | Indigo 30, Crown 2 | sacrifice Legendary+ |
+| Batibat (Night Terror) `Batibat_NightTerror` | + BonusVs Sleep x2 (the waking hit) | Green 30, Crown 2 | max level |
+
+Fragments by tier: 20 Mythic / 25 Limited / 30 Secret (Alamat already 30). No form pushes or stuns a boss (Act 3 stays a boss wall). Each gate type now covers 3 forms. **Game:** 8 configs + `TowerConfigRegistry` lines + 8 PLACEHOLDER rigs in `RS.TowerModels` (clones of the base, `Placeholder`/`PlaceholderOf`); smoke-test seeds. **Lobby:** 8 recipes in `RS.Configs.Evolutions` + 8 PLACEHOLDER rigs in `RS.UnitModels` (same names, same `IdleAnim` as the Game copies -- none set). **⚠ USER: replace all 8 rigs in BOTH Places.**
+
+**FIX 1 (Game) -- the unit panel's TAKEDOWNS tile missed every ONE-HIT kill.** `TowerCombatStats` credited a death to the enemy's recorded last damager, but a one-shot fires `EnemyDied` synchronously inside `TakeDamage`, BEFORE the resolver's `DamageDealt` records anything. Solo Aswang match: tile **126** vs **299** kills. Now falls back to `controller.LastAttackerTower.Uuid` (stamped before the hit; the same field `ReplicationBridge` credits OnKill passives from). Re-run: **296 of 299**. The PROFILE kill counter (Worthiness = evolution takedowns) was never affected -- it committed 299. Doc: `unit-selection.md`.
+
+**FIX 2 (Lobby) -- the Evolve screen could auto-pick an EVOLVED unit as the sacrifice.** Bathala's row offered `Consumes Mayari (Lunar Eclipse)` because it tied a plain Magwayen on tier and came first. On a tier tie the pick now prefers a plain unit; an evolved one is chosen only when nothing else is eligible. After: `Consumes Magwayen`. The confirm still names the sacrifice either way.
+
+**Proven live (Game, 5 Auto Play matches + probes; Lobby Play):**
+- Boot: `[TowerValidate] OK: 48 tower config(s)`, `ItemCatalog valid (70 entries)`, catalog validator reports ONLY the user's known `Bantong.SPA` line (all 8 new rows match their configs).
+- **Magwayen_Soulferry** `SOUL spawn Charger health=5247` from a FarmBoss of MaxHealth 5247 (and 231 from a 231 Grunt): exactly 100%. **AmanSinaya_Riptide** `NUKE 'Great Wave' scope=Map hit=3 of 3 live`, `1 of 1`. **Tala_MorningStar** `EveryNthAttack #12, #14 ...` (every 2nd), 48,107 dmg. **Lalahon_Caldera** `spread Burn to 3` (placed on the runtime-moved hill; Auto Play keeps choosing Hill2's far edge for Hill units). **Sidapa_LastMeasure** 145 x Execute, 58,691 dmg. **Aswang_BloodMoon** (solo) `KillStack x1.20 ... x1.80 (40 kills)` then held at x1.80 to 290 kills, 152,733 dmg, Victory. **Tiyanak_Changeling** `BonusVs Status x1.40` after its own `EnterRangeStatus Stun`. **Batibat_NightTerror** `BonusVs Status x2.00` on sleepers, 42,689 dmg.
+- **Lobby:** `EvolutionService ready (12 evolution(s))`; the screen listed every recipe with live have/need (`Own Mayari`, `Consumes Bernardo Carpio`, `Takedowns 0/2500`, `Level 1/100`). **By click:** Tala -> `Tala evolved into Tala (Morning Star)!` (Rainbow 2->1, Indigo 45->20, Crown 3->1); Magwayen -> confirm read `... The materials and your Bernardo Carpio will be used up.` -> `Magwayen evolved into Magwayen (Soulferry)!`, Bernardo Carpio 1 -> 0, materials 0.
+- ⚠ **Aswang looked broken in a mixed loadout -- it is not.** Both Aswangs (base and evolved) have the roster's shortest range (14-18) and Auto Play parked them downstream of Tiyanak/Batibat, which killed everything first (trace: nearest hittable enemy 31-44 studs). Solo it carries a match. A placement/balance note, not a bug.
+- **Tool note:** a click on an Evolve row that is scrolled out of the list's view does nothing (the ScrollingFrame clips it); scroll first.
+
+Harness restored: probes destroyed, `DevDebugAttacks` cleared, smoke `desired` back to `{ Handyong, Magwayen, Bantong, Lakapati, Bulalakaw }`, no `B107 TEMP` markers, TestMap Hill1 untouched. The Game's temporary `B107Probe` Script vanished from the Edit datamodel once between runs (every real edit survived) -- recreated; **ASK THE USER whether they removed it.** Dev profile now also holds Tala (Morning Star) and Magwayen (Soulferry).
+
 ## 2026-09-29 [game] B106 pt13 -- AD-Game: **every Legendary+ active proven; two engine bugs fixed (nukes skipped enemies, auto-actives fired at nothing).**
 
 No canon change. Game-local.

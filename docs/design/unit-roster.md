@@ -206,7 +206,7 @@ max level) EXTEND `Requires` — a blueprint extension approved by the user at B
 | **Apolaki (Zenith)** | Apolaki | *Rising Sun* cap +48% → +80% | Rainbow + 20 Orange + a *Sun Relic* (act) | **Max level** |
 | **Bathala (Ascended)** | Bathala | *Creator* also gives −10% SPA | Rainbow + 30 Yellow + a relic from EACH stage boss | **Sacrifice** a Mythic |
 | **Bakunawa (Eclipse)** | Bakunawa | Eclipse every 5th attack, not 7th | Rainbow + 30 Blue + the eclipse event boss drop | **5,000 takedowns** |
-| later | Aman Sinaya, Sidapa, Magwayen, Tala, Lalahon, Aswang, Tiyanak | — | — |
+| **B107 (built)** | Magwayen (Soulferry), Sidapa (Last Measure), Aman Sinaya (Riptide), Tala (Morning Star), Lalahon (Caldera), Aswang (Blood Moon), Tiyanak (Changeling), Batibat (Night Terror) — recipes + mechanics in `docs/systems/evolution.md` | | |
 
 ⚠ **Content gap:** only Stage 1 (3 acts, ONE boss — the Scarecrow King) exists, so "specific
 boss/act drops" needs new stages/bosses first. The first evolution can use Stage 1 Act 3.

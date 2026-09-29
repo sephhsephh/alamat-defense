@@ -815,7 +815,7 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
 - 🔲 Titles (equip UI + overhead) · 🔲 Skins (catalog → model swap both Places)
 
 ### Phase F — Endgame & social
-- 🟡 **Evolution — B106 pt9-pt12.** `RS.Configs.Evolutions` + `EvolutionRegistry` (Check = THE rule), `GrantService.EvolveUnit` (THE write; preserves trait/rolls/level/ascension/worthiness; loadout slot swapped in place), NPC `NPC_Evolve` + authored screen. Gates: materials (Rainbow + a colour fragment + the Act 3 relic `ScarecrowCrown`), owns-unit, sacrifice, max level, takedowns (`Worthiness x 50`). **4 forms:** Mayari (Lunar Eclipse), Apolaki (Zenith), Bathala (Ascended), Bakunawa (Eclipse). Verified end to end (Crown drop -> Lobby -> click Evolve -> evolved unit wins a match). 🔲 forms for the other Mythic+ units; 🔲 per-drop pity; 🔲 more relic stages. `evolution.md`.
+- 🟡 **Evolution — B106 pt9-pt12.** `RS.Configs.Evolutions` + `EvolutionRegistry` (Check = THE rule), `GrantService.EvolveUnit` (THE write; preserves trait/rolls/level/ascension/worthiness; loadout slot swapped in place), NPC `NPC_Evolve` + authored screen. Gates: materials (Rainbow + a colour fragment + the Act 3 relic `ScarecrowCrown`), owns-unit, sacrifice, max level, takedowns (`Worthiness x 50`). **12 forms (B106: 4, B107: +8)** -- every Mythic+ base has one. Verified end to end (Crown drop -> Lobby -> click Evolve -> evolved unit wins a match). 🔲 per-drop pity; 🔲 more relic stages. `evolution.md`.
 - 🔲 Spirits (attach to units, stat boosts + passives; act-specific drops)
 - 🔲 Endless mode + global leaderboards (waves/summons/level)
 - 🔲 AFK rewards · 🔲 Team presets · 🔲 Group/like milestone rewards

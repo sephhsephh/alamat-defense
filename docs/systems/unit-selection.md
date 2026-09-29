@@ -53,6 +53,8 @@ behind the player's back.
 stopped by `MatchEndPresenter`, and its per-tower kills are *estimated* at the end by splitting the
 player's kills by damage share. Fine for a results screen, useless for a live tile.
 
+**B107 FIX:** a ONE-HIT kill fires `EnemyDied` inside `TakeDamage` BEFORE the resolver's `DamageDealt` reaches `recordDamage`, so no last-damager existed yet and every one-shot went uncredited (measured solo: Takedowns 126 vs 299 kills). `EnemyDied` now falls back to `controller.LastAttackerTower.Uuid` (stamped before the hit; the same field `ReplicationBridge` credits OnKill passives from). After: 296 of 299. The PROFILE kill counter (Worthiness, evolution takedowns) was never affected.
+
 **Takedown credit without touching any damage path:** `EnemySpawner.EnemyDied` carries the killing
 PLAYER but not the killing TOWER, and threading a tower through every damage call (direct hits,
 splash, burn ticks) to fix that would be a change to combat code for a UI tile. So this file

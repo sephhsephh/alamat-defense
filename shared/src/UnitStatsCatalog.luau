@@ -70,6 +70,14 @@ UnitStatsCatalog.Stats = {
 	Apolaki_Zenith = { DMG = 59, RNG = 24, SPA = 1.4 },
 	Bathala_Ascended = { DMG = 91, RNG = 26, SPA = 2 },
 	Bakunawa_Eclipse = { DMG = 143, RNG = 22, SPA = 2.2 },
+	Magwayen_Soulferry = { DMG = 36, RNG = 22, SPA = 1.1 },
+	Sidapa_LastMeasure = { DMG = 59, RNG = 20, SPA = 1.3 },
+	AmanSinaya_Riptide = { DMG = 91, RNG = 14, SPA = 2 },
+	Tala_MorningStar = { DMG = 65, RNG = 26, SPA = 1.4 },
+	Lalahon_Caldera = { DMG = 65, RNG = 20, SPA = 2 },
+	Aswang_BloodMoon = { DMG = 78, RNG = 14, SPA = 1.9 },
+	Tiyanak_Changeling = { DMG = 91, RNG = 13, SPA = 2 },
+	Batibat_NightTerror = { DMG = 72, RNG = 16, SPA = 1.8 },
 }
 
 -- The resolved base stats for a tower, or nil if it is not in the catalog.
@@ -139,6 +147,14 @@ UnitStatsCatalog.Costs = {
 	Apolaki_Zenith = 450,
 	Bathala_Ascended = 700,
 	Bakunawa_Eclipse = 750,
+	Magwayen_Soulferry = 400,
+	Sidapa_LastMeasure = 475,
+	AmanSinaya_Riptide = 475,
+	Tala_MorningStar = 500,
+	Lalahon_Caldera = 525,
+	Aswang_BloodMoon = 550,
+	Tiyanak_Changeling = 525,
+	Batibat_NightTerror = 575,
 }
 
 -- The placement cost for a tower, or nil if it is not in the catalog. Callers HIDE on nil rather
@@ -195,6 +211,14 @@ UnitStatsCatalog.Placement = {
 	Apolaki_Zenith = "Hill",
 	Bathala_Ascended = "Hybrid",
 	Bakunawa_Eclipse = "Hybrid",
+	Magwayen_Soulferry = "Ground",
+	Sidapa_LastMeasure = "Hybrid",
+	AmanSinaya_Riptide = "Ground",
+	Tala_MorningStar = "Hill",
+	Lalahon_Caldera = "Hill",
+	Aswang_BloodMoon = "Ground",
+	Tiyanak_Changeling = "Ground",
+	Batibat_NightTerror = "Ground",
 }
 
 -- "Ground" | "Hill" | "Hybrid", or nil if the tower is not in the catalog (callers HIDE on nil).
