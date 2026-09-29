@@ -247,11 +247,13 @@ The engine-side trigger remains on an open PENDING.
 It exists so a fourth animation dialect is never born. Everything with a curve or a duration in it
 belongs here, and `Motion.Tuning` is where the kit's feel is retuned — **never per screen**.
 
+**B108 SEAMLESS COLOUR LOOP:** `idleGradient` no longer tweens `Offset` -1→1 -- a UIGradient CLAMPS outside 0..1, so part of every cycle was a flat end colour and the wrap snapped. The colour STOPS are phase-shifted each frame instead (`phased(loopStops(seq), p)`; phase 1 == phase 0 exactly). ONE RenderStepped drives every looping gradient, skips hidden screens, drops unparented gradients, and ADOPTS a repaint (Color no longer what it last wrote). Returns a handle with `:Cancel()` (all old callers used only that). `ItemIcon`'s local `animateGradient` and the Units screen's now delegate to it. **Never animate a rarity gradient with `Offset` again.**
+
 `Tuning`: Quint ease-out · hover 1.07 / 0.26s · press 0.95 / 0.09s · rest 0.30s · idle gradient 9s
 at 45° · hover Z lift 5 · **slide in 0.34s / out 0.20s / distance 0.35**.
 
 API: `isolate` · `layoutNode` · `setVisible` · `setLayoutOrder` · `destroy` · `scaleTo` · `lift` ·
-`idleGradient` · `paintHoverStroke` · `prepareCard` · **`slideIn` · `slideOut` · `isOpen` ·
+`idleGradient` · **`loopGradient` · `loopStops` · `phased` (B108)** · `paintHoverStroke` · `prepareCard` · **`slideIn` · `slideOut` · `isOpen` ·
 `restPosition` · `forgetSlide`**.
 
 ### The open/close slide (B28) — three traps handled ONCE

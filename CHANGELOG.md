@@ -1,4 +1,21 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-29 [both] B108 pt1 -- AD-Gacha/AD-UI: **the user's new plan, first six items: auto-sell spares lucky pulls, per-banner pity (Secret 30k) with a Secret bar, sold overlay on the reveal, seamless rarity gradients, always-on event banners, reward SFX slot.**
+
+User plan recorded in `ROADMAP.md` Phase E (trait expansion, index/dictionary, three UI redesigns and the cutscene system are waiting on the user's references; cutscenes LAST by the user's call).
+
+**CANON (re-hash, count unchanged at 48):** `UIKitMotion` `ed85d82c` -> **`363a3eaf`**, `UIKitHotbar` `f330b74f` -> **`80ad2b6d`**, `UIKitItemIcon` `776247af` -> **`f4de265e`**. Applied as ONE edit spec to disk and to the Game (pre-edit hashes checked); all three copies equal the Lobby's. **USER REPUBLISHES BOTH PLACES.**
+
+1. **Auto-sell never sells a TRAIT or SHINY pull** (`SummonService` step 12), whatever the tier toggle says. The result's `AutoSold` also carries `Uuids` + `Kept`.
+2. **Pity is PER BANNER** (user: "counter is different per banner"). `PityRef` = the banner's own id; each ref is Legendary 50 / Mythic 400 / **Secret 30,000**. ⚠ The live Secret threshold was **100,000**, not the documented 15,000 -- superseded either way. The summon card now shows **Secret Pity n/30000** (the 5,000 display cap that hid it is gone).
+3. **Sold overlay on the rewards popup.** The server marks each auto-sold view `AutoSold = true` (the summon screen still passes views through unchanged); `ObtainRewardsGUI` card template gained an AUTHORED `SelectedToSellOverlay` (a copy of the Units screen's, hidden by default).
+4. **SEAMLESS rarity-gradient loop, every screen, both Places.** Root cause: both animators moved `UIGradient.Offset` (`Motion.idleGradient` tweened -1->1; the hotbar wrapped `% 1`). A UIGradient CLAMPS outside 0..1, so part of each cycle was one flat end colour and the wrap snapped -- palette tiling could never hide it. Now `UIKit.Motion` phase-shifts the colour STOPS each frame (`loopStops` / `phased`; phase 1 == phase 0), one RenderStepped for every looping gradient, hidden screens skipped, repaints adopted. Hotbar keeps its RANDOM per-slot speed/direction/phase (user). `ItemIcon` + Units screen copies delegate to it.
+5. **Limited/event banners always available.** `EventFirstLight` lost its `Window` (it had actually closed on 2026-09-01) and gained `LeavesInUpdate = "Update 2"`; the card subtitle shows "Leaving in Update 2". `BannerRegistry.Validate` checks the field.
+6. **Rewards-popup SFX:** new `SoundService.UI.RewardPop` (SoundId EMPTY -- user pastes it), played by `ObtainRewardsController` each time a popup opens.
+
+**Proven live:** Lobby -- `SetAutoSell` Common..Epic + 6 x10 Standard pulls through `RequestSummon`: **53 auto-sold, 3 kept (all 3 rolled traits), 0 rule violations**; `GetSummonState` pity refs `Standard{L6,M60,S60}`, `EventFirstLight{0,0,0}`, `SelectionAncestors{0,0,0}`. Summon screen: Selection/Event/Standard each show Legendary/Mythic/**Secret 0/30000** (Standard 60/30000); event subtitle `Event exclusive units!  ·  Leaving in Update 2`, not closed. A screen pull (`DevPull=10`) -> `Auto-sold 10 for 135 Silver` and **all 10 reveal cards wore the sold overlay** (screenshot). Gradients -- Lobby unit cards and the Game hotbar's MYTHIC slot: `Offset` pinned at 0, colours travelling the whole palette, largest frame step 0.03-0.11 (no snap); 0 client errors in both Places.
+
+**⚠ FOR THE USER:** the summon screen's authored `AutoSummonButton` (x 843-1011) sits inside the pity-bar row; with two bars it already straddled the gap, with three it covers the middle (Mythic) bar. Not moved -- your layout.
+
 ## 2026-09-29 [both] B107 -- AD-Game/AD-Gacha: **every Mythic+ unit can evolve: +8 forms (12 total), plus two display fixes the runs turned up.**
 
 **CANON (re-hash, count unchanged at 48):** `ItemCatalog` `0d97d08a` -> **`5e9dba43`** (+8 evolved towers, `Summonable = false` / `EvolvedFrom`; 70 entries), `UnitStatsCatalog` `ab745a1d` -> **`1ad9341a`** (+8 Stats/Costs/Placement rows). Applied as the SAME anchor inserts to disk, Game and Lobby; the pre-edit hash was checked in each Place before writing, and all three copies hash identical. **USER REPUBLISHES BOTH PLACES.**

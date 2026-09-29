@@ -94,6 +94,8 @@ the first time it is edited on the website. `PriceText` is only the fallback if 
 > `ProductId = 0` values stay as marked placeholders (user, B55).
 
 ## Auto Summon = auto-sell (`AutoSellConfig` pure + `AutoSellService`)
+**B108 (user): a pull that rolled a TRAIT (anything but None) or a SHINY is NEVER auto-sold**, whatever its tier's toggle says. `AutoSold` in the result now also carries `Uuids` (what was sold) and `Kept` (spared lucky pulls), and each sold VIEW carries `AutoSold = true` -- set by the SERVER, so the summon screen still hands the reveal its views unchanged. `ObtainRewardsGUI`'s `UnitTemplate.Main.SelectedToSellOverlay` (authored, a copy of the Units screen's) shows on exactly those cards. The Secret pity bar shows now (`PITY_BAR_MAX` no longer hides it).
+
 **The tier list is DERIVED, not typed**: the tiers any registered banner can actually award, in
 `TierConfig.Order` order. `TierConfig` carries eight, but `Exclusive`/`Bathala` have no weight and no
 unit, and offering a toggle for a tier that can never be summoned would be a lie. Today that is

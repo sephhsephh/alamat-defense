@@ -138,7 +138,7 @@ colors"). At attach time each slot draws its own:
 | | range | what it does |
 | --- | --- | --- |
 | Spin | 6–20 °/s, random direction | rotates the InnerStroke gradient |
-| Scroll | 0.06–0.22 /s | **multi-stop tiers only** — travels the colours around the stroke |
+| Scroll | 0.06–0.22 loops/s | **multi-stop tiers only** — travels the colours around the stroke. **B108: seamless** -- `UIKit.Motion.phased` shifts the colour stops (the old `Offset % 1` clamped and snapped); speed/direction/phase still random per slot (user) |
 | Breathe | 0.35–0.8 Hz, random phase, depth 0.22 | **flat tiers only** — lifts the colour toward white and back |
 
 A flat one-colour tier scrolls invisibly, which is why it breathes instead; the choice is made from

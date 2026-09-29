@@ -72,12 +72,9 @@ local function strokeGradient(stroke: UIStroke): UIGradient
 	return g
 end
 
+-- B108: the seamless colour loop (UIKit.Motion) instead of an Offset tween, which clamps and snaps.
 local function animateGradient(grad: UIGradient, speed: number)
-	grad.Offset = Vector2.new(-1, 0)
-	local info = TweenInfo.new(speed, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1)
-	local t = TweenService:Create(grad, info, { Offset = Vector2.new(1, 0) })
-	t:Play()
-	return t
+	return Motion.loopGradient(grad, speed)
 end
 
 -- Move a GuiObject's anchor to centre without moving it (so a UIScale scales from centre).

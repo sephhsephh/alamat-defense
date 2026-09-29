@@ -546,6 +546,9 @@ local function attachV3(container: GuiObject, opts: { [string]: any })
 			s.BaseRotation = rotation
 			s.Multi = TierConfig.isMultiColor(tierName)
 			s.Gradient.Offset = Vector2.new(0, 0)
+			-- B108: the periodic palette the seamless loop shifts (Motion.loopStops mirrors the authored
+			-- stops so the ends meet with no hard edge).
+			s.LoopStops = Motion.loopStops(seq)
 		end
 
 		if s.Viewport then showModelKeepCamera(s.Viewport, opts.ModelSource, filled and entry.TowerId or nil, camCFrame, camFOV, camAnchor) end
@@ -654,8 +657,14 @@ local function attachV3(container: GuiObject, opts: { [string]: any })
 			if gradient then
 				gradient.Rotation = (s.BaseRotation + clock * s.Spin) % 360
 				if s.Multi then
-					-- Bands travel along the stroke. Offset wraps at 1, so this loops seamlessly.
-					gradient.Offset = Vector2.new((clock * s.Scroll) % 1, 0)
+					-- B108 (user): SEAMLESS. The old `Offset = (clock * Scroll) % 1` was not -- a UIGradient
+					-- clamps outside 0..1, so part of each cycle was one flat end colour and the wrap
+					-- snapped. The colour STOPS now travel instead (UIKit.Motion.phased): phase 1 is
+					-- pixel-identical to phase 0. Speed, direction and phase stay RANDOM per slot (B79,
+					-- confirmed by the user at B108). A hovered slot is left to the hover tween.
+					if not s.Hovered and s.LoopStops then
+						gradient.Color = Motion.phased(s.LoopStops, (clock * s.Scroll + s.Phase / (math.pi * 2)) % 1)
+					end
 				elseif not s.Hovered then
 					local lift = (math.sin(clock * s.Breathe * math.pi * 2 + s.Phase) * 0.5 + 0.5) * BREATHE_DEPTH
 					gradient.Color = whitened(s.TierName, lift)

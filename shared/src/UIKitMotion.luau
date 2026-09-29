@@ -249,24 +249,139 @@ function Motion.lift(card: GuiObject, on: boolean)
 	node.ZIndex = on and ((base :: number) + Motion.Tuning.HoverZIndexLift) or (base :: number)
 end
 
--- ===== idle gradient drift =====
--- Seamless because `TierConfig.seamlessSequence` tiles the palette and wraps it, so sliding Offset
--- from -1 to 1 has no visible seam to hitch on. Linear on purpose: any eased curve would make the
--- sheen visibly slow down and speed up once per loop.
+-- ===== THE SEAMLESS COLOUR LOOP (B108, user: "seamless continuous loop ... perfect continuous
+-- synched loop of its colors moving") =====
+-- WHY THE OLD DRIFT HAD A SEAM: it slid `UIGradient.Offset` from -1 to 1. A UIGradient CLAMPS to its
+-- end colours outside 0..1, so for a large part of every cycle a flat end colour filled the stroke,
+-- and at the wrap the bands snapped back. No palette tiling can hide that -- the clamp is the seam.
 --
--- Returns the Tween so a caller that destroys the card can Cancel it.
-function Motion.idleGradient(grad: UIGradient?, periodOverride: number?): Tween?
+-- THE FIX: never move Offset. Treat the palette as PERIODIC (its last colour meets its first) and
+-- shift the colour STOPS themselves by a phase each frame, wrapping the ones that fall off one end
+-- back onto the other. The picture at phase 1 is exactly the picture at phase 0, so the loop has no
+-- seam at all, at any speed, forever.
+--
+-- `loopStops(seq)`  -> the periodic stop list for any ColorSequence. A sequence whose first and last
+--                      colours already match (TierConfig.seamlessSequence) is used as-is; any other
+--                      (an authored 2-3 stop tier) is mirrored -- there and back -- so the authored
+--                      colours and their order are kept and the ends meet without a hard edge.
+-- `phased(stops, p)`-> the ColorSequence for phase p in [0, 1). At most #stops + 1 keypoints.
+type Stop = { t: number, c: Color3 }
+
+local function sameColor(a: Color3, b: Color3): boolean
+	return math.abs(a.R - b.R) < 1e-3 and math.abs(a.G - b.G) < 1e-3 and math.abs(a.B - b.B) < 1e-3
+end
+
+function Motion.loopStops(seq: ColorSequence): { Stop }
+	local kps = seq.Keypoints
+	local stops: { Stop } = {}
+	if sameColor(kps[1].Value, kps[#kps].Value) then
+		for _, kp in ipairs(kps) do table.insert(stops, { t = kp.Time, c = kp.Value }) end
+	else
+		for _, kp in ipairs(kps) do table.insert(stops, { t = kp.Time * 0.5, c = kp.Value }) end
+		for i = #kps - 1, 1, -1 do table.insert(stops, { t = 1 - kps[i].Time * 0.5, c = kps[i].Value }) end
+	end
+	return stops
+end
+
+-- Colour of the periodic palette at x in [0, 1).
+local function sampleStops(stops: { Stop }, x: number): Color3
+	for i = 1, #stops - 1 do
+		local a, b = stops[i], stops[i + 1]
+		if x >= a.t and x <= b.t then
+			local span = b.t - a.t
+			return if span <= 0 then b.c else a.c:Lerp(b.c, (x - a.t) / span)
+		end
+	end
+	return stops[#stops].c
+end
+
+function Motion.phased(stops: { Stop }, phase: number): ColorSequence
+	local moved: { Stop } = {}
+	-- Every stop but the closing one (it is the same colour as the first, one period on).
+	for i = 1, #stops - 1 do
+		table.insert(moved, { t = (stops[i].t + phase) % 1, c = stops[i].c })
+	end
+	table.sort(moved, function(x, y) return x.t < y.t end)
+	-- The edges: whatever colour the shifted palette shows at 0 is, by periodicity, also its colour at 1.
+	local edge = sampleStops(stops, (1 - phase) % 1)
+	local kps = { ColorSequenceKeypoint.new(0, edge) }
+	for _, st in ipairs(moved) do
+		if st.t > 1e-4 and st.t < 1 - 1e-4 then
+			table.insert(kps, ColorSequenceKeypoint.new(st.t, st.c))
+		end
+	end
+	table.insert(kps, ColorSequenceKeypoint.new(1, edge))
+	return ColorSequence.new(kps)
+end
+
+-- ===== idle gradient drift =====
+-- ONE RenderStepped connection drives every looping gradient in the Place. Each gradient keeps its
+-- own period; a gradient that is gone (unparented) drops out on its own, and one whose screen is
+-- hidden is skipped (no work for what nobody can see). If a caller REPAINTS the gradient (a new tier
+-- on a reused card), the driver notices its Color is no longer what it last wrote and adopts the new
+-- palette on the next frame -- so no caller needs to know the loop exists.
+--
+-- Returns a handle with `:Cancel()` (the old return was a Tween; `Cancel` is the only method any
+-- caller used, so every existing call site keeps working unchanged).
+type Loop = { stops: { Stop }, speed: number, phase: number, written: ColorSequence? }
+local loops: { [UIGradient]: Loop } = {}
+local loopConn: RBXScriptConnection? = nil
+local loopClock = 0
+
+local function visible(grad: UIGradient): boolean
+	local layer = grad:FindFirstAncestorWhichIsA("LayerCollector")
+	if layer and layer:IsA("ScreenGui") and not layer.Enabled then return false end
+	local host = grad.Parent
+	while host and host:IsA("UIStroke") do host = host.Parent end
+	if host and host:IsA("GuiObject") and not host.Visible then return false end
+	return true
+end
+
+local function ensureLoopDriver()
+	if loopConn or not game:GetService("RunService"):IsClient() then return end
+	loopConn = game:GetService("RunService").RenderStepped:Connect(function(dt)
+		loopClock += dt
+		for grad, e in pairs(loops) do
+			if grad.Parent == nil then
+				loops[grad] = nil
+			elseif visible(grad) then
+				local current = grad.Color
+				if e.written ~= nil and current ~= e.written then
+					e.stops = Motion.loopStops(current) -- repainted by its owner: adopt the new palette
+				end
+				local seq = Motion.phased(e.stops, (loopClock * e.speed + e.phase) % 1)
+				grad.Color = seq
+				e.written = seq
+			end
+		end
+	end)
+end
+
+-- Loop `grad`'s CURRENT colours. `periodOverride` = seconds per full loop (default Tuning).
+-- `opts.Phase` (0..1) staggers a gradient; `opts.Reverse` runs it the other way.
+function Motion.loopGradient(grad: UIGradient?, periodOverride: number?, opts: { Phase: number?, Reverse: boolean? }?): { Cancel: (any) -> () }?
+	if not grad then return nil end
+	grad.Offset = Vector2.new(0, 0)
+	local period = math.max(0.1, periodOverride or Motion.Tuning.IdleGradientPeriod)
+	local o = opts or {}
+	loops[grad] = {
+		stops = Motion.loopStops(grad.Color),
+		speed = (1 / period) * (if o.Reverse then -1 else 1),
+		phase = o.Phase or 0,
+		written = nil,
+	}
+	ensureLoopDriver()
+	return {
+		Cancel = function(_self)
+			loops[grad] = nil
+		end,
+	}
+end
+
+function Motion.idleGradient(grad: UIGradient?, periodOverride: number?): { Cancel: (any) -> () }?
 	if not grad then return nil end
 	grad.Rotation = Motion.Tuning.GradientRotation
-	grad.Offset = Vector2.new(-1, 0)
-	local period = periodOverride or Motion.Tuning.IdleGradientPeriod
-	local tween = TweenService:Create(
-		grad,
-		TweenInfo.new(period, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1),
-		{ Offset = Vector2.new(1, 0) }
-	)
-	tween:Play()
-	return tween
+	return Motion.loopGradient(grad, periodOverride)
 end
 
 -- ===== SPINNING GRADIENT (B32) =====

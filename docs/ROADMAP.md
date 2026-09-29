@@ -795,6 +795,12 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
 - ✅ **Codes — B39/B40.** `CodeService` is the one writer of `RedeemedCodes` (values are DAY NUMBERS). **Every code is PUBLIC** — the registry replicates, so a code is never a secret. **The rate limit is SECURITY, not politeness:** without it the remote enumerates the code space. `redeem-codes.md`.
 
 ### Phase E — Seasonal & presentation
+- 🔲 **B108 USER PLAN (2026-09-29), in the user's order; cutscenes LAST:**
+  - ✅ auto-sell spares trait/shiny pulls · ✅ per-banner pity, Secret 30,000 + a Secret bar · ✅ sold overlay on the rewards popup · ✅ seamless rarity-gradient loop · ✅ Limited/event banners always available + "Leaving in Update X" · ✅ rewards-popup SFX slot (`SoundService.UI.RewardPop`, id empty)
+  - 🔲 **Trait expansion** -- user sends a reference site; our own names, adjusted effects
+  - 🔲 **Index/dictionary** -- Units (all tiers, locked icon for unseen, click -> portrait + name + myth description) and Enemies (per stage/raid); user sends a reference image. (A Lobby `IndexScreen` already exists.)
+  - 🔲 **UI redesigns: Stat Reroll, Crafting, Evolution** -- user sends a reference per screen
+  - 🔲 **Cutscene system (LAST):** a reusable cutscene player; a summon cutscene on every banner pull; a per-Secret-unit cutscene (fade to black, fade in, animation, then the rewards)
 - 🟡 Battlepass — **backend + screen B42, BP XP AT MATCH END LANDED B43.** `RewardCalculator` →
   `MatchReturn.BattlepassXP` → Lobby `MatchReturnService` → `BattlepassAddXP` → `BattlepassService`
   (still the one writer of `Data.Battlepass`; the Game never writes it). Rule in the Game's

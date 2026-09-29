@@ -142,9 +142,7 @@ MessagingService, no deploy. Dropping in another file makes a second event, with
   one otherwise.
 
 **Shipped: `EventFirstLight` ("Festival of First Light")** — Gold at 120/pull, 2 featured on a
-**daily** rotation with Boost 4, `PityRef = "Default"` (shared with Standard on purpose: a player
-grinding an event should not have hard-pity progress stranded when it ends), window
-2026-08-01 → 2026-09-01. Rates are richer than Standard at the top (Mythic 2% vs 0.995%), which is
+**daily** rotation with Boost 4. **B108 (user): Limited/event banners are ALWAYS AVAILABLE** -- no `Window`; instead `LeavesInUpdate = "Update 2"` (validated non-empty string) and the card subtitle reads **"Leaving in Update 2"**. Its pity is its own (`PityRef = "EventFirstLight"`). (Was: window 2026-08-01 → 2026-09-01, shared "Default" pity.) Rates are richer than Standard at the top (Mythic 2% vs 0.995%), which is
 what justifies the higher cost.
 
 **It is also the first CURATED pool** — the explicit `Pool = { [tier] = { ids } }` form, which
@@ -185,7 +183,8 @@ yielding); 1–2 and 9–11 are `SummonService`.
 odds harness, and a harness can only assert the REAL algorithm if it is requireable. A Script is
 not. The split is what stops the harness from becoming a second copy of the logic that drifts.
 
-- **Pity** (`PityConfig.Refs.Default = { Legendary 50, Mythic 400, Secret 15000 }`) — checked
+- **B108 (user): PITY IS PER BANNER.** Each banner names its OWN ref (= its banner id: `Standard`, `EventFirstLight`, `SelectionAncestors`), all `{ Legendary 50, Mythic 400, Secret 30000 }` -- progress on one banner never carries to another. (The live Secret threshold had drifted to 100,000 vs this doc's 15,000; both are superseded.) `Default` stays in `PityConfig.Refs` only so an old `Data.Pity.Default` validates. The summon screen now draws the **Secret** bar too.
+- **Pity** (was `PityConfig.Refs.Default = { Legendary 50, Mythic 400, Secret 15000 }`, shared) — checked
   **Secret → Mythic → Legendary**; if `counter + 1 >= threshold` and the rolled tier is lower, it
   upgrades, highest-priority hit wins. Update is the blueprint taken literally: **reset the hit
   tier, increment the others** — a Mythic does NOT reset the Legendary counter. Counters persist in
