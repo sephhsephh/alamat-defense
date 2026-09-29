@@ -1,4 +1,17 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-29 [game] B106 pt11 -- AD-Game: **evolved forms proven in a real match; SiblingBonus now sees an evolved sibling.**
+
+No canon change. Game-local only.
+
+- **FIX -- `Passives.SiblingBonus`:** matched the partner by exact config Id only, so **Mayari_LunarEclipse never counted Apolaki_Zenith as Apolaki** (and the reverse) -- log said `SiblingBonus OFF (Apolaki on field: false)` with Apolaki_Zenith standing next to it. It now also resolves each tower's base id through `ItemCatalog.Get(id).EvolvedFrom`. Doc: `tower-authoring.md` 10b.
+- **Harness:** `MatchLifecycleSmokeTest` seeds now include the 4 evolved ids (MetaLevel 1), like every other roster unit. `desired` is back to `{ Handyong, Magwayen, Bantong, Lakapati, Bulalakaw }`.
+
+**Proven live (Game, Auto Play, `desired` = the 4 evolved forms, temporary cash probe Script, DevDebugAttacks; all removed after):** `[MatchDirector] InProgress -> Victory`, **waves 15/15, lives 3/3**, 189,534 total dmg. **Mayari_LunarEclipse** 15,186 + 58,681 dmg, 14 x `StatusOnCrit Weaken`. **Bathala_Ascended** 22,148 dmg, 207 `Pulse` lines. **Bakunawa_Eclipse** `Lunge 248.4`. **Apolaki_Zenith** 21 attacks (`Sunbeam 119.6` = 59 x 1.3 ramp), `PerWaveRamp x1.08 / x1.16 ...` -- low output only because Auto Play put both copies on Hill2's far edge (z 23-25, ~25 studs from the path, Range 24-26): map geometry, same as pt10. **After the fix (second run):** `Apolaki_Zenith SiblingBonus ON (Mayari on field: true)` and `Mayari_LunarEclipse SiblingBonus ON (Apolaki on field: true)`.
+
+**Map note (user's call):** every TestMap hill sits at z >= 19 while `Path_Main` runs z -2..12, so Hill units on this placeholder map sit at the edge of their range. Hill1 (22, 22) additionally sits at the path's end where enemies rarely arrive.
+
+**STILL NOT VERIFIED:** a Scarecrow Crown dropping from a real Act 3 win; the Evolve button click + confirm popup; the Legendary+ actives (Bathala_Ascended's all-towers SPA x0.9 prints nothing, so not measured directly).
+
 ## 2026-09-29 [game] B106 pt10 -- AD-Game: **Hill units proven: Apolaki and Tala attack. The "hills out of range" note was wrong about which hill.**
 
 No code, no canon change. Verification only.
