@@ -1,4 +1,13 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-29 [lobby] B108 pt2 -- AD-UI/AD-Gacha: **Auto Summon moved off the pity bars; the Index's data layer (discovery + lore).**
+
+Lobby-local, no canon change.
+
+- **Auto Summon button (user: "move button above bars")** -- reparented from the panel into `Banner.ActionRow` beside Summon x1 / Summon Many (LayoutOrder 4, Info 5; height 46 to match the row). `SummonController` looks it up at the new path. Screenshot: the three pity bars now have their row to themselves; a real click still opens the auto-sell popup.
+- **Unit discovery ("ever obtained", user)** -- `Server.Meta.UnitDiscovery` over `Counters.Global.Obtained_<TowerId>` (a lifetime count, NEVER decremented, so selling cannot re-lock; no schema bump -- the B88 pattern). `Mark` is called by every creator of a unit record (`GrantService.Grant`, `GrantService.EvolveUnit`, `StarterChoiceService`); `UnitDiscoveryService` backfills from owned units on each profile load. **Proven live:** `backfilled 48 owned unit type(s)` -> `48 types (48 copies ever)`; a x10 pull that was ALL auto-sold -> `58 copies ever`, Baltog 1 -> 3.
+- **`RS.Configs.Meta.IndexLore`** -- Origin + 2-3 sentence Description for all 48 units (12 evolved forms included) and the 3 enemies, drafted for the user to edit (user: "you draft, I edit"). **8 entries carry `Confirm = true`** where I was not sure of a myth detail (Lakapati, Amomongo, Bulalakaw, Urduja, Magwayen, Sidapa, Tala, Lalahon).
+- **Index screen itself: NOT built yet** -- waiting on the user's reference image. User decisions so far: a NEW screen (the old IndexScreen stays), its own button in `HUD.Left.Buttons`; Units tab shows every tier + a locked icon for undiscovered units, clicking shows portrait + name + description; Enemies tab per stage/raid.
+
 ## 2026-09-29 [both] B108 pt1 -- AD-Gacha/AD-UI: **the user's new plan, first six items: auto-sell spares lucky pulls, per-banner pity (Secret 30k) with a Secret bar, sold overlay on the reveal, seamless rarity gradients, always-on event banners, reward SFX slot.**
 
 User plan recorded in `ROADMAP.md` Phase E (trait expansion, index/dictionary, three UI redesigns and the cutscene system are waiting on the user's references; cutscenes LAST by the user's call).
