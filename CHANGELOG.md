@@ -1,4 +1,14 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-29 [game] B106 pt10 -- AD-Game: **Hill units proven: Apolaki and Tala attack. The "hills out of range" note was wrong about which hill.**
+
+No code, no canon change. Verification only.
+
+**CORRECTION to pt5-pt9's "TestMap's hills sit out of range":** only **Hill1** is the problem. Hill1 (22, 3, 22) sits beside the END of `Path_Main` (x -38 -> 43), and in these runs **enemies die before reaching that end**, so a unit there sees nothing (probe: nearest enemy 43+ studs). **Hill2** (-4, 3, 23) sits mid-path and its units fire normally. A map/wave-layout fact, not a code one -- moving Hill1 closer to the path's middle is the user's call (TestMap is a placeholder map).
+
+**Proven live (Game, Auto Play, `desired = { Apolaki, Tala }`, temporary cash probe Script, Hill1 moved at RUNTIME only to (-20, 3, 20)):** four Hill units placed on Hill2 all dealt damage -- **Apolaki** T8 3,005 / T7 9,443, **Tala** T7 5,513 / T7 77,820. Harness restored after: probe Script destroyed, `DevDebugAttacks` cleared, smoke-test `desired` back to `{ Handyong, Magwayen, Bantong, Lakapati, Bulalakaw }`; the edit-mode TestMap Hill1 is untouched at (22, 3, 22).
+
+**STILL NOT VERIFIED:** a Scarecrow Crown dropping from a real Act 3 win; the Evolve button click + confirm popup; an evolved unit placed in a match; the Legendary+ actives.
+
 ## 2026-09-28 [both] B106 pt9 -- AD-Gacha/AD-Game: **EVOLUTION (S-Evo) is live: 4 evolved forms, the recipe registry, the one write, the NPC screen.**
 
 **CANON (re-hash, count unchanged at 48):** `ItemCatalog` `06bb1217` -> **`0d97d08a`** (+4 evolved towers with `Summonable = false` / `EvolvedFrom`, + relic `ScarecrowCrown`), `UnitStatsCatalog` `a2a34269` -> **`ab745a1d`**. Both Places + disk. **USER REPUBLISHES BOTH PLACES.** Full system doc: **`docs/systems/evolution.md`** (new).
