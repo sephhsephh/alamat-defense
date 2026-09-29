@@ -133,7 +133,10 @@ Lobby-local; no shared canon changed, **no schema bump** (`StatRolls` and `Worth
 - In match: Damage x(1+p), Range x(1+p), SPA x(1-p) -- the same for every unit (Game `TowerStatResolver`).
 - **Stat Chip** = `Currencies.StatRerolls` (rerolls all three). **Focus Chip** = `Items.FocusChip` (rerolls one stat).
 - Remotes: `RerollStats(uuid, stat?)`; `InstantRollStats(uuid, stat?, { StopGrade?, MinPct = {DMG?, RNG?, SPA?} }, budget?)` -> `{ ok, OldRolls, NewRolls, OldGrades, NewGrades, Spent, Stopped = hit_filter|out_of_chips|budget, Balance, FocusBalance }`. Refusals: `bad_uuid`, `bad_stat`, `not_owned`, `profile_not_loaded`, `busy`, `no_filters`, `insufficient_rerolls`, `insufficient_focus`.
-- Goal rule: every rolled stat (all three, or the focused one) must reach `StopGrade` if set AND every stat with a `MinPct` must reach it.
+- Goal rule (pt6, user: ANY): stop when any rolled stat reaches `StopGrade`, OR any rolled stat reaches its `MinPct` (SPA may be sent negative; its magnitude is used).
 - Worthiness at >= 100 still floors each rolled stat at grade A (roll 0.9351) and any reroll resets it.
-- The screen rebuild (chips panel, per-stat instant-roll buttons, Show Chances, Filters, unit picker, Stat Transfer "coming soon") is pending the user's reference image.
+- **Screen (pt6):** `StarterGui.StatRerollGUI` + its `StatRerollController` (authored; see CHANGELOG B108 pt6). Opens from the Stat Diviner NPC or `ClientEvents.OpenStatReroll`. Old B44 controller disabled, `StatRerollScreen` hidden.
+- **Chip packs:** `RS.Configs.Meta.ChipPackConfig` (StatChips10/50/100, FocusChips10/50/100; ProductId 0 = shown, not purchasable) + `Server.Meta.ChipPackService` (`GetChipPacks`, `BuyChipPack`; grant via ReceiptService -> GrantService).
+- Dev harness on `StatRerollGUI`: `DevOpen`, `DevSelect` ("first"|uuid), `DevAction` ("all"|"focus:DMG"|"instant"|"instant:RNG"), `DevPopup` ("picker"|"chances"|"filters"|"none"), `DevFilters` ("Stop=S;DMG=10").
+- ⚠ Any reroll resets Worthiness, and Evolution reads takedowns FROM Worthiness -- so a reroll also resets evolution takedown progress (pre-existing B44 rule; flagged to the user).
 

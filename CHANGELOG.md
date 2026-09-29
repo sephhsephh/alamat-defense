@@ -1,4 +1,17 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-30 [lobby] B108 pt6 -- AD-UI/AD-Traits: **the Stat Reroll screen rebuilt from the user's reference; filters stop on ANY match; Robux chip packs.**
+
+Lobby-local, no canon change. Reference layout recorded in the project doc `claude/B108-stat-reroll-reference-spec.md`.
+
+- **`StarterGui.StatRerollGUI`** (AUTHORED in Studio; `Main` + the three popups tagged `GamepadMenu`): pack column (Stat / Focus tabs, 3 packs each), panel with the two chip counters, unit portrait slot ("+" opens the picker), **Stat Potential %** (= Worthiness) and **Takedowns n/5000** (= Worthiness x 50, EvolutionRegistry's rule), three stat rows (grade box, % box -- SPA shown negative -- green ROLL = Focus Chip reroll of that stat, gold loop = instant-roll that stat), Show Chances / Filters / Instant Roll / Reroll All, info strip, Stat Reroll | Stat Transfer tabs (Transfer = "coming soon" panel).
+- **Popups:** unit picker (search, tier filter, 5-column grid, preview, "1 Selected", Deselect All / Finish, double-click quick select); **Stat Index** (AL -> D, DMG/RNG/SPA ranges from `StatGradeConfig`, reference footer); **Stat Filters** (Stop at Tier x8, Minimum Stat % sliders with grade marks + value box + on/off toggle, active-filter chips, summary line, Apply / Reset).
+- **`StatRerollGUI.StatRerollController`** drives it (templates cloned, no UI created in code). The B44 `StarterPlayerScripts.StatRerollController` is **Disabled** and `StatRerollScreen` stays hidden -- delete both when happy.
+- **Filters = ANY (user):** `StatRerollService` goal now stops when ANY rolled stat reaches `StopGrade` OR any rolled stat reaches its `MinPct` (SPA's magnitude).
+- **Chip packs (user: Robux dev products, both chips):** `RS.Configs.Meta.ChipPackConfig` (6 packs, **ProductId = 0 placeholders -- user creates the products**) + `Server.Meta.ChipPackService` (`GetChipPacks` / `BuyChipPack`, grants through ReceiptService -> GrantService). Unconfigured packs show "Soon".
+- ⚠ Icons are placeholders: chip icons, pack art, stat icons (sword / stopwatch / bow). The per-stat buttons read "ROLL" and "∞" until icons are authored (the circular-arrow glyph does not render in Roblox fonts).
+
+**Proven live (real mouse clicks):** picker 48 cards, card click -> preview + "1 Selected", Finish selects; Reroll All B/B/B -> B/C/B (Stat Chips 246 -> 245); SPA ROLL changed SPA only (Focus 248 -> 247); Filters: tier A selected, Range slider dragged to 10.1% (chips + summary updated), Apply; Instant Roll stopped after 5 rolls on DMG A (+12.5%) -- the ANY rule; Stat Index matches the reference. Watchdog 42/42, no errors.
+
 ## 2026-09-30 [both] B108 pt5 -- AD-Traits: **the new stat-grade model + two chips + filtered Instant Roll (server side; the screen waits on the user's reference).**
 
 **CANON (re-hash, count unchanged):** `StatGradeConfig` `49a6edfd` -> **`8f8f24fc`**, `ItemCatalog` `5e9dba43` -> **`fe9597fd`**, `UnitStatsCatalog` `1ad9341a` -> **`ec19181d`**. Disk = Game = Lobby, pre-edit hashes checked in both Places. **USER REPUBLISHES BOTH PLACES.**
