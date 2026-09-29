@@ -1,4 +1,16 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-30 [lobby] B108 pt4 -- AD-UI: **the new Index (Units + Enemies dictionary), from the user's reference.**
+
+Lobby-local, no canon change. Doc: `docs/systems/collection-index.md`.
+
+- **`StarterGui.CollectionGUI`** (AUTHORED in Studio, DisplayOrder 12, `Main` tagged `GamepadMenu`): Units/Enemies tabs + rarity/group filter list + progress box on the left, chip row + card grid in the centre, detail panel (name, tier badge, 3D portrait, origin line, lore, abilities, status pill) on the right. Card/chip/filter-row templates are authored and moved under the script at boot.
+- **`HUD.Left.Buttons.IndexButton`** (clone of QuestsButton, label "Index"; **still uses the Quests logo -- user to author an icon**) and `RS.ClientEvents.OpenCollection`.
+- **`CollectionController`** drives it: units = every ItemCatalog tower sorted by `TierConfig.Order` (48); undiscovered cards show the rig darkened + "?" / LOCKED / "???"; the detail pane still shows the entry with "Not Yet Obtained" (reference behaviour). Enemies from `IndexLore.Enemies`, grouped Story/Raids/Bosses/Events, status "Encountered xN". Dark tier colours are lifted for TEXT only (strokes/dots keep the true colour). Dev attributes on the ScreenGui: `DevOpen`, `DevMode`, `DevFilter`, `DevSelect`, `DevForget` (Studio only).
+- **Data:** `GetUnitViews` now also returns `Discovered` (UnitDiscovery.List) and `EnemiesSeen` (`Counters.Global.Seen_*`). `IndexLore` enemies gained `Abilities`.
+- ⚠ Enemy portraits are EMPTY until the enemy rigs are copied into the Lobby's `RS.EnemyModels` (user: "I'll copy the rigs"). The older IndexScreen (Summon's RATES / INDEX) is untouched.
+
+**Proven live:** boot `CollectionController ready`, watchdog 42/42 after fixing one ambiguous-syntax parse error. A real click on the HUD Index button opens it; a real card click fills the detail (Siyokoy, "Obtained x2"). 48/48 units, 3/3 enemies on the dev profile; `DevForget` shows 0/48 with every card locked; Bathala detail = Alamat badge + lore; Scarecrow King = Boss badge, 3 abilities, "Encountered x49". Screenshots taken of all three states.
+
 ## 2026-09-30 [both] B108 pt3 -- AD-Traits: **the trait set is replaced by our own 11 traits (user-approved), with every effect wired and measured in a real match.**
 
 Reference: the user's trait list link. Our names, shifted numbers; three ranked families. Table + hooks: `docs/systems/trait-reroll.md`.
