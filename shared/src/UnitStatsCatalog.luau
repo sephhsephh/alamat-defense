@@ -6,8 +6,8 @@
 --
 -- These are what TowerStatResolver PRODUCES at the reference below -- NOT raw BaseStats: SPA is
 -- already inverted (lower = faster) and the resolver's ascension/roll handling has been applied.
--- The reference is tier 1, MetaLevel 1, no trait, MID roll (0.5), ascension 0 -- i.e. a unit's
--- BASE stats. Per-unit level / roll quality / trait / ascension modify these in-match; the Lobby
+-- The reference is tier 1, MetaLevel 1, no trait, NO roll (B108: rolls are a global % bonus from
+-- StatGradeConfig, so the base is the unrolled stat), ascension 0 -- i.e. a unit's BASE stats. Per-unit level / roll quality / trait / ascension modify these in-match; the Lobby
 -- shows the base number here and the grade letters (from the roll alone) beside it.
 --
 -- !! GENERATED -- do NOT hand-edit the numbers. This is a cache; the truth is the tower configs in
@@ -24,7 +24,7 @@ UnitStatsCatalog.REFERENCE = {
 	Tier = 1,
 	MetaLevel = 1,
 	Trait = nil,
-	StatRolls = { DMG = 0.5, RNG = 0.5, SPA = 0.5 },
+	StatRolls = nil, -- B108: base = unrolled (was mid-roll 0.5 against per-tower BaseStats ranges)
 	Ascension = 0,
 }
 

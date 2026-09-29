@@ -113,3 +113,27 @@ A" at 100 and the reroll delivered A/A/A, and the button **disabled at balance 0
 Config + service + controller each parse-pre-flighted.
 
 Lobby-local; no shared canon changed, **no schema bump** (`StatRolls` and `Worthiness` both pre-existed).
+
+## B108 (2026-09-30) -- grade model v2, two chips, filtered Instant Roll
+
+**Supersedes the D..Apex letters and the per-tower BaseStats ranges above.**
+
+| Grade | Chance | DMG bonus | RNG / SPA bonus |
+|---|---|---|---|
+| AL (Alamat) | 0.1% | 23-25% | 11.5-12.5% |
+| Z+ | 0.2% | 20-22.99% | 10-11.49% |
+| Z | 0.85% | 17-19.99% | 8.5-9.99% |
+| S | 1% | 14-16.99% | 7-8.49% |
+| A | 4.35% | 11-13.99% | 5.5-6.99% |
+| B | 23.5% | 8-10.99% | 4-5.49% |
+| C | 30% | 5-7.99% | 2.5-3.99% |
+| D | 40% | 0-4.99% | 0-2.49% |
+
+- A stored roll (0..1) is a quantile: its grade is the band it falls in (cumulative chances), its % is linear inside that band. `StatGradeConfig.PercentForRoll(stat, roll)`, `RollForPercent(stat, pct)`, `Multiplier(stat, roll)`, `GradeIndex(name)`.
+- In match: Damage x(1+p), Range x(1+p), SPA x(1-p) -- the same for every unit (Game `TowerStatResolver`).
+- **Stat Chip** = `Currencies.StatRerolls` (rerolls all three). **Focus Chip** = `Items.FocusChip` (rerolls one stat).
+- Remotes: `RerollStats(uuid, stat?)`; `InstantRollStats(uuid, stat?, { StopGrade?, MinPct = {DMG?, RNG?, SPA?} }, budget?)` -> `{ ok, OldRolls, NewRolls, OldGrades, NewGrades, Spent, Stopped = hit_filter|out_of_chips|budget, Balance, FocusBalance }`. Refusals: `bad_uuid`, `bad_stat`, `not_owned`, `profile_not_loaded`, `busy`, `no_filters`, `insufficient_rerolls`, `insufficient_focus`.
+- Goal rule: every rolled stat (all three, or the focused one) must reach `StopGrade` if set AND every stat with a `MinPct` must reach it.
+- Worthiness at >= 100 still floors each rolled stat at grade A (roll 0.9351) and any reroll resets it.
+- The screen rebuild (chips panel, per-stat instant-roll buttons, Show Chances, Filters, unit picker, Stat Transfer "coming soon") is pending the user's reference image.
+

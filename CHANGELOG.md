@@ -1,4 +1,15 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-30 [both] B108 pt5 -- AD-Traits: **the new stat-grade model + two chips + filtered Instant Roll (server side; the screen waits on the user's reference).**
+
+**CANON (re-hash, count unchanged):** `StatGradeConfig` `49a6edfd` -> **`8f8f24fc`**, `ItemCatalog` `5e9dba43` -> **`fe9597fd`**, `UnitStatsCatalog` `1ad9341a` -> **`ec19181d`**. Disk = Game = Lobby, pre-edit hashes checked in both Places. **USER REPUBLISHES BOTH PLACES.**
+
+- **Grades (user-approved):** D 40% / C 30% / B 23.5% / A 4.35% / S 1% / Z 0.85% / Z+ 0.2% / **AL (Alamat) 0.1%**. Bonus ranges DMG 0-4.99 / 5-7.99 / 8-10.99 / 11-13.99 / 14-16.99 / 17-19.99 / 20-22.99 / 23-25 %; RNG and SPA half that (0-2.49 ... 11.5-12.5 %). Stored rolls stay raw 0..1 and are read as QUANTILES -- **no data migration**.
+- **Global %, per-tower ranges retired (user):** Game `TowerStatResolver` folds `StatGradeConfig.Multiplier` -- DMG x(1+p), Range x(1+p), SPA x(1-p). `BaseStats` on Handyong/Oryol is no longer read. `UnitStatsCatalog.REFERENCE.StatRolls = nil` (base = unrolled), so every catalogued number is unchanged.
+- **Two chips (user names):** `StatRerolls` currency = **Stat Chip** (rerolls all three); new `FocusChip` ITEM = **Focus Chip** (rerolls one chosen stat; an item so no ProfileTemplate change). Icons are placeholders.
+- **Lobby `StatRerollService`:** `RerollStats(uuid, stat?)` (no stat = Stat Chip, a stat = Focus Chip) and new `InstantRollStats(uuid, stat?, filters, budget)` -- filters `{ StopGrade?, MinPct = {DMG?,RNG?,SPA?} }` travel with the call (no schema), refused with no filter, ceiling 1000. ONE `rollOnce` path for both (Luck best-of-N + Worthiness floor, which is now grade A = roll 0.9351).
+
+**Proven live:** 200k-roll distribution D 40.26 / C 29.86 / B 23.33 / A 4.38 / S 0.99 / Z 0.86 / Z+ 0.21 / AL 0.10 %. Game resolve: Handyong/Oryol/Bantong at roll 1.0 = Damage x1.250, Range x1.125, SPA x0.875; roll 0.5 = x1.060; boot validator shows only the known Bantong.SPA line. Lobby (real remotes, dev chips): Stat Chip D/D/C -> D/B/C; Focus DMG changed DMG only (RNG/SPA identical); `bad_stat` and `no_filters` refused; Instant Focus RNG >= A stopped at 51 rolls (51 Focus Chips spent); Instant all >= B stopped at 50 rolls (B/B/B).
+
 ## 2026-09-30 [lobby] B108 pt4 -- AD-UI: **the new Index (Units + Enemies dictionary), from the user's reference.**
 
 Lobby-local, no canon change. Doc: `docs/systems/collection-index.md`.
