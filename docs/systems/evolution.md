@@ -48,3 +48,8 @@ proxy caps at 5,000. **Max level** = `EvolutionRegistry.MAX_META_LEVEL` (100). C
 1. Game: copy the base config to `<Base>_<Form>`, change Id/DisplayName/ModelStoragePath, apply the change, register it, add a rig (both Places).
 2. Shared: `ItemCatalog` entry with `Summonable = false, EvolvedFrom = "<Base>"` + `UnitStatsCatalog` rows; re-hash both Places + manifest.
 3. Lobby: `RS.Configs.Evolutions/<Base>` recipe. Nothing else — the registry, service and screen pick it up.
+
+## B108
+- Takedowns = lifetime `Counters.PerUnit[uuid].Kills` via `EvolutionRegistry.Takedowns` (never reset; moved to the evolved uuid).
+- Evolving raises each stat grade by one, capped at Z+; AL untouched.
+- Costs now use Mutya stones (Rainbow 1 + Green N + colour 0.4N) -- first pass, tune freely.

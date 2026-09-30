@@ -1,4 +1,18 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-30 [both] B108 pt7 -- AD-Meta: **Mutya crafting economy, lifetime Takedowns, evolution raises grades (data layer; the Crafting/Evolve screens follow).**
+
+**CANON (re-hash, count unchanged):** `ItemCatalog` `fe9597fd` -> **`8302f56b`** (+7 Mutya stones; Fragment*/Artifact* kept as LEGACY), `ChallengeConfig` `1640a980` -> **`9162bc2e`** (daily reward = 2-3 Green Mutya + 10% day-colour Mutya). Disk = Game = Lobby, pre-edit hashes checked. **USER REPUBLISHES BOTH PLACES.**
+
+User decisions (project doc `claude/B108-crafting-decisions-2.md`):
+- **Takedowns are LIFETIME and never reset** -- `Counters.PerUnit[uuid].Kills` (the Game's match-end commit). A stat reroll resets only Worthiness. `EvolutionRegistry.Takedowns(data, uuid)` (max of kills and the old Worthiness x 50 floor) is THE read; `GetUnitViews` carries `Takedowns`; `GrantService.EvolveUnit` moves the unit's PerUnit counters to the evolved uuid. Stat Reroll label "Stat Potential" -> **"Stat Worthiness"**; its Takedowns line shows the lifetime count.
+- **Mutya economy (reference model, Silver):** Green Mutya (base) + 500 Silver x3 -> each of Pink/Blue/Red/Yellow/Purple Mutya; Rainbow Mutya = 1 of each colour + 1 Green + 500 Silver. **Dismantle COSTS Silver** (user): colour -> 2 Green for 1,500; Rainbow -> 15 Green for 7,500. `CraftingRecipes` rewritten; `CraftingService` = `Craft(id, amount, partial?)` (partial = Quick Craft: makes as many as you can afford) + new `Dismantle(id, amount)`; `GetCraftInfo` also returns Silver.
+- **Old items convert on load** (`UnitDiscoveryService.migrateCrafting`): Fragment* -> 1 Green each; Artifact Red->Red, Orange->Yellow, Yellow->Yellow, Green->3 Green, Blue->Blue, Indigo->Purple, Violet->Pink; Rainbow->Rainbow.
+- **Evolution costs converted** (12 configs): Rainbow Mutya 1 + Green Mutya = old fragment count + that colour's Mutya = 40% of it (Batibat's green: all Green). Numbers are a first pass -- tune freely.
+- **Evolving raises every stat one grade, capped at Z+** (Z+ stays Z+, AL untouched -- AL only comes from rerolls). The roll keeps its relative spot inside the new band.
+- Shop: the seven fragment rows -> Green Mutya x1 (100 Silver) and x5 (450 Silver), same total weight.
+
+**Proven live:** Craft Red x2 = -6 Green, -1,000 Silver; Rainbow x5 strict refused (can 1), partial crafted 1; Dismantle Red = +2 Green, -1,500 Silver; Rainbow = +15 Green, -7,500 Silver; Green refused (`cannot_dismantle`). Seeded 5,234 kills on Bakunawa -> view Takedowns 5234; evolve (real remote) D/C/Z -> C/B/Z+, Takedowns 5234 kept on the new uuid. Legacy seed (3 Red Fragments, 2 Indigo, 1 Green, 1 Rainbow Artifact) converted on rejoin to Green +6, Purple 2, Rainbow 1. Watchdog 42/42, no errors.
+
 ## 2026-09-30 [lobby] B108 pt6 -- AD-UI/AD-Traits: **the Stat Reroll screen rebuilt from the user's reference; filters stop on ANY match; Robux chip packs.**
 
 Lobby-local, no canon change. Reference layout recorded in the project doc `claude/B108-stat-reroll-reference-spec.md`.

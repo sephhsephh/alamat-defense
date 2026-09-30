@@ -56,3 +56,6 @@ screen rendered the recipe list with per-recipe "have N" affordability and craft
 ## Cross-refs
 `docs/contracts/save-schema.md` (Items map) · `gacha.md` (GrantService — the spend/grant path) ·
 `shop.md` (the interim fragment source) · `docs/proposals/2026-09-02-d2-challenges.md` (the real source).
+
+## B108 -- Mutya economy (supersedes the Fragment/Artifact loop above)
+Green Mutya (base, Epic) + Silver crafts Pink/Blue/Red/Yellow/Purple Mutya (Legendary); Rainbow Mutya (Mythic) = 1 of each colour + 1 Green + 500 Silver. Craft colour = 3 Green + 500 Silver. Dismantle COSTS Silver: colour -> 2 Green (1,500), Rainbow -> 15 Green (7,500). Remotes: `Craft(id, amount, partial?)`, `Dismantle(id, amount)`, `GetCraftInfo` (Items + Silver). Max 100 per call. Old items convert on load (`UnitDiscoveryService.migrateCrafting`). Sources: challenge reward (Green + 10% colour), shop (Green x1 / x5). Synthesis = coming soon (user).

@@ -19,9 +19,9 @@ local MatchModifiersConfig = require(ReplicatedStorage.Configs.Global.MatchModif
 
 local ChallengeConfig = {}
 
--- The seven crafting colours (ItemCatalog: Fragment<Colour>, Artifact<Colour>). Kept local so this
--- module stays pure and does not force an ItemCatalog require at load.
-local COLOURS = { "Red", "Orange", "Yellow", "Green", "Blue", "Indigo", "Violet" }
+-- B108: the Mutya colours (ItemCatalog: Mutya<Colour>). The day's reward is the BASE stone (Green Mutya)
+-- plus a small chance of that day's colour Mutya. Kept local so this module stays pure.
+local COLOURS = { "Red", "Blue", "Yellow", "Purple", "Pink" }
 ChallengeConfig.Colours = COLOURS
 
 -- The challenge POOL. Each entry names a BASE stage (its map + wave list + gold curve are reused) and a
@@ -47,10 +47,10 @@ function ChallengeConfig.RewardsForSlot(slot: number): ({ any }, string)
 	local colour = COLOURS[rng:NextInteger(1, #COLOURS)]
 	local qty = 2
 	if rng:NextNumber() < 0.20 then qty = 3 end
-	local rewards = { { Id = "Fragment" .. colour, Qty = qty } }
-	-- Occasionally the day's challenge also drops the finished ARTIFACT of that colour.
+	local rewards = { { Id = "MutyaGreen", Qty = qty } }
+	-- Occasionally the day's challenge also drops that day's COLOUR Mutya (B108).
 	if rng:NextNumber() < 0.10 then
-		table.insert(rewards, { Id = "Artifact" .. colour, Qty = 1 })
+		table.insert(rewards, { Id = "Mutya" .. colour, Qty = 1 })
 	end
 	return rewards, colour
 end
@@ -92,7 +92,7 @@ function ChallengeConfig.Validate(): (boolean, { string })
 		end
 	end
 	for _, colour in ipairs(COLOURS) do
-		for _, id in ipairs({ "Fragment" .. colour, "Artifact" .. colour }) do
+		for _, id in ipairs({ "MutyaGreen", "Mutya" .. colour }) do
 			if ItemCatalog.Get(id) == nil then
 				table.insert(issues, ("reward id not catalogued: %s"):format(id))
 			end

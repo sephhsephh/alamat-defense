@@ -95,6 +95,21 @@ ItemCatalog.Entries = {
 	-- currency, so no ProfileTemplate change. The first chip is the StatRerolls currency ("Stat Chip"). Icon PLACEHOLDER (user).
 	FocusChip        = { Kind = "Item", Tier = "Epic",      Name = "Focus Chip",         Description = "Rerolls ONE chosen stat of a unit.", Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
 
+	-- ===== B108: MUTYA stones (user-approved crafting economy, the reference's model) =====
+	-- ONE base stone (Green Mutya) + Silver crafts each colour Mutya; Rainbow = 1 of each colour + 1 Green
+	-- + Silver. Dismantle turns a stone back into Green Mutya and COSTS Silver (user). Recipes + dismantle
+	-- table: RS.Configs.Meta.CraftingRecipes (Lobby). Icons PLACEHOLDER (user authors art).
+	MutyaGreen   = { Kind = "Item", Tier = "Epic",      Name = "Green Mutya",   Description = "The base Mutya stone. Crafts every colour Mutya.",          Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	MutyaRed     = { Kind = "Item", Tier = "Legendary", Name = "Red Mutya",     Description = "A Mutya stone used to evolve units.",                       Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	MutyaBlue    = { Kind = "Item", Tier = "Legendary", Name = "Blue Mutya",    Description = "A Mutya stone used to evolve units.",                       Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	MutyaYellow  = { Kind = "Item", Tier = "Legendary", Name = "Yellow Mutya",  Description = "A Mutya stone used to evolve units.",                       Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	MutyaPurple  = { Kind = "Item", Tier = "Legendary", Name = "Purple Mutya",  Description = "A Mutya stone used to evolve units.",                       Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	MutyaPink    = { Kind = "Item", Tier = "Legendary", Name = "Pink Mutya",    Description = "A Mutya stone used to evolve units.",                       Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	MutyaRainbow = { Kind = "Item", Tier = "Mythic",    Name = "Rainbow Mutya", Description = "Made from one of every colour Mutya. Needed for evolutions.", Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+
+	-- ===== LEGACY (B50-B107) crafting materials -- RETIRED at B108. Kept catalogued ONLY so an old reward
+	-- still sitting in a queue (PendingReveals / mail) can be granted; the Lobby converts them to Mutya on
+	-- profile load (UnitDiscoveryService.migrateCrafting). Nothing new drops or costs these. =====
 	-- ===== Crafting materials (Phase D / D1): fragments -> colour artifacts (2:1) -> Rainbow (all 7). =====
 	-- 7 ROYGBIV fragment colours. 2 fragments of a colour craft that colour's artifact; all 7 colour
 	-- artifacts craft the Rainbow. Recipes: RS.Configs.Meta.CraftingRecipes (Lobby). Icons PLACEHOLDER
