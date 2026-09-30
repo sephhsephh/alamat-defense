@@ -202,14 +202,14 @@
     },
     "TraitDefinitions": {
       "file": "shared/src/TraitDefinitions.luau",
-      "hash": "79e9547e",
+      "hash": "8535ac61",
       "owner": "traits",
       "deployPath": "ReplicatedStorage.Configs.Traits.TraitDefinitions",
       "deployed": {
-        "Game": "79e9547e",
-        "Lobby": "79e9547e"
+        "Game": "8535ac61",
+        "Lobby": "8535ac61"
       },
-      "comment": "AD-Traits canon. The trait table itself: Id/DisplayName/Rarity/Weight/StatMultipliers, plus Godly's PlacementLimitOverride. PROMOTED to shared canon 2026-08-09 (Integration) -- it was GAME-only, which is why the Lobby could not build trait reroll (blueprint C1) or stat reroll (C2) and why trait-on-summon was inert. Weight is the reroll weight; total 1188 today, so None is ~84%. Deployed byte-identical in BOTH Places; the Game copy was the source and was NOT modified by the promotion. **56e81e37 -> b6b6b120 at B69 2026-09-16: +`PityCap` on the top two rarities** (Deadeye 75, Godly 600). A trait with a cap is GUARANTEED on the Nth consecutive reroll of a unit that has not landed it; the counter is per UNIT INSTANCE (`UnitInstance.TraitPity`, v7) and resets the moment the trait lands, pitied or not. The cap lives HERE, beside `Weight`, because this file is already the single definition of trait rarity -- a cap stored elsewhere could drift from the weight it exists to compensate for. **BOTH NUMBERS ARE PLACEHOLDERS AND ARE THE USER'S CALL**: they follow ~1.5x the expected rolls at current weights (Deadeye 2.104% -> ~48 expected; Godly 0.2525% -> ~396). Retune either by editing one number -- a longer cap makes a trait rarer in PRACTICE without touching `Weight`, which would also move the odds the Trait Index displays. Blitz/Sniper get no cap on purpose: at 6.7% each a pity bar would be noise. ** B73 (2026-09-17): 79e9547e (4,824 bytes). + empty `Icon` field on Blitz/Sniper/Deadeye/Godly (logo for the good-trait reveal + Trait Index; empty = show the name). PityCap comments re-derived for the None-free pool (Deadeye 25/188, Godly 3/188); the caps 75/600 were KEPT (user plans more traits). Weights unchanged. ** 26f1ad06 -> 79e9547e at B108 2026-09-30: REPLACED by the user-approved 11-trait set (Might/Keen/Hasty I-III, Sage, Hawkeye, Bountiful, Tempest, Anito, Sharpshot, Diwata, Anointed); new fields StatAdds/XPMult/CashMult/UpgradeCostMult/IncomeMult; weights in 1/100 percent (sum 10000); None 53191 keeps summon trait chance at 15.8%.",
+      "comment": "AD-Traits canon. The trait table itself: Id/DisplayName/Rarity/Weight/StatMultipliers, plus Godly's PlacementLimitOverride. PROMOTED to shared canon 2026-08-09 (Integration) -- it was GAME-only, which is why the Lobby could not build trait reroll (blueprint C1) or stat reroll (C2) and why trait-on-summon was inert. Weight is the reroll weight; total 1188 today, so None is ~84%. Deployed byte-identical in BOTH Places; the Game copy was the source and was NOT modified by the promotion. **56e81e37 -> b6b6b120 at B69 2026-09-16: +`PityCap` on the top two rarities** (Deadeye 75, Godly 600). A trait with a cap is GUARANTEED on the Nth consecutive reroll of a unit that has not landed it; the counter is per UNIT INSTANCE (`UnitInstance.TraitPity`, v7) and resets the moment the trait lands, pitied or not. The cap lives HERE, beside `Weight`, because this file is already the single definition of trait rarity -- a cap stored elsewhere could drift from the weight it exists to compensate for. **BOTH NUMBERS ARE PLACEHOLDERS AND ARE THE USER'S CALL**: they follow ~1.5x the expected rolls at current weights (Deadeye 2.104% -> ~48 expected; Godly 0.2525% -> ~396). Retune either by editing one number -- a longer cap makes a trait rarer in PRACTICE without touching `Weight`, which would also move the odds the Trait Index displays. Blitz/Sniper get no cap on purpose: at 6.7% each a pity bar would be noise. ** B73 (2026-09-17): 79e9547e (4,824 bytes). + empty `Icon` field on Blitz/Sniper/Deadeye/Godly (logo for the good-trait reveal + Trait Index; empty = show the name). PityCap comments re-derived for the None-free pool (Deadeye 25/188, Godly 3/188); the caps 75/600 were KEPT (user plans more traits). Weights unchanged. ** 26f1ad06 -> 79e9547e at B108 2026-09-30: REPLACED by the user-approved 11-trait set (Might/Keen/Hasty I-III, Sage, Hawkeye, Bountiful, Tempest, Anito, Sharpshot, Diwata, Anointed); new fields StatAdds/XPMult/CashMult/UpgradeCostMult/IncomeMult; weights in 1/100 percent (sum 10000); None 53191 keeps summon trait chance at 15.8%. ** 79e9547e -> 8535ac61 at B108 pt12: the user's trait Icon asset ids (authored in the Lobby) propagated to the Game + disk.",
       "kind": "module"
     },
     "TraitRegistry": {
@@ -604,6 +604,18 @@
       },
       "kind": "module",
       "comment": "PROMOTED to shared canon at B108 pt11 (byte-identical to the Game original; now also in the Lobby Configs.Global) so Shared.UnitStatPreview can apply the level curve in the Lobby."
+    },
+    "AdminGlobal": {
+      "file": "shared/src/AdminGlobal.luau",
+      "hash": "c7011f28",
+      "owner": "admin",
+      "deployPath": "ServerScriptService.Server.Admin.AdminGlobal",
+      "deployed": {
+        "Game": "c7011f28",
+        "Lobby": "c7011f28"
+      },
+      "kind": "module",
+      "comment": "NEW at B108 pt12 (user: admin panel + admin abuse). SERVER-ONLY cross-server half of the admin tools: MessagingService topic AlamatAdmin_v1 (announcements, buff/gift pings), MemoryStore sorted maps AlamatAdminBuffs_v1 (global Luck/Rewards buffs with expiry) and AlamatAdminGifts_v1 (global gifts, claimed once per player by the Lobby AdminService). Exposes no remote; only FIRES Remotes.AdminBroadcast. Who may call it is decided by the Lobby AdminService allowlist."
     }
   },
   "templatesNote": "Templates are under drift control since 2026-08-06 (ADR-0005). They have NO shared/src file: the Instance is the canon. Two safe ways to get one into another Place: COPY it (Studio copy/paste) and prove equality by hash, OR build it with an identical DETERMINISTIC script run in both Places and hash-match (used for Kit_UnitIcon). Never rebuild by hand/by eye. See tools/checklists.md."

@@ -68,3 +68,6 @@ the unit already had**, so a reroll at 100% Luck can still downgrade a good unit
 `DMG D->B RNG SS->C SPA A->D`). That is by design — the same way a trait reroll can land back on `None`
 — but "Luck helps rerolls" reads to a player as "I cannot get worse". Open tuning question, user
 decided at B58 to KEEP best-of-2/3 as built.
+
+## B108 pt12: global admin buffs
+`BuffService` also lists GLOBAL "admin abuse" buffs from `Server.Admin.AdminGlobal` (MemoryStore, every server): Kind `AdminLuck` (+% luck, added in `LuckService.ActivePercent`) and `AdminRewards` (x match rewards, applied by the Game's `RewardCalculator`). Title "ADMIN ABUSE", `Global = true`. `BuffStripController` refetches immediately on `Remotes.AdminBroadcast {k="buffs"}`; accents gold / green. See `admin.md`.
