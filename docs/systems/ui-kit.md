@@ -318,3 +318,10 @@ capture, and a slide would fight the veil.
 - `UIKit.Hotbar` hover card: FINAL stats via `Shared.UnitStatPreview`; anchored bottom-centre above the hovered slot;
   Trait chip `TraitIcon`.
 - `Shared.UnitStatPreview.Final(view)` / `.Format(n)` -- the one card-stat function (both Places).
+
+## B108 pt11c
+- `UnitCard.tierStroke(stroke, tier, neutral?)` -- animated tier border for any unit portrait (`TierLoop` gradient, or the
+  stroke's own authored gradient); `tier = nil` = neutral. `UnitCard.paintTier` now loops every kit unit card.
+- `UnitCard.paintGrade(label, grade)` / `gradeColor(grade)` -- Stat Index colours; AL = animated orange/purple (`GradeFX`).
+- `ItemIcon` qty `nil` = display card (full colour); only qty 0 darkens.
+- Stats display: ONE decimal (`UnitStatPreview.Format`, hotbar `short`).

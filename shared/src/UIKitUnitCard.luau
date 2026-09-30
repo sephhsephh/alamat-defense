@@ -144,8 +144,11 @@ function UnitCard.paintTier(root: Instance?, tier: string, opts: PaintOpts?)
 	local g = root:FindFirstChildOfClass("UIGradient")
 	if g then
 		g.Color = TierConfig.seamlessSequence(tier)
-		if o.Idle and Motion then
-			-- The kit's period and angle, not any one screen's timing -- the whole point of Motion.
+		-- B108 pt11 (user: every unit portrait's tier colours move): EVERY kit unit card now runs the
+		-- seamless colour loop, not just the ones that asked for `Idle`. Speed varies a little per card.
+		if Motion and Motion.loopGradient then
+			Motion.loopGradient(g, 2.5 + math.random() * 1.5)
+		elseif o.Idle and Motion then
 			Motion.idleGradient(g)
 		end
 	end
@@ -163,6 +166,87 @@ function UnitCard.paintTier(root: Instance?, tier: string, opts: PaintOpts?)
 			-- outline at rest and the hover says nothing.
 			hs.Enabled = false
 		end
+	end
+end
+
+-- ===== ANIMATED TIER BORDER (B108 pt11, user: "animate the uistroke border of all the unit portraits
+-- according to their tier, all uis that uses the viewport frame to display the units") =====
+-- `tierStroke(stroke, tier)` turns a portrait's UIStroke into a moving tier border: the stroke goes white
+-- and a child UIGradient `TierLoop` carries the tier's seamless palette through Motion's seamless loop
+-- (each border gets a slightly different speed so a grid never pulses in lock-step). `tier = nil` puts
+-- the stroke back to a plain neutral border (an empty slot) and removes the loop.
+local NEUTRAL_STROKE = Color3.fromRGB(70, 70, 80)
+function UnitCard.tierStroke(stroke: Instance?, tier: string?, neutral: Color3?)
+	if not (stroke and stroke:IsA("UIStroke")) then
+		return
+	end
+	-- An authored UIGradient already on the stroke is REUSED (two gradients on one stroke fight).
+	local g = stroke:FindFirstChild("TierLoop") or stroke:FindFirstChildOfClass("UIGradient")
+	if tier == nil or TierConfig == nil then
+		if g and g.Name == "TierLoop" then g:Destroy()
+		elseif g and g:IsA("UIGradient") then
+			if Motion and Motion.loopGradient then local h = Motion.loopGradient(g, 1) if h then h:Cancel() end end
+			g.Color = ColorSequence.new(Color3.new(1, 1, 1))
+		end
+		stroke.Color = neutral or NEUTRAL_STROKE
+		return
+	end
+	local grad: UIGradient
+	if g and g:IsA("UIGradient") then
+		grad = g
+	else
+		grad = Instance.new("UIGradient")
+		grad.Name = "TierLoop"
+		grad.Parent = stroke
+	end
+	stroke.Color = Color3.new(1, 1, 1)
+	grad.Rotation = 45
+	grad.Color = TierConfig.seamlessSequence(tier)
+	if Motion and Motion.loopGradient then
+		Motion.loopGradient(grad, 2.5 + math.random() * 1.5)
+	end
+end
+
+-- ===== STAT GRADE LETTERS (B108 pt11, user) =====
+-- `paintGrade(label, gradeName)` colours a grade letter exactly like the Stat Reroll stat index
+-- (StatGradeConfig colours). AL is special: an ANIMATED orange -> purple gradient (child `GradeFX`).
+-- Any other grade removes GradeFX, so a recycled label never keeps the AL shimmer.
+local StatGradeConfig = loadOptional(
+	optional(optional(optional(ReplicatedStorage, "Configs"), "Meta"), "StatGradeConfig"), "StatGradeConfig")
+UnitCard.AL_COLORS = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 150, 30)),
+	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(170, 70, 255)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 150, 30)),
+})
+function UnitCard.gradeColor(gradeName: string?): Color3
+	if StatGradeConfig and gradeName then
+		for _, g in ipairs(StatGradeConfig.Grades) do
+			if g.Name == gradeName then return g.Color end
+		end
+	end
+	return Color3.new(1, 1, 1)
+end
+function UnitCard.paintGrade(label: Instance?, gradeName: string?)
+	if not (label and (label:IsA("TextLabel") or label:IsA("TextButton"))) then
+		return
+	end
+	local lbl = label :: TextLabel
+	local fx = label:FindFirstChild("GradeFX")
+	if gradeName == "AL" then
+		lbl.TextColor3 = Color3.new(1, 1, 1)
+		local grad: UIGradient
+		if fx and fx:IsA("UIGradient") then
+			grad = fx
+		else
+			grad = Instance.new("UIGradient")
+			grad.Name = "GradeFX"
+			grad.Parent = label
+		end
+		grad.Color = UnitCard.AL_COLORS
+		if Motion and Motion.loopGradient then Motion.loopGradient(grad, 1.6) end
+	else
+		if fx then fx:Destroy() end
+		lbl.TextColor3 = UnitCard.gradeColor(gradeName)
 	end
 end
 

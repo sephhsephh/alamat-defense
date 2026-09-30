@@ -140,3 +140,7 @@ and `Flash`. Every reel step paints the trait's icon (`TraitRegistry.Icon`) and 
 shakes the card. The good-trait reveal shows the icon with the name under it. Sounds (empty = silent):
 `SoundService.UI.TraitReelTick`, `TraitLand`, `TraitGoodReveal`. Fill `TraitDefinitions.Icon` and every surface picks it up
 (Units card, hotbar slot, hover Trait chip `TraitIcon`, trait reroll list, reveal).
+
+## B108 pt11c
+"Skip animation" skips only the reel. A good (Special) trait ALWAYS plays the full reveal and clicks cannot skip it
+(`noSkip` during `playGoodTraitReveal`).

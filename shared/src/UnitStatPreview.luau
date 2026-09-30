@@ -70,20 +70,13 @@ function UnitStatPreview.Final(view: any): any
 	return out
 end
 
--- Display formatting shared by every card: whole numbers stay whole, otherwise up to 2 decimals;
--- thousands get separators (1830 -> "1,830"). nil -> "--" (never "nil").
+-- Display formatting shared by every card (user, B108 pt11: "always round off 1 decimal places"):
+-- rounded to ONE decimal, a whole number drops the ".0", thousands get separators
+-- (1830 -> "1,830", 68.16 -> "68.2", 1.793 -> "1.8"). nil -> "--" (never "nil").
 function UnitStatPreview.Format(n: number?): string
 	if type(n) ~= "number" then return "--" end
-	local s
-	if math.abs(n - math.floor(n + 0.5)) < 0.005 then
-		s = tostring(math.floor(n + 0.5))
-	elseif n >= 100 then
-		s = string.format("%.1f", n)
-	else
-		s = string.format("%.2f", n)
-		s = (string.gsub(s, "0+$", ""))
-		s = (string.gsub(s, "%.$", ""))
-	end
+	local r = math.floor(n * 10 + 0.5) / 10
+	local s = if r == math.floor(r) then tostring(math.floor(r)) else string.format("%.1f", r)
 	local int, frac = string.match(s, "^(%d+)(.*)$")
 	if int and #int > 3 then
 		int = (string.reverse(int):gsub("(%d%d%d)", "%1,")):reverse()

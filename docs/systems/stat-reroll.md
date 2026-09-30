@@ -146,3 +146,7 @@ Lobby-local; no shared canon changed, **no schema bump** (`StatRolls` and `Worth
   Roll when any rolled stat's grade is exactly one of them (old `StopGrade` "at or above" still accepted).
 - Rerolling a stat that already matches the active filters asks first ("Would you like to reroll S on Damage?").
 - Old `StatRerollScreen` + `StarterPlayerScripts.StatRerollController` DELETED.
+
+## B108 pt11c -- AL reveal
+Any reroll / instant roll that lands AL on a rolled stat plays `StarterGui.ALRevealScreen` (modal, no skip, ~3.3s,
+sound `SoundService.UI.ALReveal`). Grade letters use `UnitCard.paintGrade` (AL animated).

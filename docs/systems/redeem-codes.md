@@ -119,3 +119,10 @@ server path answers `unknown_code` / `already_redeemed` correctly. The button *c
 was not simulated — `MouseButton1Click` cannot be fired from a script and `VirtualInputManager` needs
 a capability this tooling lacks — so what was exercised is the call the handler makes, which is the
 half that can actually be wrong.
+
+## B108 pt11c -- Status + Limited codes
+`CodeRegistry.Codes[CODE].Status` = "Active" | "Expired" | "Limited" (missing = Active). Limited codes take `Limit`
+(default 5000): the FIRST `Limit` players across every server. `CodeService` reserves a slot in DataStore
+`Beta1_CodeClaims`, key `Claims_<CODE>` (UpdateAsync, atomic) BEFORE the grant and releases it if the grant fails. The
+reply carries `ClaimNumber` + `Limit`; the client shows "Successfully claimed code #N of Limit (Limited)!". Reasons:
+`sold_out`, `limited_unavailable` (DataStore down). To reopen a Limited code, raise `Limit` or reset the key.

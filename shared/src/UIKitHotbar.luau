@@ -187,10 +187,17 @@ local function peso(n: number): string
 	return "\u{20B1}" .. out
 end
 
+-- B108 pt11 (user: "always round off 1 decimal places for the stats number"): one decimal, a whole
+-- number drops the ".0", thousands get commas (1830 -> "1,830", 68.16 -> "68.2", 1.793 -> "1.8").
 local function short(n: number): string
-	if n >= 1e6 then return string.format("%.2fM", n / 1e6) end
-	if n >= 1e3 then return string.format("%.2fk", n / 1e3) end
-	return string.format("%.4g", n)
+	local r = math.floor(n * 10 + 0.5) / 10
+	local s = if r == math.floor(r) then tostring(math.floor(r)) else string.format("%.1f", r)
+	local int, frac = string.match(s, "^(%d+)(.*)$")
+	if int and #int > 3 then
+		int = (string.reverse(int):gsub("(%d%d%d)", "%1,")):reverse()
+		s = (string.gsub(int, "^,", "")) .. frac
+	end
+	return s
 end
 
 -- ===== V3 MODEL SWAP: THE AUTHORED CAMERA IS NOT OURS TO TOUCH (user, B77) =====
@@ -470,7 +477,9 @@ local function attachV3(container: GuiObject, opts: { [string]: any })
 						grade, colour = StatGradeConfig.GradeForRoll((rolls :: any)[stat])
 					end
 					gradeLabel.Text = grade or "-"
-					if colour then gradeLabel.TextColor3 = colour end
+					-- B108 pt11 (user): the Stat Index colours, AL = animated orange/purple gradient.
+					if grade and UnitCard.paintGrade then UnitCard.paintGrade(gradeLabel, grade)
+					elseif colour then gradeLabel.TextColor3 = colour end
 				end
 			end
 		end
@@ -527,7 +536,10 @@ local function attachV3(container: GuiObject, opts: { [string]: any })
 		-- the design's frame and stay exactly as authored -- painting them tinted the whole card.
 		local unitFrame = preview:FindFirstChild("UnitFrame", true)
 		local unitStroke = unitFrame and unitFrame:FindFirstChildWhichIsA("UIStroke")
-		if unitStroke then paintTierGradient(unitStroke, tierName) end
+		-- B108 pt11: an ANIMATED tier border (UnitCard.tierStroke) instead of a static paint.
+		if unitStroke then
+			if UnitCard.tierStroke then UnitCard.tierStroke(unitStroke, tierName) else paintTierGradient(unitStroke, tierName) end
+		end
 
 		-- Sit ABOVE the hovered slot, clamped so it never runs off either edge.
 		-- B108 pt11 FIX (user: "its not above the hotbar, its in the middle of the screen"): the authored card

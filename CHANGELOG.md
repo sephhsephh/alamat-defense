@@ -1,4 +1,18 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-30 [both] B108 pt11c -- AD-UI/AD-Meta: **code statuses + Limited codes, 1-decimal stats, grade colours, animated tier borders, unskippable good-trait and AL reveals, display item icons full colour.**
+
+**CANON (disk = Game = Lobby):** `UIKitUnitCard` `ccd2dd06` -> **`8bec4245`** (`tierStroke`, `paintGrade`, `gradeColor`; `paintTier` loops every kit unit card), `UIKitHotbar` `60609369` -> **`a95dabc6`**, `UIKitItemIcon` `49c7f8c3` -> **`4f10f6b9`**, `UnitStatPreview` `70436e1c` -> **`709bbe53`**. **USER REPUBLISHES BOTH PLACES.**
+
+- **Codes (Lobby):** `CodeRegistry` entries carry `Status = "Active" | "Expired" | "Limited"` (+ `Limit`, default 5000). Limited = a GLOBAL cap across all servers: `CodeService` reserves a slot in DataStore `Beta1_CodeClaims` (`Claims_<CODE>`, UpdateAsync) before granting and hands it back if the grant fails; the player sees "Successfully claimed code #N of 5,000 (Limited)!"; when used up: "That limited code has run out". FIRSTLIGHT is now Limited 5000, EXPIREDTEST is Status Expired.
+- **Trait reroll:** "Skip animation" skips the reel only; a GOOD trait always plays its full reveal, and clicks cannot skip it.
+- **AL reveal (Lobby):** new authored `StarterGui.ALRevealScreen` (DisplayOrder 160, modal) -- whenever a reroll/instant roll lands AL on a rolled stat: dark screen, flash, giant animated orange/purple "AL", spinning rays, shake, "ALAMAT GRADE!" + "<stat> rolled AL!", ~3.3s, no skip. Sound slot `SoundService.UI.ALReveal`.
+- **Stat numbers round to ONE decimal** (whole numbers drop ".0"): `UnitStatPreview.Format`, hotbar hover card, Units screen, Game TowerSelection (`short`, seconds, times).
+- **Grade letters** use the Stat Index colours (`UnitCard.paintGrade`); **AL = animated orange -> purple gradient** -- hotbar hover card (both Places), Units stats/hover, Stat Reroll rows.
+- **Animated tier borders** (`UnitCard.tierStroke` / looping `paintTier`) on every unit portrait: hotbar hover card, kit unit cards everywhere (Units, Summon, Index, Trait reroll, match end), Stat Reroll portrait + picker, Ascension slots/hover/picker, Evolve slots/preview/picker, Collection cards + detail, Feed portrait + level-up cards, reward popup unit cells, Game Unit Manager cards and Tower Selection portrait.
+- **Item icons:** only an explicit qty of 0 (Items screen, unowned) is darkened; display cards (crafting, evolve, shop, ascension, feed ...) are full colour.
+
+**Proven live:** Limited test code claimed "#1 of 1"; EXPIREDTEST refused `expired`; crafting icons full colour; Instant Roll with Stop=AL hit AL on Range after 614 rolls then on Attack (reveal shown); AL letter animated; Game hotbar card shows 249.1 / 4.1 / 25 with C/B in index colours; no errors in either Place.
+
 ## 2026-09-30 [both] B108 pt11b -- AD-UI: **Items screen icons readable; Mutya tint on the selected item.**
 
 - **CANON:** `UIKitItemIcon` `46b83e00` -> **`49c7f8c3`** (disk = Game = Lobby). An unowned item's art is no longer 60% transparent (it washed into the card's tier gradient and read as "blurry" -- raising its ZIndex could not help); it stays opaque and is darkened (ImageColor3 125,125,135). Owned = full colour. **USER REPUBLISHES BOTH PLACES.**

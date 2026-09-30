@@ -260,9 +260,11 @@ function ItemIcon.attach(card: GuiButton, itemId: string, qty: number?)
 		-- B108 pt11 (user: unowned icons were "blurry, cant be seen"): an unowned item is no longer faded to
 		-- 60% transparency (the art washed out into the card's tier gradient). The art stays fully opaque and
 		-- is only DARKENED, so it reads clearly and still looks "not owned".
+		-- pt11 follow-up (user: crafting icons were darkened): ONLY an explicit qty of 0 means "not owned".
+		-- `nil` is a DISPLAY card (crafting, evolve, shop, ascension, feed ...) and is always full colour.
 		if image and image:IsA("ImageLabel") then
 			image.ImageTransparency = 0
-			image.ImageColor3 = if count > 0 then Color3.new(1, 1, 1) else Color3.fromRGB(125, 125, 135)
+			image.ImageColor3 = if n == nil or count > 0 then Color3.new(1, 1, 1) else Color3.fromRGB(125, 125, 135)
 		end
 	end
 	function handle.setSelected(on: boolean)
