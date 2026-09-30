@@ -226,4 +226,62 @@ function UnitStatsCatalog.GetPlacement(towerId: string): string?
 	return UnitStatsCatalog.Placement[towerId]
 end
 
+-- B108: per-tower XP curve multiplier (TowerConfig.XPCurveMultiplier) so the LOBBY can level a unit
+-- when it is FED (TowerProgressionConfig.ApplyXP needs it). Validated against the live configs by the
+-- Game's UnitStatsCatalogValidate. Missing = 1.0.
+UnitStatsCatalog.XPCurve = {
+	Handyong             = 1,
+	Bantong              = 1.15,
+	Oryol                = 1.4,
+	Lakapati             = 1,
+	Babaylan             = 1.5,
+	Bulalakaw            = 1.2,
+	Urduja               = 1.15,
+	Magwayen             = 1.25,
+	Baltog               = 1.1,
+	Duwende              = 1.1,
+	Santelmo             = 1.2,
+	Mangkukulam          = 1.2,
+	Siyokoy              = 1.15,
+	Kapre                = 1.25,
+	NunoSaPunso          = 1.25,
+	Sarimanok            = 1.25,
+	Mambabarang          = 1.3,
+	Amomongo             = 1.3,
+	Engkanto             = 1.3,
+	Sigbin               = 1.3,
+	LamAng               = 1.35,
+	BernardoCarpio       = 1.35,
+	MariaMakiling        = 1.35,
+	Minokawa             = 1.35,
+	Apolaki              = 1.4,
+	Mayari               = 1.4,
+	Sidapa               = 1.4,
+	Tala                 = 1.45,
+	Lalahon              = 1.45,
+	Bathala              = 1.6,
+	Bakunawa             = 1.6,
+	Tikbalang            = 1.25,
+	AmanSinaya           = 1.4,
+	Aswang               = 1.5,
+	Tiyanak              = 1.5,
+	Batibat              = 1.5,
+	Mayari_LunarEclipse  = 1.4,
+	Apolaki_Zenith       = 1.4,
+	Bathala_Ascended     = 1.6,
+	Bakunawa_Eclipse     = 1.6,
+	Magwayen_Soulferry   = 1.25,
+	Sidapa_LastMeasure   = 1.4,
+	AmanSinaya_Riptide   = 1.4,
+	Tala_MorningStar     = 1.45,
+	Lalahon_Caldera      = 1.45,
+	Aswang_BloodMoon     = 1.5,
+	Tiyanak_Changeling   = 1.5,
+	Batibat_NightTerror  = 1.5,
+}
+
+function UnitStatsCatalog.GetXPCurve(towerId: string): number
+	return UnitStatsCatalog.XPCurve[towerId] or 1.0
+end
+
 return UnitStatsCatalog

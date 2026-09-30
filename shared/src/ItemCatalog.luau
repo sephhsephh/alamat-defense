@@ -107,6 +107,15 @@ ItemCatalog.Entries = {
 	MutyaPink    = { Kind = "Item", Tier = "Legendary", Name = "Pink Mutya",    Description = "A Mutya stone used to evolve units.",                       Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
 	MutyaRainbow = { Kind = "Item", Tier = "Mythic",    Name = "Rainbow Mutya", Description = "Made from one of every colour Mutya. Needed for evolutions.", Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
 
+	-- ===== B108: EXP FOOD (user). Feed a unit for XP (`ExpFood` = XP per item); each unit also needs its
+	-- own food to ASCEND (AscensionConfig.FoodFor). Drop from stage acts + the shop Food tab. Icons PLACEHOLDER. =====
+	FoodPandesal = { Kind = "Item", Tier = "Common", Name = "Pandesal", Description = "Warm bread roll. Grants 20 EXP to a unit.", ExpFood = 20, Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	FoodTuron    = { Kind = "Item", Tier = "Uncommon", Name = "Turon", Description = "Sweet banana roll. Grants 45 EXP to a unit.", ExpFood = 45, Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	FoodBibingka = { Kind = "Item", Tier = "Rare", Name = "Bibingka", Description = "Rice cake from the clay oven. Grants 75 EXP to a unit.", ExpFood = 75, Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	FoodAdobo    = { Kind = "Item", Tier = "Epic", Name = "Adobo", Description = "The house classic. Grants 150 EXP to a unit.", ExpFood = 150, Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	FoodSinigang = { Kind = "Item", Tier = "Legendary", Name = "Sinigang", Description = "Sour tamarind stew. Grants 280 EXP to a unit.", ExpFood = 280, Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	FoodLechon   = { Kind = "Item", Tier = "Mythic", Name = "Lechon", Description = "The feast centrepiece. Grants 300 EXP to a unit.", ExpFood = 300, Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+
 	-- ===== LEGACY (B50-B107) crafting materials -- RETIRED at B108. Kept catalogued ONLY so an old reward
 	-- still sitting in a queue (PendingReveals / mail) can be granted; the Lobby converts them to Mutya on
 	-- profile load (UnitDiscoveryService.migrateCrafting). Nothing new drops or costs these. =====

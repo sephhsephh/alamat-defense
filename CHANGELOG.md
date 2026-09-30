@@ -1,4 +1,18 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-30 [both] B108 pt9 -- AD-Meta: **ascension rework, EXP food, full-catalogue shop with daily stock, Silver packs (data layer; the Ascension/Shop screens follow).**
+
+Decisions: project docs `claude/B108-ascension-shop-decisions.md` + `claude/B108-ascension-shop-reference-spec.md`.
+
+**CANON:** `AscensionConfig` `59aa8e15` -> **`d95ca301`**, `ItemCatalog` `8302f56b` -> **`bb1244b8`**, `UnitStatsCatalog` `ec19181d` -> **`5f0331e8`**, and **`TowerProgressionConfig` PROMOTED to shared (`87acbd94`, byte-identical to the Game original; now also deployed to the Lobby's `Configs.Global`)**. Disk = Game = Lobby, pre-edit hashes checked; `HashShared` lists it in both Places. **USER REPUBLISHES BOTH PLACES.**
+
+- **Ascension (user: match reference):** any tier; each level = 1 UNASCENDED, non-shiny dupe (locked/favourited/equipped still protected) + 1 of the unit's own FOOD (`AscensionConfig.FoodFor`, first pass by rarity: Common Pandesal ... Mythic+ Lechon). Bonuses I +3% DMG, II +5% Range, III +7% DMG (absolute mults A1 DMG 1.03 / A2 +RNG 1.05 / A3 DMG 1.10). ⚠ Units already at A1-A3 drop from the old x1.05/x1.5/x3.0 DMG to the new numbers.
+- **EXP food (user):** 6 foods in ItemCatalog (`ExpFood`): Pandesal 20, Turon 45, Bibingka 75, Adobo 150, Sinigang 280, Lechon 300 XP. New Lobby `FeedService` (`FeedUnit(uuid, food, qty)`) levels a unit on the SAME curve the Game uses (shared `TowerProgressionConfig.ApplyXP` + `UnitStatsCatalog.XPCurve`, validated by the Game's `UnitStatsCatalogValidate`); never over-feeds past Lv 100. `GetUnitViews` carries `XPNext`.
+- **Food drops (Game):** Stage1_Act1 Pandesal 60% / Turon 35% / Bibingka 15%; Act2 Turon 50% / Bibingka 35% / Adobo 15%; Act3 Adobo 35% / Sinigang 15% / Lechon 6%. Tune freely.
+- **Shop (user: full catalogue, daily stock, Silver):** `ShopConfig` rewritten -- 19 rows always listed (Materials: Mutya + Golden Seed; Misc: Stat/Focus Chip, Trait token, Banner Ticket, Gold; Food: the 6 foods), each with a per-player DAILY stock. `ShopService`: `GetShopStock`, `BuyShopItem(rowId, count)`, new `BuyShopItems(list, "max"?)` (multi-select / Buy Max). `Data.ShopStock.Bought` is now keyed by row id (old slot keys clear on the next day roll; no schema change).
+- **Silver packs (user, reference amounts):** `SilverPackConfig` (1,100 / 5,500 / 11,000 / 25,000; **ProductId 0 -- user creates 4 dev products**) + `SilverPackService` (`GetSilverPacks` / `BuySilverPack`).
+
+**Proven live:** Game boot -- validator only the known Bantong line (XPCurve matches all 48); Handyong A2 = DMG x1.030 RNG x1.050, A3 = DMG x1.100 RNG x1.050. Lobby (real remotes): Aswang fed 5 Lechon (+1,500 XP) Lv 1 -> 4 (88/1286); a max-level unit refuses (`max_level`); non-food refused. Oryol x4: info = food Bibingka 0/1, 3 eligible dupes, "Missing materials"; bought 2 Bibingka in the shop, ascended A0 -> A1, the previewed dupe consumed, 1 Bibingka left. Shop: Lechon x3 (-4,200 Silver), Rainbow x5 capped at stock 1, then `sold_out`; multi "max" bought Green Mutya 12 + Pandesal 50.
+
 ## 2026-09-30 [lobby] B108 pt8 -- AD-UI: **Crafting and Evolve screens rebuilt from the user's references.**
 
 Lobby-local, no canon change. Reference layout: project doc `claude/B108-crafting-evolution-reference-spec.md`.
