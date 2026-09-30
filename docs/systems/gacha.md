@@ -261,3 +261,9 @@ exactly as the reveal contract above specifies.
 - Trait-on-summon: **DONE at B12** — rarity table promoted to shared canon, traits roll for real.
 - Game-side `GrantService` convergence (invariant 1 is Lobby-only today).
 - No Secret/Exclusive/Bathala tower exists, so those tiers are unreachable content.
+
+## B108 pt11
+- `Featured.Tiers` limits a banner's featured draw (Standard = { "Mythic" }); a tier the banner cannot roll (Limited on
+  Standard) or Secret is never featured.
+- Summon Max: `GachaConfig.MaxPullCount = 50`; any whole count 1..50 is allowed; the button pulls as many as the player
+  can afford.

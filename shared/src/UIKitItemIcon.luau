@@ -66,6 +66,45 @@ function ItemIcon.ImageFor(itemId: string): string
 	return PLACEHOLDER
 end
 
+-- ===== ICON TINT (B108 pt11, user) =====
+-- An item whose catalog Icon carries `Gradient = { "RRGGBB", ... }` (every Mutya: ONE white MutyaIcon
+-- asset) gets a child UIGradient named `IconTint` on its image, coloured from those stops and run through
+-- the kit's seamless colour loop. An item WITHOUT a gradient has any leftover IconTint removed, so a
+-- recycled image never keeps the previous item's colour. Every screen that sets an item image calls this.
+local function hexColor(h: string): Color3
+	local ok, c = pcall(Color3.fromHex, h)
+	return if ok then c else Color3.new(1, 1, 1)
+end
+function ItemIcon.applyTint(image: Instance?, itemId: string?)
+	if not (image and image:IsA("GuiObject")) then return end
+	local entry = itemId and ItemCatalog.Get(itemId)
+	local icon = entry and entry.Icon
+	local stops = type(icon) == "table" and icon.Gradient
+	local existing = image:FindFirstChild("IconTint")
+	if type(stops) ~= "table" or #stops == 0 then
+		if existing then existing:Destroy() end
+		return
+	end
+	local g = existing :: UIGradient?
+	if not (g and g:IsA("UIGradient")) then
+		g = Instance.new("UIGradient")
+		;(g :: UIGradient).Name = "IconTint"
+		;(g :: UIGradient).Parent = image
+	end
+	local kps = {}
+	if #stops == 1 then
+		kps = { ColorSequenceKeypoint.new(0, hexColor(stops[1])), ColorSequenceKeypoint.new(1, hexColor(stops[1])) }
+	else
+		for i, h in ipairs(stops) do
+			table.insert(kps, ColorSequenceKeypoint.new((i - 1) / (#stops - 1), hexColor(h)))
+		end
+	end
+	local grad = g :: UIGradient
+	grad.Rotation = 45
+	grad.Color = ColorSequence.new(kps)
+	Motion.loopGradient(grad, if #stops > 3 then 3 else 5)
+end
+
 local function strokeGradient(stroke: UIStroke): UIGradient
 	local g = stroke:FindFirstChildOfClass("UIGradient")
 	if not g then g = Instance.new("UIGradient"); g.Parent = stroke end
@@ -116,6 +155,7 @@ function ItemIcon.attach(card: GuiButton, itemId: string, qty: number?)
 
 	if image and image:IsA("ImageLabel") then
 		image.Image = ItemIcon.ImageFor(itemId)
+		ItemIcon.applyTint(image, itemId)
 	end
 	-- V2 shows the item's NAME on the card; v1 had nowhere to put it.
 	if nameLabel and nameLabel:IsA("TextLabel") then

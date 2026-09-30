@@ -99,13 +99,15 @@ ItemCatalog.Entries = {
 	-- ONE base stone (Green Mutya) + Silver crafts each colour Mutya; Rainbow = 1 of each colour + 1 Green
 	-- + Silver. Dismantle turns a stone back into Green Mutya and COSTS Silver (user). Recipes + dismantle
 	-- table: RS.Configs.Meta.CraftingRecipes (Lobby). Icons PLACEHOLDER (user authors art).
-	MutyaGreen   = { Kind = "Item", Tier = "Epic",      Name = "Green Mutya",   Description = "The base Mutya stone. Crafts every colour Mutya.",          Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
-	MutyaRed     = { Kind = "Item", Tier = "Legendary", Name = "Red Mutya",     Description = "A Mutya stone used to evolve units.",                       Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
-	MutyaBlue    = { Kind = "Item", Tier = "Legendary", Name = "Blue Mutya",    Description = "A Mutya stone used to evolve units.",                       Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
-	MutyaYellow  = { Kind = "Item", Tier = "Legendary", Name = "Yellow Mutya",  Description = "A Mutya stone used to evolve units.",                       Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
-	MutyaPurple  = { Kind = "Item", Tier = "Legendary", Name = "Purple Mutya",  Description = "A Mutya stone used to evolve units.",                       Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
-	MutyaPink    = { Kind = "Item", Tier = "Legendary", Name = "Pink Mutya",    Description = "A Mutya stone used to evolve units.",                       Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
-	MutyaRainbow = { Kind = "Item", Tier = "Mythic",    Name = "Rainbow Mutya", Description = "Made from one of every colour Mutya. Needed for evolutions.", Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	-- B108 pt11 (user): every Mutya uses the ONE white MutyaIcon asset; `Icon.Gradient` (hex stops) is the
+	-- tint UIKit.ItemIcon.applyTint lays over it as an animated UIGradient.
+	MutyaGreen   = { Kind = "Item", Tier = "Epic",      Name = "Green Mutya",   Description = "The base Mutya stone. Crafts every colour Mutya.",          Icon = { Image = "rbxassetid://72082627938021", Gradient = { "3CFF6E", "C8FFD6", "14A546" } }, MaxOwned = 9999, Tradeable = false },
+	MutyaRed     = { Kind = "Item", Tier = "Legendary", Name = "Red Mutya",     Description = "A Mutya stone used to evolve units.",                       Icon = { Image = "rbxassetid://72082627938021", Gradient = { "FF3C46", "FFB4A0", "A8141E" } }, MaxOwned = 9999, Tradeable = false },
+	MutyaBlue    = { Kind = "Item", Tier = "Legendary", Name = "Blue Mutya",    Description = "A Mutya stone used to evolve units.",                       Icon = { Image = "rbxassetid://72082627938021", Gradient = { "3C8CFF", "B4DCFF", "143CBE" } }, MaxOwned = 9999, Tradeable = false },
+	MutyaYellow  = { Kind = "Item", Tier = "Legendary", Name = "Yellow Mutya",  Description = "A Mutya stone used to evolve units.",                       Icon = { Image = "rbxassetid://72082627938021", Gradient = { "FFD732", "FFF5AA", "D2960A" } }, MaxOwned = 9999, Tradeable = false },
+	MutyaPurple  = { Kind = "Item", Tier = "Legendary", Name = "Purple Mutya",  Description = "A Mutya stone used to evolve units.",                       Icon = { Image = "rbxassetid://72082627938021", Gradient = { "AA50FF", "DCB4FF", "641EB4" } }, MaxOwned = 9999, Tradeable = false },
+	MutyaPink    = { Kind = "Item", Tier = "Legendary", Name = "Pink Mutya",    Description = "A Mutya stone used to evolve units.",                       Icon = { Image = "rbxassetid://72082627938021", Gradient = { "FF6EC8", "FFC8EB", "C8328C" } }, MaxOwned = 9999, Tradeable = false },
+	MutyaRainbow = { Kind = "Item", Tier = "Mythic",    Name = "Rainbow Mutya", Description = "Made from one of every colour Mutya. Needed for evolutions.", Icon = { Image = "rbxassetid://72082627938021", Gradient = { "FF3C46", "FF9628", "FFE132", "3CFF6E", "3C8CFF", "AA50FF" } }, MaxOwned = 9999, Tradeable = false },
 
 	-- ===== B108: EXP FOOD (user). Feed a unit for XP (`ExpFood` = XP per item); each unit also needs its
 	-- own food to ASCEND (AscensionConfig.FoodFor). Drop from stage acts + the shop Food tab. Icons PLACEHOLDER. =====

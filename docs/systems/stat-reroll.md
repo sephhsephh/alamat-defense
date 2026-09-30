@@ -140,3 +140,9 @@ Lobby-local; no shared canon changed, **no schema bump** (`StatRolls` and `Worth
 - Dev harness on `StatRerollGUI`: `DevOpen`, `DevSelect` ("first"|uuid), `DevAction` ("all"|"focus:DMG"|"instant"|"instant:RNG"), `DevPopup` ("picker"|"chances"|"filters"|"none"), `DevFilters` ("Stop=S;DMG=10").
 - ⚠ Any reroll resets Worthiness, and Evolution reads takedowns FROM Worthiness -- so a reroll also resets evolution takedown progress (pre-existing B44 rule; flagged to the user).
 
+
+## B108 pt11
+- Filter grade letters are MULTI-select: `filters.Stops` set -> payload `StopGrades = { ... }`; the server stops Instant
+  Roll when any rolled stat's grade is exactly one of them (old `StopGrade` "at or above" still accepted).
+- Rerolling a stat that already matches the active filters asks first ("Would you like to reroll S on Damage?").
+- Old `StatRerollScreen` + `StarterPlayerScripts.StatRerollController` DELETED.

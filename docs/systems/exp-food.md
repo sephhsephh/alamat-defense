@@ -31,3 +31,13 @@ ascension material (`AscensionConfig.FoodFor`).
 - Closes with X, a click outside the popup box, gamepad B, or closing the Units screen. Card hover previews are
   suppressed while it is open. Console: focus lands on the first Feed x1.
 - Harness: `UnitsGUI.DevFeed` = `"open"` or `"FoodTuron:3"` (real remote).
+
+## B108 pt11 -- Feed popup v2 (user reference)
+
+- `FeedPopup.Info.Portrait` (ViewportFrame + `LevelTag`) shows the selected unit and its level.
+- Rows: **Choose Amount** opens the authored `UnitsGUI.FeedAmountPopup` (slider / value box / Min / Half / Max / Apply /
+  Cancel; `GainText` + the XP bar preview update live). **Feed Max** sends everything owned; the server spends only
+  what the unit can absorb before Lv 100, the rest stays ("N kept").
+- A feed that levels the unit opens the authored `UnitsGUI.LevelUpPopup` (before / after cards with DMG/SPA/RNG from
+  `Shared.UnitStatPreview`, food used, click / A / B to continue). Sound slot `SoundService.UI.LevelUp`.
+- Harness `UnitsGUI.DevFeed`: `"open"`, `"FoodTuron:3"`, `"amount:FoodLechon"`.

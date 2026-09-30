@@ -297,3 +297,9 @@ uuid) · `DevSelect`/`DevFakeUnobtained` (Index) · `DevPull`/`DevPage` (Summon)
 
 **`GetUnitViews` is the SINGLE profile read path** since A7 retired `GetCollection` (ADR-0004).
 Load-bearing: additive is free, breaking needs contract treatment. Fields: `places/lobby/CONTEXT.md`.
+
+## B108 pt11 -- NPC prompts
+`StarterPlayerScripts.NpcPromptRouter` is THE place an NPC prompt opens a screen (ProximityPromptService.PromptTriggered ->
+ClientEvents.Open*), so streamed-out/in prompts keep working. Routes: TraitReroll, StatReroll, Craft, Evolve, Ascension,
+Shop, Challenge. All `Lobby.NPC_*` models are ModelStreamingMode Persistent. A renamed NPC can keep working with a
+`OpensEvent` attribute on its prompt.

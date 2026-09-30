@@ -133,3 +133,10 @@ parse-pre-flighted (wrap-and-require) before the run.
 
 Lobby-local; no shared canon changed, **no schema bump** (`Data.Items` and `UnitInstance.Trait` both
 pre-existed).
+
+## B108 pt11 -- icon reveal
+`TraitRerollScreen.Main.RollOverlay.Card` gained `IconHolder` (ReelIcon, NoIcon letter fallback, two spinning rays, glow)
+and `Flash`. Every reel step paints the trait's icon (`TraitRegistry.Icon`) and name; the landing flashes, pops the icon,
+shakes the card. The good-trait reveal shows the icon with the name under it. Sounds (empty = silent):
+`SoundService.UI.TraitReelTick`, `TraitLand`, `TraitGoodReveal`. Fill `TraitDefinitions.Icon` and every surface picks it up
+(Units card, hotbar slot, hover Trait chip `TraitIcon`, trait reroll list, reveal).

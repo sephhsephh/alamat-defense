@@ -440,11 +440,18 @@ local function attachV3(container: GuiObject, opts: { [string]: any })
 			levelLabel.Text = "Lv. " .. tostring(entry.Level or entry.MetaLevel or 1)
 		end
 
-		-- BASE stats (tier 1 / ML 1 / mid-roll / ascension 0) from the shared catalog, plus THIS
-		-- unit's own roll grades. Resolved in-match numbers are deliberately not shown: only the Game
-		-- can compute them, and a card that means two different things in the two Places is worse than
-		-- one that always means "the unit's base line".
-		local base = UnitStatsCatalog.Get(towerId) or {}
+		-- B108 pt11 (user): the FINAL numbers -- level, stat grades, active trait and ascension applied --
+		-- from the shared `Shared.UnitStatPreview`, so both Places print the same value for the same unit.
+		-- Falls back to the catalog base line if that module is missing (a Place caught mid-deploy).
+		local base: any = UnitStatsCatalog.Get(towerId) or {}
+		local usp = RS:FindFirstChild("Shared") and RS.Shared:FindFirstChild("UnitStatPreview")
+		if usp then
+			local okP, P = pcall(require, usp)
+			if okP then
+				local okF, fin = pcall((P :: any).Final, entry)
+				if okF and type(fin) == "table" then base = fin end
+			end
+		end
 		local rolls = entry.StatRolls or {}
 		local grades = entry.Grades
 		for _, stat in ipairs({ "DMG", "SPA", "RNG" }) do
@@ -480,6 +487,13 @@ local function attachV3(container: GuiObject, opts: { [string]: any })
 				local l = traitChip:FindFirstChildWhichIsA("TextLabel")
 				-- B108: the trait's DISPLAY name ("Might II"), not its id ("Might2"); legacy ids resolve too.
 				if l then l.Text = (TraitRegistry and traitName and TraitRegistry.Get(traitName).DisplayName) or tostring(traitName) end
+				-- B108 pt11: the trait's ICON beside its name, once TraitDefinitions carries one (hidden until then).
+				local ic = traitChip:FindFirstChild("TraitIcon")
+				if ic and ic:IsA("ImageLabel") then
+					local img = TraitRegistry and traitName and TraitRegistry.Icon(traitName) or nil
+					ic.Image = img or ""
+					ic.Visible = img ~= nil
+				end
 			end
 			local elementChip = chips:FindFirstChild("Element")
 			if elementChip and elementChip:IsA("GuiObject") then
@@ -516,12 +530,19 @@ local function attachV3(container: GuiObject, opts: { [string]: any })
 		if unitStroke then paintTierGradient(unitStroke, tierName) end
 
 		-- Sit ABOVE the hovered slot, clamped so it never runs off either edge.
-		local vp = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1920, 1080)
+		-- B108 pt11 FIX (user: "its not above the hotbar, its in the middle of the screen"): the authored card
+		-- is AnchorPoint (0.5, 1), but this used to write a TOP-LEFT position -- so the card's BOTTOM landed a
+		-- whole card-height above the slot. The anchor is now pinned to bottom-centre and the position is the
+		-- slot's top-centre, in the preview's own ScreenGui space (AbsolutePosition of both share it).
+		local parentGui = preview.Parent :: any
+		local vp = (parentGui and parentGui:IsA("GuiBase2d") and parentGui.AbsoluteSize)
+			or (workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize) or Vector2.new(1920, 1080)
 		local pw = preview.AbsoluteSize.X > 0 and preview.AbsoluteSize.X or vp.X * 0.22
-		local ph = preview.AbsoluteSize.Y > 0 and preview.AbsoluteSize.Y or vp.Y * 0.28
-		local x = slotBtn.AbsolutePosition.X + slotBtn.AbsoluteSize.X * 0.5 - pw * 0.5
-		local y = slotBtn.AbsolutePosition.Y - ph - 12
-		preview.Position = UDim2.fromOffset(math.clamp(x, 8, math.max(8, vp.X - pw - 8)), math.max(8, y))
+		preview.AnchorPoint = Vector2.new(0.5, 1)
+		local origin = (parentGui and parentGui:IsA("GuiBase2d")) and parentGui.AbsolutePosition or Vector2.zero
+		local cx = slotBtn.AbsolutePosition.X - origin.X + slotBtn.AbsoluteSize.X * 0.5
+		local top = slotBtn.AbsolutePosition.Y - origin.Y - 12
+		preview.Position = UDim2.fromOffset(math.clamp(cx, pw * 0.5 + 8, math.max(pw * 0.5 + 8, vp.X - pw * 0.5 - 8)), math.max(8, top))
 		preview.Visible = true
 	end
 

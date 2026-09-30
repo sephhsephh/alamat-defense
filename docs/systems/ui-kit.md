@@ -311,3 +311,10 @@ capture, and a slide would fight the veil.
 **Focus rules (B103):** first focus = `GamepadDefault` > normal > Close/Back/Leave, top-left among equals; full-screen click-catchers are never focused -- author them `Selectable = false`. **A card that does something must set `Selectable = true` where its click is wired** (`Kit_UnitIconV2`/`Kit_ItemIconV2` are authored false; `ItemIcon.onActivated` does it for you). A closing menu hands focus back to the menu under it. A pad shortcut that requires "nothing selected" must ALSO accept focus inside its own panel, or it can open but never close.
 **Hotbar SFX (B105):** `SoundService.UI.HotbarHover` / `HotbarClick` (both Places) -- paste ids to customise.
 **Testing pad/touch in Studio (B103):** set attribute `DevForceMode` = `Gamepad`/`Touch` on `RS.Shared.InputMode` (Edit, before Play). **Clear it before publishing.**
+
+## B108 pt11
+- `UIKit.ItemIcon.applyTint(image, itemId)` -- animated tint from ItemCatalog `Icon.Gradient`; screens that set an item image
+  by hand call it too.
+- `UIKit.Hotbar` hover card: FINAL stats via `Shared.UnitStatPreview`; anchored bottom-centre above the hovered slot;
+  Trait chip `TraitIcon`.
+- `Shared.UnitStatPreview.Final(view)` / `.Format(n)` -- the one card-stat function (both Places).
