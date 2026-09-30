@@ -1,4 +1,15 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-30 [lobby] B108 pt8 -- AD-UI: **Crafting and Evolve screens rebuilt from the user's references.**
+
+Lobby-local, no canon change. Reference layout: project doc `claude/B108-crafting-evolution-reference-spec.md`.
+
+- **`StarterGui.CraftingGUI`** + `CraftingController` (AUTHORED; item cards through `UIKit.ItemIcon`): left recipe grid with search, selected stone in the glowing ring, right panel (name, Owned Amount, Materials Needed have/need green/red, **Silver have/cost**, Amount box, Craft), bottom bar Crafting | Synthesis | Dismantle | Cancel. **Dismantle popup** = rows (stone have/1, You'll get: Green Mutya xN, Silver cost card, Dismantle) + note box. **Synthesis = "coming soon"** popup (user).
+- **`StarterGui.EvolveGUI`** + `EvolveController` (AUTHORED): "+" base slot -> unit picker (a copy of the Stat Reroll picker; only units that have an evolution; double-click quick select), result slot, grade letters base -> evolved (+1, cap Z+, AL untouched), Evolve / Preview, Materials | Other tabs (Other = lifetime Takedowns, level, Silver, partner, auto-picked sacrifice), **Quick Craft** popup (missing Mutya, inputs have/need, Silver, outputs; partial crafting per the reference's red note), **Quick Synth** = Synthesis coming soon, **Preview** popup (evolved rig, grade changes, lore).
+- `ClientEvents.OpenCrafting` / `OpenEvolution` are now AUTHORED (the B50/B106 controllers created them at runtime). The old `StarterGui.Crafting` / `StarterGui.Evolution` + controllers are **Disabled/hidden** -- delete when happy.
+- Not built: the reference's pin icon (no requirement tracker exists yet).
+
+**Proven live (real clicks):** Crafting -- picked Red Mutya, Craft: Owned 0 -> 1, Silver 37,500 -> 37,000, reveal popup; Dismantle Red: Silver -1,500, Green +2. Evolve -- "+" opened the picker (11 evolvable units), double-click picked Batibat (grades B D C -> A C B, Materials 1/1 Rainbow, 13/42 Green, 0/2 Crown; Other = Level 1/100 in red); Mayari: Quick Craft made 8 Pink Mutya, Evolve -> "Mayari (Lunar Eclipse)", grades B A A after. Preview shows Lalahon (Caldera) with Attack B -> A, SPA A -> S, Range C -> B + lore. All three controllers boot; no errors.
+
 ## 2026-09-30 [both] B108 pt7 -- AD-Meta: **Mutya crafting economy, lifetime Takedowns, evolution raises grades (data layer; the Crafting/Evolve screens follow).**
 
 **CANON (re-hash, count unchanged):** `ItemCatalog` `fe9597fd` -> **`8302f56b`** (+7 Mutya stones; Fragment*/Artifact* kept as LEGACY), `ChallengeConfig` `1640a980` -> **`9162bc2e`** (daily reward = 2-3 Green Mutya + 10% day-colour Mutya). Disk = Game = Lobby, pre-edit hashes checked. **USER REPUBLISHES BOTH PLACES.**
