@@ -1,4 +1,11 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-30 [both] B108 pt11b -- AD-UI: **Items screen icons readable; Mutya tint on the selected item.**
+
+- **CANON:** `UIKitItemIcon` `46b83e00` -> **`49c7f8c3`** (disk = Game = Lobby). An unowned item's art is no longer 60% transparent (it washed into the card's tier gradient and read as "blurry" -- raising its ZIndex could not help); it stays opaque and is darkened (ImageColor3 125,125,135). Owned = full colour. **USER REPUBLISHES BOTH PLACES.**
+- **Lobby `ItemsGUI.ItemsController`:** the SelectedItemFrame big `IconImage` now calls `ItemIcon.applyTint`, so a selected Mutya shows its colour.
+
+**Proven live (real clicks):** Inventory -> Blue Mutya selected: big icon blue, grid cards (owned and unowned) clearly visible.
+
 ## 2026-09-30 [both] B108 pt11 -- AD-UI/AD-Meta: **Feed popup v2, NPC prompts fixed, Summon Max, final stats on every unit card, multi-letter stat filters, tinted Mutya, trait reveal, old screens deleted.**
 
 **CANON (both Places, disk = Game = Lobby, pre-edit hashes checked):** `ItemCatalog` `bb1244b8` -> **`563f621c`** (the USER's `MutyaIcon` asset `rbxassetid://72082627938021` on every Mutya -- the user authored it in the Lobby; Rainbow set to it too -- plus `Icon.Gradient` hex stops per stone), `UIKitItemIcon` `f4de265e` -> **`46b83e00`** (`ItemIcon.applyTint`), `UIKitHotbar` `75dffb7a` -> **`60609369`**, NEW **`UnitStatPreview`** `70436e1c` (`RS.Shared`), **`MetaScalingConfig` PROMOTED** `f319d023` (now also in the Lobby). `HashShared` lists both new modules in both Places. **USER REPUBLISHES BOTH PLACES.**

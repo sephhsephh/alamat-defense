@@ -257,8 +257,12 @@ function ItemIcon.attach(card: GuiButton, itemId: string, qty: number?)
 		if badge and badge:IsA("GuiObject") then
 			badge.Visible = count > 0
 		end
+		-- B108 pt11 (user: unowned icons were "blurry, cant be seen"): an unowned item is no longer faded to
+		-- 60% transparency (the art washed out into the card's tier gradient). The art stays fully opaque and
+		-- is only DARKENED, so it reads clearly and still looks "not owned".
 		if image and image:IsA("ImageLabel") then
-			image.ImageTransparency = count > 0 and 0 or 0.6
+			image.ImageTransparency = 0
+			image.ImageColor3 = if count > 0 then Color3.new(1, 1, 1) else Color3.fromRGB(125, 125, 135)
 		end
 	end
 	function handle.setSelected(on: boolean)
