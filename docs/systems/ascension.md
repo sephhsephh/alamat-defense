@@ -183,3 +183,13 @@ card the button would refuse.
 
 Note the standing tension with ascension: a Mythic dupe is ALSO the material this system consumes,
 which is why its sell price is high enough to make selling one a real decision rather than free money.
+
+## B108 rework (user: "match reference")
+
+- Any tier can ascend, max A3. Each level costs **1 unascended, non-shiny dupe** (locked / favourited / equipped still
+  protected; oldest first) **+ 1 of the unit's own EXP food** (`AscensionConfig.FoodFor`, first pass by rarity).
+- Bonuses: I +3% DMG, II +5% Range, III +7% DMG (absolute: A1 DMG x1.03; A2 DMG x1.03 RNG x1.05; A3 DMG x1.10 RNG x1.05).
+  Already-ascended units keep their stars and use the new numbers.
+- `AscensionRules.ItemMap` turns `GetCost().Items` (a list) into the map `GrantService.SpendItems` takes.
+- **Screen:** `StarterGui.AscensionGUI` + `AscensionController` (AUTHORED): notices, stars, dupe + food requirements,
+  hover stat card, bonus cards, unit picker. Old `AscensionScreen` + its controller are DISABLED -- delete when happy.

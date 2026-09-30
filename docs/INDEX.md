@@ -88,6 +88,7 @@
   `CodeService` (**THE one writer of `Data.RedeemedCodes`**). Read the two warnings before touching
   it: every code in the registry is **PUBLIC** because the module replicates, and the rate limit is
   **security, not UX** — without it the remote is a code-space enumerator.
+- `exp-food.md` — **AD-Meta, LOBBY**: EXP food items (B108), `FeedService` / `FeedUnit`, Feed popup on the Units screen.
 - `shop.md` — **AD-Gacha canon, LOBBY**: the daily shop (B40), and **the game's first and only Silver
   sink** — B31 minted Silver and nothing ever spent it. Read it for the derived-not-stored stock
   (`MetaMath.RngForSlot`), and for the PRE-CHECK → SPEND → GRANT → MARK ordering with a refund on the

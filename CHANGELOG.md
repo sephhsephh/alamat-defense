@@ -1,4 +1,14 @@
 # CHANGELOG (append-only; newest first)
+## 2026-09-30 [lobby] B108 pt10 -- AD-UI: **Ascension and Shop screens rebuilt from the references; EXP food Feed popup on the Units screen.**
+
+Lobby-local, no canon change. Reference layout: project doc `claude/B108-ascension-shop-reference-spec.md`.
+
+- **`StarterGui.AscensionGUI`** + `AscensionController` (AUTHORED): notices, star row, dupe + food requirement cards, hover stat card, bonus cards (I +3% DMG / II +5% Range / III +7% DMG), unit picker. Old `AscensionScreen` + controller DISABLED.
+- **`StarterGui.SilverShopGUI`** + `SilverShopController` (AUTHORED): All/Materials/Misc/Food tabs, search, cards with min / - / qty / + / max, multi-select -> Confirm -> Buy Max / Buy Amount slider, Silver packs column, "+50 Unit Slots" (moved clear of the restock pill), restock countdown. Old `ShopGUI` DISABLED. `ClientEvents.OpenShop` authored.
+- **Feed (user: "Units screen"):** the authored-but-unused `SelectedUnitFrame.UpgradeUnitButton` is now labelled **Feed** and opens the new AUTHORED `UnitsGUI.FeedPopup` (+ `FeedScrim`): food rows (Feed x1 / Feed Max), unit info with Lv a -> Lv b preview and an XP bar preview on the shared curve. Closes on X / outside click / gamepad B / screen close; card hover previews are suppressed while open. Harness `UnitsGUI.DevFeed`. `docs/systems/exp-food.md`.
+
+**Proven live (real clicks):** Ascension -- Oryol A0 -> A1 (dupe + Bibingka consumed). Shop -- Turon x3; multi-select Bibingka + Adobo, Buy Amount half = 24 each, Silver 38,640 -> 25,440; sold-out state. Feed -- Aswang Turon Feed Max ate 13 (+585 XP, 88 -> 673/1286); Aswang (Blood Moon) Lechon x1 Lv 2 -> 3, then Bibingka Feed Max ate 24 (+1,800 XP) Lv 3 -> 4 at 988/1286 (server matches); preview showed "+1800 XP, Lv 3 -> Lv 4" before the click; clicking inside the popup keeps it open, outside closes it without clicking through.
+
 ## 2026-09-30 [both] B108 pt9 -- AD-Meta: **ascension rework, EXP food, full-catalogue shop with daily stock, Silver packs (data layer; the Ascension/Shop screens follow).**
 
 Decisions: project docs `claude/B108-ascension-shop-decisions.md` + `claude/B108-ascension-shop-reference-spec.md`.

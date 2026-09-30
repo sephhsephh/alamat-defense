@@ -93,3 +93,19 @@ opened from a blockout **NPC** `Workspace.Lobby.NPC_Shop` (a `ProximityPrompt` f
 HUD button. Renders one `ShopSlotTemplate` per daily slot (icon · name · qty · price · Buy · SoldOutOverlay)
 with the Silver balance and a restock countdown; buy = `BuyShopItem(slot)` → `ShowRewards` (B37). The spec
 is the CONTRACT: replace the screen and the NPC keeping the names and the controller needs zero edits.
+
+## B108 rebuild -- full catalogue, daily stock, Silver packs
+
+User decisions: project docs `claude/B108-ascension-shop-decisions.md` + `claude/B108-ascension-shop-reference-spec.md`.
+The B40 daily-slot model above is **superseded**.
+
+- **`ShopConfig`** = 19 rows, ALWAYS listed (`RowId`, `Id`, `Qty`, `Price` in Silver, `Stock` per player per day, `Tab`).
+  Tabs: All / Materials (Mutya, Golden Seed) / Misc (Stat Chip, Focus Chip, Trait token, Banner Ticket, Gold) / Food (the 6 EXP foods).
+- **`ShopService`** (THE one writer of `Data.ShopStock`): `GetShopStock`, `BuyShopItem(rowId, count)`,
+  `BuyShopItems(list, "max"?)` (multi-select / Buy Max). `Data.ShopStock.Bought` is keyed by row id and resets at the day roll.
+- **Silver packs:** `SilverPackConfig` (1,100 / 5,500 / 11,000 / 25,000; **ProductId 0 until the user creates the dev products**) +
+  `SilverPackService` (`GetSilverPacks` / `BuySilverPack`), granted through ReceiptService.
+- **Screen:** `StarterGui.SilverShopGUI` + `SilverShopController` (AUTHORED, reference layout): tabs, search, cards with
+  min / - / qty / + / max, multi-select -> Confirm -> Buy Max or Buy Amount slider, Silver pack column, "+50 Unit Slots"
+  (BuyUnitSlots through `UIKit.Confirm`), restock countdown. Opens from `NPC_Shop` / `ClientEvents.OpenShop` (authored).
+  The old `StarterGui.ShopGUI` is DISABLED -- delete when happy.
