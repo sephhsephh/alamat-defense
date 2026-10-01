@@ -267,3 +267,14 @@ exactly as the reveal contract above specifies.
   Standard) or Secret is never featured.
 - Summon Max: `GachaConfig.MaxPullCount = 50`; any whole count 1..50 is allowed; the button pulls as many as the player
   can afford.
+
+## B108 pt13 — level gates + Shiny Hunter
+- Rule: `GachaConfig.LevelGate` = { Level = 10, Tiers = Secret/Alamat/Limited, Shiny = true }; pure
+  `GachaConfig.ResolveGates(level, ownsShinyHunter)` -> `{ Blocked, BlockedList, ShinyChance, GateLevel, Gated, ShinyHunter }`.
+  The SERVER resolves it per batch (`ShinyHunterService.GatesFor(player, Data.PlayerLevel)`); the client reads the same
+  function's output through `GetSummonState.Gates` for the Info popup and the Index.
+- Engine: `BuildContext(cfg, now, featured, luck, gates)`. A blocked tier is skipped by the pity override and FALLS to the
+  highest stocked unblocked tier below it (`roll.GatedFrom`); the pity ledger records the tier actually awarded. The shiny
+  RNG draw is always consumed (stream unchanged); only the threshold moves (0 when gated, x2 with the pass).
+- Shiny Hunter = gamepass, ownership cached by `ShinyHunterService` (Roblox is the ledger, nothing stored in the profile).
+  `ShinyHunterGamePassId = 0` is a PLACEHOLDER: nobody owns it, the Info button says "coming soon".

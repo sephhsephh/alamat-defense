@@ -160,3 +160,28 @@ interaction.
 - **ReceiptService** gained a Studio-only test seam (`_Decide`) driven by `LuckPackService`'s
   `DevReceiptTest` harness — the first real exercise of the receipt pipeline. A real Robux charge
   is still untested (needs a purchase).
+
+## B108 pt13 — the "hero stage" rebuild + the summon animation
+The B55 screen (`StarterGui.SummonScreen`) is PARKED (Enabled=false, controller Disabled, attr `RetiredB108pt13`);
+`IndexController` still waits for it, so delete both together once the user signs off.
+- **Screen:** `StarterGui.SummonGUI` (authored) driven by `SummonGUIController`. Same data contract as B55
+  (BannerRegistry/GachaConfig/PityConfig/LuckConfig/AutoSellConfig in RS + ONE `GetSummonState` read + the
+  `ChooseBannerUnit` read mode). Tree: `Main/{Scrim, Root/{Header, Stage, Dock, Drawer}, ChancesPopup, InfoPopup,
+  AutoSellPopup, PickerPopup}`. Templates (`TabTemplate`, `FeaturedTemplate`, `PityTemplate`, `PackTemplate`,
+  `GroupTemplate`/`ChipTemplate`, `GateRowTemplate`, `RowTemplate`, `OptionTemplate`) are parked under the controller.
+- **Gradients:** any `UIGradient` with attribute `Anim` = `Loop`|`Spin` (+ `Period`) is animated by `UIKit.Motion`
+  (`loopGradient`/`spinGradient`, visible-only). Gradients named `TierGradient` are repainted with the tier's colours;
+  on TEXT the controller lightens them 40% toward white (deep tiers were unreadable on the dark outline).
+- **Selection:** pick button -> SELECT UNIT (search + grid) -> `UIKit.Confirm` ("...only change it again after the
+  daily reset!") -> `ChooseBannerUnit` -> `Notify.Success("Successfully selected unit!")`. Lock = the existing
+  day-number cooldown; "Time Left" counts to the next reset (`MetaConfig.ResetOffsetSec`).
+- **Many switcher:** `GachaConfig.ManyPresets` = {10, 25, 0}; 0 = MAX affordable (<= `MaxPullCount`). Session-only.
+- **Gamepad:** `Main` tagged `GamepadMenu`; while open B = back/close, L1/R1 = tabs, X = x1, Y = many.
+- **Animation:** `StarterGui.SummonRevealGUI` (DisplayOrder 140) + `SummonReveal.Play(result)` (yields). Orb charge
+  time per best tier in `SummonReveal.Tuning.Charge`; showcase threshold `Tuning.ShowcaseMinTier = "Epic"` (+ any
+  shiny, trait or `New`). After it, the controller fires `ShowRewards(result.Rewards)` unchanged. Skipped when the saved
+  setting `SkipSummonAnim` is on (read via the shared `ClientSettings`). Camera move: planned, not built.
+- **Server additions:** `RequestSummon` reply `Tiers[i]` (the pull's tier) and view `New` (first-ever copy);
+  `GetSummonState.Gates`. Level gates: see `gacha.md`.
+- **Dev harness:** `SummonGUI` attributes `DevPull`, `DevTab`, `DevPopup` (chances/info/autosell/picker), `DevChoose`
+  (no confirm), `DevSwitch`.
