@@ -1,4 +1,13 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-02 [lobby] B108 pt13d -- AD-UI: **new toast notifications, Daily Rewards restyle + claim ceremony, ScreenFX on Units/Summon/Daily.**
+
+**CANON:** `UIKitNotify` `5e2b09d4` -> **`e6aedeb9`** on disk + LOBBY only. **GAME NOT DEPLOYED ON PURPOSE (user): the user copies `StarterGui.Notifications` into the Game first, then a session syncs the module** -- PENDING in STATE.md (replaced the obsolete B33 "StarterGui.Summon is unfinished" line: that GUI no longer exists, the summon screen was rebuilt B55/B108 pt13). The module is backward compatible with the old card, so nothing breaks in between.
+
+- **Toasts:** authored new `CardTemplate` (badge + glyph, type title, white message, tint wash, animated accent stroke, draining timer bar, sheen, dedupe counter); newest on top; hover pauses, click dismisses; same message stacks as "x2/x3"; pop + tilt + sheen + spinning badge, Error shakes; per-type sound. Old card kept hidden as `CardTemplate_RetiredB108pt13d`. Glyph for Error is a plain "X" (GothamSSm has no U+2715 -- it drew a box).
+- **Daily Rewards:** restyled in place (names per the B40 spec kept), responsive scale (was ~1070px wide fixed), pill statuses, breathing READY card, streak count + bar, "DAY n CLAIMED!" ceremony. A UIGradient on a TextLabel tints the TEXT too -- the status pill uses BackgroundColor3 instead.
+- **ScreenFX:** Units (no blur), Summon (Header/Stage/Dock), Daily Rewards wired; `success()` text is clamped to the screen edge. Summon's Luck chip moved off the banner title.
+- **Proven live (real clicks):** 4 toast types + an Error x3 dedupe on screen; Daily Rewards open (scaled, styled), real claim of Day 1 -> burst + "DAY 1 CLAIMED!" -> reveal, HUD then "Resets in 14:00:27"; HUD Units -> opens; HUD Summon -> Units closes, Summon opens with blur 14; X -> blur 0. No client errors.
+- **Dev profile touched:** Day 1 daily reward claimed for real (streak 1).
 ## 2026-10-02 [lobby] B108 pt13c -- AD-UI: **NPC screens get a shared juice layer (ScreenFX): blur + drop-in open, springy buttons, success ceremonies, one screen at a time.**
 
 - **NEW** `StarterPlayerScripts.Client.UI.ScreenFX` + authored `StarterGui.ScreenFXLayer` (templates Burst/Spark/Charge/ResultText, hidden) + `Lighting.ScreenFXBlur`. Wired into StatReroll, SilverShop, Evolve, Ascension, Crafting -- open/close, button springs, grid pop-in, popup slide-in, and per-action ceremonies (charge ring while the server works -> burst + sparks + flash + big text + shake: "PURCHASED!", "EVOLVED!", "ASCENDED!", "CRAFTED xN!", "DISMANTLED!", grade-up "S!"; refusals shake). Opening one of these screens now closes the others. Full write-up: `docs/systems/screen-fx.md`.

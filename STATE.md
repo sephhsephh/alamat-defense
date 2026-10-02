@@ -52,7 +52,7 @@ Resolved PENDINGs live in `CHANGELOG.md`. This list is CURRENT-state only.
 - **NOT A PENDING — DO NOT RE-RAISE (USER, B40): the empty SoundIds are DELIBERATE** — the user fills all 13 slots **at release**;
   silence in development is expected. Same standing class as the 0.05 `UIHoverStroke.Thickness`. **`ConfirmationPopupUI` IS LIVE AND VERIFIED IN THE GAME (B63)** — 23 descendants, every part `resolve()` gates on, driven end to end in Play: open -> `Enabled` false->true, 2s gate (`YES (3)` countdown, locked grey, `No` live at once) -> ready green -> a REAL mouse click on `No` returned **false** -> clean teardown, `busy` released. No longer an open question.
 - **PENDING (USER, B32, art):** `SellButtons.CancelButton` nearly overlaps `QuickSellButton`; `PlayButton` wears the **Shop** logo.
-- **PENDING (USER, B33): the new `StarterGui.Summon` is UNFINISHED — do NOT touch.**
+- **PENDING (USER -> then AD-UI, B108 pt13d): copy the Lobby's `StarterGui.Notifications` (new `CardTemplate`) into the GAME**, then a session deploys shared `UIKitNotify` `e6aedeb9` to the Game (manifest `deployed.Game` is still `5e2b09d4`; the module is backward compatible, so either order is safe). Lobby `CardTemplate_RetiredB108pt13d` = the old card, delete when happy.
 - **NOT A PENDING — LEVELLING WORKS (B41).** `AddPlayerXP` applies `PlayerLevelConfig.ApplyXP` (SHARED CANON `2e99d041`) and writes BOTH
   fields; it is the ONE account-XP path. **`PlayerLevel` is authoritative; `PlayerXP` is progress WITHIN the level, NEVER a lifetime
   total.** **No migration and no v5** — `ApplyXP` self-heals a backlog on the next grant. **PENDING (USER, balance, B33):** L50 =

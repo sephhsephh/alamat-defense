@@ -282,3 +282,12 @@ script(s) finished after 15s` — a line that had never once appeared before.
 longer hang *quietly*, and it catches hangs from causes a timeout sweep never would — a remote that
 never returns, a yield in a future script nobody has written yet. The `need()` rule still applies to
 anything touched from here; see the section above.
+
+## B108 pt13d — toast re-skin (UIKitNotify e6aedeb9, Lobby; Game pending the user's GUI copy)
+- New authored `StarterGui.Notifications.CardTemplate`: `IconBadge/Glyph`, `Kind` (type title), `Message` (white),
+  `Count` (dedupe "x2"), `Wash` (type tint), `Accent`, `AccentStroke/AccentGradient`, `TimerBar/Fill`, `Sheen`, `UIScale`.
+  Container moved to y 0.085, 8px padding. The old card is kept hidden as `CardTemplate_RetiredB108pt13d`.
+- Behaviour: newest on top (LayoutOrder = -seq); hover pauses the timer, click/tap dismisses; the same message+type
+  while its card is up bumps the counter and restarts the timer; enter = pop + tilt + sheen + spinning badge, Error
+  shakes; per-type sound via UIKit.Sound (Error/Confirm/Click). API unchanged (Notify/Error/Success/Warning/Info).
+- The module reads every new part OPTIONALLY, so the Game's old card keeps working until the art is copied.

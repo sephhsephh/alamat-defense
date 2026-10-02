@@ -1,33 +1,31 @@
 --!strict
 -- UIKitNotify.lua (SHARED CANON -- deploy path ReplicatedStorage.Shared.UIKit.Notify)
--- Kit CONTROLLER (toast notifications). Promoted to shared canon at B34.
+-- Kit CONTROLLER (toast notifications). Promoted to shared canon at B34. Re-skinned B108 pt13d.
 --
 -- Any client script:
 --   local Notify = require(ReplicatedStorage.Shared.UIKit.Notify)
 --   Notify.Error("You can only place 4 Archer")   Notify.Success("Tower placed")
 --   Notify.Warning("...")   Notify.Info("...")    Notify.Notify(msg, "Error")
 --
--- *** WHY THIS IS SHARED, AND WHY IT WAS NOT UNTIL B34. ***
--- The Game grew this first (Client.UI.NotificationController). At B33 the user copied it into the
--- Lobby and asked for it Lobby-wide, which left TWO copies, in DIFFERENT paths, in NEITHER manifest,
--- and only the Lobby's hardened -- a fork with no drift control, which is precisely what the
--- shared-canon system exists to prevent. Both copies are retired; this is the one.
--- It follows UIKit.Confirm's shape exactly: the MODULE is shared canon, the GUI it drives
--- (StarterGui.Notifications -- Container + CardTemplate) stays PER-PLACE AUTHORED ART, because art
--- cannot be scripted and copying a ScreenGui between Places is a USER action (B26).
+-- The MODULE is shared canon; the GUI it drives (StarterGui.Notifications -- Container + CardTemplate)
+-- is PER-PLACE AUTHORED ART, copied between Places by the USER (B26), same shape as UIKit.Confirm.
 --
 -- *** THE RULE FOR CALLERS: TOAST EVENTS, LABEL STATE. *** (docs/systems/ui-feedback.md)
--- A card auto-dismisses after Duration. That makes it right for something that HAPPENED -- sold,
--- refused, failed, upgraded -- and WRONG for something that IS TRUE ("this banner is blocked",
--- "this unit cannot ascend"). Erasing a still-current condition off the screen after a few seconds
--- is worse than never having shown it: persistent state belongs on a label that keeps saying it.
+-- A card auto-dismisses, so it is right for something that HAPPENED and wrong for something that IS TRUE.
 --
--- CLIENT MODULE. There is no LocalPlayer on the server, so a server require degrades to print-only
--- rather than erroring -- a misplaced require should cost a toast, never a boot.
+-- B108 pt13d (user: "improve the looks of the notification system"):
+--   * NEWEST ON TOP, older cards slide down; cap MaxCards, oldest leaves first.
+--   * Type badge (glyph), type title, white message, colour wash + animated accent stroke, and a TIMER
+--     BAR that drains over the card's life. Hovering a card PAUSES its timer; clicking/tapping it
+--     dismisses it early (a toast is not a screen -- the close-button rule is for screens).
+--   * DEDUPE: the same message + type while its card is still up bumps an "x2, x3..." counter and
+--     restarts the timer instead of stacking copies (spam-clicking a refused button used to fill the stack).
+--   * Enter: pop + tilt + a light sheen sweep, the badge spins in; Error cards shake. Exit: shrink + fade.
+--   * Optional sound per type through UIKit.Sound (silent if the slot is empty).
+--   * BACKWARD COMPATIBLE with the pre-pt13d CardTemplate (Message + Accent + AccentStroke only): every new
+--     part is looked up optionally, so a Place still holding the old art keeps working unchanged.
 --
--- Cards pop in (UIScale), stack in the GUI's UIListLayout so they NEVER overlap, cap at MaxCards,
--- then fade and destroy themselves. Colour is coded by type. All visuals live in the authored GUI;
--- this module only clones CardTemplate and animates it.
+-- CLIENT MODULE. A server require degrades to print-only rather than erroring.
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -36,31 +34,35 @@ local TweenService = game:GetService("TweenService")
 local NotifyKit = {}
 
 local COLORS: { [string]: Color3 } = {
-	Error = Color3.fromRGB(255, 90, 90),
-	Success = Color3.fromRGB(110, 225, 140),
-	Warning = Color3.fromRGB(255, 190, 70),
+	Error = Color3.fromRGB(255, 90, 100),
+	Success = Color3.fromRGB(110, 230, 140),
+	Warning = Color3.fromRGB(255, 196, 70),
 	Info = Color3.fromRGB(110, 190, 255),
 }
 NotifyKit.Colors = COLORS
 
+local GLYPHS: { [string]: string } = { Error = "X", Success = "\u{2713}", Warning = "!", Info = "i" }
+local TITLES: { [string]: string } = { Error = "ERROR", Success = "SUCCESS", Warning = "WARNING", Info = "INFO" }
+local SOUNDS: { [string]: string } = { Error = "Error", Success = "Confirm", Warning = "Error", Info = "Click" }
+
 -- The ONE place to retune how toasts feel, same reasoning as Motion.Tuning.
 NotifyKit.Tuning = {
-	Duration = 3.5,   -- seconds a card stays before dismissing
+	Duration = 3.5,   -- seconds a card stays (each dedupe bump restarts it)
 	MaxCards = 5,     -- older cards are dismissed early past this
-	PopTime = 0.28,
-	FadeTime = 0.25,
-	PopFrom = 0.7,
-	FadeToScale = 0.85,
+	PopTime = 0.32,
+	FadeTime = 0.22,
+	PopFrom = 0.6,
+	FadeToScale = 0.8,
+	EnterTilt = -5,
+	SheenTime = 0.6,
+	PlaySounds = true,
 }
 
--- ===== resolution =====
--- Bounded waits, never bare ones. This module is required by SCREEN CONTROLLERS at boot, so a bare
--- WaitForChild here would stop being "no toasts" and become "that screen never finishes booting" --
--- exactly how the Lobby's Units screen died at B33. If the authored GUI is absent, every call
--- degrades to a printed line and the CALLER CARRIES ON.
+-- ===== resolution (bounded waits: a missing GUI must cost a toast, never a screen's boot) =====
 local container: Instance? = nil
 local template: Instance? = nil
 local disabled = true
+local SoundKit: any = nil
 
 local function resolve()
 	if RunService:IsServer() then
@@ -83,79 +85,255 @@ local function resolve()
 		return
 	end
 	disabled = false
+	local parent = script.Parent
+	local sm = parent and parent:FindFirstChild("Sound")
+	if sm and sm:IsA("ModuleScript") then
+		local ok, mod = pcall(require, sm)
+		if ok then SoundKit = mod end
+	end
 end
 resolve()
 
+local function tween(o: Instance, t: number, props: { [string]: any }, style: Enum.EasingStyle?, dir: Enum.EasingDirection?): Tween
+	local tw = TweenService:Create(o, TweenInfo.new(t, style or Enum.EasingStyle.Quad, dir or Enum.EasingDirection.Out), props)
+	tw:Play()
+	return tw
+end
+
+local function find(card: Instance, name: string): any
+	return card:FindFirstChild(name)
+end
+
 local seq = 0
+-- live card -> its timer state
+type Timer = { left: number, total: number, paused: boolean }
+local timers: { [Instance]: Timer } = {}
 
 local function dismiss(card: Instance?)
 	if card == nil or card.Parent == nil then
 		return
 	end
 	local frame = card :: Frame
-	-- An attribute, not a table, so a card dismissed twice (cap eviction racing the timer) is a
-	-- no-op rather than a double-destroy.
 	if frame:GetAttribute("Dismissing") then
 		return
 	end
 	frame:SetAttribute("Dismissing", true)
+	timers[frame] = nil
 
-	local info = TweenInfo.new(NotifyKit.Tuning.FadeTime)
-	TweenService:Create(frame, info, { BackgroundTransparency = 1 }):Play()
+	local t = NotifyKit.Tuning.FadeTime
+	tween(frame, t, { BackgroundTransparency = 1, Rotation = 3 })
 	for _, d in ipairs(frame:GetDescendants()) do
 		if d:IsA("TextLabel") then
-			TweenService:Create(d, info, { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
+			tween(d, t, { TextTransparency = 1, TextStrokeTransparency = 1, BackgroundTransparency = 1 })
 		elseif d:IsA("Frame") then
-			TweenService:Create(d, info, { BackgroundTransparency = 1 }):Play()
+			tween(d, t, { BackgroundTransparency = 1 })
 		elseif d:IsA("UIStroke") then
-			TweenService:Create(d, info, { Transparency = 1 }):Play()
+			tween(d, t, { Transparency = 1 })
 		end
 	end
-	local scale = frame:FindFirstChildWhichIsA("UIScale")
-	if scale then
-		TweenService:Create(scale, info, { Scale = NotifyKit.Tuning.FadeToScale }):Play()
+	local scale = frame:FindFirstChild("UIScale")
+	if scale and scale:IsA("UIScale") then
+		tween(scale, t, { Scale = NotifyKit.Tuning.FadeToScale }, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 	end
-	task.delay(NotifyKit.Tuning.FadeTime + 0.03, function()
+	task.delay(t + 0.03, function()
 		if frame and frame.Parent then
 			frame:Destroy()
 		end
 	end)
 end
 
+-- One heartbeat drives every timer bar, so a dozen cards cost one connection.
+local timerConn: RBXScriptConnection? = nil
+local function ensureTimerLoop()
+	if timerConn then return end
+	timerConn = RunService.Heartbeat:Connect(function(dt)
+		local any = false
+		for card, tm in pairs(timers) do
+			any = true
+			if card.Parent == nil then
+				timers[card] = nil
+			elseif not tm.paused then
+				tm.left -= dt
+				local bar = find(card, "TimerBar")
+				local fill = bar and find(bar, "Fill")
+				if fill then
+					fill.Size = UDim2.fromScale(math.clamp(tm.left / tm.total, 0, 1), 1)
+				end
+				if tm.left <= 0 then
+					dismiss(card)
+				end
+			end
+		end
+		if not any and timerConn then
+			timerConn:Disconnect()
+			timerConn = nil
+		end
+	end)
+end
+
+local function playEnter(card: Frame, kind: string)
+	local scale = card:FindFirstChild("UIScale")
+	if scale and scale:IsA("UIScale") then
+		scale.Scale = NotifyKit.Tuning.PopFrom
+		tween(scale, NotifyKit.Tuning.PopTime, { Scale = 1 }, Enum.EasingStyle.Back)
+	end
+	card.Rotation = NotifyKit.Tuning.EnterTilt
+	tween(card, NotifyKit.Tuning.PopTime, { Rotation = 0 }, Enum.EasingStyle.Back)
+	local badge = find(card, "IconBadge")
+	if badge then
+		badge.Rotation = -180
+		tween(badge, 0.45, { Rotation = 0 }, Enum.EasingStyle.Back)
+		local bs = badge:FindFirstChild("UIScale")
+		if bs and bs:IsA("UIScale") then
+			bs.Scale = 0.2
+			tween(bs, 0.45, { Scale = 1 }, Enum.EasingStyle.Back)
+		end
+	end
+	local sheen = find(card, "Sheen")
+	if sheen then
+		sheen.Position = UDim2.fromScale(-0.2, 0.5)
+		tween(sheen, NotifyKit.Tuning.SheenTime, { Position = UDim2.fromScale(1.2, 0.5) }, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+	end
+	if kind == "Error" then
+		task.spawn(function()
+			for i = 1, 6 do
+				card.Rotation = (if i % 2 == 0 then 1 else -1) * (4 - i * 0.6)
+				task.wait(0.035)
+			end
+			card.Rotation = 0
+		end)
+	end
+	local grad = find(card, "AccentStroke")
+	grad = grad and grad:FindFirstChild("AccentGradient")
+	if grad and grad:IsA("UIGradient") then
+		tween(grad, 1.2, { Rotation = grad.Rotation + 360 }, Enum.EasingStyle.Linear)
+	end
+end
+
+local function paint(card: any, kind: string, message: string)
+	local color = COLORS[kind] or COLORS.Info
+	card.Message.Text = message
+	-- The new art carries a Kind title: the message stays white and the TYPE colour goes on the chrome.
+	-- The old art had no title, so its message keeps the type colour.
+	local kindLabel = find(card, "Kind")
+	if kindLabel then
+		kindLabel.Text = TITLES[kind] or string.upper(kind)
+		kindLabel.TextColor3 = color
+	else
+		card.Message.TextColor3 = color
+	end
+	local accent = find(card, "Accent")
+	if accent then accent.BackgroundColor3 = color end
+	local wash = find(card, "Wash")
+	if wash then wash.BackgroundColor3 = color end
+	local badge = find(card, "IconBadge")
+	if badge then
+		badge.BackgroundColor3 = color
+		local glyph = find(badge, "Glyph")
+		if glyph then glyph.Text = GLYPHS[kind] or "i" end
+	end
+	local bar = find(card, "TimerBar")
+	local fill = bar and find(bar, "Fill")
+	if fill then fill.BackgroundColor3 = color end
+	local stroke = find(card, "AccentStroke")
+	if stroke then
+		stroke.Color = color
+		local g = find(stroke, "AccentGradient")
+		if g then
+			g.Color = ColorSequence.new({
+				ColorSequenceKeypoint.new(0, color),
+				ColorSequenceKeypoint.new(0.5, Color3.new(1, 1, 1)),
+				ColorSequenceKeypoint.new(1, color),
+			})
+			-- the gradient tints the stroke's own colour, so keep the base white under it
+			stroke.Color = Color3.new(1, 1, 1)
+		end
+	end
+end
+
+local function sound(kind: string)
+	if SoundKit and NotifyKit.Tuning.PlaySounds then
+		pcall(SoundKit.play, SOUNDS[kind] or "Click", "UI")
+	end
+end
+
+-- The same message + type is already up: bump its counter and restart its clock.
+local function bump(card: Frame)
+	local n = (tonumber(card:GetAttribute("Count")) or 1) + 1
+	card:SetAttribute("Count", n)
+	local cnt = find(card, "Count")
+	if cnt then
+		cnt.Text = "x" .. n
+		cnt.Visible = true
+		local cs = cnt:FindFirstChild("UIScale")
+		if cs and cs:IsA("UIScale") then
+			cs.Scale = 1.6
+			tween(cs, 0.3, { Scale = 1 }, Enum.EasingStyle.Back)
+		end
+	end
+	local scale = card:FindFirstChild("UIScale")
+	if scale and scale:IsA("UIScale") then
+		scale.Scale = 1.06
+		tween(scale, 0.25, { Scale = 1 }, Enum.EasingStyle.Back)
+	end
+	local tm = timers[card]
+	if tm then
+		tm.left = tm.total
+	end
+end
+
 function NotifyKit.Notify(message: string, notifType: string?): Instance?
 	local kind = notifType or "Info"
-	-- Degraded mode still SAYS the thing, on the one channel that cannot be deleted.
 	if disabled or container == nil or template == nil then
 		print("[Notify:" .. kind .. "] " .. message)
 		return nil
 	end
-	local color = COLORS[kind] or COLORS.Info
+
+	for _, c in ipairs((container :: Instance):GetChildren()) do
+		if c:IsA("Frame") and not c:GetAttribute("Dismissing")
+			and c:GetAttribute("Msg") == message and c:GetAttribute("Kind") == kind then
+			bump(c)
+			sound(kind)
+			return c
+		end
+	end
 
 	seq += 1
 	local card = (template :: Instance):Clone() :: any
 	card.Name = "Notif"
-	card.LayoutOrder = seq
+	card.LayoutOrder = -seq -- newest on top
 	card.Visible = true
-	card.Message.Text = message
-	card.Message.TextColor3 = color
-	card.Accent.BackgroundColor3 = color
-	local stroke = card:FindFirstChild("AccentStroke")
-	if stroke then
-		(stroke :: UIStroke).Color = color
-	end
+	card:SetAttribute("Msg", message)
+	card:SetAttribute("Kind", kind)
+	card:SetAttribute("Count", 1)
+	paint(card, kind, message)
 	card.Parent = container
 
-	local scale = card:FindFirstChildWhichIsA("UIScale")
-	if scale then
-		scale.Scale = NotifyKit.Tuning.PopFrom
-		TweenService:Create(scale,
-			TweenInfo.new(NotifyKit.Tuning.PopTime, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-			{ Scale = 1 }):Play()
+	local total = NotifyKit.Tuning.Duration
+	timers[card] = { left = total, total = total, paused = false }
+	ensureTimerLoop()
+
+	-- hover pauses, click/tap dismisses (only the new art is Active; the old art ignores input)
+	if card:IsA("GuiObject") then
+		card.MouseEnter:Connect(function()
+			local tm = timers[card]
+			if tm then tm.paused = true end
+		end)
+		card.MouseLeave:Connect(function()
+			local tm = timers[card]
+			if tm then tm.paused = false end
+		end)
+		card.InputBegan:Connect(function(input: InputObject)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+				dismiss(card)
+			end
+		end)
 	end
 
-	-- Keep the stack bounded: dismiss the oldest SURVIVING card past the cap. Counting only cards
-	-- that are not already dismissing is what stops a burst from evicting cards twice and leaving
-	-- the stack shorter than the cap.
+	playEnter(card, kind)
+	sound(kind)
+
+	-- Keep the stack bounded: dismiss the oldest SURVIVING card past the cap.
 	local live = {}
 	for _, c in ipairs((container :: Instance):GetChildren()) do
 		if c:IsA("Frame") and not c:GetAttribute("Dismissing") then
@@ -164,14 +342,10 @@ function NotifyKit.Notify(message: string, notifType: string?): Instance?
 	end
 	if #live > NotifyKit.Tuning.MaxCards then
 		table.sort(live, function(a, b)
-			return a.LayoutOrder < b.LayoutOrder
+			return a.LayoutOrder > b.LayoutOrder -- most negative = newest; the largest is the oldest
 		end)
 		dismiss(live[1])
 	end
-
-	task.delay(NotifyKit.Tuning.Duration, function()
-		dismiss(card)
-	end)
 
 	return card
 end

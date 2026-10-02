@@ -38,3 +38,14 @@ ScreenFX call is guarded (`if ScreenFX then`), so a screen still works without t
 - **Restyle (authored):** every top-level panel stroke got an animated theme `FXStrokeGradient` (green / gold / orange /
   violet-cyan / rainbow), banner gradients and button gradients loop, banner titles got an `FXShimmer`.
 - **Layouts kept** (they are the user's own references and every feature works as-is).
+
+## B108 pt13d — Daily Rewards, Units, Summon
+- **Daily Rewards:** restyled in place (spec names kept): gradient panel + animated gold stroke, gold shimmer title, pill
+  tabs with a selected stroke, day cards with gradient bodies and status PILLS (green claimed / gold ready / grey later),
+  claimed icons dimmed, the READY card bobs + its glow pulses + a shine turns behind it, the streak panel shows a big
+  `StreakCount` + `StreakBar` (state.Streak over the cycle). A `Responsive` UIScale fits the 1080x300 pixel panel to the
+  viewport (0.55..1.6). Claim -> "DAY n CLAIMED!" burst + shake, reveal 0.9s later. Spec additions: `Main.Responsive`,
+  `DayCardTemplate.Shine`, `DailyStreak.StreakCount/StreakDays/StreakBar.Fill` (all optional).
+- **Units:** ScreenFX open/close (no blur -- the unit preview is part of the screen), button springs, feed popups slide in.
+- **Summon:** ScreenFX open/close of Header/Stage/Dock over the scrim + blur, button springs. Its own gradient animator stays.
+- Opening any ScreenFX screen closes the others (Units/Summon also keep the HUD.Left ScreenOpened rule).
