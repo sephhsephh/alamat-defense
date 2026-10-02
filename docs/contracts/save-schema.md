@@ -13,7 +13,7 @@ whole Experience.
 > exact store 2026-08-01** (drift check during the v2 work) — no split-brain. Store target only,
 > unrelated to the schema version.
 
-## v9 shape (current)
+## v10 shape (current)
 
 ```luau
 {
@@ -59,6 +59,7 @@ whole Experience.
 	TraitFilters: { [string]: boolean },                        -- v7: hunted traits (reroll screen); SPARSE
 	UnitSlotsPurchased: number,                                 -- v8: unit-capacity upgrades BOUGHT (a count, not the cap)
 	HudCurrencies: { string },                                  -- v9: ids pinned to the Lobby HUD bar, in display order (max 3)
+	UnitTeams: { { Name: string, Units: { string } } },        -- v10: saved Units-screen teams (max 5, dense uuid lists)
 }
 ```
 
@@ -210,6 +211,9 @@ PENDING for other Places in `STATE.md`. Never edit or remove an existing migrati
 
 ## Version history
 
+- **v10** (2026-10-02, B108 pt14): `UnitTeams` (saved teams on the rebuilt Units screen). `Migrations[9]` a
+  deliberate no-op (top-level additive). `461fed3e → 80d6ccc3`, both Places + disk. One writer: the Lobby
+  `LoadoutService` (GetUnitTeams / SaveUnitTeam / LoadUnitTeam / RenameUnitTeam; names are TextService-filtered).
 - **v9** (2026-09-18, B76): `HudCurrencies` (the configurable HUD currency bar). `Migrations[8]` a
   deliberate no-op. `d3d4e63c → 461fed3e`, both Places + disk. Proven: Lobby `Migrated ... forward 1
   step(s) to v9`. Default `{ "Gold", "Silver" }` = what the bar already showed.

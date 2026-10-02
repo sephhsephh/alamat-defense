@@ -1,4 +1,21 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-02 [lobby+game] B108 pt14 -- **Units screen rebuilt (hero-left layout) + upgrade path, tooltips, View Unit, Teams, Select by Filter.**
+
+**CANON:** NEW `UnitInfoCatalog` **`0e1d71af`** (both Places + disk; generated from the Game's 48 tower configs, 443 tier rows verified, 0 mismatches). `ProfileTemplate` `461fed3e` -> **`80d6ccc3`** = **SCHEMA v10** (`UnitTeams`, no-op migration) both Places + disk. `HashShared` lists UnitInfoCatalog in both Places.
+
+- **Layout** (user picks: Hero-left, 5 per row): showcase left (upgrade path, chips, model, trait/ascension, level bar, stat pills, More Stats), vertical action rail (Feed / Passives / View / Favorite / Lock / Sell), 5-wide grid, bottom bar Equip | capacity | Unequip All | Teams | Quick Sell. See `docs/systems/units-screen.md`.
+- **Hover info everywhere** (one shared tooltip): rail labels, element (strong vs), placement, max placements, trait (rarity + description + stored), ascension (x/3 + bonuses), stat pills (grade + roll %), upgrade segments (cost, attack, before -> after), capacity +, swap. Gamepad = selection, touch = long-press.
+- **Grid hover card** rebuilt (`UnitsGUI.CardHover`): portrait, tier, chips, level + XP left, final DMG/SPA/RNG pills, trait / stars / worthiness.
+- **Upgrade path**: per-tier segments (cyan placement, orange = attack changes, green = stat steps); click previews that tier's numbers for this unit.
+- **More Stats**: crit chance/damage, DPS, placements, cost, cost efficiency, upgrades + total cost, max-upgrade DPS, attack, element, placement, ability, takedowns, worthiness.
+- **Passives & Abilities** panel: attack + every attack change by upgrade, passives (named from the tower configs, described in plain words), ability, trait.
+- **View Unit**: full-screen stage, drag / Q-E / buttons rotate, wheel zoom, R reset, info card; X / B / Esc closes.
+- **Teams** (5 slots, schema v10): save current loadout, load (server re-cleans: owned, one per family, unlocked slots), rename (filtered); total cost / team DPS / cost efficiency per team.
+- **Unequip All** (`SetLoadout({})`), **Sell This Unit** (rail; refuses locked/fav/equipped with the reason, else the global confirm), **Select by Filter** in sell mode (rarity / element / trait / placement chips, live match count, ticks only sellable units), sell button reads "Sell N Units", **Swap Trait Slots** chip.
+- `UnitsController` 200-local ceiling respected: new features in `UnitsHeroController` via `UnitsState`. Equip/flag/feed buttons are looked up anywhere under `Main.Bottom` (they moved). Build slice 8 -> 5 ms.
+- Verified live: open (134 units), select, segment hover/preview, passives, More Stats + stat % tooltip, View Unit + rotate, equip, Teams save -> Unequip All -> load, Select by Filter (24 Common) -> sell row, Sell This Unit blocked (equipped) and confirm -> NO, grid hover card.
+- Dev data touched (dev profile): Bakunawa equipped (loadout 1), Team #1 saved with it.
+
 ## 2026-10-02 [lobby+game] B108 pt13e -- **Units lag fix, Trait Reroll restyle, Units/Inventory layout, StatReroll NPC fix.**
 
 **CANON:** `UIKitMotion` `363a3eaf` -> **`2f3bd9b3`** on disk + BOTH Places (loop/spin driver throttled to 30 Hz; a gradient whose ancestors are hidden, or that sits outside its nearest ScrollingFrame window, is skipped). `UIKitNotify` `e6aedeb9` now deployed to the GAME too (the user copied `StarterGui.Notifications`); its STATE.md PENDING line is removed. Drift check: both Places identical except the known Kit_HotbarSlotV2 / Kit_ItemIconV2 template differences.

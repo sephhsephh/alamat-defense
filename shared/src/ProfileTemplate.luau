@@ -16,7 +16,7 @@
 
 local ProfileTemplate = {}
 
-ProfileTemplate.SCHEMA_VERSION = 9
+ProfileTemplate.SCHEMA_VERSION = 10
 ProfileTemplate.STORE_NAME = "Beta1_PlayerData" -- one store for the whole Experience (production)
 
 -- Live store name. In Studio ALL data goes to a separate dev store, so playtests and
@@ -140,6 +140,13 @@ export type ProfileData = {
 	-- HudCurrencyService is the one writer and re-Sanitizes before every write, so a forged payload
 	-- can neither overflow the bar nor pin something that is not in the catalog.
 	HudCurrencies: { string },
+
+	-- v10 (B108 pt14): the Units screen's saved TEAMS -- named loadouts the player can load in one
+	-- click. Each is a DENSE uuid list exactly like `Loadout` (never holes). Loading a team goes through
+	-- the Lobby's LoadoutService (the one writer of `Loadout`), which re-cleans it: unowned uuids are
+	-- dropped, one unit per family, capped at the player's unlocked slots. One writer of this field:
+	-- the same LoadoutService. Length capped by the Lobby LoadoutService's MAX_TEAMS.
+	UnitTeams: { { Name: string, Units: { string } } },
 }
 
 -- New players start with NO units. The Lobby's first-join starter choice grants the first
@@ -205,6 +212,9 @@ ProfileTemplate.Template = {
 	-- this ships. Kept in sync with `HudCurrencyConfig.Defaults` (Lobby-local, cannot be required
 	-- from shared canon -- the GAME Place has no such config).
 	HudCurrencies = { "Gold", "Silver" },
+
+	-- v10 (B108 pt14): see the type above. Empty = no saved teams yet.
+	UnitTeams = {},
 }
 
 -- Migrations[fromVersion] mutates data from fromVersion to fromVersion + 1.
@@ -353,6 +363,13 @@ end
 -- this executes. Nothing to backfill -- that default IS what every existing player was already
 -- looking at. The step exists because `Migrate()` WARNS AND STOPS at a missing step.
 ProfileTemplate.Migrations[8] = function(_data)
+	-- intentionally empty; see above
+end
+
+-- v9 -> v10: add the top-level `UnitTeams` (B108 pt14, saved Units-screen teams).
+-- A DELIBERATE NO-OP for the v7->v8 reason: a TOP-LEVEL additive key that `Reconcile()` has already
+-- filled with {} before this runs. Nothing to backfill -- nobody has a saved team yet.
+ProfileTemplate.Migrations[9] = function(_data)
 	-- intentionally empty; see above
 end
 
