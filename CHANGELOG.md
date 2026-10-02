@@ -1,4 +1,13 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-02 [lobby] B108 pt18 Part G -- **Events window + Beginner's Path quests + HUD tracker.**
+
+- New authored `StarterGui.EventsGUI` (Starter / Featured / Active sidebar, Beginner's Path "Permanent", description, page tabs 1-5 with locks, x/5 counter, quest rows with rewards / Pin / Go to Quest / X->Claim->check, locked-page overlay, Back / Calendar / Event Banner) driven by new `EventsController`; new `StarterGui.EventTracker` (pinned quest on the HUD).
+- New `RS.Configs.EventQuestConfig`: **25 drafted quests on 5 pages** (First Steps / Getting Stronger / Build Your Team / Craft & Trade / Master of the Farm) -- placeholder rewards, edit freely. Page N unlocks after page N-1 is fully claimed.
+- New `Server.Meta.EventQuestService` (Remotes GetEventQuests / ClaimEventQuest / PinEventQuest). Claims + pin stored in `Counters.Global.EventQuests` / `EventPinned` -- **no schema bump**.
+- New `Server.Meta.LifetimeCounters` + bumps in FeedService (Feeds), TraitRerollService (TraitRerolls), StatRerollService (StatRerollsDone, incl. instant), CraftingService (Crafts), GrantService.EvolveUnit (Evolutions), ShopService (ShopBuys).
+- HUD Event button now opens the Events window (DailyRewards event tab = fallback). Guide NPC's "Open the Beginner's Path" opens it. Event Banner opens Summon on `EventFirstLight` (`OpenSummon(bannerId)` is new in SummonGUIController).
+- Verified live: HUD Event -> window; claim Equip quest -> reward reveal + 1/5 + check; pin Feed -> HUD tracker; tracker -> window; Go to Quest (Feed) -> Units screen; locked page 3 overlay blocks clicks; guide dialogue -> window; Event Banner -> Limited (Festival of First Light). Dev claims reset afterwards (dev profile keeps +500 Gold).
+
 ## 2026-10-02 [lobby] B108 pt18 Part F -- **Dialogue system: every NPC talks first, guide NPC, walk arrow.**
 
 - New authored `StarterGui.DialogueGUI` (portrait viewport, gold name banner + subtitle, typewriter body, continue arrow + input hint, X, choice buttons) driven by new `DialogueController`. All lines in new `RS.Configs.DialogueConfig` (edit freely; format in docs/systems/dialogue.md).
