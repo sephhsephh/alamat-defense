@@ -1,5 +1,25 @@
 # SYSTEM — Play menu (PlayGUI + LoadingScreen)
-<!-- owner: AD-UI (screens/controllers) + AD-Lobby (flow/launch) | scope: lobby | last-verified: 2026-08-13 (B19/P6) -->
+<!-- owner: AD-UI (screens/controllers) + AD-Lobby (flow/launch) | scope: lobby | last-verified: 2026-10-02 (B108 pt17) -->
+
+## B108 pt17 REBUILD (2026-10-02) -- read this first
+
+The P2-P7 screen described further down is **retired** (`*_RetiredB108`, disabled). The menu was rebuilt from the
+user's reference screenshots; decisions: project doc `claude/B108-playgui-decisions.md`.
+
+- **Client:** `StarterGui.PlayGUI.PlayController` (one LocalScript). Pages in `Main.Content`: `Modes` (Progressive +
+  Competitive cards), `StoryMap` (island cards), `Party`. Modals: `StagePanel`, `Challenges`, `InvitePopup`,
+  `JoinPopup`; `Tooltip`; `PartyPreview` (avatars in a ViewportFrame); `BottomBar`. Invite toast:
+  `StarterGui.PartyInviteGUI`. Config: `RS.Configs.PlayConfig` (modes, themes, Normal/Hard, maps + acts + Infinite).
+- **Stage panel:** acts 1-5 (act N needs N-1 cleared), Infinite (needs Act 3; green theme, Highest Wave, rewards per
+  5 waves), Mastery (Coming Soon); Normal/Hard (Hard = wire 200 + Insane, x1.5 on a clear, needs the act cleared);
+  stars from `StageProgress` (schema v11); star rewards via `Remotes.ClaimStarReward`.
+- **Challenges:** Regular (3 per 30 min, 10/day), Daily, Weekly (1/week) -- see `challenges.md`.
+- **Server:** `PartyService` (+`Remotes.PartyAction`: setPrivacy / setStage / disband / listPublic / join / kick;
+  Difficulty name; unlock + challenge-limit checks), `MatchmakingService` (Difficulty name), `LaunchService`
+  (ChallengeKind/Index), `PlayStateService` (`GetPlayState`, `ClaimStarReward`, Studio `DevStageProgress`).
+- **Game:** `RewardCalculator` (star missions -> `RecordStageProgress`, Hard x1.5, Infinite per-5-wave pay,
+  Regular/Weekly challenge pay via `ConsumeChallengeClear`), `MatchEntryService` (challenge kind), stages
+  `Stage1_Act4` "Night of Wings", `Stage1_Act5` "The Scarecrow King", `Stage1_Infinite` (+ wave lists).
 
 Split out of `docs/systems/lobby-ui.md` at B15 when that file passed its 300-line cap (ADR-0006
 governs STATE.md only; every other doc splits). Implementation law is `docs/blueprints/playgui.md`

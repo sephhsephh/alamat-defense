@@ -1,4 +1,11 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-02 [lobby+game] B108 pt17 Part D -- **Acts 4-5 + Infinite.**
+
+- **Game (new):** `Stage1_Act4` "Night of Wings" (18 waves, Manananggal fliers mixed in from wave 4 + all-air waves, boss on 18, BaseHealthScale 3.0) and `Stage1_Act5` "The Scarecrow King" (20 waves, mid-boss on 10, two bosses on 20, 3.6). `Stage1_Act3.NextActId` -> Act 4. `Stage1_Infinite` (`Infinite = true`, generated 200-wave list: more grunts each wave, fliers from wave 5, Farm Boss every 10 waves; HP already +15%/wave via WaveScalingConfig). Registered in StageRegistry + WaveListRegistry. Names are placeholders -- rename freely (mirror in the Lobby StageRegistry).
+- **Game `RewardCalculator`:** Infinite pays `Rewards.Infinite` per 5 waves survived (150 Gold + 40 XP) plus a Trait Reroll Token per 10 waves, win or lose, and saves `StageProgress.HighestWave`.
+- **Lobby:** StageRegistry mirror gains Act 4 / Act 5 / Infinite (Act 3 now chains to 4). Play menu: Infinite unlocks after Act 3 (green panel, Endless pill, effects, rewards per 5 waves, Highest Wave), Mastery stays Coming Soon, act column fits all 7 buttons. `PartyService` refuses a launch of a locked act / Infinite (same rules as the menu).
+- **Verified live (Lobby):** Act 4 opens as the next act (Hard locked), Act 5 locked, Infinite opens with its panel. **Game side compiled + registries load-checked in Edit (wave counts, boss waves); not match-tested** -- the new acts need a balance play-test.
+
 ## 2026-10-02 [lobby+game] B108 pt17 Part C -- **Challenges: Regular / Daily / Weekly.**
 
 **CANON:** `ChallengeConfig` `9162bc2e` -> **`054838ab`** (both Places + disk). **USER: REPUBLISH BOTH PLACES.**
