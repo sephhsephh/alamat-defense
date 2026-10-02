@@ -1,4 +1,23 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-02 [lobby+game] B108 pt13e -- **Units lag fix, Trait Reroll restyle, Units/Inventory layout, StatReroll NPC fix.**
+
+**CANON:** `UIKitMotion` `363a3eaf` -> **`2f3bd9b3`** on disk + BOTH Places (loop/spin driver throttled to 30 Hz; a gradient whose ancestors are hidden, or that sits outside its nearest ScrollingFrame window, is skipped). `UIKitNotify` `e6aedeb9` now deployed to the GAME too (the user copied `StarterGui.Notifications`); its STATE.md PENDING line is removed. Drift check: both Places identical except the known Kit_HotbarSlotV2 / Kit_ItemIconV2 template differences.
+
+- **StatReroll NPC opened to a bare dim** (user report): Main was hidden at boot by the old Motion convention and ScreenFX only moves panels. `StatRerollController.open` shows Main, and `ScreenFX.open` now shows every ancestor of each panel (fixes the class, not just this screen).
+- **Units lag** (user: "when owning many units, it lags"). Measured on the dev profile (134 units): ONE open = one **635 ms** frame, then 134 live 3D viewports (114 of them still holding the kit template's placeholder RIG). Now:
+  - viewport models are LAZY: only cards inside the scroll window (+0.75 screen) get a model, and give it back 2.5 screens away; model cloning is time-budgeted (5 ms/frame);
+  - cards are cloned from a LEAN copy of `Kit_UnitIconV2` (placeholder rig stripped once; the canon template is untouched);
+  - cards PERSIST across `loadUnits` and are PATCHED (fields only repaint when a view signature changed; tier paint / model only when they changed); new uuids get cards, gone ones are destroyed;
+  - a new card is set up in a detached stage and its wrapper is parented once; new cards are built in 8 ms slices; a generation token abandons a stale build;
+  - `ScreenFX.juice` no longer juices unit cards (`NoFX` on the lean card -- they own their hover scale) and filters `DescendantAdded` to buttons before deferring.
+  - Result: first open = no frame over ~55 ms (spread over ~10 frames); re-open / equip / unequip rebuild = **62-136 ms wall, 0 new cards**; 14-20 models alive instead of 134 rigs.
+  - The script sits at Luau's 200-local ceiling ("Out of local registers" was the first live result) -- the new state lives in ONE `Lazy` table.
+- **Units grid was cut off**: `UnitsContainer` had a FIXED `CanvasSize {0,2}` (2x the frame) -- with 134 units most of the list was unreachable. Now `AutomaticCanvasSize = Y`, UIPadding in offsets (a scale padding on an auto canvas grew to 64 px). Cards are 4-wide and fill the row (layout node `Size = (0.255, 0, 0, 4000)`: the 1:1 aspect constraint takes the smaller axis, so width decides). **Same canvas bug and fix on the Inventory.**
+- **Inventory:** search placeholder "Search items"; description moved into an authored `SelectedItemFrame.InfoBox` ("ABOUT", animated stroke) under the art; the list uses the full height; 4-wide cards; the big icon springs in on selection (authored `IconImage.SelPop`); a filtered-out card no longer leaves a hole (hide through `Motion.setVisible` -- the card is wrapped).
+- **Trait Reroll restyle** (same family as Stat Reroll, purple): banner title with shimmer, animated panel/name/badge strokes, gradient buttons, red close, picker 6-wide, cards/filter/index/roll restyled; **responsive** (`Main.Responsive` UIScale, Main re-sized 1/scale so the dim still covers the screen; was a fixed 820 px panel); ScreenFX open/close with blur + one-screen-at-a-time (it used to stack UNDER Stat Reroll); trait-name burst after every roll. Layout and every feature unchanged.
+- **Stat Reroll:** layout kept (rebuilt at pt13c and already the best fit for its four areas).
+- Dev data touched (dev profile): equipped then unequipped one unit; granted 2 TraitRerollToken, rerolled Tiyanak -> Keen I (1 token left).
+
 ## 2026-10-02 [lobby] B108 pt13d -- AD-UI: **new toast notifications, Daily Rewards restyle + claim ceremony, ScreenFX on Units/Summon/Daily.**
 
 **CANON:** `UIKitNotify` `5e2b09d4` -> **`e6aedeb9`** on disk + LOBBY only. **GAME NOT DEPLOYED ON PURPOSE (user): the user copies `StarterGui.Notifications` into the Game first, then a session syncs the module** -- PENDING in STATE.md (replaced the obsolete B33 "StarterGui.Summon is unfinished" line: that GUI no longer exists, the summon screen was rebuilt B55/B108 pt13). The module is backward compatible with the old card, so nothing breaks in between.

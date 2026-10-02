@@ -49,3 +49,9 @@ ScreenFX call is guarded (`if ScreenFX then`), so a screen still works without t
 - **Units:** ScreenFX open/close (no blur -- the unit preview is part of the screen), button springs, feed popups slide in.
 - **Summon:** ScreenFX open/close of Header/Stage/Dock over the scrim + blur, button springs. Its own gradient animator stays.
 - Opening any ScreenFX screen closes the others (Units/Summon also keep the HUD.Left ScreenOpened rule).
+
+## B108 pt13e — Trait Reroll, StatReroll fix, perf
+- `open()` shows every ancestor of each panel (a Main hidden at boot by the old Motion convention left StatReroll as a bare dim).
+- `juice()` filters `DescendantAdded` to GuiButtons before deferring; a button with attribute `NoFX` is skipped (Units cards own their scale).
+- **Trait Reroll** wired: register/juice/gradients, open/close of `Panel` + `SlotsBar` with `Dim = Main`, popOnShow on the Confirm/Instant cards and the Index panel, `success()` with the new trait name in its rarity colour after every roll. Responsive via `Main.Responsive` (scale = clamp(min(vx*0.92/1100, vy*0.9/640), 0.5, 1.6); Main.Size = 1/scale).
+- Units perf notes (why the grid is lazy): see CHANGELOG pt13e.
