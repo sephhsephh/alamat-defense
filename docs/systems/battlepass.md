@@ -94,3 +94,30 @@ keeping the names, zero controller edits.
 **Level-skip products** (5/10/50) — a dev-product `ProcessReceipt` flow. The paid-track unlock landed
 at B48 (gamepass) and the match-end XP source at B43, so the core loop is complete; what remains is the
 user creating the Alamat Pass gamepass and pasting its id into `BattlepassConfig.GamePassId`.
+
+## B108 pt15 -- the "river" screen (2026-10-02)
+User: "enhance and improve overall battlepass ui"; picked the **river** layout + Jump to next claim,
+reward hover card, milestone highlights, season timer, gradient borders and animations.
+
+- **Authored** in `StarterGui.BattlePassGUI.Main` (old `Main` parked as `Main_RetiredB108pt15`,
+  Visible=false -- delete when happy). Script only clones `Track.Columns.ColumnTemplate` per tier.
+- **Track**: horizontal `ScrollingFrame`; FREE cells above, ALAMAT cells below, a `Node` per tier on
+  the river. `RiverBase` spans column 1 -> MaxTier; `RiverFill` runs to the current level + the XP
+  fraction toward the next column (tweened 1.1 s on open). Mouse wheel scrolls it sideways.
+- **Cell states** (`CellState` attribute): `claimable` (rotating green/gold stroke, 30 Hz pulse, CLAIM
+  badge; click claims), `claimed` (shade + green check), `needpass` (gold lock), `locked` (grey lock),
+  `empty`. Cell background = the reward's rarity colour (`TierConfig.BrightestColor`).
+- **Milestones** every 10 tiers: wider column, MILESTONE tag, gold/pink border.
+- **Header**: level badge (pops + "LEVEL UP!" on a level increase), XP bar, NEXT reward preview,
+  JUMP TO NEXT (first claimable, else current level), CLAIM ALL with a live count badge.
+- **Reward hover card** (`BattlePassGUI.RewardHover`): name x qty, rarity, tier, track, description,
+  extra rewards, milestone note, status (ready / claimed / needs pass / reach level N). Mouse hover,
+  gamepad selection, touch tap on a non-claimable cell (2.5 s).
+- **Season timer**: `BattlepassConfig.SeasonEndsAt` (unix UTC; 0 hides the pill), sent as
+  `SeasonEndsAt` in `GetBattlepass`. **Currently a PLACEHOLDER: 2026-12-01 00:00 UTC.**
+- Only the close button (or gamepad B) closes. Missions tab -> `ClientEvents.OpenQuests`.
+- Dev harness: `BattlePassGUI:SetAttribute("DevBP", "open"|"close"|"claimall"|"jump")`.
+- Verified live: open, river + nodes, hover card (locked cell), wheel scroll, Jump (info toast),
+  Claim All with nothing to claim (warning + shake), close/reopen, Missions tab -> Daily Quests.
+  **NOT verified live: an actual claim** -- the dev profile has tiers 1-22 claimed and
+  `ServerStorage.BattlepassAddXP` cannot be invoked from the MCP (capability restriction).

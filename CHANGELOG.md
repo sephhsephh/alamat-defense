@@ -1,4 +1,11 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-02 [lobby] B108 pt15 -- **Battle Pass rebuilt as a "river" track.**
+
+- New authored `BattlePassGUI.Main` + `RewardHover`; `BattlePassController` rewritten (old Main parked as `Main_RetiredB108pt15`). See `docs/systems/battlepass.md` "B108 pt15".
+- XP river through tier nodes, FREE above / ALAMAT below, rarity-coloured cells with state strokes, pulsing claimables, milestone columns every 10 tiers, level badge pop, NEXT reward preview, JUMP TO NEXT, CLAIM ALL count badge, reward hover card (mouse / gamepad / touch), mouse-wheel sideways scroll, promo strip.
+- Server: `BattlepassConfig.SeasonEndsAt` (PLACEHOLDER 2026-12-01 UTC) -> `GetBattlepass().SeasonEndsAt` -> season timer pill.
+- Not verified live: an actual claim (no claimable tiers on the dev profile; the XP channel is blocked from the MCP).
+
 ## 2026-10-02 [lobby+game] B108 pt14 -- **Units screen rebuilt (hero-left layout) + upgrade path, tooltips, View Unit, Teams, Select by Filter.**
 
 **CANON:** NEW `UnitInfoCatalog` **`0e1d71af`** (both Places + disk; generated from the Game's 48 tower configs, 443 tier rows verified, 0 mismatches). `ProfileTemplate` `461fed3e` -> **`80d6ccc3`** = **SCHEMA v10** (`UnitTeams`, no-op migration) both Places + disk. `HashShared` lists UnitInfoCatalog in both Places.
