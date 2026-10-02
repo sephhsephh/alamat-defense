@@ -1,4 +1,12 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-02 [lobby] B108 pt18 Part E -- **New starter pick screen (viewport overlay).**
+
+- `StarterGui.StarterChoiceScreen`: old Root/Controller renamed `*_RetiredB108` (hidden/disabled, not deleted). New authored `Main` ("Pick a Starter Unit!", 3 unit slots with full-body idle models on pedestals, name + tier, hover/tap stat card: element / placement / limit chips, DMG/SPA/RNG, trait, worth) and `Reveal` (tier aura, model, card with the ROLLED grades + final stats, Continue).
+- New `StarterPickController`: same server contract (GetStarterOffer / ChooseStarterTower). Click a unit to select it (glow + blue pedestal), the grey "Select a Unit" button turns green "Select Unit", confirm -> Reveal -> Continue fires the new `RS.ClientEvents.StarterChosen(towerId)` (hook for the dialogue system). Gamepad: focus starts on the middle unit.
+- `StarterChoiceService`: an already-owned choice now returns its `Uuid` too (the Reveal can show its grades).
+- Studio harnesses: ScreenGui attribute `DevPreview = true` (show the picker on any profile), `DevPreviewReveal = "<uuid>"` (play the Reveal for an owned unit). With `DevSimulateFirstJoin`, the sim card takes slot 3 so the grant path is testable without granting a real starter.
+- Verified live: hover card per unit, selection + button state, sim grant -> Reveal (rolls A/C/B), real unit Reveal (final stats + grades), Continue closes the screen.
+
 ## 2026-10-02 [lobby+game] B108 pt17 Part D -- **Acts 4-5 + Infinite.**
 
 - **Game (new):** `Stage1_Act4` "Night of Wings" (18 waves, Manananggal fliers mixed in from wave 4 + all-air waves, boss on 18, BaseHealthScale 3.0) and `Stage1_Act5` "The Scarecrow King" (20 waves, mid-boss on 10, two bosses on 20, 3.6). `Stage1_Act3.NextActId` -> Act 4. `Stage1_Infinite` (`Infinite = true`, generated 200-wave list: more grunts each wave, fliers from wave 5, Farm Boss every 10 waves; HP already +15%/wave via WaveScalingConfig). Registered in StageRegistry + WaveListRegistry. Names are placeholders -- rename freely (mirror in the Lobby StageRegistry).
