@@ -1,4 +1,15 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-02 [lobby] B108 pt17 Part A -- **New Play menu (PlayGUI rebuilt from the user's references).**
+
+**CANON:** `IconCatalog` `887a24e2` -> **`576dc4da`** (both Places + disk): adds `Crown`, `Gift`, `Info`, `Arrow` (toolbox placeholders).
+
+- **Retired** (renamed `*_RetiredB108`, disabled/hidden, not deleted): PlayGUIController, StoryModeController, DifficultyController, LobbyController, MatchmakingController and the MainMenu / StoryModeFrame / LobbyFrame frames. `DifficultyScale` + `Commands.SelectAct` kept.
+- **New authored UI** in `StarterGui.PlayGUI.Main`: TopBanner, PartyPreview (party avatars idling in a ViewportFrame + "+" invite spots), Content pages `Modes` (Progressive: Story / Raid / Boss Rush / Challenge / Expedition; Competitive: Ranked / Leaderboards), `StoryMap` (island cards: completion bar + rewards), `Party` (stage header, rewards, Private/Public + info tooltip, 4 member slots with crown + level, Start / Change Map / Disband), modals `StagePanel` (acts 1-5 + Infinite + Mastery column with stars, Normal/Hard with gift icon, Stage Effects with tooltips, rewards, Star Missions, Star Rewards, Fastest Clear / Total Clears, Select Stage / Enter Matchmaking, per-mode theme colour), `Challenges` (Regular / Daily / Weekly tabs with reset timers, challenge rows), `InvitePopup` (search, level, title badge, +), `JoinPopup` (public parties), Tooltip, BottomBar (Back / Invite Players / Join or Leave Party). New `StarterGui.PartyInviteGUI` toast (Accept / Decline, 20 s expiry, gamepad A/X).
+- **`PlayController`** (new LocalScript) drives all of it; entry = HUD Play button or `ClientEvents.OpenStageSelect`; hides other screens + camera parallax ported from the old controller. Only close buttons / Back / gamepad B close windows.
+- **`Configs.PlayConfig`** (new, Lobby): modes (enabled / Coming Soon), themes, Normal/Hard (Hard = wire 200 + Insane branch, x1.5 reward preview), maps (The Farm: Acts 1-5, Infinite id, Mastery none), per-act Star Missions (Clear / NoLivesLost / TimeUnder / MaxUnits) + Star Rewards (1x TraitRerollToken per star).
+- **Server:** `PartyService` gains `Remotes.PartyAction` (setPrivacy, setStage, disband, listPublic, join, kick), member level + equipped title, `isPublic` / `stage` on PartyState, and `RequestLaunch` accepts `Difficulty = "Normal" | "Hard"` (server maps to wire values; Hard needs the act cleared). `MatchmakingService` accepts the same name. New `PlayStateService` (`Remotes.GetPlayState`: level, ClearsByStage, ChallengeClears).
+- **Not yet (Parts B-D):** stars earned/claimed + Fastest Clear (schema bump), Regular/Weekly challenges, Infinite + Acts 4-5 in the Game place. Acts 4-5 / Infinite / Mastery show locked "Coming Soon". Island art = gradient placeholders until the user sends art.
+
 ## 2026-10-02 [lobby+game] B108 pt17a -- **Units rail: state icons + instant tooltips; trait icon visible.**
 
 **CANON:** `IconCatalog` `bed4617f` -> **`887a24e2`** (both Places + disk): `Lock` / `Unlock` are now a matched closed / open padlock pair (187897034 / 187897041).

@@ -631,12 +631,12 @@
     },
     "IconCatalog": {
       "file": "shared/src/IconCatalog.luau",
-      "hash": "887a24e2",
+      "hash": "576dc4da",
       "owner": "ui",
       "deployPath": "ReplicatedStorage.Shared.IconCatalog",
       "deployed": {
-        "Game": "887a24e2",
-        "Lobby": "887a24e2"
+        "Game": "576dc4da",
+        "Lobby": "576dc4da"
       },
       "kind": "module",
       "comment": "NEW at B108 pt16 (user: never use emoji icons). THE one table of UI icon image ids (toolbox placeholders until the user uploads their own): unit actions, general glyph replacements, element / placement / max-placement icons. get(name), element(e), placement(p), apply(img, name)."

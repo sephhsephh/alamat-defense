@@ -38,6 +38,11 @@ IconCatalog.Icons = {
 	Money = "rbxassetid://18560905584",
 	Wave = "rbxassetid://14963611911",
 	Fire = "rbxassetid://118675873199574",
+	-- B108 pt17: Play menu / party
+	Crown = "rbxassetid://11322089611",
+	Gift = "rbxassetid://591644027",
+	Info = "rbxassetid://4871684504",
+	Arrow = "rbxassetid://4726772330",
 	-- unit info
 	MaxPlacement = "rbxassetid://13441691835",
 	Placement_Hill = "rbxassetid://10728596258",

@@ -1,3 +1,5 @@
+> **B108 pt17 (2026-10-02): this blueprint is SUPERSEDED.** The Play menu was rebuilt from the user's reference screenshots (mode cards, island map, stage panel, challenges window, party panel). The P2-P7 controllers it describes are retired (`*_RetiredB108`). Current design: `claude/B108-playgui-decisions.md` (project doc) + CHANGELOG pt17.
+
 # BLUEPRINT — PlayGUI (main menu → story mode → lobby → launch)
 
 <!-- owner: AD-UI (screens/controllers) + AD-Lobby (flow/launch) + AD-Game (reward scaling) -->
