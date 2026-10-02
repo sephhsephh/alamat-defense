@@ -121,3 +121,14 @@ reward hover card, milestone highlights, season timer, gradient borders and anim
   Claim All with nothing to claim (warning + shake), close/reopen, Missions tab -> Daily Quests.
   **NOT verified live: an actual claim** -- the dev profile has tiers 1-22 claimed and
   `ServerStorage.BattlepassAddXP` cannot be invoked from the MCP (capability restriction).
+
+## B108 pt16 -- per-season pass + Limited finale (2026-10-02)
+- User: "battlepass should be per season, they need to buy another battle pass when another season begins".
+  The pass is a **Developer Product** (`BattlepassConfig.ProductId`; **0 = not on sale yet**), registered with
+  `ReceiptService`; the receipt sets `Owned = true` for the CURRENT season (`OwnedVia = "Product"`).
+- Season rollover now resets `Owned` (and `OwnedVia`) with XP + claims.
+- The old gamepass (`GamePassId`) only counts while `SeasonId == LegacyGamePassSeason` ("Season1"),
+  `OwnedVia = "GamePass"`; a refund only removes a gamepass-granted pass.
+- `FinaleUnit` (Tala for Season 1) is inserted FIRST on the last tier: free track = the unit, Alamat track =
+  the SHINY unit (`{ Id, Qty, Shiny = true }` -> GrantService unit opts). Cells show the model + SHINY tag.
+- Client buys with `PromptProductPurchase`; re-syncs on `PromptProductPurchaseFinished`.

@@ -77,6 +77,9 @@ local function hexColor(h: string): Color3
 end
 function ItemIcon.applyTint(image: Instance?, itemId: string?)
 	if not (image and image:IsA("GuiObject")) then return end
+	-- B108 pt16 (user: every item slot gets hover details + View Obtainment Methods): tag the image with
+	-- its item, so the Lobby's ItemInfo layer can find it under the pointer. nil clears a recycled slot.
+	image:SetAttribute("ItemId", itemId)
 	local entry = itemId and ItemCatalog.Get(itemId)
 	local icon = entry and entry.Icon
 	local stops = type(icon) == "table" and icon.Gradient
@@ -132,6 +135,7 @@ end
 function ItemIcon.attach(card: GuiButton, itemId: string, qty: number?)
 	local entry = ItemCatalog.Get(itemId)
 	local tier = ItemCatalog.GetTier(itemId)
+	card:SetAttribute("ItemId", itemId) -- B108 pt16: item hover / obtainment tag (see applyTint)
 
 	local main = card:FindFirstChild("Main")
 	-- ===== V2 KIT (B26) =====

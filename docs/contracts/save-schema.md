@@ -251,3 +251,7 @@ PENDING for other Places in `STATE.md`. Never edit or remove an existing migrati
   (verified on a v1 profile). ProfileTemplate hash `184cdfad → 63a0c98a`. Deployed + verified in
   GAME; **Lobby deploy PENDING (A2)**. Game services (PlayerInventoryService / LoadoutValidator /
   RewardCalculator / DevSeed) refactored to uuids the same session; combat/placement unchanged.
+
+### B108 pt16 note (no version bump)
+`Data.Battlepass.OwnedVia` (string?, "Product" | "GamePass") -- how THIS season's pass was obtained. `Owned` now
+resets on season rollover (per-season pass). Additive field inside an existing free-form table; no migration.

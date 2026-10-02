@@ -327,13 +327,33 @@ type Loop = { stops: { Stop }, speed: number, phase: number, written: ColorSeque
 local loops: { [UIGradient]: Loop } = {}
 local loopConn: RBXScriptConnection? = nil
 local loopClock = 0
+local loopAcc = 0
 
+-- B108 pt13e (user: the Units screen lagged with many units): a gradient is only animated when it can
+-- actually be SEEN -- every ancestor Visible (not just its host) and, inside a ScrollingFrame, inside the
+-- scroller's window. 130+ unit cards each carried looping gradients that rebuilt a ColorSequence EVERY
+-- frame while scrolled out of sight. The driver also runs at 30 Hz instead of every frame.
 local function visible(grad: UIGradient): boolean
 	local layer = grad:FindFirstAncestorWhichIsA("LayerCollector")
 	if layer and layer:IsA("ScreenGui") and not layer.Enabled then return false end
 	local host = grad.Parent
 	while host and host:IsA("UIStroke") do host = host.Parent end
-	if host and host:IsA("GuiObject") and not host.Visible then return false end
+	if not (host and host:IsA("GuiObject")) then return true end
+	local hostObj = host :: GuiObject
+	local node: Instance? = hostObj
+	local scroller: ScrollingFrame? = nil
+	while node and node ~= layer do
+		if node:IsA("GuiObject") then
+			if not (node :: GuiObject).Visible then return false end
+			if scroller == nil and node ~= hostObj and node:IsA("ScrollingFrame") then scroller = node :: ScrollingFrame end
+		end
+		node = node.Parent
+	end
+	if scroller then
+		local p, sz = hostObj.AbsolutePosition, hostObj.AbsoluteSize
+		local sp, ss = scroller.AbsolutePosition, scroller.AbsoluteSize
+		if p.Y + sz.Y < sp.Y or p.Y > sp.Y + ss.Y or p.X + sz.X < sp.X or p.X > sp.X + ss.X then return false end
+	end
 	return true
 end
 
@@ -341,6 +361,9 @@ local function ensureLoopDriver()
 	if loopConn or not game:GetService("RunService"):IsClient() then return end
 	loopConn = game:GetService("RunService").RenderStepped:Connect(function(dt)
 		loopClock += dt
+		loopAcc += dt
+		if loopAcc < 1 / 30 then return end
+		loopAcc = 0
 		for grad, e in pairs(loops) do
 			if grad.Parent == nil then
 				loops[grad] = nil
