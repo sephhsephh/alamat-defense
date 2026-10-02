@@ -76,6 +76,99 @@ function ChallengeConfig.GetDaily(nowSec: number?): any
 	return ChallengeConfig.GetForSlot(slot)
 end
 
+-- ===== B108 pt17 Part C: REGULAR + WEEKLY challenges (user: Regular / Daily / Weekly tabs) =====
+-- REGULAR: a set of `RegularCount` challenges that ROTATES every `RegularPeriod` seconds, with a shared
+-- limit of `RegularDailyLimit` clears per day (resets with the daily reset). Small reward.
+-- WEEKLY: ONE harder challenge per week (two modifiers stacked on a later act), ONE paid clear per week,
+-- bigger reward. DAILY is the original GetDaily above, unchanged.
+-- All PURE functions of a slot number, exactly like the daily: the Lobby shows them, the Game re-resolves
+-- them from the kind + slot + index it stashed at entry -- a forged payload cannot pick the reward.
+ChallengeConfig.RegularPeriod = 1800 -- 30 minutes
+ChallengeConfig.RegularCount = 3
+ChallengeConfig.RegularDailyLimit = 10
+ChallengeConfig.WeeklyLimit = 1
+ChallengeConfig.RegularRewards = { { Id = "Gold", Qty = 400 }, { Id = "MutyaGreen", Qty = 1 } }
+ChallengeConfig.WeeklyRewards = { { Id = "MutyaRainbow", Qty = 1 }, { Id = "StatRerolls", Qty = 3 }, { Id = "Gold", Qty = 3000 } }
+-- Weekly stages + modifier pairs (harder than any daily). Rotates by week.
+local WEEKLY = {
+	{ Id = "weekly_harvest", Name = "Harvest of Ruin", StageId = "Stage1_Act3", Modifiers = { "EnemyHpX2", "Scarcity" } },
+	{ Id = "weekly_scarecrow", Name = "The Scarecrow's Wrath", StageId = "Stage1_Act2", Modifiers = { "EnemyHpX2", "HalfLives" } },
+	{ Id = "weekly_blind", Name = "Blind Harvest", StageId = "Stage1_Act3", Modifiers = { "ShortSight", "EnemyHpX2" } },
+}
+
+function ChallengeConfig.RegularSlot(nowSec: number?): number
+	return MetaMath.Slot(ChallengeConfig.RegularPeriod, MetaConfig.ResetOffsetSec, nowSec)
+end
+function ChallengeConfig.WeeklySlot(nowSec: number?): number
+	return MetaMath.Slot(MetaConfig.Periods.Weekly, MetaConfig.ResetOffsetSec, nowSec)
+end
+function ChallengeConfig.DaySlot(nowSec: number?): number
+	return MetaMath.Slot(MetaConfig.Periods.Daily, MetaConfig.ResetOffsetSec, nowSec)
+end
+
+-- The index-th (1..RegularCount) regular challenge of a slot: distinct pool entries, deterministic.
+function ChallengeConfig.GetRegularForSlot(slot: number, index: number): any?
+	if index < 1 or index > ChallengeConfig.RegularCount then return nil end
+	local rng = MetaMath.RngForSlot(slot, "challenge_regular")
+	local order = {}
+	for i = 1, #POOL do order[i] = i end
+	for i = #order, 2, -1 do
+		local j = rng:NextInteger(1, i)
+		order[i], order[j] = order[j], order[i]
+	end
+	local t = POOL[order[((index - 1) % #POOL) + 1]]
+	return {
+		Id = t.Id, Name = t.Name, Kind = "Regular", Index = index, Slot = slot,
+		StageId = t.StageId, Modifiers = table.clone(t.Modifiers), Rewards = table.clone(ChallengeConfig.RegularRewards),
+	}
+end
+function ChallengeConfig.GetRegular(nowSec: number?): { any }
+	local slot = ChallengeConfig.RegularSlot(nowSec)
+	local out = {}
+	for i = 1, ChallengeConfig.RegularCount do
+		table.insert(out, ChallengeConfig.GetRegularForSlot(slot, i))
+	end
+	return out
+end
+
+function ChallengeConfig.GetWeeklyForSlot(slot: number): any
+	local t = WEEKLY[(slot % #WEEKLY) + 1]
+	return {
+		Id = t.Id, Name = t.Name, Kind = "Weekly", Index = 1, Slot = slot,
+		StageId = t.StageId, Modifiers = table.clone(t.Modifiers), Rewards = table.clone(ChallengeConfig.WeeklyRewards),
+	}
+end
+function ChallengeConfig.GetWeekly(nowSec: number?): any
+	return ChallengeConfig.GetWeeklyForSlot(ChallengeConfig.WeeklySlot(nowSec))
+end
+
+-- One entry point for the Game: kind + slot (+ index) -> the challenge. Unknown kind = the daily.
+function ChallengeConfig.Resolve(kind: any, slot: number?, index: any): any
+	if kind == "Regular" then
+		return ChallengeConfig.GetRegularForSlot(slot or ChallengeConfig.RegularSlot(), tonumber(index) or 1)
+			or ChallengeConfig.GetRegularForSlot(slot or ChallengeConfig.RegularSlot(), 1)
+	elseif kind == "Weekly" then
+		return ChallengeConfig.GetWeeklyForSlot(slot or ChallengeConfig.WeeklySlot())
+	end
+	local d = ChallengeConfig.GetForSlot(slot or ChallengeConfig.DaySlot())
+	d.Kind = "Daily"
+	d.Slot = d.DaySlot
+	return d
+end
+
+-- Limits, read from the profile's Counters.Global.ChallengeLimits = { RegularDay, RegularClears, WeeklyWeek }
+-- (written by the Game at a paid challenge clear). Returns (used, limit) for the CURRENT period.
+function ChallengeConfig.LimitUsed(limits: any, kind: string, nowSec: number?): (number, number)
+	limits = type(limits) == "table" and limits or {}
+	if kind == "Regular" then
+		local used = if limits.RegularDay == ChallengeConfig.DaySlot(nowSec) then (tonumber(limits.RegularClears) or 0) else 0
+		return used, ChallengeConfig.RegularDailyLimit
+	elseif kind == "Weekly" then
+		return (if limits.WeeklyWeek == ChallengeConfig.WeeklySlot(nowSec) then 1 else 0), ChallengeConfig.WeeklyLimit
+	end
+	return 0, math.huge
+end
+
 -- Boot-time sanity: every template names a stage-shaped id and known modifiers, and every colour's
 -- reward ids are catalogued. Returns (ok, issues). Cheap; call from a harness, not the hot path.
 function ChallengeConfig.Validate(): (boolean, { string })

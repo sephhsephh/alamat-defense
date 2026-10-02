@@ -121,6 +121,21 @@ Built at B52. `ChallengeConfig`/`MatchModifiersConfig` are now SHARED (see above
   Start built `MatchLaunch v4 ... gameMode=Challenge stage=Stage1_Act1` (ReserveServer is 403 in Studio,
   so the assertion is on the payload BUILT, as with every teleport-contract check).
 
+## Regular / Daily / Weekly (B108 pt17 Part C)
+
+The new Play menu's Challenges window has three tabs, all driven by shared `ChallengeConfig` (`054838ab`):
+
+- **Regular** - `GetRegular()`: `RegularCount` (3) distinct pool entries per `RegularPeriod` (30 min) slot, reward
+  `RegularRewards` (Gold 400 + 1 Green Mutya). Limit `RegularDailyLimit` (10) paid clears per day, shared by all three.
+- **Daily** - the original `GetDaily()` (unchanged; fragments/Mutya by day slot, no limit).
+- **Weekly** - `GetWeekly()`: one harder entry from `WEEKLY` per week (two modifiers on Act 2/3), reward `WeeklyRewards`
+  (Rainbow Mutya, 3 Stat Rerolls, 3000 Gold), `WeeklyLimit` 1 paid clear per week.
+- Payload: `ChallengeKind` + `ChallengeIndex` (additive, forward-tolerant like `GameMode`). The Game re-resolves with
+  `ChallengeConfig.Resolve(kind, slot, index)` at entry (stashes `ChallengeKind/Slot/Index`) and at payout.
+- Limits live in `Counters.Global.ChallengeLimits = { RegularDay, RegularClears, WeeklyWeek }` (no schema bump). The Lobby
+  `PartyService` refuses a launch when any member is at the limit; the Game's `PlayerInventoryService.ConsumeChallengeClear`
+  re-checks at payout (past the limit = no challenge reward). Star missions never apply to challenges.
+
 ## What's still open (follow-ups)
 - **Varied base stages + bespoke challenge wave content** — the pool currently bases every entry on
   `Stage1_Act1`; the challenge is the modifiers + reward, not new waves yet. Tuning follow-up.

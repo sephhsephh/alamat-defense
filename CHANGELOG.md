@@ -1,4 +1,14 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-02 [lobby+game] B108 pt17 Part C -- **Challenges: Regular / Daily / Weekly.**
+
+**CANON:** `ChallengeConfig` `9162bc2e` -> **`054838ab`** (both Places + disk). **USER: REPUBLISH BOTH PLACES.**
+
+- **Regular**: 3 challenges per 30-minute set, 10 paid clears per day (shared), Gold 400 + Green Mutya. **Weekly**: one harder challenge per week (2 modifiers on Act 2/3), 1 paid clear per week, Rainbow Mutya + 3 Stat Rerolls + 3000 Gold. **Daily** unchanged.
+- Lobby: Challenges window tabs are all live (Rewards Available / Limit Reached, per-tab reset timers, "Daily Limit x/10", "Weekly Limit x/1", rows dim at the limit); Select Stage carries `ChallengeKind/Index` into the party stage; Start sends them; `LaunchService` adds them to the payload; `PartyService` refuses a launch if any member is at the limit; `GetPlayState` returns `ChallengeLimits`.
+- Game: `MatchEntryService` resolves the challenge by kind (`ChallengeConfig.Resolve`), stashes kind/slot/index; `RewardCalculator` pays Regular/Weekly rewards only through `PlayerInventoryService.ConsumeChallengeClear` (Counters.Global.ChallengeLimits).
+- Fix: Select Stage now closes every open window (the Challenges window used to stay over the party panel).
+- Verified live (Lobby): Regular tab shows 3 rows with Daily Limit 10/10 and "New set in 29:17"; Weekly row (Harvest of Ruin, Act 3) -> stage panel -> party panel "Weekly Challenge" with the weekly rewards. Game side compiled + `Resolve`/`LimitUsed` unit-checked; not match-tested.
+
 ## 2026-10-02 [lobby+game] B108 pt17 Part B -- **Star missions + star rewards + Fastest Clear (save schema v11).**
 
 **CANON:** `ProfileTemplate` `80d6ccc3` -> **`0e42343d`** (SCHEMA **v11**, `StageProgress`, `Migrations[10]` no-op). NEW `StageMissionsConfig` **`b0a9abfe`** (`RS.Configs.Global`, both Places + disk; HashShared lists it). **USER: REPUBLISH BOTH PLACES (schema bump).**
