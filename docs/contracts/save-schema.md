@@ -13,7 +13,7 @@ whole Experience.
 > exact store 2026-08-01** (drift check during the v2 work) — no split-brain. Store target only,
 > unrelated to the schema version.
 
-## v10 shape (current)
+## v11 shape (current)
 
 ```luau
 {
@@ -60,6 +60,7 @@ whole Experience.
 	UnitSlotsPurchased: number,                                 -- v8: unit-capacity upgrades BOUGHT (a count, not the cap)
 	HudCurrencies: { string },                                  -- v9: ids pinned to the Lobby HUD bar, in display order (max 3)
 	UnitTeams: { { Name: string, Units: { string } } },        -- v10: saved Units-screen teams (max 5, dense uuid lists)
+	StageProgress: { [stageId]: { Missions: { ["M1"|"M2"|"M3"]: true }, Claimed: { ["S1"|"S2"|"S3"]: true }, BestClear: number?, HighestWave: number? } }, -- v11: Play-menu stars
 }
 ```
 
@@ -211,6 +212,10 @@ PENDING for other Places in `STATE.md`. Never edit or remove an existing migrati
 
 ## Version history
 
+- **v11** (2026-10-02, B108 pt17): `StageProgress` (per-act star missions ever done, star rewards claimed, fastest
+  clear, highest wave). Writers: GAME `PlayerInventoryService.RecordStageProgress` from `RewardCalculator` at match end
+  (Missions / BestClear / HighestWave; missions only ever added); LOBBY `PlayStateService` ClaimStarReward (Claimed,
+  grant first then mark). Missions + rewards live in shared `StageMissionsConfig`. `Migrations[10]` a deliberate no-op.
 - **v10** (2026-10-02, B108 pt14): `UnitTeams` (saved teams on the rebuilt Units screen). `Migrations[9]` a
   deliberate no-op (top-level additive). `461fed3e → 80d6ccc3`, both Places + disk. One writer: the Lobby
   `LoadoutService` (GetUnitTeams / SaveUnitTeam / LoadUnitTeam / RenameUnitTeam; names are TextService-filtered).

@@ -1,4 +1,14 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-02 [lobby+game] B108 pt17 Part B -- **Star missions + star rewards + Fastest Clear (save schema v11).**
+
+**CANON:** `ProfileTemplate` `80d6ccc3` -> **`0e42343d`** (SCHEMA **v11**, `StageProgress`, `Migrations[10]` no-op). NEW `StageMissionsConfig` **`b0a9abfe`** (`RS.Configs.Global`, both Places + disk; HashShared lists it). **USER: REPUBLISH BOTH PLACES (schema bump).**
+
+- **StageMissionsConfig** (shared): 3 missions + 3 star rewards per act (Stage1_Act1..5), mission types Clear / NoLivesLost / TimeUnder / MaxUnits, `Evaluate`, `StarsOf`, `MissionText`. Lobby `PlayConfig.Acts` now points here.
+- **Game:** `RewardCalculator` evaluates the act's missions at match end (story acts only, not challenges) from the same results the end screen shows (lives lost, virtual clear time, your own units placed) -> `PlayerInventoryService.RecordStageProgress` (missions only added, fastest clear kept, highest wave kept). Hard (Insane) clears now pay **x1.5** (rewardMult), matching the Play menu preview.
+- **Lobby:** `PlayStateService` returns `StageProgress`; new `Remotes.ClaimStarReward(stageId, stars)` (grant first, mark second; one writer of `Claimed`). Studio harness `RS:SetAttribute("DevStageProgress", "Stage1_Act1:M1,M2:432" | "clear")`.
+- **Play menu:** act buttons + missions show earned stars, star reward cards show Claim / Claimed (check) / "N Stars", the reward reveal plays on claim, Fastest Clear shows the best time, Story card + island progress = stars earned / available. Notifications, reward reveal, confirm popup and FX layer stay visible while the menu is open.
+- **Verified live (Lobby):** profile loads at v11; seeded 2 stars -> 2 lit stars, Fastest 7:12, Claim -> reveal + "Claimed" + check, server log `Star reward CLAIMED ... S1`; seed cleared afterwards (dev profile keeps +1 Trait Reroll Token). **Game side** compiled and the mission evaluator unit-checked in Edit; not match-tested (playing the Game place wipes dev currency).
+
 ## 2026-10-02 [lobby] B108 pt17 Part A -- **New Play menu (PlayGUI rebuilt from the user's references).**
 
 **CANON:** `IconCatalog` `887a24e2` -> **`576dc4da`** (both Places + disk): adds `Crown`, `Gift`, `Info`, `Arrow` (toolbox placeholders).

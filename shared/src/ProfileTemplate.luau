@@ -16,7 +16,7 @@
 
 local ProfileTemplate = {}
 
-ProfileTemplate.SCHEMA_VERSION = 10
+ProfileTemplate.SCHEMA_VERSION = 11
 ProfileTemplate.STORE_NAME = "Beta1_PlayerData" -- one store for the whole Experience (production)
 
 -- Live store name. In Studio ALL data goes to a separate dev store, so playtests and
@@ -147,6 +147,14 @@ export type ProfileData = {
 	-- dropped, one unit per family, capped at the player's unlocked slots. One writer of this field:
 	-- the same LoadoutService. Length capped by the Lobby LoadoutService's MAX_TEAMS.
 	UnitTeams: { { Name: string, Units: { string } } },
+
+	-- v11 (B108 pt17): per-ACT progress for the Play menu, keyed by stageId ("Stage1_Act3").
+	--   Missions    = { M1 = true, M3 = true }  star missions EVER completed (sparse -- never write false)
+	--   Claimed     = { S1 = true }             star rewards claimed (S1/S2/S3 = the 1/2/3-star reward), once each
+	--   BestClear   = fastest Victory, seconds   HighestWave = best wave reached (Infinite)
+	-- Writers: the GAME at match end (Missions / BestClear / HighestWave, PlayerInventoryService) and the
+	-- LOBBY StarRewardService (Claimed). Missions/rewards are defined in shared StageMissionsConfig.
+	StageProgress: { [string]: { Missions: { [string]: boolean }, Claimed: { [string]: boolean }, BestClear: number?, HighestWave: number? } },
 }
 
 -- New players start with NO units. The Lobby's first-join starter choice grants the first
@@ -215,6 +223,9 @@ ProfileTemplate.Template = {
 
 	-- v10 (B108 pt14): see the type above. Empty = no saved teams yet.
 	UnitTeams = {},
+
+	-- v11 (B108 pt17): see the type above. Empty = no act played since stars shipped.
+	StageProgress = {},
 }
 
 -- Migrations[fromVersion] mutates data from fromVersion to fromVersion + 1.
@@ -370,6 +381,15 @@ end
 -- A DELIBERATE NO-OP for the v7->v8 reason: a TOP-LEVEL additive key that `Reconcile()` has already
 -- filled with {} before this runs. Nothing to backfill -- nobody has a saved team yet.
 ProfileTemplate.Migrations[9] = function(_data)
+	-- intentionally empty; see above
+end
+
+-- v10 -> v11: add the top-level `StageProgress` (B108 pt17, Play-menu stars + fastest clear).
+-- A DELIBERATE NO-OP for the v7->v8 reason: a TOP-LEVEL additive key that `Reconcile()` has already
+-- filled with {} before this runs. Nothing to backfill: star missions were never tracked before, so
+-- inventing past stars would credit runs nobody can prove. (Old clears still show via
+-- Counters.Global.ClearsByStage.)
+ProfileTemplate.Migrations[10] = function(_data)
 	-- intentionally empty; see above
 end
 
