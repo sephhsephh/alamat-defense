@@ -13,8 +13,8 @@ IconCatalog.Icons = {
 	Passives = "rbxassetid://120674109076896",
 	View = "rbxassetid://15875255096",
 	Favorite = "rbxassetid://3057073083",
-	Lock = "rbxassetid://84057422523657",
-	Unlock = "rbxassetid://115289332203941",
+	Lock = "rbxassetid://187897034",
+	Unlock = "rbxassetid://187897041",
 	Sell = "rbxassetid://14002617467",
 	Swap = "rbxassetid://11769203234",
 	-- general

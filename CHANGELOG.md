@@ -1,4 +1,12 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-02 [lobby+game] B108 pt17a -- **Units rail: state icons + instant tooltips; trait icon visible.**
+
+**CANON:** `IconCatalog` `bed4617f` -> **`887a24e2`** (both Places + disk): `Lock` / `Unlock` are now a matched closed / open padlock pair (187897034 / 187897041).
+
+- **Rail icons show the unit's state**: locked = gold closed padlock, unlocked = grey open padlock; favorited = yellow star, not favorited = grey empty star. Tooltip still names the action ("Unlock" / "Unfavorite").
+- **Tooltip refreshes instantly**: `Tip.refresh()` re-runs the hovered target's provider after every hero repaint, so clicking Lock flips "Lock" -> "Unlock" without leaving and re-hovering.
+- **Trait icon** now shows left of the trait name (SelectedUnitFrame + CardHover): the Icon's aspect constraint was FitWithinMaxSize on a 0-width box, so it rendered 0x0. Now height-driven ScaleWithParentSize.
+
 ## 2026-10-02 [lobby+game] B108 pt16 -- **Evolve rebuilt, item hover + obtainment everywhere, icons replace emoji, per-season Battle Pass, Units polish.**
 
 **CANON:** NEW `IconCatalog` **`bed4617f`** (both Places + disk; HashShared lists it). `UIKitItemIcon` `4f10f6b9` -> **`c51e8ed5`** both Places + disk (applyTint/attach tag `ItemId`). `UIKitMotion` `2f3bd9b3` source now committed (pt13e file was left out of that commit).
