@@ -1,4 +1,13 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-02 [lobby] B108 pt18 Part F -- **Dialogue system: every NPC talks first, guide NPC, walk arrow.**
+
+- New authored `StarterGui.DialogueGUI` (portrait viewport, gold name banner + subtitle, typewriter body, continue arrow + input hint, X, choice buttons) driven by new `DialogueController`. All lines in new `RS.Configs.DialogueConfig` (edit freely; format in docs/systems/dialogue.md).
+- `NpcPromptRouter`: NPCs with a DialogueConfig entry (all 7 + the guide) now talk first; their screen opens from the first choice ("Browse the Shop", "Craft", ...). Movement + other prompts are locked while talking.
+- New placeholder **`Workspace.NPC_Guide`** "True Saint (Holy)" / "Beginner's Path Event" beside the spawn (glow + name tag). Choices: Open the Beginner's Path (`ClientEvents.OpenEvents`, Part G), tips, goodbye.
+- After the starter Reveal: the chosen starter says "Good choice picking me! Come on, True Saint (Holy) will show us what to do." then a **walk arrow** (new `WaypointController` + `RS.WaypointTemplate`, `ClientEvents.GuideToNpc`) leads to the guide.
+- New ClientEvents: StartDialogue, GuideToNpc, OpenEvents. Starter screen harness `DevPreviewReveal` now also fires the intro on Continue.
+- Verified live: E on the guide -> 2 lines -> choices -> "What should I do first?" node -> Goodbye; Space advances; Shop NPC -> "Browse the Shop" opens the Silver Shop; starter Reveal Continue -> Tala intro -> arrow beam to the guide.
+
 ## 2026-10-02 [lobby] B108 pt18 Part E -- **New starter pick screen (viewport overlay).**
 
 - `StarterGui.StarterChoiceScreen`: old Root/Controller renamed `*_RetiredB108` (hidden/disabled, not deleted). New authored `Main` ("Pick a Starter Unit!", 3 unit slots with full-body idle models on pedestals, name + tier, hover/tap stat card: element / placement / limit chips, DMG/SPA/RNG, trait, worth) and `Reveal` (tier aura, model, card with the ROLLED grades + final stats, Continue).
