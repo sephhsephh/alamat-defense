@@ -1,4 +1,11 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-02 [lobby] B108 pt13c -- AD-UI: **NPC screens get a shared juice layer (ScreenFX): blur + drop-in open, springy buttons, success ceremonies, one screen at a time.**
+
+- **NEW** `StarterPlayerScripts.Client.UI.ScreenFX` + authored `StarterGui.ScreenFXLayer` (templates Burst/Spark/Charge/ResultText, hidden) + `Lighting.ScreenFXBlur`. Wired into StatReroll, SilverShop, Evolve, Ascension, Crafting -- open/close, button springs, grid pop-in, popup slide-in, and per-action ceremonies (charge ring while the server works -> burst + sparks + flash + big text + shake: "PURCHASED!", "EVOLVED!", "ASCENDED!", "CRAFTED xN!", "DISMANTLED!", grade-up "S!"; refusals shake). Opening one of these screens now closes the others. Full write-up: `docs/systems/screen-fx.md`.
+- **Restyle (authored, layouts kept):** animated theme gradients on every top-level panel stroke, looping banner + button gradients, shimmer on banner titles.
+- **Caught + fixed during the build:** a UIScale pop on OPEN made the Silver Shop size its cards from a shrunken AbsoluteSize -- opens/popups now animate Position + Rotation only. Templates inside a Folder still render -- authored hidden.
+- **Proven live (real clicks):** Shop buy Red Mutya -> "PURCHASED!" burst then the reward reveal; Shop X -> blur 14 -> 0; Crafting Rainbow with no materials -> refusal shake; Dismantle Red -> "DISMANTLED!"; craft Red Mutya -> charge -> "CRAFTED x1!"; opening StatReroll/Evolve/Ascension/Shop/Crafting in a row leaves exactly one open; all 5 controllers boot, no errors.
+- **Unproven:** the Evolve and Ascension ceremonies and the stat-reroll grade bursts (the dev profile has no chips / evolvable / ascendable setup this session -- the code paths are the same success() call proven above).
 ## 2026-10-02 [both] B108 pt13b -- AD-UI: **only the close button closes a UI (user rule, now in CLAUDE.md); summon price shows the Gold icon.**
 
 **CANON:** `SettingsUI` `10f3d48c` -> **`8f348863`** (the dim no longer closes Settings) -- disk = Game = Lobby, manifest updated. **USER REPUBLISHES BOTH PLACES.**
