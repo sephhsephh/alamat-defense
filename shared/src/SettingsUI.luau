@@ -308,9 +308,7 @@ end
 closeButton.MouseButton1Click:Connect(function()
 	setOpen(false)
 end)
-dimButton.MouseButton1Click:Connect(function()
-	setOpen(false)
-end)
+-- B108 pt13b (user): only the close button closes Settings; the dim no longer dismisses it.
 
 -- The Lobby opens settings from its HUD rather than a floating gear, so the two Places share one
 -- screen and one builder while each keeps its own entry point.

@@ -114,6 +114,7 @@ up next session. Unlisted new system → add it to OWNERSHIP.md as part of build
   the same session (landing checklist step 2). No exceptions.
 - Log prefixes: `[DIAG]` debugging, `[DATA]` persistence, `[CONTRACT]` schema/version
   assertions, `[Test]` dev harness. Keep them grep-able.
+- **ONLY THE CLOSE BUTTON CLOSES A UI (user rule, 2026-10-02).** No click-outside / scrim / dim / overlay dismiss, ever (gamepad B = the close button). Reveal overlays that say "click anywhere to continue" are the one exception.
 - **NEVER generate UI in scripts** (user rule, 2026-07-18). Build ScreenGuis/Frames/labels
   as REAL Instances in StarterGui so the user can edit them in Studio. Dynamic lists use a
   designed `*Template` instance (Visible=false) that scripts clone and fill. Controllers
