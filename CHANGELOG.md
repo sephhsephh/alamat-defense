@@ -1,4 +1,10 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-03 [lobby+game] B109 M5 -- **Infernal Hunt (loot event): roaming boss in matches, chests, milestones.**
+- **SHARED (both Places + disk + manifest):** NEW `InfernalHuntConfig` **e4d4cd44**; `ItemCatalog` 0930b37a -> **9a8848d2** (+InfernalChest). `tools/hash_shared.luau` lists InfernalHuntConfig.
+- **GAME:** `Configs.Enemies.Common.InfernalBoss` (FarmBoss clone, Damage 0) + registry line; `WaveDirector.onEnemyRemoved` ignores `IsBonus` enemies; new `Server.Events.InfernalHuntService` (spawn roll, bonus spawn, kill credit, `Remotes.InfernalHunt`) + `Client.InfernalHuntClient` toasts. **Code-read only -- not play-tested (user rule). Harness `RS DevInfernalForce = true`.**
+- **LOBBY:** `Server.Meta.InfernalHuntService` (GetInfernal / ClaimInfernalMilestones / OpenInfernalChests); `EventQuestConfig` + Infernal Hunt row (`WindowSource`), authored `Detail.LootBox`; `ObtainmentCatalog` lists chest + milestone sources. Verified live: open chest from the page.
+- Contract: new counters `Counters.Global.InfernalHunt` (GAME writes) / `InfernalClaims` (LOBBY writes). PENDING (USER): play a Game match with `DevInfernalForce` to see the boss + chest credit.
+
 ## 2026-10-03 [lobby] B109 M4 -- **Headliner Hunt (unit hunt event).**
 - `GoalEval` + `ObtainSince` (lifetime `Obtained_<id>` minus a per-event baseline). `EventQuestService`: baselines (once, while Active), `ClaimEventEvolve` remote + snapshot `Evolve`/`Status`, refuses claims for Upcoming events.
 - `EventQuestConfig` + Headliner Hunt (Units carousel Tala/Lalahon/Aswang/Tiyanak, 8 obtain quests incl. evolved forms, Evolve Rewards, banner EventFirstLight) -- placeholders.

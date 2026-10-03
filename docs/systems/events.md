@@ -36,6 +36,20 @@ buttons grey); pin from detail + row; HUD tracker shows quest + event pins. Game
 - Verified live: carousel + evolve box; DevPushRewards "Tala:1" -> "Obtain Tala" 1/1 -> claim 40 coins. Evolve gift with a
   real evolution: code-path only.
 
+## Infernal Hunt (Loot, B109 M5) -- GAME + LOBBY
+- Rules: SHARED `Configs.Meta.InfernalHuntConfig` (Enabled, EventKey, Window, SpawnChance 35%, waves 3-10, modes
+  Story/Infinite/Challenge, DailyLimit 15, Milestones every 10 bosses, ChestDrops). Event row `WindowSource = "InfernalHunt"`.
+- GAME `Server.Events.InfernalHuntService`: rolls at InProgress, spawns `InfernalBoss` (Common/InfernalBoss = tinted
+  FarmBoss clone, Damage 0, placeholder rig) ~8 s into the chosen wave as a BONUS enemy (`ctrl.IsBonus`;
+  `WaveDirector.onEnemyRemoved` skips bonus enemies). On death: every present player +1 Total/+1 DayChests (cap) and
+  +1 `InfernalChest` -- the ONE writer of `Counters.Global.InfernalHunt = {Key,Total,Day,DayChests}`. Toasts via
+  `Remotes.InfernalHunt` + `Client.InfernalHuntClient`. Harness: `RS:SetAttribute("DevInfernalForce", true)` (wave 1, 100%).
+- LOBBY `Server.Meta.InfernalHuntService`: `GetInfernal`, `ClaimInfernalMilestones` (writes `Counters.Global.InfernalClaims`),
+  `OpenInfernalChests(n<=50)` (SpendItems -> weighted rolls -> Grant, refund on failure). Screen: `Detail.LootBox` (total,
+  milestone nodes, today x/15, chest + Open 1 / Open All).
+- Verified live (Lobby): page, DevPushRewards "InfernalChest:3" -> 3x Owned -> Open 1 -> Focus Chip, 2x left.
+  **Game spawn + kill credit: code-read only** (the Game is not play-tested -- user rule). Milestone claim needs Game totals.
+
 ## Not yet
-Infernal Hunt (M5, Game), Calendar, the Game's pinned panel (M7). The HUD EVENT card text is the
+Calendar, the Game's pinned panel (M7). The HUD EVENT card text is the
 user's static authored text (not driven).

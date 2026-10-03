@@ -89,6 +89,9 @@ ItemCatalog.Entries = {
 	-- B109 M3: the ONE shared event currency. Kind "EventToken" = stored in Currencies.EventTokens[id] (the nested map
 	-- reserved since v2 -- no schema bump). Earned from events, spent in the Event Shop (EventShopService).
 	EventCoin = { Kind = "EventToken", Tier = "Legendary", Name = "Event Coin", Description = "Precious event coins that can be spent in the Event Shop!", Icon = { Image = "rbxassetid://18560905584" }, Tradeable = false },
+	-- B109 M5: Infernal Hunt chest. An openable ITEM: the Lobby opens it (InfernalHuntService) and rolls
+	-- InfernalHuntConfig.ChestDrops. Dropped by the Game's Infernal boss (daily limit).
+	InfernalChest = { Kind = "Item", Tier = "Mythic", Name = "Infernal Chest", Description = "Open for a chance at Trait Reroll Tokens, Stat Chips, Focus Chips, Event Coins or a Rainbow Mutya!", Icon = { Image = "rbxassetid://591644027" }, MaxOwned = 9999, Tradeable = false },
 	StatRerolls = { Kind = "Currency", Tier = "Rare",   Name = "Stat Chip",   Description = "Rerolls all three of a unit's stats.", Icon = { Image = "rbxassetid://0" }, Tradeable = false },
 
 	-- ===== Items (existing stage drops) =====

@@ -306,6 +306,7 @@ local MODULES = {
 	AdminGlobal = "ServerScriptService.Server.Admin.AdminGlobal",
 	IconCatalog = "ReplicatedStorage.Shared.IconCatalog",
 	StageMissionsConfig = "ReplicatedStorage.Configs.Global.StageMissionsConfig",
+	InfernalHuntConfig = "ReplicatedStorage.Configs.Meta.InfernalHuntConfig", -- B109 M5
 }
 
 -- GuiObject subtrees. Promoted by AD-UI 2026-08-06; a Place that has not received the kit
