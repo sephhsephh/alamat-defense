@@ -1,4 +1,9 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-04 [game] B110 G5 -- **Boss warning + dramatic reward reveal.**
+- New authored `MatchHUD.BossWarning` (red band, scrolling hazard stripes, skull, blinking WARNING!, "<boss> Appeared!", subtitle). `BossHealthUI` shows it for bosses that spawn mid-match (band grows in, title slams, shake + red flash); the Infernal boss says it drops loot chests. Harness: `BossWarning` attr `DevPreview = "<name>"`. Boss bar name restyled (user's bar images kept); boss Container moved under the Ready/Skip spot (y 0.2), preview shrunk -- no overlap.
+- **Infernal Hunt verified live in the Game** (DevInfernalForce): spawn wave 1 -> warning -> kill -> `+1 chest (total 1, today 1/15)`.
+- Match-end reveal (existing B75 item-by-item preview) gets authored `Stage.RevealFX` (14 spinning tier-tinted rays, glow, shockwave ring, spark burst; flash + shake on Mythic+), icon wobble-drop, transparent icon backing, vignette backdrop, Alamat-styled info card, readable rarity colour. Harness: `MatchEnd` attr `DevReveal = true`.
+
 ## 2026-10-04 [game] B110 G2+G3 -- **Stage Info + Unit Manager rebuilt (full-height right panels).**
 - Both panels: 0.32 x 0.98 on the right edge (user: use the whole height), full-screen sheet when the viewport is < 900 px wide (`fitPanel()` on every open). Violet glass + gold shimmer, big Close.
 - Stage Info: title + header pills (`StagePill` Story/Infinite/Challenge + map/act, `ModePill` difficulty), Session Stats as 4 stat boxes (`StatBoxTemplate`), Gained Rewards + Stage Rewards as kit item cards (`UIKit.ItemIcon`) with odds rows under, themed sections + boss tiles. `HudPanels`: `addGrid` / `addBox` / `addCard` (pixel cells).
