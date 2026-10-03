@@ -1,4 +1,10 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-04 [game] B110 G2+G3 -- **Stage Info + Unit Manager rebuilt (full-height right panels).**
+- Both panels: 0.32 x 0.98 on the right edge (user: use the whole height), full-screen sheet when the viewport is < 900 px wide (`fitPanel()` on every open). Violet glass + gold shimmer, big Close.
+- Stage Info: title + header pills (`StagePill` Story/Infinite/Challenge + map/act, `ModePill` difficulty), Session Stats as 4 stat boxes (`StatBoxTemplate`), Gained Rewards + Stage Rewards as kit item cards (`UIKit.ItemIcon`) with odds rows under, themed sections + boss tiles. `HudPanels`: `addGrid` / `addBox` / `addCard` (pixel cells).
+- Unit Manager card (names kept, script contract intact): portrait + lock icon + `#n` upgrade priority, new green `UpgradeButton` (Upgrade x/y + cost incl. `UpgradeCostMult`, MAX state; click = RequestUpgrade), blue targeting, red Sell showing `SellValue`, Auto Upgrade + priority; 3 pixel-sized columns; staggered pop-in. Footer Close / Sell All themed.
+- Verified live (Game, Auto Play placed 4 units).
+
 ## 2026-10-04 [game] B110 G1 -- **Game HUD overhaul, part 1: Alamat theme kit + top rail + juice.**
 User brief: bold original Alamat look (dark violet glass, gold animated borders, UIGradients everywhere), juicy motion, hotbar untouched; next-wave preview under TIME, Ready/Skip top-centre (boss-bar spot), right panels full height.
 - `ServerStorage.DevTools.AlamatTheme` (edit-time authoring helpers: glass body, gold shimmer stroke tagged `AlamatShimmer`, accent buttons tagged `AlamatPress`, gold text). New client `Client.UI.HudFX` (shimmer, press, pop, bump, countTo, slam, shake, flash, float, pulse; Player attr `ReducedMotion` disables shake/flash) + `Client.UI.HudFXBoot` (wires tags, incl. clones).
