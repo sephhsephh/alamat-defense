@@ -1,4 +1,8 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-03 [lobby] B109 M6 -- **Party invite toast restyled (ref: invite card).**
+- `PartyService` invite message + `fromDisplayName`, `stage` (host's pick), `members`, `maxSize`. `PartyInviteGUI.Toast` rebuilt (header line, stage banner with mode icon + stage name + mode/act + difficulty badge, 4 member slots, Accept/Decline, timer bar); `PartyInviteController` paints it from `PlayConfig` (map name/art/theme). Harness: `PartyInviteGUI` attribute `DevPreview = true`.
+- Verified live via DevPreview (The Farm, Story - Act 2, Hard). Real two-player invite + avatar headshots in slots: unverified (Studio solo).
+
 ## 2026-10-03 [lobby+game] B109 M5 -- **Infernal Hunt (loot event): roaming boss in matches, chests, milestones.**
 - **SHARED (both Places + disk + manifest):** NEW `InfernalHuntConfig` **e4d4cd44**; `ItemCatalog` 0930b37a -> **9a8848d2** (+InfernalChest). `tools/hash_shared.luau` lists InfernalHuntConfig.
 - **GAME:** `Configs.Enemies.Common.InfernalBoss` (FarmBoss clone, Damage 0) + registry line; `WaveDirector.onEnemyRemoved` ignores `IsBonus` enemies; new `Server.Events.InfernalHuntService` (spawn roll, bonus spawn, kill credit, `Remotes.InfernalHunt`) + `Client.InfernalHuntClient` toasts. **Code-read only -- not play-tested (user rule). Harness `RS DevInfernalForce = true`.**
