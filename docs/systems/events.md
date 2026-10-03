@@ -25,6 +25,17 @@ HUD Event -> screen (Featured Beginner's Path, Active Weekend Rush "Ends in 1d, 
 3-5 locked), claim -> Gold + Bibingka + Event Coin x10; Event Shop grid, buy Trait Reroll Token for 10 (balance 10 -> 0,
 buttons grey); pin from detail + row; HUD tracker shows quest + event pins. Gamepad paths code-only.
 
+## Headliner Hunt (UnitHunt, B109 M4)
+- Config: `Units` (carousel; click swaps the centre model), `EvolveRewards = { {TowerId = <evolved form>, Reward} }`,
+  quests with goal `ObtainSince` (`GoalEval`): obtains AFTER the player first saw the event (baseline =
+  `Counters.Global.EventQuests[ev].Base[towerId]` = lifetime `Obtained_<id>` at first sight; EventQuestService writes it
+  once, on join / GetEventQuests / claim, only while the event is Active). Selling/feeding never lowers progress.
+- Evolve Rewards: gift button -> `ClaimEventEvolve(eventId)` claims every done + unclaimed one (`Claimed["Evolve_<id>"]`).
+- Claims refuse while an event is Upcoming (`event_not_started`). Placeholder units: Tala, Lalahon, Aswang, Tiyanak
+  (+ evolved forms), 40 Event Coins each; banner button -> EventFirstLight.
+- Verified live: carousel + evolve box; DevPushRewards "Tala:1" -> "Obtain Tala" 1/1 -> claim 40 coins. Evolve gift with a
+  real evolution: code-path only.
+
 ## Not yet
-Headliner Hunt (M4), Infernal Hunt (M5, Game), Calendar, the Game's pinned panel (M7). The HUD EVENT card text is the
+Infernal Hunt (M5, Game), Calendar, the Game's pinned panel (M7). The HUD EVENT card text is the
 user's static authored text (not driven).

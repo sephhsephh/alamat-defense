@@ -1,4 +1,10 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-03 [lobby] B109 M4 -- **Headliner Hunt (unit hunt event).**
+- `GoalEval` + `ObtainSince` (lifetime `Obtained_<id>` minus a per-event baseline). `EventQuestService`: baselines (once, while Active), `ClaimEventEvolve` remote + snapshot `Evolve`/`Status`, refuses claims for Upcoming events.
+- `EventQuestConfig` + Headliner Hunt (Units carousel Tala/Lalahon/Aswang/Tiyanak, 8 obtain quests incl. evolved forms, Evolve Rewards, banner EventFirstLight) -- placeholders.
+- Authored `EventsGUI.Main.Detail.FeaturedBox` (+UnitTemplate) + `EvolveBox`; `EventsController` paints them (carousel -> centre model, evolve totals + gift).
+- Verified live: Headliner screen, obtain via DevPushRewards -> 1/1 -> claim 40 Event Coins. Contract impact: none.
+
 ## 2026-10-03 [lobby+game] B109 M3 -- **Events screen rebuilt + Event Coin + Event Shop + unified pin tracker.**
 - **SHARED:** `ItemCatalog` 4349544e -> **0930b37a** (+`EventCoin`, Kind "EventToken" -> `Currencies.EventTokens`, the v2 map; no schema bump). Deployed BOTH Places, disk + manifest.
 - `GrantService`: grant + `Spend` for Kind EventToken. New `Configs.Meta.EventShopConfig` + `Server.Meta.EventShopService` (`GetEventShop`, `BuyEventShop(index,times)`, unlimited, refund on refused grant). `LobbyServices` views carry `Currencies.EventTokens`; `ItemInfoController` counts tokens; `ObtainmentCatalog` lists event rewards + Event Shop.
