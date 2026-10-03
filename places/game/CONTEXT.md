@@ -121,7 +121,8 @@ Boot order in `ReplicationBridge`: data services first; `[DATA]`/`[CONTRACT]` li
   one event is the drift the one-writer rule prevents. Names are a CROSS-PLACE contract: a rename
   strands every quest baseline. `docs/systems/quests.md`. **B109:** + `InfiniteWaves`, `InfiniteDayBest`
   `{Day,[stageId]=wave}`, `HardClearsByStage[stageId]` (RewardCalculator); `HudInfoService` reads `QuestRegistry.State`. **B109 M5 Infernal Hunt:** `Server.Events.InfernalHuntService`
-  (bonus boss `InfernalBoss`, `ctrl.IsBonus` skipped by WaveDirector) writes `Counters.Global.InfernalHunt` + InfernalChest.
+  (bonus boss `InfernalBoss`, `ctrl.IsBonus` skipped by WaveDirector) writes `Counters.Global.InfernalHunt` + InfernalChest. **B110 HUD overhaul** (`match-hud.md`): AlamatTheme kit,
+  HudFX motion, full-height right panels, BossWarning, reveal VFX, Auto Play Settings (presets/slots/zone).
 - **THE THREE SETTINGS ACTIONS ARE WIRED (B41)** — `GameSettingsActions`, no edit to shared-canon
   `SettingsUI`. `ReturnToLobby`/`RestartMatch` fire `RequestMatchAction` so the SERVER keeps the
   teleport-v4 stamp; a client-side teleport would bypass the contract. `settings.md`.

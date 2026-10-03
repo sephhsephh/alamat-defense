@@ -143,3 +143,18 @@ model's `DisplayName` attribute; `HealthText` shows `NumberFormat.Short(current)
 
 Cleanup rides on the existing bar lifecycle: `removeBar` destroys the billboard with the row, so a
 dead boss leaves nothing behind.
+
+## B110 -- Alamat HUD overhaul (2026-10-04, user: bold original, violet/gold, juicy, hotbar untouched)
+- **Theme kit:** `ServerStorage.DevTools.AlamatTheme` (edit-time only): violet glass (white BG x UIGradient), gold
+  shimmer stroke (UIGradient tagged `AlamatShimmer`), press-animated buttons (tag `AlamatPress`, UIScale `Press`).
+- **Motion:** `Client.UI.HudFX` (shimmer, wirePress, pop, bump, countTo, slam/slamOut, shake, flash, float, pulse) +
+  `Client.UI.HudFXBoot` (wires tags, incl. clones). Player attribute `ReducedMotion = true` disables shake/flash.
+  ONE UIScale per object (HudFX reuses an existing one -- two UIScales fight).
+- **Layout:** stat rail top-centre (LIVES / WAVE + progress / ENEMIES / TIME); Ready/Skip under it (WavePrep.Root);
+  next-wave preview under TIME; boss bars below that (y 0.2); BossWarning band; cash pill above the hotbar; right
+  column UNIT MANAGER / STAGE INFO / AUTO PLAY (+ GearButton -> Auto Play Settings) / speed. Right panels (Stage Info,
+  Unit Manager, Auto Play Settings) are 0.32 x 0.98 full height; < 900 px wide = full-screen sheet; they yield to
+  each other via SidePanelBus.
+- **Harnesses (Studio):** `MatchHUD.BossWarning` attr `DevPreview = "<name>"`; `MatchEnd` attr `DevReveal = true`;
+  `AutoPlaySettings` attr `DevOpen = true`; server `RS DevInfernalForce = true`.
+- Auto Play Settings data + rules: see the AutoPlayService header (`Counters.Global.AutoPlay`).
