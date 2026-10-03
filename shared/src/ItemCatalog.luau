@@ -83,6 +83,9 @@ ItemCatalog.Entries = {
 	-- they filled at B22. It renders as a blank square until then; nothing else breaks.
 	Gold        = { Kind = "Currency", Tier = "Common", Name = "Gold",        Description = "Gacha / banner roll currency.",       Icon = { Image = "rbxassetid://128910310881167" }, Tradeable = false },
 	Silver      = { Kind = "Currency", Tier = "Common", Name = "Silver",      Description = "Soft currency from dupes / sells.",   Icon = { Image = "rbxassetid://119213648374305" }, Tradeable = false },
+	-- B109: Battle Pass EXP as a REWARD (quests/achievements). Not a stored currency: GrantService routes Kind
+	-- "BattlepassXP" to BattlepassService (ServerStorage.BattlepassAddXP), the one writer of Data.Battlepass.
+	BattlepassXP = { Kind = "BattlepassXP", Tier = "Rare", Name = "Battlepass EXP", Description = "Experience for the Battle Pass.", Icon = { Image = "rbxassetid://3057073083" }, Tradeable = false },
 	StatRerolls = { Kind = "Currency", Tier = "Rare",   Name = "Stat Chip",   Description = "Rerolls all three of a unit's stats.", Icon = { Image = "rbxassetid://0" }, Tradeable = false },
 
 	-- ===== Items (existing stage drops) =====

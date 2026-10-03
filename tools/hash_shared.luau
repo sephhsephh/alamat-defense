@@ -1,5 +1,5 @@
 -- tools/hash_shared.luau
--- TOOLVERSION: B81-1
+-- TOOLVERSION: B109-1
 -- DRIFT CHECK: run via execute_luau (Edit datamodel) in ANY Place at bootstrap.
 -- Prints fnv1a32 hashes of the deployed shared canon; compare against shared/manifest.json.
 -- Anything absent in this Place returns "MISSING" (expected before its first deploy).
@@ -298,6 +298,14 @@ local MODULES = {
 	GamepadMenus = "StarterPlayer.StarterPlayerScripts.Client.GamepadMenus",
 	-- Promoted B100: the one authored-FX player (MovementController + EnemyDeathFX).
 	AuthoredFX = "ReplicatedStorage.Shared.AuthoredFX",
+	-- B109: back-ported the seven promotions B108 made (pt9-pt17) that never reached this table.
+	TowerProgressionConfig = "ReplicatedStorage.Configs.Global.TowerProgressionConfig",
+	UnitStatPreview = "ReplicatedStorage.Shared.UnitStatPreview",
+	UnitInfoCatalog = "ReplicatedStorage.Shared.UnitInfoCatalog",
+	MetaScalingConfig = "ReplicatedStorage.Configs.Global.MetaScalingConfig",
+	AdminGlobal = "ServerScriptService.Server.Admin.AdminGlobal",
+	IconCatalog = "ReplicatedStorage.Shared.IconCatalog",
+	StageMissionsConfig = "ReplicatedStorage.Configs.Global.StageMissionsConfig",
 }
 
 -- GuiObject subtrees. Promoted by AD-UI 2026-08-06; a Place that has not received the kit

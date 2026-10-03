@@ -27,4 +27,8 @@ MetaConfig.Periods = {
 	Weekly = 604800,
 }
 
+-- B109 (user): every WEEKLY reset (weekly quests + the weekly challenge) is Monday 00:00 Philippine time
+-- = Sunday 16:00 UTC. Epoch day 0 was a Thursday, so the slot boundary needs (now + 288000) % week == 0.
+MetaConfig.WeeklyResetOffsetSec = 288000
+
 return MetaConfig

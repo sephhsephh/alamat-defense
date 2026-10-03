@@ -100,7 +100,8 @@ function ChallengeConfig.RegularSlot(nowSec: number?): number
 	return MetaMath.Slot(ChallengeConfig.RegularPeriod, MetaConfig.ResetOffsetSec, nowSec)
 end
 function ChallengeConfig.WeeklySlot(nowSec: number?): number
-	return MetaMath.Slot(MetaConfig.Periods.Weekly, MetaConfig.ResetOffsetSec, nowSec)
+	-- B109: Monday 00:00 PH time, the same weekly boundary as weekly quests (MetaConfig.WeeklyResetOffsetSec).
+	return MetaMath.Slot(MetaConfig.Periods.Weekly, MetaConfig.WeeklyResetOffsetSec or MetaConfig.ResetOffsetSec, nowSec)
 end
 function ChallengeConfig.DaySlot(nowSec: number?): number
 	return MetaMath.Slot(MetaConfig.Periods.Daily, MetaConfig.ResetOffsetSec, nowSec)

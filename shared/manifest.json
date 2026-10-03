@@ -16,14 +16,14 @@
     },
     "ItemCatalog": {
       "file": "shared/src/ItemCatalog.luau",
-      "hash": "563f621c",
+      "hash": "4349544e",
       "owner": "ui",
       "deployPath": "ReplicatedStorage.Configs.Meta.ItemCatalog",
       "deployed": {
-        "Game": "563f621c",
-        "Lobby": "563f621c"
+        "Game": "4349544e",
+        "Lobby": "4349544e"
       },
-      "comment": "789dca4b -> fc4b8023 at B22 2026-08-16: the USER authored real icon assetids in the LOBBY Studio for the five entries that shipped as rbxassetid://0 placeholders (Gold 128910310881167, Silver 119213648374305, BannerTicket 6731922404, TraitRerollToken 12590248124, GoldenSeed 124757602236693). AD-Meta did not author this -- the bootstrap drift check caught it, the user confirmed it was theirs, and B22 RECORDED it: shared/src was updated to the live Lobby bytes and re-hashed to fc4b8023 (6520 bytes, byte-identical to the deployed Lobby copy). deployed.Game was LEFT at the stale 789dca4b by B22 on purpose (a Lobby-only session must not deploy to the Game). **RESOLVED at B23 2026-08-16 (AD-Integration): copied to the GAME, re-hashed there to fc4b8023 byte-identical, zero rbxassetid://0 remaining. Both Places match; the module was never re-authored -- owner is AD-UI and the five icon ids are the USER's own uploads.** Promoted to shared canon 2026-08-01 (A-phase Integration). THE authority on a grantable's Name/Tier/Icon; replaces the Lobby's interim UnitCatalog for name+tier. CHANGED at promotion: the TowerConfigRegistry require is now LAZY + OPTIONAL so the module loads in the Lobby (which has no tower configs); Validate() returns (ok, errors, notes) and reports the skipped Tower->TowerConfig cross-check. Added GetName/GetTier convenience readers. fc4b8023 -> 9be86a5f at B45 2026-08-30 (AD-Game, user-approved, cross-owner): added StatRerolls as Kind='Currency'. C2's stat reroll (B44) SPENDS Currencies.StatRerolls, but GrantService.Grant refuses any uncatalogued id (invariant 4), so nothing could mint it and the sink had no faucet -- C1's TraitRerollToken was reachable only because it was already catalogued. Its icon is a PLACEHOLDER rbxassetid://0 for the USER to author, same as the five they filled at B22. The currency block was re-aligned in the same edit. 9be86a5f -> 2ee5f976 at B50 2026-09-02 (AD-Meta, Phase D/D1 crafting): +15 Item entries -- 7 ROYGBIV fragments (Rare), 7 colour artifacts (Epic), 1 Rainbow artifact (Mythic). Additive only (new keys; no existing entry touched), icons placeholder rbxassetid://0. Deployed byte-identical to BOTH Places in one session, 36/36 verified. User republishes both. 0d97d08a -> 5e9dba43 at B107 2026-09-29: +8 evolved towers (Summonable=false, EvolvedFrom): Magwayen_Soulferry, Sidapa_LastMeasure, AmanSinaya_Riptide, Tala_MorningStar, Lalahon_Caldera, Aswang_BloodMoon, Tiyanak_Changeling, Batibat_NightTerror (70 entries). 5e9dba43 -> fe9597fd at B108: StatRerolls renamed Stat Chip (rerolls all three stats); + FocusChip item (Epic, rerolls ONE chosen stat; icon placeholder). fe9597fd -> 8302f56b at B108 pt7: + 7 Mutya stones (MutyaGreen base Epic, Red/Blue/Yellow/Purple/Pink Legendary, Rainbow Mythic) -- the user-approved crafting economy; Fragment*/Artifact* kept as LEGACY (converted on Lobby load). 8302f56b -> bb1244b8 at B108 pt9: + 6 EXP foods (FoodPandesal 20 / Turon 45 / Bibingka 75 / Adobo 150 / Sinigang 280 / Lechon 300 XP, field ExpFood); also each unit's ascension food. bb1244b8 -> 563f621c at B108 pt11: every Mutya uses the USER'S MutyaIcon asset (rbxassetid://72082627938021, authored by the user in the Lobby; Rainbow set to it too) + Icon.Gradient hex stops per stone (tinted by UIKit.ItemIcon.applyTint).",
+      "comment": "563f621c -> 4349544e at B109: + BattlepassXP entry (Kind \"BattlepassXP\"; GrantService routes it to BattlepassService). 789dca4b -> fc4b8023 at B22 2026-08-16: the USER authored real icon assetids in the LOBBY Studio for the five entries that shipped as rbxassetid://0 placeholders (Gold 128910310881167, Silver 119213648374305, BannerTicket 6731922404, TraitRerollToken 12590248124, GoldenSeed 124757602236693). AD-Meta did not author this -- the bootstrap drift check caught it, the user confirmed it was theirs, and B22 RECORDED it: shared/src was updated to the live Lobby bytes and re-hashed to fc4b8023 (6520 bytes, byte-identical to the deployed Lobby copy). deployed.Game was LEFT at the stale 789dca4b by B22 on purpose (a Lobby-only session must not deploy to the Game). **RESOLVED at B23 2026-08-16 (AD-Integration): copied to the GAME, re-hashed there to fc4b8023 byte-identical, zero rbxassetid://0 remaining. Both Places match; the module was never re-authored -- owner is AD-UI and the five icon ids are the USER's own uploads.** Promoted to shared canon 2026-08-01 (A-phase Integration). THE authority on a grantable's Name/Tier/Icon; replaces the Lobby's interim UnitCatalog for name+tier. CHANGED at promotion: the TowerConfigRegistry require is now LAZY + OPTIONAL so the module loads in the Lobby (which has no tower configs); Validate() returns (ok, errors, notes) and reports the skipped Tower->TowerConfig cross-check. Added GetName/GetTier convenience readers. fc4b8023 -> 9be86a5f at B45 2026-08-30 (AD-Game, user-approved, cross-owner): added StatRerolls as Kind='Currency'. C2's stat reroll (B44) SPENDS Currencies.StatRerolls, but GrantService.Grant refuses any uncatalogued id (invariant 4), so nothing could mint it and the sink had no faucet -- C1's TraitRerollToken was reachable only because it was already catalogued. Its icon is a PLACEHOLDER rbxassetid://0 for the USER to author, same as the five they filled at B22. The currency block was re-aligned in the same edit. 9be86a5f -> 2ee5f976 at B50 2026-09-02 (AD-Meta, Phase D/D1 crafting): +15 Item entries -- 7 ROYGBIV fragments (Rare), 7 colour artifacts (Epic), 1 Rainbow artifact (Mythic). Additive only (new keys; no existing entry touched), icons placeholder rbxassetid://0. Deployed byte-identical to BOTH Places in one session, 36/36 verified. User republishes both. 0d97d08a -> 5e9dba43 at B107 2026-09-29: +8 evolved towers (Summonable=false, EvolvedFrom): Magwayen_Soulferry, Sidapa_LastMeasure, AmanSinaya_Riptide, Tala_MorningStar, Lalahon_Caldera, Aswang_BloodMoon, Tiyanak_Changeling, Batibat_NightTerror (70 entries). 5e9dba43 -> fe9597fd at B108: StatRerolls renamed Stat Chip (rerolls all three stats); + FocusChip item (Epic, rerolls ONE chosen stat; icon placeholder). fe9597fd -> 8302f56b at B108 pt7: + 7 Mutya stones (MutyaGreen base Epic, Red/Blue/Yellow/Purple/Pink Legendary, Rainbow Mythic) -- the user-approved crafting economy; Fragment*/Artifact* kept as LEGACY (converted on Lobby load). 8302f56b -> bb1244b8 at B108 pt9: + 6 EXP foods (FoodPandesal 20 / Turon 45 / Bibingka 75 / Adobo 150 / Sinigang 280 / Lechon 300 XP, field ExpFood); also each unit's ascension food. bb1244b8 -> 563f621c at B108 pt11: every Mutya uses the USER'S MutyaIcon asset (rbxassetid://72082627938021, authored by the user in the Lobby; Rainbow set to it too) + Icon.Gradient hex stops per stone (tinted by UIKit.ItemIcon.applyTint).",
       "kind": "module"
     },
     "Kit_Button": {
@@ -96,14 +96,14 @@
     },
     "MetaConfig": {
       "file": "shared/src/MetaConfig.luau",
-      "hash": "5166d377",
+      "hash": "dc319738",
       "owner": "gacha",
       "deployPath": "ReplicatedStorage.Configs.Meta.MetaConfig",
       "deployed": {
-        "Game": "5166d377",
-        "Lobby": "5166d377"
+        "Game": "dc319738",
+        "Lobby": "dc319738"
       },
-      "comment": "Promoted to shared canon at B51 (Phase D / D2 challenges), byte-identical to the Lobby original (len 1414). Deployed to the Game so ChallengeConfig computes the SAME daily Slot boundary the Lobby's shop/daily/quests use. Its header still reads 'LOBBY-LOCAL' -- kept byte-identical so the Lobby needs no republish; refresh that line (comment-only re-hash + both-Place redeploy) next time an AD-Gacha session touches the Lobby, the RewardScalingConfig-header precedent.",
+      "comment": "5166d377 -> dc319738 at B109: + WeeklyResetOffsetSec = 288000 (Monday 00:00 PH time). Promoted to shared canon at B51 (Phase D / D2 challenges), byte-identical to the Lobby original (len 1414). Deployed to the Game so ChallengeConfig computes the SAME daily Slot boundary the Lobby's shop/daily/quests use. Its header still reads 'LOBBY-LOCAL' -- kept byte-identical so the Lobby needs no republish; refresh that line (comment-only re-hash + both-Place redeploy) next time an AD-Gacha session touches the Lobby, the RewardScalingConfig-header precedent.",
       "kind": "module"
     },
     "MatchModifiersConfig": {
@@ -120,14 +120,14 @@
     },
     "ChallengeConfig": {
       "file": "shared/src/ChallengeConfig.luau",
-      "hash": "054838ab",
+      "hash": "192c7a83",
       "owner": "game",
       "deployPath": "ReplicatedStorage.Configs.Global.ChallengeConfig",
       "deployed": {
-        "Game": "054838ab",
-        "Lobby": "054838ab"
+        "Game": "192c7a83",
+        "Lobby": "192c7a83"
       },
-      "comment": "Promoted to shared canon at B52 (Phase D / D2 -- the Lobby Challenge tab), byte-identical to the Game original. The Lobby reads GetDaily() to display + launch today's challenge; the Game re-resolves it server-authoritatively at entry + match-end. Requires MetaMath + MetaConfig + MatchModifiersConfig (all shared). B53: added economy modifiers (IncomeMult/StartingCashMult -> the Scarcity/LeanStart modifiers) + a Scarce Fields challenge; re-hashed + redeployed both Places. 1640a980 -> 9162bc2e at B108 pt7: daily reward = 2-3 Green Mutya + 10% chance of the day colour Mutya (was Fragment/Artifact); colours Red/Blue/Yellow/Purple/Pink.",
+      "comment": "054838ab -> 192c7a83 at B109: WeeklySlot uses MetaConfig.WeeklyResetOffsetSec (weekly challenge + weekly quests reset together). Promoted to shared canon at B52 (Phase D / D2 -- the Lobby Challenge tab), byte-identical to the Game original. The Lobby reads GetDaily() to display + launch today's challenge; the Game re-resolves it server-authoritatively at entry + match-end. Requires MetaMath + MetaConfig + MatchModifiersConfig (all shared). B53: added economy modifiers (IncomeMult/StartingCashMult -> the Scarcity/LeanStart modifiers) + a Scarce Fields challenge; re-hashed + redeployed both Places. 1640a980 -> 9162bc2e at B108 pt7: daily reward = 2-3 Green Mutya + 10% chance of the day colour Mutya (was Fragment/Artifact); colours Red/Blue/Yellow/Purple/Pink.",
       "kind": "module"
     },
     "PlayerDataService": {
@@ -571,14 +571,14 @@
     },
     "QuestRegistry": {
       "file": "shared/src/QuestRegistry.luau",
-      "hash": "7c5df4d2",
+      "hash": "ed48e799",
       "owner": "meta",
       "deployPath": "ReplicatedStorage.Configs.Meta.QuestRegistry",
       "deployed": {
-        "Game": "7c5df4d2",
-        "Lobby": "7c5df4d2"
+        "Game": "ed48e799",
+        "Lobby": "ed48e799"
       },
-      "comment": "PROMOTED B81 2026-09-22 from Lobby-local (added B40). The daily quest rules: the quest table, LiveCounters, CurrentDay/SecondsUntilReset and the deterministic RollDaily(userId, day). Promoted so the GAME's Pinned Quests panel (HudInfoService, read-only) rolls the SAME day's set the Lobby's Quests screen shows -- a Game-side copy would drift the day someone edits a weight. The Lobby's QuestService stays THE ONE WRITER of Data.Quests; the Game never assigns a baseline, so a quest the player has not opened today reads 0 progress there. Pure; needs Shared.MetaMath + Configs.Meta.MetaConfig (both canon). Only the header comment changed on promotion (Lobby-local -> shared canon). Added to tools/hash_shared.luau AND both in-Studio HashShared copies in the same session (TOOLVERSION B81-1).",
+      "comment": "7c5df4d2 -> ed48e799 at B109 2026-10-03: REWRITTEN (fixed Daily + Weekly lists, daily Infinite map quests, pure State/ProgressOf used by Lobby QuestService AND Game HudInfoService). PROMOTED B81 2026-09-22 from Lobby-local (added B40). The daily quest rules: the quest table, LiveCounters, CurrentDay/SecondsUntilReset and the deterministic RollDaily(userId, day). Promoted so the GAME's Pinned Quests panel (HudInfoService, read-only) rolls the SAME day's set the Lobby's Quests screen shows -- a Game-side copy would drift the day someone edits a weight. The Lobby's QuestService stays THE ONE WRITER of Data.Quests; the Game never assigns a baseline, so a quest the player has not opened today reads 0 progress there. Pure; needs Shared.MetaMath + Configs.Meta.MetaConfig (both canon). Only the header comment changed on promotion (Lobby-local -> shared canon). Added to tools/hash_shared.luau AND both in-Studio HashShared copies in the same session (TOOLVERSION B81-1).",
       "kind": "module"
     },
     "UnitStatPreview": {

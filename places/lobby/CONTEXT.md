@@ -74,10 +74,9 @@ persist in the SAME save, which makes at-least-once deliver exactly once; reveal
 who IS online.
 **SHOP** (`ShopConfig` + `ShopService`, THE one `Data.ShopStock` writer) is the game's **FIRST SILVER SINK** — verified first that
 nothing spent Silver while B31 mints it. Stock DERIVED from `MetaMath.RngForSlot`, never stored; `Bought` RESETS on rollover;
-**PRE-CHECK → SPEND → GRANT → MARK**; **the client sends a slot INDEX, never a price.** **QUESTS** (`QuestRegistry` + `QuestService`,
-THE one `Data.Quests` writer): **progress is a DELTA against a baseline** taken at assignment, written ONCE per quest per day — a
-lifetime counter read would finish every quest instantly for an established player. **Only `GachaPulls` + `Ascensions` counters exist**;
-match-shaped quests are REFUSED and NAMED at boot until the GAME place writes its own.
+**PRE-CHECK → SPEND → GRANT → MARK**; **the client sends a slot INDEX, never a price.** **QUESTS (B109 rebuild, `quests.md`)**: shared
+`QuestRegistry` (fixed Daily + Weekly lists + daily Infinite map quests, pure `State`) + `QuestService` (one `Data.Quests` writer;
+baselines per period, Claim/ClaimAll/unlimited Pins) + authored `StarterGui.QuestsGUI` (old blockout `QuestsGUI_RetiredB109`).
 
 
 **B39 — SCHEMA v3 → v4 + EVENT DAILIES + CODES + THE REVEAL QUEUE. Docs: `daily-rewards.md`, `redeem-codes.md`, `reward-push.md`.**

@@ -1,117 +1,73 @@
-# Quests — daily quests (Lobby meta, AD-Gacha canon)
+# Quests — Daily / Weekly / Infinite (Lobby meta; rules shared with the Game)
 
-<!-- owner: lobby | scope: lobby | last-verified: 2026-08-27 (B40) -->
+<!-- owner: lobby | scope: lobby+game (rules shared) | last-verified: 2026-10-03 (B109 M1) -->
+
+B109 rebuild from the user's references. Decisions: `docs/specs/2026-10-03-quests-events-overhaul.md`.
+History (B40 random daily roll, B42 blockout screen): CHANGELOG.
 
 | piece | what it is |
 |---|---|
-| `RS.Configs.Meta.QuestRegistry` | PURE: the quest table, the deterministic daily roll |
-| `SSS.Server.Meta.QuestService` | **THE one writer of `Data.Quests`**; owns `GetQuests` + `ClaimQuest` |
+| `RS.Configs.Meta.QuestRegistry` | **SHARED CANON** (both Places). PURE content + progress math: `Daily`, `Weekly`, `InfiniteDaily`, `State(data)`, `ProgressOf`, `FindCurrent`. **Edit quests HERE.** |
+| `SSS.Server.Meta.QuestService` | Lobby. **THE one writer of `Data.Quests`.** Remotes `GetQuests`, `ClaimQuest(id)`, `ClaimAllQuests(tab)`, `SetQuestPin(key,on)`. |
+| `StarterGui.QuestsGUI` + `QuestsController` | Lobby. AUTHORED window (RowTemplate cloned). Old B42 blockout = `QuestsGUI_RetiredB109` (disabled). |
+| `StarterGui.HUD.NotificationController` | HUD badge = claimable Daily + Weekly; "Quest complete" toast (first poll only seeds). |
+| Game `HudInfoService` | Read-only: match HUD quest panel via `QuestRegistry.State` (event quests + full pins there = spec M7). |
 
-`RS.Remotes` **29 → 31**. **No schema bump:** `Quests { Progress, Claimed, PinnedQuestId }` has been
-in the template since v2 with no writer.
+## The lists (user, B109)
+- **Fixed lists:** everyone gets the same `Daily` (8) and `Weekly` (8). Placeholder numbers — the user edits.
+- **Daily Infinite map quests:** each day `InfiniteMapsForDay(day)` draws `MapsPerDay` (2) maps from
+  `InfiniteDaily.Maps` (deterministic, same for everyone), each with wave **25 / 50 / 75** quests
+  (`Inf_<stageId>_<wave>`). Only The Farm exists, so 1 map/day until a second `Maps` row is added.
+- **Resets:** daily = `MetaConfig.ResetOffsetSec` (16:00 UTC = 00:00 PH). **Weekly = Monday 00:00 PH**
+  (`MetaConfig.WeeklyResetOffsetSec = 288000`); the weekly CHALLENGE limit uses the same boundary.
+- `Desc` may hold one `{Word}`: underlined + clickable, opening `Link` (Story / Infinite / Challenge via
+  `ClientEvents.OpenStageSelect(mode|actId)`, Summon, Units, Shop, Craft).
+- Rewards are `GrantService` rows; **`BattlepassXP`** (ItemCatalog Kind `BattlepassXP`) is routed by
+  GrantService to `ServerStorage.BattlepassAddXP` — BattlepassService stays the one Battle Pass writer.
 
-## ⚠ Progress is a DELTA against a baseline, not a counter read
+## ⚠ Counter quests are a DELTA against a baseline
+Counters under `Data.Counters.Global` are LIFETIME totals. `QuestService` records each quest's baseline
+ONCE per period (`Data.Quests.Daily/Weekly.Base[id]`) — on join, every 60 s for online players, and on
+any read — and never rewrites it. Progress = current − baseline. Re-baselining on read is the classic
+"my quest keeps going back to zero" bug. No baseline yet ⇒ honest 0 (the Game panel shows that too).
 
-`Data.Counters.Global.*` are **lifetime** totals maintained by `SummonService` and
-`AscensionService`. A daily quest that read one directly would be **instantly complete for any
-established player, forever** — a player with 900 pulls finishes "summon 10 times" before they see it.
+**Infinite map quests** have no baseline: they read `Counters.Global.InfiniteDayBest = { Day, [stageId] = wave }`
+(the Game's per-day best).
 
-So when a quest is assigned, the service records the counter's value as a **`Baseline`**, and progress
-is `current - baseline`.
-
-That is what lets quests work **today** against counters nobody wrote for quests: **no service that
-owns a counter was touched, and nothing was added to any hot path.**
-
-- **Baselines are written once per quest per day and never rewritten.** Re-baselining on read would
-  reset progress every time the player opened the screen — the easiest way to get this wrong, and
-  invisible until someone reports "my quest keeps going back to zero".
-- Progress is clamped at 0. A counter only goes up, but a profile edit must not render a negative bar.
-- `Progress` and `Claimed` are **pruned** to today, so neither grows without bound on a profile.
-
-## ⚠ Only two counters exist, and a quest on a third is REFUSED
-
-| counter | written by |
+## Counters (cross-Place contract: lifetime, monotonic, never renamed)
+| counter | writer |
 |---|---|
-| `GachaPulls` | `SummonService` |
-| `Ascensions` | `AscensionService` |
+| `GachaPulls`, `Ascensions` | SummonService, AscensionService |
+| `Feeds`, `TraitRerolls`, `StatRerollsDone`, `Crafts`, `Evolutions`, `ShopBuys` | Lobby `LifetimeCounters.Bump` |
+| `GoldSpent`, `SilverSpent` (B109) | `GrantService.Spend` (the one spend path) |
+| `DailyQuestsClaimed` (B109) | QuestService (claims of other daily quests) |
+| `Clears`, `ClearsByStage`, `InsaneVictories` (= Lobby "Hard"), `ChallengeClears`, `Waves` | Game RewardCalculator |
+| `InfiniteWaves`, `InfiniteDayBest`, `HardClearsByStage` (B109) | Game RewardCalculator |
 
-A quest naming a counter with no writer would sit at 0 forever and read as a bug in the quest system,
-so:
+`QuestRegistry.LiveCounters` lists what is written; a quest on any other counter is hidden and NAMED at boot.
 
-- `QuestRegistry.LiveCounters` lists what is actually written;
-- `Assignable()` filters to those, and **orphans are never assigned**;
-- `QuestService` **names them at boot** in a warning.
+## Data (`Data.Quests`, free-form since v2 — no schema bump)
+`{ Daily = { Slot, Base, Claimed }, Weekly = { Slot, Base, Claimed }, Pins = { "Q:id" | "A:id" | "E:event:quest" } }`.
+The B40 fields (`Progress`, `Claimed`, `PinnedQuestId`) are dropped on first touch. Pins are **unlimited**
+(user; capped at 100 for profile size); claiming a quest unpins it.
 
-The two obvious match quests were left **commented out in the registry** rather than shipped broken.
-**SHIPPED at B42** now that the Game writes their counters (see the B41 section below): a one-line
-`LiveCounters` change plus the two entries, no service edit.
+## Claims: GRANT FIRST, MARK SECOND
+A claim must name a CURRENT quest (`FindCurrent`), be complete and unclaimed; then `GrantService.Grant`,
+then mark. Reveal = the RETURN VALUE (`ShowRewards`). `ClaimAllQuests` loops until nothing is claimable so
+"Complete 6 daily quests" is collected in the same click. Reasons: `not_current`, `already_claimed`,
+`not_complete`, `grant_failed`, `nothing_to_claim`, `busy`, `profile_not_loaded`, `bad_key`, `too_many_pins`.
 
-## ⚠ B41 (AD-Game): the match counters exist now — and one of them always did
+## The window (B109, refs = Quests screenshots)
+Title banner + Search + Filter (category Daily/Weekly/Unit/Infinite; Claimable/Incomplete/Pinned/Hide
+claimed) + Achievements button; tabs All / Daily / Weekly / **Trial** ("coming soon": unit-unlock quests,
+refs pending) + Claim All; list rows (kind + timer pill, title, desc link, pin, CLAIM chip, claimed check +
+strike) sorted claimable → in progress → claimed; detail panel (objective bar, reward cards, Claim/Incomplete,
+pin). Per-tab theme colour. Gamepad: B close (filter first), L1/R1 tabs, X claim, Y Claim All; window tagged
+`GamepadMenu`. Studio harness: `QuestsGUI` attribute `DevOpen = "All" | "Daily" | "Weekly" | "Trial"`.
 
-The claim above that "none of it exists" was **wrong when written**. `RewardCalculator` has been
-writing global counters at match end since A8:
-
-| counter | written by | moves when |
-|---|---|---|
-| `Clears` | `RewardCalculator` (Game) | **a Victory** — and a `StageConfig` **IS an act** (`Stage1_Act1..3`, chained by `NextActId`), so this already *is* "acts cleared" |
-| `ClearsByStage[stageId]` | `RewardCalculator` (Game) | a Victory, per act |
-| `Waves` | `RewardCalculator` (Game) | any outcome, by waves survived |
-| `Summons` | `SummonManager` (Game) | live, per spawn — the one counter that does not wait for match end |
-| `InsaneVictories` | `RewardCalculator` (Game) | **added B41** — a Victory that was *also* Insane |
-
-**So `ClearThree` needs no Game work.** Point it at **`Clears`**, not a new `ActsCleared` key: the
-Game deliberately did **not** add a second key for an event `Clears` already counts, because two
-stored numbers for one event is exactly the drift the one-writer rule exists to prevent (user's
-call, B41). `WinInsane` was the only one genuinely blocked, and `InsaneVictories` now exists.
-
-**SHIPPED at B42 (AD-Gacha, Lobby).** `Clears` + `InsaneVictories` were added to
-`QuestRegistry.LiveCounters`; `ClearThree` (Target 3) reads **`Clears`** and `WinInsane` (Target 1)
-reads `InsaneVictories`. **6 assignable of 6, 0 orphans**; claim verified live (PullOne → Silver x120).
-AD-Game supplied the counters and only the Lobby side of the quest system was edited, as intended.
-
-**⚠ Names are a cross-Place contract.** A counter read by a baseline delta must be lifetime and
-monotonic — never reset, never per-day. Renaming one silently strands every baseline already written
-against the old key, which is why `Clears` was not renamed to match the quest's wording.
-
-## The daily set is DERIVED
-
-`RollDaily(userId, day)` uses `MetaMath.RngForSlot(day, "Quests:"..userId)` — same mechanism as the
-shop, same reason: every server agrees with no stored roll.
-
-## ⚠ A claim must be one of TODAY'S quests, not merely a real quest id
-
-Otherwise a client could claim any quest in the registry by name. `claim` re-rolls the day's set
-server-side and checks membership.
-
-## GRANT FIRST, MARK SECOND
-
-`Grant` validates and can refuse; the mark cannot. Marking first would burn the claim and pay nothing.
-Same rule as daily rewards, codes and the shop. Reveal is the **return value** (B37).
-
-## Reason codes
-
-`bad_quest_id` · `not_assigned_today` · `already_claimed` · `not_complete` · `grant_failed` ·
-`profile_not_loaded` · `busy`
-
-## Verified live
-
-| case | result |
-|---|---|
-| assignment on an established profile | all three read **0/N** — the baseline works |
-| claim while incomplete | `not_complete` (`Progress: 0`) |
-| one **real** summon through `RequestSummon` | all three advanced by exactly 1; `PullOne` → 1/1, `CanClaim` |
-| claim `PullOne` | `ok=true`, Silver x120 granted |
-| claim again | `already_claimed` |
-| claim a quest not rolled today | `not_assigned_today` |
-| claim `123` | `bad_quest_id` |
-
-Quest content and rewards are **PLACEHOLDER**, labelled in the file.
-
-## The screen (B42)
-
-Built as **BLOCKOUT** art scripted to `docs/specs/2026-08-28-quests-screen.md` — the same call as
-DailyRewards at B40 (server + spec finished, only art blocking). `StarterGui.QuestsGUI` +
-`QuestsController`; `HUD.Left.Buttons.QuestsButton` fires `ClientEvents.OpenQuests` (self-wired, the
-SummonController shape). Renders a card per daily quest — name, progress bar, first reward icon+qty
-(with `+N`), Claim → `ClaimQuest` → `ShowRewards` reveal (return value, B37). The spec is the
-CONTRACT: the user re-authors the tree keeping the names and the controller needs zero edits.
+## Verified live (B109 M1, Lobby, real clicks)
+Open from HUD; Weekly theme + 1d 3h timer; filter (Infinite) + Reset; pin (gold); 10x summon → `Summon`
+claimable → Claim → reveal Silver x300 + Battlepass EXP x100, server `[DATA] Battlepass +100 XP` +
+`Quest CLAIMED D_Summon`; GoldSpent 1300/5000 on the weekly quest; search "spend"; Story link → Play menu.
+**Not yet observed live:** the completion toast; the Game-side Infinite/Hard counters (code-read only —
+the Game is not play-tested, user rule).

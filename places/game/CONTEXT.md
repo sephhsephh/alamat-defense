@@ -119,7 +119,8 @@ Boot order in `ReplicationBridge`: data services first; `[DATA]`/`[CONTRACT]` li
 - **MATCH QUEST COUNTERS (B41).** `InsaneVictories` added (Victory AND Insane). **`Clears` already IS
   "acts cleared"** (a `StageConfig` IS an act), so no `ActsCleared` key was added — two numbers for
   one event is the drift the one-writer rule prevents. Names are a CROSS-PLACE contract: a rename
-  strands every quest baseline. `docs/systems/quests.md`.
+  strands every quest baseline. `docs/systems/quests.md`. **B109:** + `InfiniteWaves`, `InfiniteDayBest`
+  `{Day,[stageId]=wave}`, `HardClearsByStage[stageId]` (RewardCalculator); `HudInfoService` reads `QuestRegistry.State`.
 - **THE THREE SETTINGS ACTIONS ARE WIRED (B41)** — `GameSettingsActions`, no edit to shared-canon
   `SettingsUI`. `ReturnToLobby`/`RestartMatch` fire `RequestMatchAction` so the SERVER keeps the
   teleport-v4 stamp; a client-side teleport would bypass the contract. `settings.md`.
