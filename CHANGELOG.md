@@ -1,4 +1,11 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-03 [lobby] B109 M2 -- **Achievements: categories, milestone gifts, Claim All.**
+- New `Configs.Meta.GoalEval` (the one lifetime-goal evaluator: + HardActs, InfiniteBest, UnitsDistinct, Shiny, Ascension, Stars by acts) + `Configs.Meta.AchievementConfig` (Story / The Collector / Infinite + Challenge / Secrets, 19 placeholder achievements, 25-50-75-100% milestones).
+- `QuestService` (still the one `Data.Quests` writer): `Data.Quests.Ach`; remotes `GetAchievements`, `ClaimAchievement`, `ClaimAllAchievements`, `ClaimAchievementMilestones`; `GetQuests` returns `Achievements` so the HUD badge + toast include them. No schema bump.
+- New authored `StarterGui.AchievementsGUI` + `AchievementsController` (sidebar + badges, category progress + markers + next-milestone rewards + gift, rows with rewards/pin/X-Claim-check, per-category theme, gamepad). Quests window "Achievements" button opens it (the GetConnections check, unavailable to game scripts, removed). Claimed rows (both windows) strike to the title's width.
+- **Verified live (Lobby):** Claim All 6, Collector 4/6 (67%), gift claimed 25%+50%, claimed styling. Story "all acts on Hard" depends on the Game's `HardClearsByStage` (M1, not match-tested).
+- Contract impact: none (Lobby-local). Open: M3 Events next.
+
 ## 2026-10-03 [lobby+game] B109 M1 -- **Quests rebuild: Daily / Weekly / daily Infinite map quests + new Quests window.**
 User decisions (7 Q&A rounds on 18 reference shots): `docs/specs/2026-10-03-quests-events-overhaul.md` (M1-M7 plan: Quests -> Achievements -> Events + Event Coin + Event Shop -> Headliner -> Infernal (Game) -> party toast -> Game pinned panel).
 - **SHARED (deployed BOTH Places, byte-identical, manifest updated):** `QuestRegistry` 7c5df4d2 -> **ed48e799** (REWRITTEN: fixed Daily 8 + Weekly 8, `InfiniteDaily` 2 maps/day x waves 25/50/75, pure `State`/`ProgressOf`/`FindCurrent`; `RollDaily` kept as a compat alias); `MetaConfig` 5166d377 -> **dc319738** (+`WeeklyResetOffsetSec = 288000` = Monday 00:00 PH time); `ChallengeConfig` 054838ab -> **192c7a83** (weekly challenge limit on the same Monday boundary -- the slot number changes once, so the week it ships grants one fresh weekly clear); `ItemCatalog` 563f621c -> **4349544e** (+`BattlepassXP`, Kind "BattlepassXP").

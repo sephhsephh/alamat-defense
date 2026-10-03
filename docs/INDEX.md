@@ -95,6 +95,7 @@
   sink** — B31 minted Silver and nothing ever spent it. Read it for the derived-not-stored stock
   (`MetaMath.RngForSlot`), and for the PRE-CHECK → SPEND → GRANT → MARK ordering with a refund on the
   unreachable failure. The client sends a slot INDEX and never a price.
+- `achievements.md` — **LOBBY**: B109 achievements (categories, milestones, `GoalEval` lifetime goal types).
 - `quests.md` — **LOBBY + shared rules**: B109 Daily / Weekly / daily Infinite map quests, the Quests window,
   baseline-delta progress, the cross-Place counter list. Spec: `docs/specs/2026-10-03-quests-events-overhaul.md`.
 - `battlepass.md` — **AD-Meta/AD-Gacha canon, LOBBY**: the seasonal tier ladder (B42) + match-end XP (B43)
