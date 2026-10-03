@@ -7,7 +7,7 @@ Decisions: `docs/specs/2026-10-03-quests-events-overhaul.md` (refs = the user's 
 | piece | where | job |
 |---|---|---|
 | `Configs.Meta.AchievementConfig` | RS (Lobby) | **Edit here.** Categories (Id, Name, Color, Milestones `{Pct, Reward}`, List) + achievements (Id, Name, Desc with one `{link}`, Link, Goal, Reward, Hidden). |
-| `Configs.Meta.GoalEval` | RS (Lobby) | THE lifetime-goal evaluator (Counter, Level, StageClear, **HardActs**, Stars(+Acts), **InfiniteBest**, UnitsOwned, **UnitsDistinct**, UnitLevel, **Shiny**, **Ascension**, Equipped, Codes). Pure. Events adopt it at M3. |
+| `Configs.Meta.GoalEval` | RS (**SHARED canon since M7**) | THE lifetime-goal evaluator (Counter, Level, StageClear, **HardActs**, Stars(+Acts), **InfiniteBest**, UnitsOwned, **UnitsDistinct**, UnitLevel, **Shiny**, **Ascension**, Equipped, Codes). Pure. Events adopt it at M3. |
 | `Server.Meta.QuestService` | SSS | Still the ONE `Data.Quests` writer: `Data.Quests.Ach = { Claimed = {[id]=true}, Milestones = {[catId]={[i]=true}} }`. Remotes `GetAchievements`, `ClaimAchievement(id)`, `ClaimAllAchievements(catId?)`, `ClaimAchievementMilestones(catId)`; pins are `SetQuestPin("A:<id>")`. `GetQuests` also returns `Achievements` (flat) for the HUD badge + toast. |
 | `StarterGui.AchievementsGUI` + `AchievementsController` | StarterGui | AUTHORED window (CategoryTemplate / RowTemplate / MarkerTemplate cloned). |
 

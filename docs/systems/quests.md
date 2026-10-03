@@ -11,7 +11,7 @@ History (B40 random daily roll, B42 blockout screen): CHANGELOG.
 | `SSS.Server.Meta.QuestService` | Lobby. **THE one writer of `Data.Quests`.** Remotes `GetQuests`, `ClaimQuest(id)`, `ClaimAllQuests(tab)`, `SetQuestPin(key,on)`. |
 | `StarterGui.QuestsGUI` + `QuestsController` | Lobby. AUTHORED window (RowTemplate cloned). Old B42 blockout = `QuestsGUI_RetiredB109` (disabled). |
 | `StarterGui.HUD.NotificationController` | HUD badge = claimable Daily + Weekly; "Quest complete" toast (first poll only seeds). |
-| Game `HudInfoService` | Read-only: match HUD quest panel via `QuestRegistry.State` (event quests + full pins there = spec M7). |
+| Game `HudInfoService` + `HudPanels` | Read-only match HUD panel: B109 M7 `Pins` = every pin with live progress (quests via `QuestRegistry.State`, achievements / event quests via `Data.Quests.PinMeta[key] = {Label,Name,Goal}` (Lobby QuestService writes it on pin; synced on join/60 s) + shared `GoalEval`); rotates every 6 s; no pins = first unfinished daily quest. |
 
 ## The lists (user, B109)
 - **Fixed lists:** everyone gets the same `Daily` (8) and `Weekly` (8). Placeholder numbers — the user edits.

@@ -664,6 +664,18 @@
       },
       "kind": "module",
       "comment": "NEW at B109 M5 (Infernal Hunt loot event). The GAME spawns the roaming boss + credits kills (Counters.Global.InfernalHunt) from it; the LOBBY shows the event, the milestone track and opens chests (Counters.Global.InfernalClaims). Window/EventKey/chance/limit/milestones/chest drops all here."
+    },
+    "GoalEval": {
+      "file": "shared/src/GoalEval.luau",
+      "hash": "928d3a53",
+      "owner": "lobby",
+      "deployPath": "ReplicatedStorage.Configs.Meta.GoalEval",
+      "deployed": {
+        "Game": "928d3a53",
+        "Lobby": "928d3a53"
+      },
+      "kind": "module",
+      "comment": "PROMOTED B109 M7 (Lobby-local since M2). The ONE lifetime-goal evaluator (achievements, event quests). Shared so the GAME HudInfoService shows live progress for pinned achievements / event quests (Data.Quests.PinMeta goals)."
     }
   },
   "templatesNote": "Templates are under drift control since 2026-08-06 (ADR-0005). They have NO shared/src file: the Instance is the canon. Two safe ways to get one into another Place: COPY it (Studio copy/paste) and prove equality by hash, OR build it with an identical DETERMINISTIC script run in both Places and hash-match (used for Kit_UnitIcon). Never rebuild by hand/by eye. See tools/checklists.md."

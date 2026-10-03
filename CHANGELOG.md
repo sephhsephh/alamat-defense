@@ -1,4 +1,10 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-03 [lobby+game] B109 M7 -- **Game match HUD shows every pin (quests, achievements, event quests).**
+- **SHARED:** `GoalEval` PROMOTED (Lobby-local since M2) -> **928d3a53**, both Places + disk + manifest + hash tool.
+- **Lobby:** `QuestService` writes `Data.Quests.PinMeta[key] = { Label, Name, Goal }` for "A:"/"E:" pins (backfill + prune on join / every 60 s).
+- **Game:** `HudInfoService` returns `Pins` (live progress via `QuestRegistry.State` + `GoalEval`); `HudPanels` shows them, rotating every 6 s with "i/n pinned"; no pins = the B81 daily-quest fallback. **Code-read only (Game not play-tested, user rule).**
+- **B109 milestone set M1-M7 complete.** Open: user play-test of the Game side (Infinite/Hard counters, Infernal boss, match HUD pins); the HUD EVENT card static text; Calendar; Trial quests (user refs).
+
 ## 2026-10-03 [lobby] B109 M6 -- **Party invite toast restyled (ref: invite card).**
 - `PartyService` invite message + `fromDisplayName`, `stage` (host's pick), `members`, `maxSize`. `PartyInviteGUI.Toast` rebuilt (header line, stage banner with mode icon + stage name + mode/act + difficulty badge, 4 member slots, Accept/Decline, timer bar); `PartyInviteController` paints it from `PlayConfig` (map name/art/theme). Harness: `PartyInviteGUI` attribute `DevPreview = true`.
 - Verified live via DevPreview (The Farm, Story - Act 2, Hard). Real two-player invite + avatar headshots in slots: unverified (Studio solo).
