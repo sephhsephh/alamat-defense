@@ -86,6 +86,9 @@ ItemCatalog.Entries = {
 	-- B109: Battle Pass EXP as a REWARD (quests/achievements). Not a stored currency: GrantService routes Kind
 	-- "BattlepassXP" to BattlepassService (ServerStorage.BattlepassAddXP), the one writer of Data.Battlepass.
 	BattlepassXP = { Kind = "BattlepassXP", Tier = "Rare", Name = "Battlepass EXP", Description = "Experience for the Battle Pass.", Icon = { Image = "rbxassetid://3057073083" }, Tradeable = false },
+	-- B109 M3: the ONE shared event currency. Kind "EventToken" = stored in Currencies.EventTokens[id] (the nested map
+	-- reserved since v2 -- no schema bump). Earned from events, spent in the Event Shop (EventShopService).
+	EventCoin = { Kind = "EventToken", Tier = "Legendary", Name = "Event Coin", Description = "Precious event coins that can be spent in the Event Shop!", Icon = { Image = "rbxassetid://18560905584" }, Tradeable = false },
 	StatRerolls = { Kind = "Currency", Tier = "Rare",   Name = "Stat Chip",   Description = "Rerolls all three of a unit's stats.", Icon = { Image = "rbxassetid://0" }, Tradeable = false },
 
 	-- ===== Items (existing stage drops) =====

@@ -1,4 +1,13 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-03 [lobby+game] B109 M3 -- **Events screen rebuilt + Event Coin + Event Shop + unified pin tracker.**
+- **SHARED:** `ItemCatalog` 4349544e -> **0930b37a** (+`EventCoin`, Kind "EventToken" -> `Currencies.EventTokens`, the v2 map; no schema bump). Deployed BOTH Places, disk + manifest.
+- `GrantService`: grant + `Spend` for Kind EventToken. New `Configs.Meta.EventShopConfig` + `Server.Meta.EventShopService` (`GetEventShop`, `BuyEventShop(index,times)`, unlimited, refund on refused grant). `LobbyServices` views carry `Currencies.EventTokens`; `ItemInfoController` counts tokens; `ObtainmentCatalog` lists event rewards + Event Shop.
+- `EventQuestConfig`: + Type/TypeLabel/Featured/Window|WindowSource/Label/Unit/Coin/Buff/Art, `Status()`; `Progress` -> `GoalEval`; Beginner's Path quests + 10 Event Coins each (placeholder); new **Weekend Rush** buff event (follows `WeekendRushConfig`).
+- New authored full-screen `EventsGUI` (old = `EventsGUI_RetiredB109`, disabled) + `EventsController`: Featured / Active / Upcoming (collapsible), centre unit model, detail + buff box, `QuestsPopup` + `ShopPopup` (pixel-sized grid cells -- a scale cell in an auto canvas collapses), tagged `GamepadMenu`.
+- Pins unified: event pins = `Data.Quests.Pins` `"E:ev:q"` (pt18's single `EventPinned` is legacy/ignored). `EventTracker.PinList` + `PinTrackerController` show EVERY pin (quests, achievements, events); `ClientEvents.PinsChanged`.
+- **Verified live (Lobby):** screen, quest claim with Event Coin, shop buy 10 -> 0, pins + tracker. Test note: synthetic clicks on small row icons can miss while the row hover-grows (hover first).
+- Open: the HUD EVENT card ("WEEKEND RUSH / Ends in 00:00:00") is static authored text -- ask the user before wiring it. M4 Headliner next.
+
 ## 2026-10-03 [lobby] B109 M2 -- **Achievements: categories, milestone gifts, Claim All.**
 - New `Configs.Meta.GoalEval` (the one lifetime-goal evaluator: + HardActs, InfiniteBest, UnitsDistinct, Shiny, Ascension, Stars by acts) + `Configs.Meta.AchievementConfig` (Story / The Collector / Infinite + Challenge / Secrets, 19 placeholder achievements, 25-50-75-100% milestones).
 - `QuestService` (still the one `Data.Quests` writer): `Data.Quests.Ach`; remotes `GetAchievements`, `ClaimAchievement`, `ClaimAllAchievements`, `ClaimAchievementMilestones`; `GetQuests` returns `Achievements` so the HUD badge + toast include them. No schema bump.

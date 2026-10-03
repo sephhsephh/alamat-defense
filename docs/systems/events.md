@@ -1,21 +1,30 @@
-# Events window + Beginner's Path (Lobby) -- B108 pt18 Part G
+# Events screen + Event Coin + Event Shop (Lobby) -- B109 M3 (rebuilt from pt18 Part G)
+
+<!-- owner: lobby | scope: lobby | last-verified: 2026-10-03 (B109 M3) -->
+
+Decisions: `docs/specs/2026-10-03-quests-events-overhaul.md`. pt18's window = `EventsGUI_RetiredB109` (disabled).
 
 ## Pieces
 | Piece | Where | Job |
 |---|---|---|
-| `Configs.EventQuestConfig` | ReplicatedStorage.Configs (Lobby) | **Every event + quest.** Groups (Starter / Featured / Active), events (Name, Tag, Description, Banner, Giver, Pages), quests (Id, Text, Goal, Rewards, Go), `Progress(data, goal)`. 25 drafted Beginner's Path quests on 5 pages -- placeholder balance, edit freely. |
-| `EventQuestService` | ServerScriptService.Server.Meta | `GetEventQuests`, `ClaimEventQuest` (grant first, mark second), `PinEventQuest`. One writer of `Counters.Global.EventQuests` + `Counters.Global.EventPinned` (no schema bump -- same home as ChallengeLimits). Studio: `RS:SetAttribute("DevEventQuests","reset")` server-side wipes claims + pin. |
-| `LifetimeCounters` | ServerScriptService.Server.Meta | `Bump(userId, key, n)` -- new lifetime counters: Feeds, TraitRerolls, StatRerollsDone, Crafts, Evolutions, ShopBuys (wired into Feed/TraitReroll/StatReroll/Crafting/GrantService.EvolveUnit/Shop). |
-| `EventsGUI` + `EventsController` | StarterGui (authored) | Window: sidebar groups, event header + Permanent pill + description, page tabs 1-5 (lock icon), page counter x/5, 5 quest rows, locked overlay, Back / Calendar (soon) / Event Banner. |
-| `EventTracker` | StarterGui (authored) | The pinned quest on the HUD (right side). Click = open Events. Refreshes every 20 s. |
+| `Configs.EventQuestConfig` | RS (Lobby) | **Every event.** Id, Name, Type (Quest/Buff/UnitHunt/Loot), TypeLabel, Featured, Window `{StartUtc,EndUtc}` or `WindowSource = "WeekendRush"`, Label (replaces the countdown, e.g. "Permanent"), Color, Art, Unit (centre model), Description, Coin, Buff `{Title,Text}`, Banner, Pages (quests). `Status(ev)` -> Active/Upcoming/Ended + seconds. Goals = `Configs.Meta.GoalEval`. |
+| `EventQuestService` | SSS.Server.Meta | `GetEventQuests`, `ClaimEventQuest` (grant first, mark second; page unlock). Claims in `Counters.Global.EventQuests` (no schema bump). Its old single pin (`EventPinned`, `PinEventQuest`) is LEGACY -- pins are now `Data.Quests.Pins` `"E:<event>:<quest>"` via `SetQuestPin`. |
+| `Configs.Meta.EventShopConfig` + `EventShopService` | RS / SSS | Event Shop rows `{Id, Qty, Price}`, **unlimited** (user). `GetEventShop`, `BuyEventShop(index, times<=100)`: pre-check -> `GrantService.Spend` -> Grant (refund on a refused grant). |
+| `EventCoin` | shared `ItemCatalog` (Kind `EventToken`) | ONE shared event currency in `Currencies.EventTokens.EventCoin` (field since v2). `GrantService` grants + spends it; `LobbyServices` views carry `Currencies.EventTokens`; the item hover card counts it; `ObtainmentCatalog` lists every event that pays it + the Event Shop. |
+| `EventsGUI` + `EventsController` | StarterGui (authored) | Full-screen: sidebar (Featured cards, collapsible Active / Upcoming groups, Back, Calendar = coming soon), centre unit model (`UnitCard.viewport` + `playIdle`), right detail (type, name, timer pill, description, buff box, Event Shop / Event Quests / Event Banner). Popups `QuestsPopup` (page tabs + locks, rows, detail, Claim, Pin, Go to Quest) and `ShopPopup` (grid, Buy x1/x10, balance with the coin hover card). |
+| `EventTracker` + `PinTrackerController` | StarterGui (authored) | HUD pin tracker = EVERY pin (quests, achievements, event quests), bottom-right, 2 cards tall then scrolls. Refresh: 15 s, `ClientEvents.PinsChanged`, after rewards. Click opens the source. |
 
 ## Rules
-- Goals are LIFETIME: Counter / Level / StageClear / Stars / UnitsOwned / UnitLevel / Equipped / Codes.
-- Page N unlocks when every quest on page N-1 is claimed (server-checked).
-- Row: Pin (one pinned quest; claiming it unpins) | Go to Quest (closes the window, fires `Go.Open(Arg)` and the walk arrow to `Go.Npc`) | X (not done) -> Claim (done) -> check (claimed).
-- Entry: HUD Event button (was the DailyRewards event tab), the guide NPC's dialogue choice, the tracker. `ClientEvents.OpenEvents(eventId?)`.
-- Event Banner -> `ClientEvents.OpenSummon(bannerId)` (SummonGUI now accepts a banner id) -- Beginner's Path uses `EventFirstLight`.
+- Ended events are hidden; Featured events sit on top; the rest group by Active / Upcoming (collapsible).
+- Theme follows the selected event's `Color` (backdrop, title, popups). Only Back / X / gamepad B close; scrims never.
+- Beginner's Path quests each pay 10 Event Coins (placeholder `BEGINNER_COINS`). Weekend Rush = Buff event (`WindowSource`).
+- Studio harness: `EventsGUI` attribute `DevOpen = "<eventId>"`; server `RS:SetAttribute("DevEventQuests","reset")`.
+
+## Verified live (B109 M3, Lobby, real clicks)
+HUD Event -> screen (Featured Beginner's Path, Active Weekend Rush "Ends in 1d, 2h"); Event Quests popup (page 2 of 5,
+3-5 locked), claim -> Gold + Bibingka + Event Coin x10; Event Shop grid, buy Trait Reroll Token for 10 (balance 10 -> 0,
+buttons grey); pin from detail + row; HUD tracker shows quest + event pins. Gamepad paths code-only.
 
 ## Not yet
-- The GAME's pinned-quest panel does not show event quests (Lobby tracker only).
-- Featured / Active groups are empty until the user's event references arrive. Calendar = "coming soon".
+Headliner Hunt (M4), Infernal Hunt (M5, Game), Calendar, the Game's pinned panel (M7). The HUD EVENT card text is the
+user's static authored text (not driven).

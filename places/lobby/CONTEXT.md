@@ -77,7 +77,8 @@ nothing spent Silver while B31 mints it. Stock DERIVED from `MetaMath.RngForSlot
 **PRE-CHECK → SPEND → GRANT → MARK**; **the client sends a slot INDEX, never a price.** **QUESTS (B109 rebuild, `quests.md`)**: shared
 `QuestRegistry` (fixed Daily + Weekly lists + daily Infinite map quests, pure `State`) + `QuestService` (one `Data.Quests` writer;
 baselines per period, Claim/ClaimAll/unlimited Pins) + authored `StarterGui.QuestsGUI` (old blockout `QuestsGUI_RetiredB109`). **ACHIEVEMENTS (B109 M2, `achievements.md`)**:
-`AchievementConfig` + `GoalEval` + `AchievementsGUI`; claims live in `Data.Quests.Ach` (QuestService).
+`AchievementConfig` + `GoalEval` + `AchievementsGUI`; claims live in `Data.Quests.Ach` (QuestService). **EVENTS (B109 M3, `events.md`)**: full-screen `EventsGUI`, `EventCoin`
+(`Currencies.EventTokens`), `EventShopService`, unified pin tracker `EventTracker.PinList`.
 
 
 **B39 — SCHEMA v3 → v4 + EVENT DAILIES + CODES + THE REVEAL QUEUE. Docs: `daily-rewards.md`, `redeem-codes.md`, `reward-push.md`.**
