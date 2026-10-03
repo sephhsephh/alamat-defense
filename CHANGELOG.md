@@ -1,4 +1,11 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-04 [game] B110 G1 -- **Game HUD overhaul, part 1: Alamat theme kit + top rail + juice.**
+User brief: bold original Alamat look (dark violet glass, gold animated borders, UIGradients everywhere), juicy motion, hotbar untouched; next-wave preview under TIME, Ready/Skip top-centre (boss-bar spot), right panels full height.
+- `ServerStorage.DevTools.AlamatTheme` (edit-time authoring helpers: glass body, gold shimmer stroke tagged `AlamatShimmer`, accent buttons tagged `AlamatPress`, gold text). New client `Client.UI.HudFX` (shimmer, press, pop, bump, countTo, slam, shake, flash, float, pulse; Player attr `ReducedMotion` disables shake/flash) + `Client.UI.HudFXBoot` (wires tags, incl. clones).
+- MatchHUD restyled: StatBar = one gold-bordered glass rail (LIVES / WAVE + progress bar / ENEMIES / TIME, dividers), menu + top-right + J/K buttons, right action column (violet / amber / green, key chips), speed buttons, StageTag, PinnedQuests, cash pill (money icon, gold text, count-up), NEXT WAVE line, WaveBanner (gold slam + wings), new `ScreenFlash` (vignette). WavePrep Root -> top-centre under the rail, Preview -> under TIME.
+- `HUD` script: banner slam + camera kick, lost-life pulse + red flash + shake, wave/enemy bumps, wave progress, cash count-up.
+- Verified live (Game, Auto Play, waves 1-2). Note (user-approved this once): playing the Game runs MatchLifecycleSmokeTest.
+
 ## 2026-10-03 [lobby+game] B109 M7 -- **Game match HUD shows every pin (quests, achievements, event quests).**
 - **SHARED:** `GoalEval` PROMOTED (Lobby-local since M2) -> **928d3a53**, both Places + disk + manifest + hash tool.
 - **Lobby:** `QuestService` writes `Data.Quests.PinMeta[key] = { Label, Name, Goal }` for "A:"/"E:" pins (backfill + prune on join / every 60 s).
