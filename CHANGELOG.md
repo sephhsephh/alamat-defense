@@ -1,4 +1,11 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-04 [lobby+game] B111 -- **Settings screen rebuilt, identical in both Places.**
+- **SHARED (both Places + disk + manifest):** `SettingsConfig` 22402435 -> **efbd0548**, `SettingsUI` 8f348863 -> **72cfd779** (see `docs/systems/settings.md` B111). **Bug fixed:** Sanitize reverted a saved `false` to a `true` default (Display Health Bars / Show Unit VFX could never stay off).
+- New authored `StarterGui.Settings` in both Places via `tools/build_settings_gui.luau` (Alamat violet/gold; old = `Settings_RetiredB111`).
+- Wiring: Game `WavePrepUI` (Auto Vote Start vs Auto Skip Waves, re-check on change), `MatchEndUI` (Show Match End Rewards), `HudPanels` (Display Pinned Quests); Lobby `PinTrackerController` (Display Pinned Quests).
+- Verified live: Lobby (open from HUD, toggle pinned quests hides tracker, tabs, search), Game (gear opens, Game-only rows, actions live, Auto Vote Start auto-readies + persists, Enemies tab). Test settings restored.
+- Not built (no system behind them yet): keybind remapping, UI scale, presets/testing tabs.
+
 ## 2026-10-04 [game] B110 G6 -- **Polish: tower selection panel themed; docs.**
 - `TowerSelection.Root`: violet glass PortraitCard + StatsCard, green Upgrade / red Sell / violet Ability / priority arrows with gold edges + press motion, Fredoka labels (strokes kept for any tier tint). Verified live.
 - `docs/systems/match-hud.md` B110 section (theme kit, HudFX, layout, harnesses); `places/game/CONTEXT.md` pointer.

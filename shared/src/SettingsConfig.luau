@@ -45,6 +45,11 @@ SettingsConfig.Defaults = {
 	StrictQueueOrder = false,       -- queued targets are served one tower at a time, in order
 	AutoUpgradeNewUnits = false,    -- a newly placed unit starts with Auto Upgrade already on
 	AutoAbilitiesNewUnits = false,  -- a newly placed unit starts with auto-cast already on
+	-- B111 (settings rebuild, user refs): four more, each wired in its Place.
+	AutoVoteStart = false,          -- Game: auto-cast the READY vote (AutoSkipWave now covers only skips)
+	ShowMatchEndRewards = true,     -- Game: the item-by-item reward reveal before the results screen
+	ShowPinnedQuests = true,        -- both: the pinned-quest panel (match HUD / Lobby tracker)
+	ScreenShake = true,             -- both: camera shake + screen flashes (off = Player attr ReducedMotion)
 }
 
 -- *** KEY-NAME NOTE: `SoundVolume` IS THE SFX SLIDER. DO NOT RENAME IT TO `SFXVolume`. ***
@@ -53,9 +58,14 @@ SettingsConfig.Defaults = {
 -- it would silently reset every existing player's volume to the default. A slightly-off key name is
 -- a much smaller cost than that.
 
--- Category tabs for the settings side-panel, in order. "All" is special (shows everything).
--- Add a category here + tag schema entries with it to expand -- the UI builds itself from this.
-SettingsConfig.Categories = { "All", "Sounds", "Game", "Performance", "Actions" }
+-- Category tabs for the settings side-panel, in order. "All" is special (shows everything, grouped by
+-- category with a header each). B111: the user's reference layout -- Audio / Gameplay / Graphics / Units /
+-- Enemies / Misc. `CategoryIcons` names an IconCatalog key per tab.
+SettingsConfig.Categories = { "All", "Audio", "Gameplay", "Graphics", "Units", "Enemies", "Misc" }
+SettingsConfig.CategoryIcons = {
+	All = "Gear", Audio = "Wave", Gameplay = "Sparkle", Graphics = "View",
+	Units = "Players", Enemies = "Skull", Misc = "Info",
+}
 
 SettingsConfig.Scopes = { Both = "Both", GameOnly = "GameOnly", LobbyOnly = "LobbyOnly" }
 
@@ -63,44 +73,45 @@ SettingsConfig.Scopes = { Both = "Both", GameOnly = "GameOnly", LobbyOnly = "Lob
 -- follows this list. Type/range here is what Sanitize enforces.
 -- Scope defaults to "Both" and Kind defaults to "Preference" when omitted (see normalise below).
 SettingsConfig.Schema = {
-	-- ===== Sounds: one slider per SoundGroup created at B32 =====
-	{ Key = "MusicVolume", Type = "number", Label = "Music Volume", Min = 0, Max = 1, Category = "Sounds" },
-	{ Key = "SoundVolume", Type = "number", Label = "SFX Volume", Min = 0, Max = 1, Category = "Sounds" },
-	{ Key = "UIVolume", Type = "number", Label = "UI Volume", Min = 0, Max = 1, Category = "Sounds" },
+	-- B111: every row carries a one-line `Desc` (shown under the title), Actions an `Icon` (IconCatalog key).
+	-- ===== Audio: one slider per SoundGroup created at B32 =====
+	{ Key = "MusicVolume", Type = "number", Label = "Music Volume", Desc = "Adjusts all game music volume", Min = 0, Max = 1, Category = "Audio" },
+	{ Key = "SoundVolume", Type = "number", Label = "SFX Volume", Desc = "Adjusts all game sound effect volume", Min = 0, Max = 1, Category = "Audio" },
+	{ Key = "UIVolume", Type = "number", Label = "UI Volume", Desc = "Adjusts button and menu sounds", Min = 0, Max = 1, Category = "Audio" },
 
-	-- ===== Game =====
-	-- B54: sprint is a TOGGLE in both Places; this pins it on. Scope "Both" on purpose -- the player
-	-- runs around in the Lobby and in a match, and one profile serves both.
-	{ Key = "AlwaysSprint", Type = "boolean", Label = "Always Sprint", Category = "Game" },
-	{ Key = "AutoSkipWave", Type = "boolean", Label = "Auto Skip Wave", Category = "Game", Scope = "GameOnly" },
-	{ Key = "ShowHealthBar", Type = "boolean", Label = "Show Health Bar", Category = "Game", Scope = "GameOnly" },
-	-- B87 AUTOMATION. The Unit Manager carries its own buttons for these four, and the rows here are
-	-- THE SAME SAVED KEYS, so the two surfaces can never disagree -- and a Preference that is not in
-	-- this Schema is dropped by Sanitize, so they have to be here to persist at all.
-	{ Key = "StrictUpgradeOrder", Type = "boolean", Label = "Strict Upgrade Order", Category = "Game", Scope = "GameOnly" },
-	{ Key = "StrictQueueOrder", Type = "boolean", Label = "Strict Queue Order", Category = "Game", Scope = "GameOnly" },
-	{ Key = "AutoUpgradeNewUnits", Type = "boolean", Label = "Auto-Upgrade New Units", Category = "Game", Scope = "GameOnly" },
-	{ Key = "AutoAbilitiesNewUnits", Type = "boolean", Label = "Auto Abilities on New Units", Category = "Game", Scope = "GameOnly" },
-	-- The reward reveal lives in the Lobby (ObtainRewardsGUI), so the toggle belongs there. This is
-	-- blueprint B3's original "skip-anim toggle in Settings" ask, finally given a home.
-	{ Key = "SkipRevealAnim", Type = "boolean", Label = "Skip Reward Animation", Category = "Game", Scope = "LobbyOnly" },
-	-- B73: the Trait Reroll screen carries its own checkbox for this; the row here is the same saved
-	-- key, so the two can never disagree (a Preference must be in the Schema or Sanitize drops it).
-	{ Key = "SkipTraitRerollAnim", Type = "boolean", Label = "Skip Trait Reroll Animation", Category = "Game", Scope = "LobbyOnly" },
-	{ Key = "SkipSummonAnim", Type = "boolean", Label = "Skip Summon Animation", Category = "Game", Scope = "LobbyOnly" },
-
-	-- ===== Performance =====
-	{ Key = "EnableVFX", Type = "boolean", Label = "Enable VFX", Category = "Performance", Scope = "GameOnly" },
-	{ Key = "LowDetail", Type = "boolean", Label = "Low Detail Mode", Category = "Performance" },
-	{ Key = "SimplifyHealthBar", Type = "boolean", Label = "Simplify Health Bar", Category = "Performance", Scope = "GameOnly" },
-
-	-- ===== Actions (persist NOTHING) =====
-	-- Scoping confirmed with the user at B35: the Game shows all three, the Lobby shows only
-	-- "Teleport to Spawn". An Action with no registered handler renders DISABLED rather than
+	-- ===== Gameplay =====
+	-- Actions persist NOTHING. An Action with no registered handler renders DISABLED rather than
 	-- pretending to work -- see ClientSettings.RegisterAction.
-	{ Key = "RestartMatch", Kind = "Action", Label = "Restart Match", Category = "Actions", Scope = "GameOnly" },
-	{ Key = "ReturnToLobby", Kind = "Action", Label = "Return to Lobby", Category = "Actions", Scope = "GameOnly" },
-	{ Key = "TeleportToSpawn", Kind = "Action", Label = "Teleport to Spawn", Category = "Actions" },
+	{ Key = "RestartMatch", Kind = "Action", Label = "Restart Game", Desc = "End your current game and restart", Icon = "Hourglass", Category = "Gameplay", Scope = "GameOnly" },
+	{ Key = "ReturnToLobby", Kind = "Action", Label = "Back To Lobby", Desc = "Leave your current game and return to lobby", Icon = "Arrow", Category = "Gameplay", Scope = "GameOnly" },
+	{ Key = "TeleportToSpawn", Kind = "Action", Label = "Teleport To Spawn", Desc = "Go to your current map's spawn point", Icon = "Players", Category = "Gameplay" },
+	{ Key = "AutoSkipWave", Type = "boolean", Label = "Auto Skip Waves", Desc = "Automatically vote to skip waves", Category = "Gameplay", Scope = "GameOnly" },
+	{ Key = "AutoVoteStart", Type = "boolean", Label = "Auto Vote Start", Desc = "Automatically vote to start games", Category = "Gameplay", Scope = "GameOnly" },
+	{ Key = "ShowMatchEndRewards", Type = "boolean", Label = "Show Match End Rewards", Desc = "Show reward pop-ups after matches", Category = "Gameplay", Scope = "GameOnly" },
+	{ Key = "ShowPinnedQuests", Type = "boolean", Label = "Display Pinned Quests", Desc = "Display all pinned quests on screen", Category = "Gameplay" },
+	-- B54: sprint is a TOGGLE in both Places; this pins it on.
+	{ Key = "AlwaysSprint", Type = "boolean", Label = "Auto Sprint", Desc = "Automatically sprint without holding the sprint key", Category = "Gameplay" },
+
+	-- ===== Graphics =====
+	{ Key = "ScreenShake", Type = "boolean", Label = "Show Camera Shake", Desc = "Show camera shake and screen flash effects", Category = "Graphics" },
+	{ Key = "LowDetail", Type = "boolean", Label = "Low Detail Mode", Desc = "Greatly reduce game visual details", Category = "Graphics" },
+	{ Key = "EnableVFX", Type = "boolean", Label = "Show Unit VFX", Desc = "Show unit attack effects and damage numbers", Category = "Graphics", Scope = "GameOnly" },
+
+	-- ===== Units -- B87 AUTOMATION. The Unit Manager carries its own buttons for these four; the rows
+	-- here are THE SAME SAVED KEYS, so the two surfaces can never disagree. =====
+	{ Key = "StrictUpgradeOrder", Type = "boolean", Label = "Strict Auto-Upgrade Priority", Desc = "Fully upgrade higher-priority units before lower-priority ones", Category = "Units", Scope = "GameOnly" },
+	{ Key = "StrictQueueOrder", Type = "boolean", Label = "Strict Queue Order", Desc = "Buy queued upgrades one unit at a time, in order", Category = "Units", Scope = "GameOnly" },
+	{ Key = "AutoUpgradeNewUnits", Type = "boolean", Label = "Auto-Upgrade Placed Units", Desc = "Automatically enable auto-upgrade for placed units", Category = "Units", Scope = "GameOnly" },
+	{ Key = "AutoAbilitiesNewUnits", Type = "boolean", Label = "Auto Abilities on Placement", Desc = "Enable auto abilities on placed units", Category = "Units", Scope = "GameOnly" },
+
+	-- ===== Enemies =====
+	{ Key = "ShowHealthBar", Type = "boolean", Label = "Display Health Bars", Desc = "Display enemy health bars", Category = "Enemies", Scope = "GameOnly" },
+	{ Key = "SimplifyHealthBar", Type = "boolean", Label = "Simple Health Bars", Desc = "No health text or damage trail on enemy bars", Category = "Enemies", Scope = "GameOnly" },
+
+	-- ===== Misc (Lobby animations) =====
+	{ Key = "SkipSummonAnim", Type = "boolean", Label = "Fast Summon", Desc = "Skip the summon animation and show results at once", Category = "Misc", Scope = "LobbyOnly" },
+	{ Key = "SkipRevealAnim", Type = "boolean", Label = "Skip Reward Animation", Desc = "Show claimed rewards without the reveal animation", Category = "Misc", Scope = "LobbyOnly" },
+	{ Key = "SkipTraitRerollAnim", Type = "boolean", Label = "Skip Trait Reroll Animation", Desc = "Skip the trait spin and reveal", Category = "Misc", Scope = "LobbyOnly" },
 }
 
 -- ===== which Place are we in? =====
@@ -168,7 +179,13 @@ function SettingsConfig.Sanitize(raw: any): { [string]: any }
 			local value = rawTable[key]
 			local default = SettingsConfig.Defaults[key]
 			if field.Type == "boolean" then
-				clean[key] = (type(value) == "boolean") and value or default
+				-- B111 FIX: the old `(type(value) == "boolean") and value or default` turned a saved FALSE back into
+				-- the default whenever the default was true (ShowHealthBar / EnableVFX could never stay off).
+				if type(value) == "boolean" then
+					clean[key] = value
+				else
+					clean[key] = default
+				end
 			elseif field.Type == "number" then
 				if type(value) == "number" and value == value then -- reject NaN
 					clean[key] = math.clamp(value, field.Min or 0, field.Max or 1)

@@ -118,3 +118,16 @@ at B35; the key did not.
 
 No save-schema bump is needed for new keys: `Data.Settings` has been free-form `{[string]: any}`
 since v1.
+
+## B111 -- Settings screen rebuilt (user refs), SAME design in both Places
+- GUI authored by `tools/build_settings_gui.luau` (run identically in Game + Lobby; old screen = `Settings_RetiredB111`,
+  disabled; the Game's gear `OpenButton` moved in). Tree: Panel{TitleBanner, Search.Input, CloseButton, CategoryPanel,
+  Content}, Dim, CategoryButtonTemplate, SectionTemplate{Header{Icon,Label,Line}, Grid}, Toggle/Slider/ActionRowTemplate.
+- Shared `SettingsUI` builds one SECTION per category (icon + gold title + divider) with a 2-column pixel grid (1 column
+  < 520 px; panel full-screen < 900 px); rows = Title + Desc + control (check / X toggle, value box + slider, icon
+  action). Search filters by title + desc; category tabs filter; open pop, staggered row pops, toggle bump, shimmer.
+  Only X / gamepad B close. `ClientEvents.OpenSettings` opens it from other screens.
+- New keys: `AutoVoteStart` (READY vote; `AutoSkipWave` now only skips -- WavePrepUI re-checks on change),
+  `ShowMatchEndRewards` (MatchEndUI skips the reveal), `ShowPinnedQuests` (HudPanels / Lobby PinTrackerController),
+  `ScreenShake` (SettingsUI sets Player attr `ReducedMotion`).
+- **Sanitize bug fixed:** a saved `false` used to come back as `true` for default-true keys (ShowHealthBar, EnableVFX).
