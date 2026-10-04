@@ -103,6 +103,19 @@ function ClientSettings.Set(key: string, value: any)
 	ClientSettings.Changed:Fire(current)
 end
 
+-- B112: change several settings in ONE save (Reset Keybinds, a rebind that clears a clashing key).
+function ClientSettings.SetMany(changes: { [string]: any })
+	for key, value in pairs(changes) do
+		current[key] = value
+	end
+	current = SettingsConfig.Sanitize(current)
+	applySideEffects()
+	if saveSettings then
+		(saveSettings :: RemoteEvent):FireServer(current)
+	end
+	ClientSettings.Changed:Fire(current)
+end
+
 -- ===== actions =====
 -- An Action is a button, not a preference: it fires and persists nothing. WHAT it does is
 -- Place-specific (Restart Match means nothing in the Lobby), so each Place registers its own

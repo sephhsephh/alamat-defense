@@ -22,6 +22,9 @@ script:SetAttribute("BootComplete", false)
 -- (UIKit.Motion). Only the X (or gamepad B) closes -- the dim never does (user rule).
 -- Side effects of two settings live here so they work identically in both Places:
 --   ScreenShake -> Player attribute "ReducedMotion" (read by the Game's HudFX and anything else that shakes).
+--   UIScale     -> an `AD_UIScale` UIScale (B112, see "UI SCALE" below).
+-- B112: Type "key" rows clone the optional KeybindRowTemplate{ Title, Desc, KeyButton{Label}, Clear }
+-- (tools/build_keybind_row.luau); click the key, press a key; X unbinds. Logic lives in Settings.Keybinds.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -31,6 +34,7 @@ local GuiService = game:GetService("GuiService")
 
 local SettingsConfig = require(ReplicatedStorage.Configs.Global.SettingsConfig)
 local ClientSettings = require(script.Parent.Parent.Settings.ClientSettings)
+local Keybinds = require(script.Parent.Parent.Settings:WaitForChild("Keybinds")) -- B112 (also registers ResetKeybinds)
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -74,6 +78,107 @@ end
 ClientSettings.Changed:Connect(applySideEffects)
 applySideEffects(ClientSettings.GetAll())
 
+-- ===== UI SCALE (B112) =====
+-- A UIScale parented to a ScreenGui does NOTHING (measured live, B112), so the scale goes on each TOP-LEVEL
+-- panel as a UIScale named `AD_UIScale`. Skipped, on purpose:
+--   * a panel that already has its OWN UIScale -- those are open/close pop animations (HudFX, Quests,
+--     Achievements...), and a second UIScale on one object is not allowed (one per object);
+--   * CONTAINERS -- anything spanning a whole screen axis. An invisible holder (menu roots, the HUD's
+--     full-height Left / Right columns, full-width Top / Bottom strips) has its CHILDREN scaled instead (up
+--     to 2 levels down); a VISIBLE full-axis panel (Unit Manager) keeps its authored size -- both because a
+--     full-height column grown by 120% runs off the screen;
+--   * templates (`*Template`) and retired (`*_Retired*`) objects.
+-- A UIScale grows a frame AWAY from its AnchorPoint, so a top-left-anchored button on the right edge would
+-- grow off-screen. Before its FIRST scale each object is re-anchored to the side of its parent it sits on
+-- (thirds: left/centre/right, top/middle/bottom) with its Position compensated, so at 100% nothing moves
+-- and when scaled it grows INWARD. Done once (attribute AD_Anchored). A script that later tweens such an
+-- object's Position must read its AnchorPoint, not assume the authored one.
+--   * the screens in UISCALE_SKIP: Settings itself (so a bad scale can always be undone), admin/dev tools.
+-- At 100% nothing is created at all. A UIScale is a size modifier on an authored panel, not generated UI.
+local UISCALE_SKIP = { Settings = true, Freecam = true, AdminPanel = true, AdminBroadcastGUI = true, ScreenFXLayer = true }
+local uiScaleValue = 1
+local watchedParents: { [Instance]: boolean } = setmetatable({}, { __mode = "k" }) :: any
+local function isContainer(o: GuiObject): boolean
+	return o.Size.X.Scale >= 0.95 or o.Size.Y.Scale >= 0.95
+end
+-- an invisible layout holder (no fill, no image): safe to look inside. A VISIBLE full-axis panel (Unit
+-- Manager, Stage Info) is left at its authored size -- scaling its rows one by one spills them out of it.
+local function isHolder(o: GuiObject): boolean
+	if o.BackgroundTransparency < 0.99 then return false end
+	if (o:IsA("ImageLabel") or o:IsA("ImageButton")) and (o :: any).Image ~= "" and (o :: any).ImageTransparency < 0.99 then
+		return false
+	end
+	return true
+end
+local function anchorInward(o: GuiObject)
+	if o:GetAttribute("AD_Anchored") or o.AutomaticSize ~= Enum.AutomaticSize.None then return end
+	local p = o.Parent :: any
+	if p == nil or (not p:IsA("GuiBase2d")) or p:FindFirstChildWhichIsA("UIGridStyleLayout") then return end
+	local ps, pp = p.AbsoluteSize, p.AbsolutePosition
+	if ps.X < 1 or ps.Y < 1 or o.AbsoluteSize.X < 1 then return end -- not laid out (disabled screen): try next time
+	o:SetAttribute("AD_Anchored", true)
+	local c = o.AbsolutePosition + o.AbsoluteSize / 2
+	local rx, ry = (c.X - pp.X) / ps.X, (c.Y - pp.Y) / ps.Y
+	local ax = if rx < 0.34 then 0 elseif rx > 0.66 then 1 else 0.5
+	local ay = if ry < 0.34 then 0 elseif ry > 0.66 then 1 else 0.5
+	local dx, dy = ax - o.AnchorPoint.X, ay - o.AnchorPoint.Y
+	if dx == 0 and dy == 0 then return end
+	-- compensate in the Size's own units; with a size/aspect constraint the real size differs, so use pixels
+	local constrained = o:FindFirstChildWhichIsA("UIAspectRatioConstraint") or o:FindFirstChildWhichIsA("UISizeConstraint")
+	if constrained then
+		o.Position += UDim2.fromOffset(o.AbsoluteSize.X * dx, o.AbsoluteSize.Y * dy)
+	else
+		o.Position += UDim2.new(o.Size.X.Scale * dx, o.Size.X.Offset * dx, o.Size.Y.Scale * dy, o.Size.Y.Offset * dy)
+	end
+	o.AnchorPoint = Vector2.new(ax, ay)
+end
+local scaleNode: (Instance, number) -> ()
+local function watchChildren(parent: Instance, depth: number)
+	if watchedParents[parent] then return end
+	watchedParents[parent] = true
+	parent.ChildAdded:Connect(function(child)
+		task.defer(scaleNode, child, depth)
+	end)
+end
+function scaleNode(o: Instance, depth: number)
+	if not o:IsA("GuiObject") or o.Parent == nil or o.Name:find("Template$") or o.Name:find("_Retired") then return end
+	local own = o:FindFirstChild("AD_UIScale")
+	if own == nil then
+		if o:FindFirstChildOfClass("UIScale") then return end
+		-- a LAYOUT ITEM (its parent has a UIListLayout / UIGridLayout) is always scaled as one unit, whatever
+		-- its size -- the HUD's button column items are {1,0},{1,0} cells
+		local inLayout = o.Parent ~= nil and (o.Parent :: Instance):FindFirstChildWhichIsA("UIGridStyleLayout") ~= nil
+		if not inLayout and isContainer(o :: GuiObject) then
+			if depth < 3 and isHolder(o :: GuiObject) then
+				watchChildren(o, depth + 1)
+				for _, c in ipairs(o:GetChildren()) do scaleNode(c, depth + 1) end
+			end
+			return
+		end
+		if uiScaleValue == 1 then return end
+		anchorInward(o :: GuiObject)
+		own = Instance.new("UIScale")
+		own.Name = "AD_UIScale"
+		own.Parent = o
+	end
+	(own :: UIScale).Scale = uiScaleValue
+end
+local function scaleGui(g: Instance)
+	if not g:IsA("ScreenGui") or UISCALE_SKIP[g.Name] or g.Name:find("_Retired") then return end
+	watchChildren(g, 1)
+	for _, c in ipairs(g:GetChildren()) do scaleNode(c, 1) end
+end
+local function applyUIScale(settings: any)
+	local v = tonumber(settings.UIScale) or 1
+	if v == uiScaleValue then return end
+	uiScaleValue = v
+	for _, g in ipairs(playerGui:GetChildren()) do scaleGui(g) end
+end
+playerGui.ChildAdded:Connect(function(g) task.defer(scaleGui, g) end)
+ClientSettings.Changed:Connect(applyUIScale)
+uiScaleValue = 0 -- force the first pass to walk (and wire) every screen
+applyUIScale(ClientSettings.GetAll())
+
 local gui = playerGui:FindFirstChild("Settings") or playerGui:WaitForChild("Settings", 10)
 if gui == nil then
 	warn("[SettingsUI] StarterGui.Settings is not in this Place yet -- the settings panel is unavailable here.")
@@ -93,6 +198,10 @@ local sectionTemplate = need(gui, "SectionTemplate")
 local toggleTemplate = need(gui, "ToggleRowTemplate")
 local sliderTemplate = need(gui, "SliderRowTemplate")
 local actionTemplate = need(gui, "ActionRowTemplate")
+local keybindTemplate = gui:FindFirstChild("KeybindRowTemplate") or gui:WaitForChild("KeybindRowTemplate", 3) -- B112, optional
+if keybindTemplate == nil then
+	warn("[SettingsUI] Settings.KeybindRowTemplate missing -- keybind rows hidden (run tools/build_keybind_row.luau).")
+end
 local closeBtn = need(panel, "CloseButton")
 local catPanel = need(panel, "CategoryPanel")
 local content = need(panel, "Content")
@@ -109,6 +218,7 @@ end
 for _, t in ipairs({ catTemplate, sectionTemplate, toggleTemplate, sliderTemplate, actionTemplate }) do
 	t.Visible = false
 end
+if keybindTemplate then keybindTemplate.Visible = false end
 
 local okI, IconCatalog = pcall(function() return require(ReplicatedStorage.Shared.IconCatalog) end)
 local function icon(key: string?): string
@@ -192,12 +302,24 @@ local function buildSlider(field: any, parent: Instance, order: number)
 		local ratio = math.clamp(((value or 0) - minV) / math.max(maxV - minV, 1e-6), 0, 1)
 		tween(fill, 0.12, { Size = UDim2.fromScale(ratio, 1) })
 		tween(handle, 0.12, { Position = UDim2.fromScale(ratio, 0.5) })
-		if not box:IsFocused() then box.Text = tostring(math.floor(ratio * 100 + 0.5)) end
+		if not box:IsFocused() then
+			-- B112: Display "Percent" shows the VALUE as a percent (UI Scale 75..125), else the 0..100 ratio
+			box.Text = if field.Display == "Percent" then tostring(math.floor((value or 0) * 100 + 0.5)) else tostring(math.floor(ratio * 100 + 0.5))
+		end
 	end
 	local dragging = false
+	-- B112: a `Step` field snaps the value (UI Scale moves in 5% steps) and is the gamepad step
+	local function snap(v: number): number
+		if field.Step then
+			v = minV + math.floor((v - minV) / field.Step + 0.5) * field.Step
+		end
+		return math.clamp(v, minV, maxV)
+	end
 	local function applyFromX(x: number)
 		local ratio = math.clamp((x - track.AbsolutePosition.X) / math.max(track.AbsoluteSize.X, 1), 0, 1)
-		ClientSettings.Set(field.Key, minV + ratio * (maxV - minV))
+		local v = snap(minV + ratio * (maxV - minV))
+		if field.Step and math.abs(v - (tonumber(ClientSettings.Get(field.Key)) or v)) < 1e-6 then return end
+		ClientSettings.Set(field.Key, v)
 	end
 	track.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -206,6 +328,11 @@ local function buildSlider(field: any, parent: Instance, order: number)
 		end
 	end)
 	UserInputService.InputChanged:Connect(function(input)
+		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement
+			and not UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
+			dragging = false -- B112: the release was missed (e.g. it landed outside the window); never drag unheld
+			return
+		end
 		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
 			applyFromX(input.Position.X)
 		end
@@ -224,13 +351,18 @@ local function buildSlider(field: any, parent: Instance, order: number)
 			elseif input.KeyCode == Enum.KeyCode.DPadLeft or input.KeyCode == Enum.KeyCode.Left then -0.05 else 0
 		if step ~= 0 then
 			local cur = tonumber(ClientSettings.Get(field.Key)) or minV
-			ClientSettings.Set(field.Key, math.clamp(cur + step * (maxV - minV), minV, maxV))
+			local delta = if field.Step then math.sign(step) * field.Step else step * (maxV - minV)
+			ClientSettings.Set(field.Key, snap(cur + delta))
 		end
 	end)
 	box.FocusLost:Connect(function()
 		local n = tonumber(box.Text)
 		if n then
-			ClientSettings.Set(field.Key, minV + math.clamp(n / 100, 0, 1) * (maxV - minV))
+			if field.Display == "Percent" then
+				ClientSettings.Set(field.Key, snap(n / 100))
+			else
+				ClientSettings.Set(field.Key, minV + math.clamp(n / 100, 0, 1) * (maxV - minV))
+			end
 		end
 		refreshers[field.Key](ClientSettings.Get(field.Key))
 	end)
@@ -263,6 +395,86 @@ local function buildAction(field: any, parent: Instance, order: number)
 	return row
 end
 
+-- ===== KEY rows (B112) =====
+-- Click the key button (or gamepad A on it) -> it reads "Press a key" and the NEXT keyboard key is bound
+-- (Keybinds.Set clears a clashing action of the same Group and the row says which). Backspace or a second
+-- click cancels; a reserved key (Escape, Slash, Tab, Enter, F9-F12) is refused. X unbinds.
+local KEY_BG, KEY_WAIT, KEY_NONE = C(52, 40, 74), C(255, 190, 60), C(30, 24, 42)
+local capturingRow: any = nil
+local function stopCapture()
+	capturingRow = nil
+	task.delay(0.15, function()
+		if capturingRow == nil then Keybinds.Capturing = false end
+	end)
+end
+local function buildKey(field: any, parent: Instance, order: number)
+	local row = keybindTemplate:Clone()
+	row.Name = field.Key
+	row.LayoutOrder = order
+	row.Visible = true
+	setText(row, field)
+	row.Parent = parent
+	local keyBtn, clear = row.KeyButton, row.Clear
+	local label = keyBtn.Label
+	local action = string.sub(field.Key, 5) -- "Key_Dash" -> "Dash"
+	local note: string? = nil
+	local function paint()
+		if capturingRow == row then
+			label.Text = "Press a key"
+			keyBtn.BackgroundColor3 = KEY_WAIT
+			return
+		end
+		local name = ClientSettings.Get(field.Key)
+		label.Text = if note then note elseif name == "" or name == nil then "None" else Keybinds.Label(name)
+		keyBtn.BackgroundColor3 = if name == "" or name == nil then KEY_NONE else KEY_BG
+		clear.Visible = name ~= "" and name ~= nil
+	end
+	refreshers[field.Key] = function() paint() end
+	paint()
+	keyBtn.Activated:Connect(function()
+		bump(keyBtn)
+		if capturingRow == row then
+			stopCapture()
+		else
+			local prev = capturingRow
+			capturingRow = row
+			Keybinds.Capturing = true
+			if prev and prev.Parent and refreshers[prev.Name] then refreshers[prev.Name]() end
+		end
+		paint()
+	end)
+	UserInputService.InputBegan:Connect(function(input)
+		if capturingRow ~= row or input.UserInputType ~= Enum.UserInputType.Keyboard then return end
+		local name = input.KeyCode.Name
+		if name == "Backspace" then
+			stopCapture()
+			paint()
+			return
+		end
+		if not SettingsConfig.IsBindableKey(name) then
+			note = "Can't use " .. Keybinds.Label(name)
+		else
+			local took = Keybinds.Set(action, name)
+			note = if took then "Taken from " .. took else nil
+		end
+		stopCapture()
+		paint()
+		if note then
+			task.delay(1.6, function()
+				note = nil
+				paint()
+			end)
+		end
+	end)
+	clear.Activated:Connect(function()
+		bump(clear)
+		if capturingRow == row then stopCapture() end
+		Keybinds.Set(action, "")
+		paint()
+	end)
+	return row
+end
+
 -- one section per category that has rows here, in config order
 local categories = SettingsConfig.CategoriesFor(place)
 local built = 0
@@ -282,6 +494,9 @@ for _, category in ipairs(categories) do
 			local row
 			if SettingsConfig.KindOf(field) == "Action" then
 				row = buildAction(field, sec.Grid, i)
+			elseif field.Type == "key" then
+				if keybindTemplate == nil then continue end
+				row = buildKey(field, sec.Grid, i)
 			elseif field.Type == "number" then
 				row = buildSlider(field, sec.Grid, i)
 			else

@@ -1,4 +1,12 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-04 [lobby+game] B112 -- **UI Scale + keybind remapping (Settings, both Places).**
+- **SHARED (both Places + disk + manifest, 57 -> 58 modules):** `SettingsConfig` efbd0548 -> **359e9376** (UIScale, Keybinds tab, 20 `Key_<Action>` rows, IsBindableKey, Sanitize "key"), `ClientSettings` a3a9d32f -> **de3e339c** (SetMany), `MovementController` 89552a9b -> **7f7dd86c** (Sprint/Dash keys from Keybinds, re-bind on change), `SettingsUI` 72cfd779 -> **7f24c676** (UI scale applier, key rows, slider Display/Step, drag fix), NEW `Keybinds` **5789296c** (`Client.Settings.Keybinds`). `tools/hash_shared.luau` B112-1.
+- Authored `Settings.KeybindRowTemplate` in both Places (`tools/build_keybind_row.luau`).
+- Game-local: PlacementController / TowerSelectionUI / UnitManagerUI / HudPanels / WavePrepUI read `Keybinds` (gamepad + mouse + Escape kept); Toggle Auto Skip Waves keybind; new `Client.UI.KeyHints` paints the key chips + vote hint. Lobby-local: new `LobbyHotkeys` (Play / Quests / Summon / Units / Inventory, unbound by default), `HudEntry.activate(path)`, PlayController `OpenStageSelect("Menu")`.
+- Keyboard only (gamepad/touch fixed). Defaults = the old hard-coded keys. Not built: Shift Lock toggle (engine-owned), Quick Placement, Areas menu (no systems).
+- Verified live: Lobby (rebind Dash Q->F, CAS rebinds, "Taken from" clash note; K opens Quests, U opens Units; capture swallows the key; Reset Keybinds; UI Scale 120 / 75 / 100, HUD grows inward). Game (17 rows; F opens Unit Manager; rebind to M -> chip shows M, F inert, M toggles; N toggles Auto Skip; Reset; UI Scale 120 with Unit Manager intact). User settings restored (keys default, UI Scale 100, Auto Skip ON as before). No console errors.
+- Contract impact: none (settings are free-form; no schema bump).
+
 ## 2026-10-04 [lobby+game] B111 -- **Settings screen rebuilt, identical in both Places.**
 - **SHARED (both Places + disk + manifest):** `SettingsConfig` 22402435 -> **efbd0548**, `SettingsUI` 8f348863 -> **72cfd779** (see `docs/systems/settings.md` B111). **Bug fixed:** Sanitize reverted a saved `false` to a `true` default (Display Health Bars / Show Unit VFX could never stay off).
 - New authored `StarterGui.Settings` in both Places via `tools/build_settings_gui.luau` (Alamat violet/gold; old = `Settings_RetiredB111`).

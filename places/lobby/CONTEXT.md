@@ -105,7 +105,7 @@ decided → `RewardPush`.** `ObtainRewardsGUI` needed **zero** changes.
 LocalScript CANNOT — so it threw at EVERY boot from B34, while B34's "verified 19/19" had run the check inside `execute_luau`, **WHICH
 HAS plugin capability AND its own require cache**: a re-implementation was tested, not the deployed script. **Clone a module to exercise
 a fresh copy.** Paired markers now, and **the start marker goes AFTER `--!strict`** or Luau silently drops strict mode. The Lobby
-settings screen is live (6 rows / 5 tabs here, 11 in the Game, same file); `SettingsUI` → **`7e5a736a`**.
+settings screen is live (same file both Places; hashes in the manifest). B112: UI Scale + keybinds (`settings.md`); menu keys = `LobbyHotkeys` + `HudEntry.activate`.
 
 
 **B35 — ONE SETTINGS SYSTEM FOR BOTH PLACES. FULL DOC: `settings.md`.** 4 shared entries at **IDENTICAL paths** in both Places, which

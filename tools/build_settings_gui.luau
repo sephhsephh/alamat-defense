@@ -3,6 +3,7 @@
 -- the result is byte-for-byte the same design everywhere. The old screen is kept as Settings_RetiredB111
 -- (disabled); the Game's floating gear (OpenButton) is moved into the new screen.
 -- Driven by the shared SettingsUI (see its header for the template names).
+-- B112: then run tools/build_keybind_row.luau (adds KeybindRowTemplate for the Keybinds tab).
 local CS = game:GetService("CollectionService")
 local SG = game:GetService("StarterGui")
 local FRED = Font.new("rbxasset://fonts/families/FredokaOne.json")

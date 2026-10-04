@@ -54,6 +54,9 @@ local SettingsConfig = require(ReplicatedStorage.Configs.Global.SettingsConfig)
 -- would hang this script forever if the folder were ever renamed.
 local settingsFolder = script.Parent:FindFirstChild("Settings") or script.Parent:WaitForChild("Settings", 10)
 local ClientSettings = settingsFolder and require(settingsFolder:WaitForChild("ClientSettings", 10)) or nil
+-- B112: the keyboard keys come from the player's keybinds (Settings > Keybinds); gamepad + touch stay fixed.
+local keybindsModule = settingsFolder and settingsFolder:WaitForChild("Keybinds", 10)
+local Keybinds = keybindsModule and require(keybindsModule) or nil
 
 local player = Players.LocalPlayer
 local PLACE = SettingsConfig.Place()
@@ -522,19 +525,31 @@ if ClientSettings then
 end
 
 -- ===== bindings =====
-ContextActionService:BindAction(ACTION_SPRINT, onSprintAction, true,
-	Enum.KeyCode.LeftShift, Enum.KeyCode.RightShift, Enum.KeyCode.ButtonL3)
-ContextActionService:SetTitle(ACTION_SPRINT, "Sprint")
-ContextActionService:SetPosition(ACTION_SPRINT, UDim2.new(1, -140, 1, -190))
+-- B112: the keyboard key is the player's keybind (Keybinds.Get, nil = unbound -> gamepad + touch only).
+-- Re-binding the SAME action name replaces the old bind, so a rebind in Settings takes effect at once.
+-- Without the Keybinds module (should never happen) the pre-B112 keys are used.
+local function bindMovement()
+	local sprintKey = if Keybinds then Keybinds.Get("Sprint") else Enum.KeyCode.LeftShift
+	local sprintInputs: { any } = { Enum.KeyCode.ButtonL3 }
+	if sprintKey then table.insert(sprintInputs, 1, sprintKey) end
+	ContextActionService:BindAction(ACTION_SPRINT, onSprintAction, true, table.unpack(sprintInputs))
+	ContextActionService:SetTitle(ACTION_SPRINT, "Sprint")
+	ContextActionService:SetPosition(ACTION_SPRINT, UDim2.new(1, -140, 1, -190))
 
-if DASH_ENABLED then
-	ContextActionService:BindAction(ACTION_DASH, onDashAction, true,
-		Enum.KeyCode.Q, Enum.KeyCode.ButtonR1)
-	ContextActionService:SetTitle(ACTION_DASH, "Dash")
-	ContextActionService:SetPosition(ACTION_DASH, UDim2.new(1, -140, 1, -290))
+	if DASH_ENABLED then
+		local dashKey = if Keybinds then Keybinds.Get("Dash") else Enum.KeyCode.Q
+		local dashInputs: { any } = { Enum.KeyCode.ButtonR1 }
+		if dashKey then table.insert(dashInputs, 1, dashKey) end
+		ContextActionService:BindAction(ACTION_DASH, onDashAction, true, table.unpack(dashInputs))
+		ContextActionService:SetTitle(ACTION_DASH, "Dash")
+		ContextActionService:SetPosition(ACTION_DASH, UDim2.new(1, -140, 1, -290))
+	end
+	paintSprintButton()
 end
-
-paintSprintButton()
+bindMovement()
+if Keybinds then
+	Keybinds.Watch(bindMovement)
+end
 
 -- ===== Studio harness (leave OFF) =====
 -- Tooling cannot synthesise a key press (VirtualInputManager is not available to it), so each of

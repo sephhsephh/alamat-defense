@@ -50,6 +50,34 @@ SettingsConfig.Defaults = {
 	ShowMatchEndRewards = true,     -- Game: the item-by-item reward reveal before the results screen
 	ShowPinnedQuests = true,        -- both: the pinned-quest panel (match HUD / Lobby tracker)
 	ScreenShake = true,             -- both: camera shake + screen flashes (off = Player attr ReducedMotion)
+	-- B112: UI Scale (the user's refs, Misc). Applied by SettingsUI as an `AD_UIScale` UIScale on every
+	-- top-level panel that has no UIScale of its own (see SettingsUI "UI SCALE").
+	UIScale = 1,
+	-- B112: keybinds. One flat `Key_<Action>` string per action = an Enum.KeyCode NAME, "" = unbound.
+	-- Flat keys (not a nested map) so the B35 Scope trap rule holds per row and Sanitize stays per-entry.
+	-- Defaults = the keys that were HARD-CODED before B112, so nobody's muscle memory changes.
+	-- KEYBOARD ONLY: gamepad buttons and touch buttons stay fixed (Keybinds module header).
+	Key_Sprint = "LeftShift",
+	Key_Dash = "Q",
+	Key_Interact = "E",
+	Key_PlaceUnit = "E",
+	Key_RotateUnit = "R",
+	Key_CancelPlacement = "X",
+	Key_UpgradeUnit = "E",
+	Key_AutoUpgradeUnit = "Z",
+	Key_SellUnit = "X",
+	Key_TargetingUnit = "T",
+	Key_UseAbility = "V",
+	Key_AutoAbility = "C",
+	Key_UnitManager = "F",
+	Key_StageInfo = "C",
+	Key_VoteSkip = "G",
+	Key_ToggleAutoSkip = "",
+	Key_OpenPlay = "",
+	Key_OpenQuests = "",
+	Key_OpenSummon = "",
+	Key_OpenUnits = "",
+	Key_OpenInventory = "",
 }
 
 -- *** KEY-NAME NOTE: `SoundVolume` IS THE SFX SLIDER. DO NOT RENAME IT TO `SFXVolume`. ***
@@ -61,10 +89,10 @@ SettingsConfig.Defaults = {
 -- Category tabs for the settings side-panel, in order. "All" is special (shows everything, grouped by
 -- category with a header each). B111: the user's reference layout -- Audio / Gameplay / Graphics / Units /
 -- Enemies / Misc. `CategoryIcons` names an IconCatalog key per tab.
-SettingsConfig.Categories = { "All", "Audio", "Gameplay", "Graphics", "Units", "Enemies", "Misc" }
+SettingsConfig.Categories = { "All", "Audio", "Gameplay", "Graphics", "Units", "Enemies", "Misc", "Keybinds" }
 SettingsConfig.CategoryIcons = {
 	All = "Gear", Audio = "Wave", Gameplay = "Sparkle", Graphics = "View",
-	Units = "Players", Enemies = "Skull", Misc = "Info",
+	Units = "Players", Enemies = "Skull", Misc = "Info", Keybinds = "Bookmark",
 }
 
 SettingsConfig.Scopes = { Both = "Both", GameOnly = "GameOnly", LobbyOnly = "LobbyOnly" }
@@ -112,7 +140,53 @@ SettingsConfig.Schema = {
 	{ Key = "SkipSummonAnim", Type = "boolean", Label = "Fast Summon", Desc = "Skip the summon animation and show results at once", Category = "Misc", Scope = "LobbyOnly" },
 	{ Key = "SkipRevealAnim", Type = "boolean", Label = "Skip Reward Animation", Desc = "Show claimed rewards without the reveal animation", Category = "Misc", Scope = "LobbyOnly" },
 	{ Key = "SkipTraitRerollAnim", Type = "boolean", Label = "Skip Trait Reroll Animation", Desc = "Skip the trait spin and reveal", Category = "Misc", Scope = "LobbyOnly" },
+	-- B112: `Display = "Percent"` makes the slider's box show the VALUE x100 (75..125) instead of the 0..100
+	-- ratio; `Step` is the gamepad / arrow-key step in VALUE units.
+	{ Key = "UIScale", Type = "number", Label = "UI Scale", Desc = "Adjust the size of the HUD and on-screen panels", Min = 0.75, Max = 1.25, Step = 0.05, Display = "Percent", Category = "Misc" },
+
+	-- ===== Keybinds (B112). Type "key" = a KeybindRowTemplate row (key button + X clear).
+	-- `Group` = where the key is LIVE: a rebind clears any other key of the SAME Group (and overlapping Scope)
+	-- that held it. Placement keys only work while placing, Selected keys only while a unit is selected,
+	-- so E can be both "Place Unit" and "Upgrade Unit" -- exactly as it was hard-coded before. =====
+	{ Key = "ResetKeybinds", Kind = "Action", Label = "Reset Keybinds", Desc = "Reset all keybinds to their defaults", Icon = "Hourglass", Category = "Keybinds" },
+	{ Key = "Key_Dash", Type = "key", Group = "Global", Label = "Dash", Desc = "Dash forward", Category = "Keybinds" },
+	{ Key = "Key_Sprint", Type = "key", Group = "Global", Label = "Sprint", Desc = "Toggle sprinting", Category = "Keybinds" },
+	{ Key = "Key_Interact", Type = "key", Group = "Global", Label = "Interact Prompt", Desc = "Use NPCs and interaction prompts", Category = "Keybinds" },
+	{ Key = "Key_PlaceUnit", Type = "key", Group = "Placement", Label = "Place Unit", Desc = "Confirm placing the held unit", Category = "Keybinds", Scope = "GameOnly" },
+	{ Key = "Key_RotateUnit", Type = "key", Group = "Placement", Label = "Rotate Unit", Desc = "Rotate the unit being placed", Category = "Keybinds", Scope = "GameOnly" },
+	{ Key = "Key_CancelPlacement", Type = "key", Group = "Placement", Label = "Cancel Unit Placement", Desc = "Stop placing the held unit", Category = "Keybinds", Scope = "GameOnly" },
+	{ Key = "Key_UpgradeUnit", Type = "key", Group = "Selected", Label = "Upgrade Unit", Desc = "Upgrade the selected unit", Category = "Keybinds", Scope = "GameOnly" },
+	{ Key = "Key_AutoUpgradeUnit", Type = "key", Group = "Selected", Label = "Auto Upgrade Unit", Desc = "Toggle auto upgrade on the selected unit", Category = "Keybinds", Scope = "GameOnly" },
+	{ Key = "Key_SellUnit", Type = "key", Group = "Selected", Label = "Sell Unit", Desc = "Sell the selected unit", Category = "Keybinds", Scope = "GameOnly" },
+	{ Key = "Key_TargetingUnit", Type = "key", Group = "Selected", Label = "Change Unit Targeting", Desc = "Cycle the selected unit's targeting", Category = "Keybinds", Scope = "GameOnly" },
+	{ Key = "Key_UseAbility", Type = "key", Group = "Selected", Label = "Use Ability", Desc = "Activate the selected unit's ability", Category = "Keybinds", Scope = "GameOnly" },
+	{ Key = "Key_AutoAbility", Type = "key", Group = "Selected", Label = "Auto Ability", Desc = "Toggle auto ability on the selected unit", Category = "Keybinds", Scope = "GameOnly" },
+	{ Key = "Key_UnitManager", Type = "key", Group = "Global", Label = "Toggle Unit Manager", Desc = "Open or close the Unit Manager", Category = "Keybinds", Scope = "GameOnly" },
+	{ Key = "Key_StageInfo", Type = "key", Group = "Global", Label = "Toggle Stage Info", Desc = "Open or close the Stage Info panel", Category = "Keybinds", Scope = "GameOnly" },
+	{ Key = "Key_VoteSkip", Type = "key", Group = "Global", Label = "Vote Start / Skip", Desc = "Vote to start the game or skip the wave", Category = "Keybinds", Scope = "GameOnly" },
+	{ Key = "Key_ToggleAutoSkip", Type = "key", Group = "Global", Label = "Toggle Auto Skip Waves", Desc = "Turn Auto Skip Waves on or off", Category = "Keybinds", Scope = "GameOnly" },
+	{ Key = "Key_OpenPlay", Type = "key", Group = "Global", Label = "Open Play Menu", Desc = "Open the Play menu", Category = "Keybinds", Scope = "LobbyOnly" },
+	{ Key = "Key_OpenQuests", Type = "key", Group = "Global", Label = "Open Quests Menu", Desc = "Open the Quests menu", Category = "Keybinds", Scope = "LobbyOnly" },
+	{ Key = "Key_OpenSummon", Type = "key", Group = "Global", Label = "Open Summon Menu", Desc = "Open the Summon menu", Category = "Keybinds", Scope = "LobbyOnly" },
+	{ Key = "Key_OpenUnits", Type = "key", Group = "Global", Label = "Open Units Menu", Desc = "Open the Units menu", Category = "Keybinds", Scope = "LobbyOnly" },
+	{ Key = "Key_OpenInventory", Type = "key", Group = "Global", Label = "Open Inventory", Desc = "Open the Inventory", Category = "Keybinds", Scope = "LobbyOnly" },
 }
+
+-- B112: is `name` a KEYBOARD Enum.KeyCode name a player may bind? Gamepad / mouse / touch codes are
+-- refused (those inputs are not remappable), and so are keys Roblox itself owns (Escape = menu, Slash =
+-- chat, F9 = console...). Used by Sanitize on BOTH sides, so a doctored payload cannot store junk.
+local RESERVED_KEYS = { Escape = true, Slash = true, Tab = true, Return = true, Unknown = true, F9 = true, F10 = true, F11 = true, F12 = true }
+function SettingsConfig.IsBindableKey(name: any): boolean
+	if type(name) ~= "string" or name == "" or RESERVED_KEYS[name] then
+		return false
+	end
+	if name:find("^Button") or name:find("^DPad") or name:find("^Thumbstick") or name:find("^Mouse")
+		or name:find("^Touch") or name:find("^Trackpad") then
+		return false
+	end
+	local ok, code = pcall(function() return (Enum.KeyCode :: any)[name] end)
+	return ok and code ~= nil
+end
 
 -- ===== which Place are we in? =====
 -- ONE definition of the assertion every script in this project makes for itself. `Workspace.Lobby`
@@ -182,6 +256,13 @@ function SettingsConfig.Sanitize(raw: any): { [string]: any }
 				-- B111 FIX: the old `(type(value) == "boolean") and value or default` turned a saved FALSE back into
 				-- the default whenever the default was true (ShowHealthBar / EnableVFX could never stay off).
 				if type(value) == "boolean" then
+					clean[key] = value
+				else
+					clean[key] = default
+				end
+			elseif field.Type == "key" then
+				-- B112: "" (unbound) or a bindable keyboard key name; anything else falls back to the default.
+				if value == "" or SettingsConfig.IsBindableKey(value) then
 					clean[key] = value
 				else
 					clean[key] = default

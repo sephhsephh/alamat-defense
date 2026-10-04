@@ -54,6 +54,7 @@ everything untradeable at launch).
 - ✅ Match end: stats/MVP, rewards commit, tower XP screen, Next Act validation
 - ✅ Persistence: ProfileStore schema v1, session-locked, dev store in Studio
 - ✅ Settings persisted in profile
+- ✅ UI Scale + keyboard keybind remapping, both Places (B112, `docs/systems/settings.md`)
 - 🟡 Art: attack anim/VFX/sound ids placeholder; weapon grips approximate
 - ✅ Monetization (B48, AD-Meta): paid track = **permanent gamepass unlock**, WIRED. `BattlepassConfig.GamePassId` + `BattlepassService` ownership sync (`UserOwnsGamePassAsync` on load + `PromptGamePassPurchaseFinished`) + client `PromptGamePassPurchase`. `Owned` stays the one writer's field. **User creates the gamepass + sets the id.** 🔲 level-skip products (5/10/50) still unbuilt.
 - 🟡 Content: 1 map, 2 enemies, 8 towers, 1 stage — pipeline proven, content thin

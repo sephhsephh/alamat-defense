@@ -131,3 +131,27 @@ since v1.
   `ShowMatchEndRewards` (MatchEndUI skips the reveal), `ShowPinnedQuests` (HudPanels / Lobby PinTrackerController),
   `ScreenShake` (SettingsUI sets Player attr `ReducedMotion`).
 - **Sanitize bug fixed:** a saved `false` used to come back as `true` for default-true keys (ShowHealthBar, EnableVFX).
+
+## B112 -- UI Scale + keybind remapping (both Places)
+- **UI Scale** (`UIScale`, Misc, 75-125 %, 5 % steps, box shows %). `SettingsUI` puts a UIScale named `AD_UIScale`
+  on each top-level panel (a UIScale on a ScreenGui does nothing -- measured). Skipped: `Settings` itself, admin/dev
+  screens, `*Template`, `*_Retired*`, panels that already own a UIScale (pop animations). Full-axis INVISIBLE holders
+  (HUD.Left/Right/Top/Bottom) are recursed (layout items always scaled whole); full-axis VISIBLE panels (Unit
+  Manager) keep their size. Before the first scale each object is re-anchored to its side of the parent with
+  Position compensated (attr `AD_Anchored`), so it grows inward. Nothing is created at 100 %.
+- **Keybinds** (new tab): `Key_<Action>` flat string settings (Enum.KeyCode name, "" = unbound), Type `key`,
+  `Group` Global / Placement / Selected (a rebind clears the same-Group holder; E = Place Unit AND Upgrade Unit on
+  purpose). `SettingsConfig.IsBindableKey` refuses gamepad/mouse/touch codes + Escape/Slash/Tab/Return/F9-F12.
+  **Keyboard only** -- gamepad buttons + mobile touch buttons are fixed. Shared module `Client.Settings.Keybinds`
+  (Get / Is / Label / Set / Reset / Bind / Watch, `Capturing`); `ResetKeybinds` action; Interact key drives every
+  ProximityPrompt authored on E.
+- Rows: `KeybindRowTemplate{Title, Desc, KeyButton{Label}, Clear}` authored by `tools/build_keybind_row.luau`
+  (run in both Places after build_settings_gui). Click key -> "Press a key" -> next key binds ("Taken from X" note);
+  Backspace / second click cancels; X unbinds.
+- Consumers: shared MovementController (Sprint, Dash; re-binds on change; RightShift no longer sprints). Game:
+  PlacementController (Place E / Rotate R / Cancel X, Escape + mouse kept), TowerSelectionUI (Upgrade E, Sell X,
+  Targeting T, Auto Upgrade Z, Ability V, Auto Ability C), UnitManagerUI (F), HudPanels (Stage Info C), WavePrepUI
+  (Vote G + its hint, Toggle Auto Skip Waves = unbound), `Client.UI.KeyHints` (paints the authored key chips).
+  Lobby: `StarterPlayerScripts.LobbyHotkeys` (Open Play / Quests / Summon / Units / Inventory, unbound by default;
+  open only), `HudEntry.activate(path)`, PlayController `OpenStageSelect("Menu")`.
+- Not remappable (engine-owned / no system): Shift Lock toggle, "Quick Placement", Areas menu; MatchEnd L/R/E.

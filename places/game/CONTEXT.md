@@ -125,7 +125,7 @@ Boot order in `ReplicationBridge`: data services first; `[DATA]`/`[CONTRACT]` li
   HudFX motion, full-height right panels, BossWarning, reveal VFX, Auto Play Settings (presets/slots/zone).
 - **THE THREE SETTINGS ACTIONS ARE WIRED (B41)** — `GameSettingsActions`, no edit to shared-canon
   `SettingsUI`. `ReturnToLobby`/`RestartMatch` fire `RequestMatchAction` so the SERVER keeps the
-  teleport-v4 stamp; a client-side teleport would bypass the contract. `settings.md`.
+  teleport-v4 stamp; a client-side teleport would bypass the contract. `settings.md` (B112: UI Scale + keybinds -- hotkeys read `Settings.Keybinds`, never a hard-coded KeyCode; `Client.UI.KeyHints`).
 - **`MatchDirector.AbortMatch` (B41) — AN ABORT PAYS NOTHING (user's call).** `MatchEnded` is never fired, so no XP/gold/drops/counters and no result recorded; deliberately NOT a Defeat, whose
   consolation would make a restart button farmable. Restarting a live match aborts it first. The flag
   is consumed by the match LOOP, never the caller's thread — racing teardown leaks a wave into the next match. `MatchStateChanged` now carries `StageId` (B41).
