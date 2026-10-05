@@ -158,3 +158,9 @@ dead boss leaves nothing behind.
 - **Harnesses (Studio):** `MatchHUD.BossWarning` attr `DevPreview = "<name>"`; `MatchEnd` attr `DevReveal = true`;
   `AutoPlaySettings` attr `DevOpen = true`; server `RS DevInfernalForce = true`.
 - Auto Play Settings data + rules: see the AutoPlayService header (`Counters.Global.AutoPlay`).
+
+## B113 -- enemy name above the floating bar
+`RS.UITemplates.EnemyHealthbar` canvas is now 4 x 1.25 studs (StudsOffset 2.95, bar centre unchanged at 2.6):
+`Background` on the bottom 44 % (AnchorPoint 0,1), `NameText` (bold, dark outline) in the top half. Before,
+NameText sat ABOVE a 0.55-stud canvas, and a BillboardGui only draws inside its own size, so the name was
+never visible. `FloatingHealthbars` sets the text from the enemy's `DisplayName`; Simplify Health Bar hides it.

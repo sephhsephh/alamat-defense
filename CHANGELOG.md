@@ -1,4 +1,8 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-05 [game] B113b -- **Fix: new VFX now visible on every unit; enemy names actually render.**
+- User: "cant see enemy name at all, cant see the vfx changes at all". Causes: (1) the user's loadout units (Handyong, Magwayen, Bantong) had B82 PLACEHOLDER folders (default sparkle + visible ball) that beat the element sets -- 23 placeholders moved to `ServerStorage.VFXScaffoldBackup_B113`; only Bantong's real Slash crater impact kept. (2) `EnemyHealthbar.NameText` sat outside the 0.55-stud BillboardGui canvas and was clipped -- canvas now 1.25 studs, name inside, bar position unchanged.
+- Note: the user's profile has Simple Health Bars ON, which hides names by the user's own rule. Verified live: with it off, every enemy shows its name (Grunt); setting restored to ON. Handyong now plays Elements/Fire, Magwayen Dark, Bantong _Default + crater, Bulalakaw Fire, Urduja Neutral. No errors.
+
 ## 2026-10-05 [game] B113 -- **Real particle VFX per element (toolbox), script-made shapes retired.**
 - Toolbox pack "THE ULTRA VFX AND PARTICLES PACK" (16612351416) inserted to a quarantine, 63 scripts + sounds/remotes/humanoids/tools stripped -> `ServerStorage.VFXSourceLibrary.UltraVFXPack_Clean` (source only, 727 emitters).
 - NEW `RS.VFXTemplates.Elements.<Element>.{Release,Projectile,Impact,Telegraph}` for Fire/Water/Nature/Dark/Light/Holy/Cosmic/Neutral (normalised sizes/speeds). `VFXLibrary` (Game-local) resolves `Elements/<Element>/<kind>` before `_Default`; `_Default` rebuilt particle-only (no ball / disc).

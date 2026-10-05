@@ -199,8 +199,10 @@ That is the whole loop — **no code, no config edit**, for every unit from here
 User: "actual particle emitters, no pre-made or script-made circles and splashes". Lookup gains one step
 between `Shared/<id>` and `_Default`: **`Elements/<the tower's Element>/<kind>`** (`VFXLibrary.ElementOf`
 reads `Element` from `TowerConfigRegistry`, cached). So every tower WITHOUT its own folder plays its
-element's set; an authored `Towers/<Id>` folder still wins (Bantong, Oryol, Babaylan, Bulalakaw, Handyong,
-Magwayen, Urduja untouched).
+element's set; an authored `Towers/<Id>` folder still wins. **B113 fix:** the 23 B82 placeholder templates
+(default sparkle + visible ball / disc) in Handyong, Magwayen, Bantong, Bulalakaw, Oryol, Babaylan, Urduja
+were blocking the sets -- moved to `ServerStorage.VFXScaffoldBackup_B113` (attribute `OriginalPath`; move
+one back to restore). The only real art kept is `Towers/Bantong/Attacks/Slash/Impact` (the crater).
 
 ```
 VFXTemplates.Elements.{Fire, Water, Nature, Dark, Light, Holy, Cosmic, Neutral}.{Release, Projectile, Impact, Telegraph}
