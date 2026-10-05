@@ -190,6 +190,29 @@ That is the whole loop — **no code, no config edit**, for every unit from here
 | --- | --- |
 | `RS.Shared.VFXLibrary` | The lookup rules (shared with the validator). Pure. |
 | `Client.VFX.VFXPlayer` | Clones a template, anchors it, ignites it, cleans it up. Caps and culling. |
-| `Client.VFX.VFXController` | Routes the server's events; keeps the old built-in shapes as fallback. |
+| `Client.VFX.VFXController` | Routes the server's events. B113: the script-made tracer beam, attack-shape flash and phase flash are RETIRED (particles only); damage numbers stay. |
 | `Server.Networking.VFXBroadcaster` | `AttackVFX(kind, position, ctx)` + `Projectile(..., ctx)`. |
 | `ServerScriptService.TowerVFXValidate` | The boot report. |
+
+## B113 -- Element particle sets (toolbox VFX, user request)
+
+User: "actual particle emitters, no pre-made or script-made circles and splashes". Lookup gains one step
+between `Shared/<id>` and `_Default`: **`Elements/<the tower's Element>/<kind>`** (`VFXLibrary.ElementOf`
+reads `Element` from `TowerConfigRegistry`, cached). So every tower WITHOUT its own folder plays its
+element's set; an authored `Towers/<Id>` folder still wins (Bantong, Oryol, Babaylan, Bulalakaw, Handyong,
+Magwayen, Urduja untouched).
+
+```
+VFXTemplates.Elements.{Fire, Water, Nature, Dark, Light, Holy, Cosmic, Neutral}.{Release, Projectile, Impact, Telegraph}
+```
+Each is an invisible anchor Part with Attachments holding ParticleEmitters copied from the toolbox pack
+**"THE ULTRA VFX AND PARTICLES PACK"** (asset 16612351416), normalised: size caps (Impact 5 / Release 3 /
+Projectile 2.5 / Telegraph 4 studs), speed caps, lifetime <= 2.5 s, smoke columns dropped, Water re-tuned
+for a ground splash. `_Default` = a copy of the Neutral set (its `SFX` sounds kept) -- the visible ball
+projectile and the flat telegraph disc are gone. Tune freely in Studio (EmitCount attribute per emitter).
+
+Source library (nothing runs): `ServerStorage.VFXSourceLibrary.UltraVFXPack_Clean` -- 727 emitters, all
+scripts / sounds / remotes / humanoids / tools stripped. Copy emitters from it to author more.
+Boot report now reads `no folder of their own -- playing: Elements/Dark (12), ...`.
+Note: the screen-capture tool does not render world BillboardGuis (healthbars, damage numbers) -- verify those by
+properties, not screenshots.

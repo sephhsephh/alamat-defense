@@ -1,4 +1,12 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-05 [game] B113 -- **Real particle VFX per element (toolbox), script-made shapes retired.**
+- Toolbox pack "THE ULTRA VFX AND PARTICLES PACK" (16612351416) inserted to a quarantine, 63 scripts + sounds/remotes/humanoids/tools stripped -> `ServerStorage.VFXSourceLibrary.UltraVFXPack_Clean` (source only, 727 emitters).
+- NEW `RS.VFXTemplates.Elements.<Element>.{Release,Projectile,Impact,Telegraph}` for Fire/Water/Nature/Dark/Light/Holy/Cosmic/Neutral (normalised sizes/speeds). `VFXLibrary` (Game-local) resolves `Elements/<Element>/<kind>` before `_Default`; `_Default` rebuilt particle-only (no ball / disc).
+- `VFXController`: tracer beam, attack-shape flash, phase flash retired; bolt fallback flies the house particle projectile. `TowerVFXValidate` reports per-element counts (39 towers: Cosmic 5, Dark 12, Fire 5, Holy 2, Light 4, Nature 4, Neutral 4, Water 3).
+- Enemy names above healthbars: already wired (B94, `EnemyHealthbar.NameText` = `DisplayName`, hidden by Simplify Health Bar) -- verified live by properties (Grunt / Manananggal visible).
+- Verified live (Game, Auto Play): resolution per element, impacts playing, no new errors. Auto Play switched back off.
+- Open: Bantong's folder is `Attacks/Cast` but its attack is `Slash` (never plays -- user's art, ask before renaming).
+
 ## 2026-10-04 [lobby+game] B112 -- **UI Scale + keybind remapping (Settings, both Places).**
 - **SHARED (both Places + disk + manifest, 57 -> 58 modules):** `SettingsConfig` efbd0548 -> **359e9376** (UIScale, Keybinds tab, 20 `Key_<Action>` rows, IsBindableKey, Sanitize "key"), `ClientSettings` a3a9d32f -> **de3e339c** (SetMany), `MovementController` 89552a9b -> **7f7dd86c** (Sprint/Dash keys from Keybinds, re-bind on change), `SettingsUI` 72cfd779 -> **7f24c676** (UI scale applier, key rows, slider Display/Step, drag fix), NEW `Keybinds` **5789296c** (`Client.Settings.Keybinds`). `tools/hash_shared.luau` B112-1.
 - Authored `Settings.KeybindRowTemplate` in both Places (`tools/build_keybind_row.luau`).
