@@ -1,4 +1,10 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-06 [game] B116 -- **Wave flow rebuilt to the user's spec + Auto Play zone rings.**
+- Server: `WavePrepConfig` (WaveCountdown 5, NextWaveInfoDelay 10, SkipVoteDelay 15, SkipWindow 30; legacy WaveIntermission/WaveInterval derived), `WaveDirector` (countdown BEFORE the wave; counter/income/spawn at 0; `UpcomingWave` signal), `MatchDirector` (preview = next wave), `WavePrepService` + `MatchReplicator` (`PrepDuration`).
+- Client: `WavePrepUI` (Countdown widget, info at +10s, skip + timer + bar at +15s, in/out animations), `HUD` (status line no longer shows "Next Wave - Ns" / "Wave 2 in" -- hidden unless build phase / end states), `MatchAudio` (boss warning with the info popup). Authored: WavePrep.Countdown, Root.TimerLabel/TimerBar, Preview enlarged (2-column enemy chips).
+- Auto Play zone: green (units) + pink (farm) animated range rings, follow the aim while picking, stay while Auto Play is ON (local only).
+- Verified live: countdown "WAVE N INCOMING" with counter held, wave start + banner, info popup "NEXT: WAVE 3" at +10s, skip panel "Next wave in 25s" + bar at +15s, Skip -> both hide -> countdown; early field clear -> countdown; rings ON + following aim. Restored: Auto Skip Waves ON; Auto Play left OFF (it had been left ON by my B115 testing).
+
 ## 2026-10-06 [lobby+game] B115 -- **Spacing pass: no more cramped UI (user: "too clamped ... claustrophobic").**
 - Rules from 8pt-grid / internal<=external practice: `docs/systems/ui-spacing.md`. Tool `tools/ui_breathing.luau` (stacked text >= 5% gap, side-by-side >= 3%, real buttons get 6%/10% UIPadding; layouts, Hotbar, admin, retired screens untouched). Applied: Game 104, Lobby 174 (+35 button paddings).
 - Unit Manager hand-tuned: card re-laid on 6% margins + even rows, 14 px grid gaps, CardGrid inner padding, automation row spaced (`UnitManagerUI.fitPanel` subtracts the padding).

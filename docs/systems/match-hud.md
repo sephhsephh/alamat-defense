@@ -164,3 +164,20 @@ dead boss leaves nothing behind.
 `Background` on the bottom 44 % (AnchorPoint 0,1), `NameText` (bold, dark outline) in the top half. Before,
 NameText sat ABOVE a 0.55-stud canvas, and a BillboardGui only draws inside its own size, so the name was
 never visible. `FloatingHealthbars` sets the text from the enemy's `DisplayName`; Simplify Health Bar hides it.
+
+## B116 -- wave flow rebuilt (user's spec)
+Timeline (`WavePrepConfig`, virtual seconds): READY phase (vote / Auto Vote Start / timeout) -> per wave:
+**5s COUNTDOWN** (`WaveCountdown`, prep label `Countdown`; the counter still shows the previous wave, 0 / 15
+first) -> wave starts (counter up, income paid, enemies spawn -- one instant) -> **+10s NEXT-WAVE INFO**
+(`NextWaveInfoDelay`; WavePrep.Preview "NEXT: WAVE N+1", income + enemy chips; data = `WavePreview`, now
+pushed from `WaveDirector.UpcomingWave` for the NEXT wave) -> **+15s SKIP WAVE** (`SkipVoteDelay`) with a
+**30s timer** (`SkipWindow`; WavePrep.Root TimerLabel + draining TimerBar) -> skip (unanimous) / timer /
+wave fully cleared -> both hide -> next COUNTDOWN. Last wave: no skip phase.
+- `WavePrepService` replicates `PrepDuration` (client derives elapsed). Widgets: WavePrep.Countdown
+  ("WAVE N INCOMING" + big number, pulses each second), Root (skip), Preview (info); all animate in (Back pop)
+  and out (shrink, then hide) via `setShown`.
+- MatchHUD.StatusLine: only "Build Phase - Ns", Preparing, VICTORY / DEFEAT -- hidden otherwise (the old
+  "Next Wave - Ns" / "Wave N in Ns" text is gone). MatchAudio boss warning fires with the info popup.
+- **Auto Play zone rings** (AutoPlaySettingsUI): the unit RangeIndicator (animated dashed ring) -- GREEN =
+  Normal (units) range, PINK = Farm range; follow the aim while picking; stay on the zone while the panel is
+  open or Auto Play is ON; local player only. Replaces the flat ZoneMarker part.
