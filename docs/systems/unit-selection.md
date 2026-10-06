@@ -194,3 +194,33 @@ camera byte-identical, this panel still looked different from a hotbar slot beca
 a wide box (aspect 1.39 against the slot's 0.83) — the same unit, just more empty room beside it. The
 fix was one `UIAspectRatioConstraint` on the viewport, not a camera change. Delete it if you prefer
 the wide frame.
+
+## B114 -- ref-style rebuild: multi-ability, Passives, Stat Breakdown, VFX toggle
+Layout (`tools/build_unit_panel.luau`, Edit mode, re-runnable): left side, mid-height (phones < 900 px:
+height-sized, docked bottom-left -- `fitPanel`). Portrait card (gold name, trait/element/placement icon
+badges, Range/VFX/Info icon strip, priority row, red Sell + green Upgrade with key chips), gold stats card,
+4 combat tiles, ability column, hotkey row, upgrade bar. `TowerSelection.DisplayOrder = 2` (above the HUD).
+- **Close:** the red X (gamepad B) is the ONLY way to close (user rule). Clicking empty ground / R2 at nothing
+  no longer deselects; clicking another unit still switches. Gamepad Sell moved B -> X.
+- **Trait badge** shows the trait's real `Icon` (TraitDefinitions).
+- **Abilities (several per unit).** Config `Abilities = { { Id, Cooldown, DisplayName?, Description?, Icon?,
+  CooldownScope = "Global"|"Local", AutoActivate?, Params? }, ... }` -- or the old single `Ability`, read as a
+  list of one by `RS.Shared.AbilityList` (Game-local; also `Describe`). `CooldownScope = "Global"`: using it on
+  one copy puts EVERY copy of that unit the same player placed on cooldown (user); default Local.
+  `TowerController`: `self.Abilities`, `TryActivateAbility(index)`, `AbilityReadyAt`, attrs `AbilityCount`,
+  `Ability<i>Ready`, `Ability<i>Cd` (whole seconds) + the legacy `HasAbility/AbilityName/AbilityReady`.
+  ONE auto toggle (`AutoActivateAbility`, C key) fires every ability when ready (user). Remote
+  `RequestActivateAbility(model, index?)`. UI: one `AbilityButtonTemplate` clone per ability (icon = `Icon`, else
+  the element icon; dark Shade + seconds while cooling down), hover / gamepad focus = `Root.AbilityCard` (name,
+  cyan cooldown, description, Global/Local footer). V = first ready ability.
+- **Passives** button (always): `PassivesWindow` (Unit tab only, user) -- each passive's name +
+  `UnitInfoCatalog.DescribePassive` text, numbers green / status words gold. Only its X / B closes it.
+- **Stat Breakdown** ("i"): `BreakdownPanel` with tabs Damage / SPA / Range / Crit Chance / Crit DMG / Income /
+  Upg Cost -- PERMANENT tiles (Level, Trait, Stat roll, Ascension, Challenge, permanent buffs), TEMPORARY rows
+  (timed buffs + seconds left), TOTAL (base -> final). Data = the server's `StatSources` JSON attribute
+  (`Server.Towers.StatSources`, published by `TowerController:PublishStatSources` only when it changes).
+  The stats card's CURRENT values now come from it too (the client resolve missed stat rolls, ascension,
+  challenge scales and buffs); the next-tier preview is scaled by the same live factor.
+- **VFX toggle** (eye): TAP hides this unit's VFX, HOLD (0.5 s) toggles every unit of that player. Client-only
+  attribute `ClientHideVFX` on the model, honoured by `VFXController` (sounds still play).
+- Child labels are named `Title`, never `Name` (a child called Name collides with Instance.Name).
