@@ -1,4 +1,9 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-06 [game] B117 -- **Enemy healthbars restyled (simplify = flat + cheapest) + random wave-banner lines.**
+- `EnemyHealthbar` template: glass bar, gold edge, shaded red fill + shine, quarter ticks, cream damage trail, outlined name/HP. `FloatingHealthbars.applyDetail` disables all decoration once when Simplify Health Bar is on.
+- NEW `Configs.Global.WaveBannerLines` (First/Boss/Final/General pools, no repeats); `HUD.showBanner` uses it instead of "GOOD LUCK, DEFENDER!".
+- Verified live: banner "THE ALAMAT AWAKENS..." on wave 1; bar copies rendered in both modes (62% / 18% HP); no errors.
+
 ## 2026-10-06 [game] B116 -- **Wave flow rebuilt to the user's spec + Auto Play zone rings.**
 - Server: `WavePrepConfig` (WaveCountdown 5, NextWaveInfoDelay 10, SkipVoteDelay 15, SkipWindow 30; legacy WaveIntermission/WaveInterval derived), `WaveDirector` (countdown BEFORE the wave; counter/income/spawn at 0; `UpcomingWave` signal), `MatchDirector` (preview = next wave), `WavePrepService` + `MatchReplicator` (`PrepDuration`).
 - Client: `WavePrepUI` (Countdown widget, info at +10s, skip + timer + bar at +15s, in/out animations), `HUD` (status line no longer shows "Next Wave - Ns" / "Wave 2 in" -- hidden unless build phase / end states), `MatchAudio` (boss warning with the info popup). Authored: WavePrep.Countdown, Root.TimerLabel/TimerBar, Preview enlarged (2-column enemy chips).

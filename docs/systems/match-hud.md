@@ -181,3 +181,14 @@ wave fully cleared -> both hide -> next COUNTDOWN. Last wave: no skip phase.
 - **Auto Play zone rings** (AutoPlaySettingsUI): the unit RangeIndicator (animated dashed ring) -- GREEN =
   Normal (units) range, PINK = Farm range; follow the aim while picking; stay on the zone while the panel is
   open or Auto Play is ON; local player only. Replaces the flat ZoneMarker part.
+
+## B117 -- enemy healthbar look + random wave-banner lines
+- `RS.UITemplates.EnemyHealthbar` (4.4 x 1.35 studs, bar centre still 2.6 studs up): violet glass bar
+  (`Glass` gradient) + gold `Edge` stroke, red fill with `Shade` gradient and a `Shine` strip, 3 quarter
+  `Ticks`, cream `DamageTrail`, heavy outlined HP text, cream outlined name. Shared with summon bars (green).
+- **Simplify Health Bar = the optimized mode:** `FloatingHealthbars.applyDetail` turns every decoration off
+  (gradients/stroke disabled, shine/ticks/trail hidden, flat dark background, name + HP text hidden) ONCE per
+  mode change; the fill snaps (no tweens). Normal mode keeps the tweened fill + trailing damage.
+- Wave banner subtitle: `RS.Configs.Global.WaveBannerLines` (pools First / Boss / Final / General --
+  motivational, memes, provocations; edit freely, keep lines ~32 chars). `Pick` never repeats the last line;
+  boss detection uses the previous next-wave preview.
