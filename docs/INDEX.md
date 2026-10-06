@@ -56,6 +56,7 @@
   per-`StageConfig`, and **the two difficulty scales** (UI 1–100 vs WIRE 100–1000, ADR-0011) —
   confusing them pays maximum gold for a normal match, silently. Also records that Insane is
   implemented but UNREACHABLE until teleport v3. Read before touching anything that pays a player.
+- `ui-spacing.md` — **BOTH Places**: the B115 spacing rules (card margins, row gaps, 14 px grid gaps, button insets) + `tools/ui_breathing.luau`. Read before building any screen.
 - `ui-kit.md` — **Place-NEUTRAL** AD-UI canon for the shared UI kit: 6 controllers
   (`RS.Shared.UIKit`, `shared/src` files) + 8 real instance templates (`RS.UITemplates.Kit`, the
   INSTANCE is canon per ADR-0005), the shared hotbar, the configs it depends on, and the rules

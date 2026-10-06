@@ -1,4 +1,10 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-06 [lobby+game] B115 -- **Spacing pass: no more cramped UI (user: "too clamped ... claustrophobic").**
+- Rules from 8pt-grid / internal<=external practice: `docs/systems/ui-spacing.md`. Tool `tools/ui_breathing.luau` (stacked text >= 5% gap, side-by-side >= 3%, real buttons get 6%/10% UIPadding; layouts, Hotbar, admin, retired screens untouched). Applied: Game 104, Lobby 174 (+35 button paddings).
+- Unit Manager hand-tuned: card re-laid on 6% margins + even rows, 14 px grid gaps, CardGrid inner padding, automation row spaced (`UnitManagerUI.fitPanel` subtracts the padding).
+- Verified live: Unit Manager, unit panel, Settings (Game); Play menu, Quests (Lobby). Measured audit before/after in the Game.
+- Not changed: list/grid layout paddings (risk of overflowing fixed rows) -- tune per screen if any still feel tight.
+
 ## 2026-10-06 [game] B114 -- **Selected-unit panel rebuilt from the user's refs: multi-ability, Passives, Stat Breakdown, VFX toggle.**
 - Server: NEW `RS.Shared.AbilityList` (config `Abilities` list or legacy `Ability`; `CooldownScope` Global = all the owner's copies), `TowerController` multi-ability (per-ability cooldowns, global cooldown table, attrs `AbilityCount` / `Ability<i>Ready` / `Ability<i>Cd`, one auto toggle fires all), `RequestActivateAbility(model, index?)`. NEW `Server.Towers.StatSources` + `StatSources` JSON attribute (permanent + timed sources per stat, final values).
 - UI (authored, `tools/build_unit_panel.luau`): Alamat restyle, trait icon, red X close (only close; empty-ground click no longer deselects; gamepad Sell B -> X), ability buttons + AbilityCard, AUTO, Passives window, Stat Breakdown, VFX toggle (tap one / hold all), key chips on Sell/Upgrade (KeyHints), DisplayOrder 2, phone fit. Stats card shows the server's real values.
