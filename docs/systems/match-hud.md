@@ -192,3 +192,12 @@ wave fully cleared -> both hide -> next COUNTDOWN. Last wave: no skip phase.
 - Wave banner subtitle: `RS.Configs.Global.WaveBannerLines` (pools First / Boss / Final / General --
   motivational, memes, provocations; edit freely, keep lines ~32 chars). `Pick` never repeats the last line;
   boss detection uses the previous next-wave preview.
+
+## B118 -- stage tag difficulty + animated XP bar
+- MatchDirector now pushes `Difficulty` = the PLAYER'S choice ("Hard" when `DifficultyMode` is "Insane" --
+  the Lobby's Hard -- else "Normal"); before it pushed the stage's own label, always "Normal". HudPanels
+  colours the StageTag ModeLine (Hard red, Normal green); the Stage Info "Mode" row / pill follow.
+- XP bar (Game `XPBarGui.XPBar`, HudPanels `animateXP`; Lobby `ExpBar`, ExpBarController `render`): fill
+  slides (Quint), XP number rolls up, level-up = fill to 100% -> gold "LEVEL UP!" pop -> refill from 0,
+  sheen (`Fill.Sheen.Sweep` gradient) sweeps every 4 s, first paint animates from empty. Harness attribute
+  `DevXP` ("level,xp,need" Game / "level,xp" Lobby) plays it without touching data.

@@ -1,4 +1,9 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-07 [lobby+game] B118 -- **StageTag shows the real difficulty; animated XP bar in both Places.**
+- Game `MatchDirector`: `Difficulty` from `DifficultyMode` (Insane -> "Hard"); `HudPanels` ModeLine coloured.
+- XP bar animation (slide, roll-up, level-up pop + refill, sheen) in Game `HudPanels` and Lobby `ExpBarController`; authored `Sheen` + label `Pop` UIScale in both. Fixed: a 0-XP profile left the "Lv. 1 (0 / 0 XP)" placeholder (label now painted immediately).
+- Verified live: Game "Hard Mode" (red) with DevDifficultyMode Insane (reset after), XP gain 0 -> 600/810 + level-up 16 -> 17; Lobby gain 474 -> 500/810 + level-up. No data changed (DevXP is display-only).
+
 ## 2026-10-06 [game] B117 -- **Enemy healthbars restyled (simplify = flat + cheapest) + random wave-banner lines.**
 - `EnemyHealthbar` template: glass bar, gold edge, shaded red fill + shine, quarter ticks, cream damage trail, outlined name/HP. `FloatingHealthbars.applyDetail` disables all decoration once when Simplify Health Bar is on.
 - NEW `Configs.Global.WaveBannerLines` (First/Boss/Final/General pools, no repeats); `HUD.showBanner` uses it instead of "GOOD LUCK, DEFENDER!".
