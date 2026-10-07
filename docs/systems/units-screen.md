@@ -34,3 +34,21 @@ features **upgrade path, View Unit inspect, Teams save/load, Select-by-Filter se
 - View Unit: drag / Q-E / buttons rotate, wheel zoom, R reset, X / B / Esc close (only-close-button rule kept).
 - Gamepad B / Escape backs out one layer (Inspect > Filter > Teams > Passives).
 - Studio harness: `UnitsGUI:SetAttribute("DevHero", "teams"|"filter"|"inspect"|"passives"|"more")`.
+
+## In the GAME (B123) -- J / the MatchHUD J button, loadout only
+The user copied `StarterGui.UnitsGUI` into the Game. Same controllers, minimal Game-copy patches (each tagged
+`B123 (GAME copy)`): rigs from `RS.TowerModels` (no `UnitModels` there), `ClientEvents.ToggleUnits` opens it (no
+HudEntry), equip refusals toast, `match_running` text. Game-only differences live in `UnitsGUI.UnitsMatchMode`:
+- **Loadout only** (user): Feed, Favourite, Lock, Sell, Quick Sell + sell bar, Swap Trait, buy slots are hidden and
+  kept hidden. Server `Server.Units.UnitsScreenService` refuses them (`lobby_only`).
+- **Change window**: every MatchState except `InProgress` (Preparing, the start vote / Countdown, results). While a wave
+  runs the SellStatus line explains the lock and writes refuse with `match_running`.
+- **Auto start waits**: `LocalPlayer.UnitsScreenOpen` holds WavePrepUI's AUTO ready vote; a manual vote and the start
+  timer still work.
+- A change goes through the SHARED `LoadoutRules` (the Lobby's exact rules, one copy), is SAVED to `Data.Loadout`,
+  re-validated into the running match (`LoadoutValidator`) + its launch Config, then `LoadoutAssigned` repaints the
+  hotbar. Replay / Next Act take the player's current saved loadout (`MatchActionHandler.startFromConfig`).
+- Studio: the smoke test seeds all towers; it now starts with the loadout picked on this screen last session
+  (remembered by TowerId because the seed issues fresh uuids every Play), else its `desired` list.
+- Needs (all shared canon since B123): `UnitCapacityConfig`, `UnitFamilyConfig`, `UnitSort`, `ScreenFX` (+ the
+  authored `StarterGui.ScreenFXLayer` and `Lighting.ScreenFXBlur`), `RS.ClientEvents` (Game folder of BindableEvents).

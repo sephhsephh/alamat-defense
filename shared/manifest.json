@@ -415,14 +415,14 @@
     },
     "SettingsConfig": {
       "file": "shared/src/SettingsConfig.luau",
-      "hash": "359e9376",
+      "hash": "d26a0359",
       "owner": "game",
       "deployPath": "ReplicatedStorage.Configs.Global.SettingsConfig",
       "deployed": {
-        "Game": "359e9376",
-        "Lobby": "359e9376"
+        "Game": "d26a0359",
+        "Lobby": "d26a0359"
       },
-      "comment": "efbd0548 -> 359e9376 at B112: + UIScale (Misc, 0.75..1.25, Display Percent, Step 0.05) + Keybinds category: ResetKeybinds action + 20 Type \"key\" rows (Key_<Action>, Group Global/Placement/Selected, Scope per Place; defaults = the pre-B112 hard-coded keys) + IsBindableKey + Sanitize \"key\" branch (keyboard KeyCode name or \"\" only). 22402435 -> efbd0548 at B111: categories Audio/Gameplay/Graphics/Units/Enemies/Misc + CategoryIcons, Desc/Icon per row, 4 new keys (AutoVoteStart, ShowMatchEndRewards, ShowPinnedQuests, ScreenShake), Sanitize FIX (saved false no longer reverts to a true default). PROMOTED TO SHARED CANON B35 2026-08-20 (owner AD-Game, schema shared with AD-UI). The one structure behind the unified settings system the user asked for: 'there will be one settings system for both game and lobby ... but both should use same structure, same gui.' Two fields carry that: Scope (Both/GameOnly/LobbyOnly) decides where an entry is SHOWN, Kind (Preference/Action) decides whether it PERSISTS. A Place difference is therefore a config field and NEVER a branch in a script -- SettingsUI contains no Place-specific `if` at all. *** THE TRAP, AND THE REASON Sanitize IGNORES Scope: one profile serves BOTH Places. If Sanitize dropped out-of-scope keys, changing any setting in the Lobby would sanitize every GameOnly preference out of the payload and PERMANENTLY LOSE it (and vice versa). So Sanitize processes every Preference regardless of Scope; Scope is a rendering concern only. Proven live at B35: a Game-side save left the LobbyOnly SkipRevealAnim intact, and MusicVolume set in the Game was read back in the Lobby. *** Actions have no Default and are skipped by Sanitize entirely, so a button press can never persist as a preference. KEY-NAME NOTE: `SoundVolume` IS the SFX slider -- do NOT rename it to SFXVolume; it shipped as the only volume key and players have saved values under it, so a rename silently resets everyone. Place() is the ONE definition of the Workspace.Lobby assertion every script in the project otherwise repeats. NO save-schema bump was needed: Data.Settings has been free-form {[string]: any} since v1. B54: +AlwaysSprint (Scope Both, Category Game) for the sprint toggle; re-hashed + redeployed both Places. ** B73 (2026-09-17): e7338957 (9,015 bytes). + `SkipTraitRerollAnim` Preference (LobbyOnly, Game tab), default false -- the Trait Reroll screen's saved skip checkbox; must be in the Schema or Sanitize drops it. ** ** B87 (2026-09-26): e7338957 -> 601163e7 (10,508 bytes). +FOUR GameOnly boolean Preferences for the Unit Manager's AUTOMATION row: StrictUpgradeOrder, StrictQueueOrder, AutoUpgradeNewUnits, AutoAbilitiesNewUnits (all default false). They live in the SETTINGS system, not in match-scoped state, so they SURVIVE the match -- an 'auto-upgrade new units' that forgets itself every wave is worse than not having it. The Unit Manager's own buttons write the SAME saved keys as the Settings rows, so the two surfaces cannot disagree; and a Preference absent from the Schema is dropped by Sanitize, which is why both the Defaults and the Schema entries are needed. ** 601163e7 -> 22402435 at B108 pt13: + SkipSummonAnim (LobbyOnly, 'Skip Summon Animation') -- skips the summon orb + showcases.",
+      "comment": "efbd0548 -> 359e9376 at B112: + UIScale (Misc, 0.75..1.25, Display Percent, Step 0.05) + Keybinds category: ResetKeybinds action + 20 Type \"key\" rows (Key_<Action>, Group Global/Placement/Selected, Scope per Place; defaults = the pre-B112 hard-coded keys) + IsBindableKey + Sanitize \"key\" branch (keyboard KeyCode name or \"\" only). 22402435 -> efbd0548 at B111: categories Audio/Gameplay/Graphics/Units/Enemies/Misc + CategoryIcons, Desc/Icon per row, 4 new keys (AutoVoteStart, ShowMatchEndRewards, ShowPinnedQuests, ScreenShake), Sanitize FIX (saved false no longer reverts to a true default). PROMOTED TO SHARED CANON B35 2026-08-20 (owner AD-Game, schema shared with AD-UI). The one structure behind the unified settings system the user asked for: 'there will be one settings system for both game and lobby ... but both should use same structure, same gui.' Two fields carry that: Scope (Both/GameOnly/LobbyOnly) decides where an entry is SHOWN, Kind (Preference/Action) decides whether it PERSISTS. A Place difference is therefore a config field and NEVER a branch in a script -- SettingsUI contains no Place-specific `if` at all. *** THE TRAP, AND THE REASON Sanitize IGNORES Scope: one profile serves BOTH Places. If Sanitize dropped out-of-scope keys, changing any setting in the Lobby would sanitize every GameOnly preference out of the payload and PERMANENTLY LOSE it (and vice versa). So Sanitize processes every Preference regardless of Scope; Scope is a rendering concern only. Proven live at B35: a Game-side save left the LobbyOnly SkipRevealAnim intact, and MusicVolume set in the Game was read back in the Lobby. *** Actions have no Default and are skipped by Sanitize entirely, so a button press can never persist as a preference. KEY-NAME NOTE: `SoundVolume` IS the SFX slider -- do NOT rename it to SFXVolume; it shipped as the only volume key and players have saved values under it, so a rename silently resets everyone. Place() is the ONE definition of the Workspace.Lobby assertion every script in the project otherwise repeats. NO save-schema bump was needed: Data.Settings has been free-form {[string]: any} since v1. B54: +AlwaysSprint (Scope Both, Category Game) for the sprint toggle; re-hashed + redeployed both Places. ** B73 (2026-09-17): e7338957 (9,015 bytes). + `SkipTraitRerollAnim` Preference (LobbyOnly, Game tab), default false -- the Trait Reroll screen's saved skip checkbox; must be in the Schema or Sanitize drops it. ** ** B87 (2026-09-26): e7338957 -> 601163e7 (10,508 bytes). +FOUR GameOnly boolean Preferences for the Unit Manager's AUTOMATION row: StrictUpgradeOrder, StrictQueueOrder, AutoUpgradeNewUnits, AutoAbilitiesNewUnits (all default false). They live in the SETTINGS system, not in match-scoped state, so they SURVIVE the match -- an 'auto-upgrade new units' that forgets itself every wave is worse than not having it. The Unit Manager's own buttons write the SAME saved keys as the Settings rows, so the two surfaces cannot disagree; and a Preference absent from the Schema is dropped by Sanitize, which is why both the Defaults and the Schema entries are needed. ** 601163e7 -> 22402435 at B108 pt13: + SkipSummonAnim (LobbyOnly, 'Skip Summon Animation') -- skips the summon orb + showcases. 359e9376 -> d26a0359 at B123: Key_OpenUnits = J and Key_OpenQuests = K (defaults), both rows now scope Both (were LobbyOnly) -- the Game's HUD J/K open the copied Units/Quests screens.",
       "kind": "module"
     },
     "MovementConfig": {
@@ -687,6 +687,66 @@
         "Lobby": "5789296c"
       },
       "comment": "Added B112 (user: keybind remapping). THE one place a script asks which keyboard key an action uses: Get/Is/Label/LabelOf/Set (clears a same-Group clash)/Reset/Bind/Watch + Capturing flag; registers the ResetKeybinds settings action; applies Key_Interact to every ProximityPrompt authored on E (AD_AuthoredKey). Keys live in SettingsConfig as flat Key_<Action> strings. Keyboard only -- gamepad + touch fixed. Consumers: MovementController (shared), SettingsUI (shared); Game PlacementController, TowerSelectionUI, WavePrepUI, UnitManagerUI, HudPanels, KeyHints; Lobby LobbyHotkeys.",
+      "kind": "module"
+    },
+    "LoadoutRules": {
+      "file": "shared/src/LoadoutRules.luau",
+      "hash": "22a35ed2",
+      "owner": "lobby",
+      "deployPath": "ReplicatedStorage.Shared.LoadoutRules",
+      "deployed": {
+        "Game": "22a35ed2",
+        "Lobby": "22a35ed2"
+      },
+      "comment": "NEW B123. THE rules for writing Data.Loadout / Data.UnitTeams (Clean, SetSlot, ApplyList, TeamsOf/TeamsView, TeamIndex, TrimTeamName), extracted verbatim from the Lobby's LoadoutService so the Game's pre-wave Units screen (Server.Units.UnitsScreenService) writes the loadout by the same rules: owned, dense, level-gated slots, ONE PER FAMILY. Pure; requires LoadoutConfig + UnitFamilyConfig. Lobby LoadoutService now calls it (verified live: equip, bad_slot, SetLoadout restore, teams).",
+      "kind": "module"
+    },
+    "UnitCapacityConfig": {
+      "file": "shared/src/UnitCapacityConfig.luau",
+      "hash": "8fa14a9d",
+      "owner": "game",
+      "deployPath": "ReplicatedStorage.Configs.Meta.UnitCapacityConfig",
+      "deployed": {
+        "Game": "8fa14a9d",
+        "Lobby": "8fa14a9d"
+      },
+      "comment": "PROMOTED B123 (byte-identical to the Lobby's B72 original, whose header still says LOBBY-LOCAL). The Game's copied Units screen + UnitsScreenService.GetUnitViews need the capacity snapshot. Pure.",
+      "kind": "module"
+    },
+    "UnitFamilyConfig": {
+      "file": "shared/src/UnitFamilyConfig.luau",
+      "hash": "b52f18bd",
+      "owner": "lobby",
+      "deployPath": "ReplicatedStorage.Configs.Meta.UnitFamilyConfig",
+      "deployed": {
+        "Game": "b52f18bd",
+        "Lobby": "b52f18bd"
+      },
+      "comment": "PROMOTED B123 (byte-identical to the Lobby original; header still says LOBBY-LOCAL). ONE PER FAMILY resolution, needed by the shared LoadoutRules in both Places.",
+      "kind": "module"
+    },
+    "UnitSort": {
+      "file": "shared/src/UnitSort.luau",
+      "hash": "bbcd88db",
+      "owner": "ui",
+      "deployPath": "StarterPlayer.StarterPlayerScripts.Client.UI.UnitSort",
+      "deployed": {
+        "Game": "bbcd88db",
+        "Lobby": "bbcd88db"
+      },
+      "comment": "PROMOTED B123 (byte-identical to the Lobby's B108 pt16 module). The one order for unit lists; the copied Units screen requires it in the Game too.",
+      "kind": "module"
+    },
+    "ScreenFX": {
+      "file": "shared/src/ScreenFX.luau",
+      "hash": "c1dc4764",
+      "owner": "ui",
+      "deployPath": "StarterPlayer.StarterPlayerScripts.Client.UI.ScreenFX",
+      "deployed": {
+        "Game": "c1dc4764",
+        "Lobby": "c1dc4764"
+      },
+      "comment": "PROMOTED B123 (byte-identical to the Lobby's B108 pt13c module). Screen juice (open/close drop-in, button springs, success burst). Needs the authored StarterGui.ScreenFXLayer + Lighting.ScreenFXBlur, both now in the Game too (built B123 from the Lobby's exact properties, 45 descendants); without them it degrades to no effects.",
       "kind": "module"
     }
   },

@@ -74,9 +74,9 @@ SettingsConfig.Defaults = {
 	Key_VoteSkip = "G",
 	Key_ToggleAutoSkip = "",
 	Key_OpenPlay = "",
-	Key_OpenQuests = "",
+	Key_OpenQuests = "K", -- B123: both Places (Game: the HUD K button)
 	Key_OpenSummon = "",
-	Key_OpenUnits = "",
+	Key_OpenUnits = "J", -- B123: both Places (Game: the HUD J button; loadout locked once wave 1 starts)
 	Key_OpenInventory = "",
 }
 
@@ -166,9 +166,9 @@ SettingsConfig.Schema = {
 	{ Key = "Key_VoteSkip", Type = "key", Group = "Global", Label = "Vote Start / Skip", Desc = "Vote to start the game or skip the wave", Category = "Keybinds", Scope = "GameOnly" },
 	{ Key = "Key_ToggleAutoSkip", Type = "key", Group = "Global", Label = "Toggle Auto Skip Waves", Desc = "Turn Auto Skip Waves on or off", Category = "Keybinds", Scope = "GameOnly" },
 	{ Key = "Key_OpenPlay", Type = "key", Group = "Global", Label = "Open Play Menu", Desc = "Open the Play menu", Category = "Keybinds", Scope = "LobbyOnly" },
-	{ Key = "Key_OpenQuests", Type = "key", Group = "Global", Label = "Open Quests Menu", Desc = "Open the Quests menu", Category = "Keybinds", Scope = "LobbyOnly" },
+	{ Key = "Key_OpenQuests", Type = "key", Group = "Global", Label = "Open Quests Menu", Desc = "Open the Quests menu", Category = "Keybinds" },
 	{ Key = "Key_OpenSummon", Type = "key", Group = "Global", Label = "Open Summon Menu", Desc = "Open the Summon menu", Category = "Keybinds", Scope = "LobbyOnly" },
-	{ Key = "Key_OpenUnits", Type = "key", Group = "Global", Label = "Open Units Menu", Desc = "Open the Units menu", Category = "Keybinds", Scope = "LobbyOnly" },
+	{ Key = "Key_OpenUnits", Type = "key", Group = "Global", Label = "Open Units Menu", Desc = "Open the Units menu", Category = "Keybinds" },
 	{ Key = "Key_OpenInventory", Type = "key", Group = "Global", Label = "Open Inventory", Desc = "Open the Inventory", Category = "Keybinds", Scope = "LobbyOnly" },
 }
 

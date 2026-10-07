@@ -183,4 +183,4 @@
 - `2026-07-31-ui-kit-button-primitive.md` — AD-UI: add a universal Button primitive +
   PlayerLevelBar to the Phase A kit (§5); no-scripts-on-templates rule; hotbar glow-bug
   hypothesis. FOR REVIEW; gated on A1–A3.
-- `systems/units-screen.md` -- Lobby Units screen (B108 pt14 rebuild: hero-left, upgrade path, tooltips, inspect, teams, select-by-filter).
+- `systems/units-screen.md` -- Lobby Units screen (B108 pt14 rebuild: hero-left, upgrade path, tooltips, inspect, teams, select-by-filter) + the Game copy on J (B123: loadout only, until wave 1).

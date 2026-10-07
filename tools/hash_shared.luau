@@ -1,5 +1,5 @@
 -- tools/hash_shared.luau
--- TOOLVERSION: B112-1
+-- TOOLVERSION: B123-1
 -- DRIFT CHECK: run via execute_luau (Edit datamodel) in ANY Place at bootstrap.
 -- Prints fnv1a32 hashes of the deployed shared canon; compare against shared/manifest.json.
 -- Anything absent in this Place returns "MISSING" (expected before its first deploy).
@@ -310,6 +310,12 @@ local MODULES = {
 	StageMissionsConfig = "ReplicatedStorage.Configs.Global.StageMissionsConfig",
 	InfernalHuntConfig = "ReplicatedStorage.Configs.Meta.InfernalHuntConfig", -- B109 M5
 	GoalEval = "ReplicatedStorage.Configs.Meta.GoalEval", -- B109 M7
+	-- B123: the Units screen (J) in the match -- shared loadout rules + the Lobby modules it needs.
+	LoadoutRules = "ReplicatedStorage.Shared.LoadoutRules",
+	UnitCapacityConfig = "ReplicatedStorage.Configs.Meta.UnitCapacityConfig",
+	UnitFamilyConfig = "ReplicatedStorage.Configs.Meta.UnitFamilyConfig",
+	UnitSort = "StarterPlayer.StarterPlayerScripts.Client.UI.UnitSort",
+	ScreenFX = "StarterPlayer.StarterPlayerScripts.Client.UI.ScreenFX",
 }
 
 -- GuiObject subtrees. Promoted by AD-UI 2026-08-06; a Place that has not received the kit
