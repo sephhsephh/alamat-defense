@@ -73,8 +73,8 @@ systems listed in `docs/OWNERSHIP.md`. Every chat mounts this repo.
 5. Refresh `STATE.md` if the project-level picture moved; flip your rows in
    `docs/ROADMAP.md` (the done/partial/planned status board).
 6. `git add -A && git commit -m "[<place>] <summary>"`. **NO attribution trailers** — no `Co-Authored-By:`, no `Generated with`, no session link (user rule 2026-09-16).
-7. Mirror the essentials into the Place's `ServerStorage.Documentation` (AIState +
-   RecentChanges) until that in-Studio doc set is fully retired.
+7. (Retired B123.) The in-Studio `ServerStorage.Documentation` set is now `Documentation_Retired`
+   (read-only history) -- do NOT mirror into it; the repo is the only doc set.
 8. **User advisory (never skip):** end the session by telling the user, in plain terms:
    (a) any NEW PENDINGs and exactly which chat/Place must act on them BEFORE dependent
    work continues; (b) whether the other Place is now stale and should be updated first;

@@ -138,8 +138,8 @@ the changelog so it is not mistaken for drift.
 1. Check size caps; split violators; update INDEX.md.
 2. Find `last-verified` dates older than the last 5 changelog entries touching that
    subject; spot-check those docs against code; fix or re-stamp.
-3. Migrate one or two docs from the Game place's ServerStorage.Documentation into
-   `docs/systems/` (migrate-on-touch also applies during normal sessions).
+3. (Done B123: the in-Studio doc set is retired as `ServerStorage.Documentation_Retired`; its still-true
+   content lives in `docs/systems/match-*.md` + `content-howto.md`.)
 4. Trim CHANGELOG: rotate entries older than ~3 months **or beyond ~5k lines, whichever
    comes first**, into `archive/CHANGELOG-<period>.md`. Bootstrap cost scales with this file.
 5. Commit.
