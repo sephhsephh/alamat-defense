@@ -245,6 +245,12 @@ exists**. Full rules, attach modes and the authoring contract: `tower-vfx.md`. T
 ## 11. Placement rules a new tower inherits (B81)
 
 - **Where it stands (B106):** `Placement = "Ground"` ground zones, cannot hit flying · `"Hill"` hill zones only · `"Hybrid"` **ground zones only, but CAN hit flying**. `CanHitFlying` still overrides.
+- **Hill zones (B120):** a map's `TowerZones` folder holds Parts **or Models**. A Model there makes every
+  BasePart inside it a zone, inheriting the nearest ancestor's `ZoneType` attribute (`"Hill"`/`"Ground"`;
+  a name starting "Hill" counts too) -- so put `ZoneType = "Hill"` on the MODEL, not on each mesh.
+  `TowerPlacementRules.ZonePartsIn` is the one discovery the server (`MapLoader`) and the ghost
+  (`PlacementController`) share. TestMap's hills are the user's 3 `RockFormation` models (the 2 placeholder
+  `Hill1`/`Hill2` parts are deleted).
 
 - **Never on the path.** `Shared.PathClearance` blocks any footprint touching the map's `PathDesigns`,
   client ghost and server alike. Your `Footprint` is the radius it tests.

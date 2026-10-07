@@ -1,4 +1,9 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-07 [game] B120 -- **A Model in TowerZones is a zone; the RockFormations are TestMap's hills.**
+- `Shared.TowerPlacementRules`: NEW `ZonePartsIn(folder)` (BasePart children + every BasePart inside a Model/Folder child); `ZoneTypeOf` now inherits `ZoneType` (or a "Hill*" name) from ancestors up to the TowerZones folder. `MapLoader.resolveTowerZones` (keys "<Model>/<n>") and `PlacementController.getTowerZones` both use it.
+- `ServerStorage.Maps.Stage1.TestMap.TowerZones`: `ZoneType = "Hill"` on `RockFormation1`, `RockFormation`, `RockFormation3` (the user's models); placeholder parts `Hill1`/`Hill2` DELETED.
+- Verified live: map loads 32 zones; Bulalakaw (Hill) placed on all 3 rocks, rejected WrongTerrain on plain ground earlier; Bantong (Ground) rejected WrongTerrain on a rock, placed on the ground. `docs/systems/tower-authoring.md`.
+
 ## 2026-10-07 [game] B119 -- **Melee units teleport ONTO their target and stick to it; Bantong idles in the hotbar.**
 - `Server.Towers.MeleeMover`: every melee attack (all `Movement` styles) teleports to the enemy's edge (radius + 1, min 1.5 studs) and is re-pinned to the enemy's live position each step through the swing, then teleports home. Before: a fixed spot `StandOff` (3-4) short of where the enemy WAS, so a walking enemy was hit from far away. Affects Bantong, Baltog, Amomongo, LamAng, Tikbalang, Aswang, Tiyanak (+ evolved forms). `docs/systems/tower-authoring.md` section 4.
 - Game `RS.TowerModels.Bantong` had no `IdleAnim` attribute (its rig was rebuilt), so the hotbar fell back to the stock idle; set to `rbxassetid://125610139973073` (the config's idle, same as the Lobby's `UnitModels.Bantong`). Hotbar code untouched.
