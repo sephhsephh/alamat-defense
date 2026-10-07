@@ -43,6 +43,7 @@ end
 
 function SettingsService.Set(userId: number, rawSettings: any)
 	local clean = SettingsConfig.Sanitize(rawSettings)
+	clean.Rev = SettingsConfig.Rev -- B123: a save from a live client is already migrated
 	local data = PlayerDataService.GetData(userId)
 	if data then
 		data.Settings = clean -- autosaved by ProfileStore
@@ -74,7 +75,8 @@ function SettingsService.Init()
 		local userId = player.UserId
 		-- Sanitize even our own stored data -- a schema change shouldn't hand back stale shapes.
 		-- A write that raced the load wins over the saved copy.
-		profile.Data.Settings = SettingsConfig.Sanitize(pendingWrites[userId] or profile.Data.Settings)
+		-- B123: then the one-time migrations (SettingsConfig.Migrate) -- new defaults reach old profiles.
+		profile.Data.Settings = SettingsConfig.Migrate(SettingsConfig.Sanitize(pendingWrites[userId] or profile.Data.Settings))
 		pendingWrites[userId] = nil
 	end)
 

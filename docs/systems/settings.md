@@ -155,3 +155,10 @@ since v1.
   Lobby: `StarterPlayerScripts.LobbyHotkeys` (Open Play / Quests / Summon / Units / Inventory, unbound by default;
   open only), `HudEntry.activate(path)`, PlayController `OpenStageSelect("Menu")`.
 - Not remappable (engine-owned / no system): Shift Lock toggle, "Quick Placement", Areas menu; MatchEnd L/R/E.
+
+## Migrations (B123)
+A saved value always beats a default, so a NEW default never reaches a profile that saved settings before it existed.
+`Data.Settings.Rev` (a number Sanitize keeps) + `SettingsConfig.Migrate` (run by SettingsService on every profile load;
+saves are stamped with `SettingsConfig.Rev`). Rev 1: `Key_OpenUnits` / `Key_OpenQuests` -- stored "" from when they were
+LobbyOnly-unbound -- get their new J / K defaults ONCE; a key cleared later stays cleared. Add a migration = bump `Rev`,
+add an `if rev < N` block.

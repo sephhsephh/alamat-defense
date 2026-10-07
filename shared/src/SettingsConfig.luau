@@ -278,7 +278,30 @@ function SettingsConfig.Sanitize(raw: any): { [string]: any }
 			end
 		end
 	end
+	-- B123: the migration revision rides along (a number, nothing else) -- see SettingsConfig.Migrate.
+	if type(rawTable.Rev) == "number" then
+		clean.Rev = rawTable.Rev
+	end
 	return clean
+end
+
+-- ===== MIGRATIONS (B123) =====
+-- A saved value always beats a default, so a NEW default never reaches a player who saved settings
+-- before it existed. `Rev` (stored inside Data.Settings) records which one-time fixes a profile has had;
+-- SettingsService runs Migrate on every profile load and stamps saves with the current Rev.
+--   Rev 1 (B123): Key_OpenUnits / Key_OpenQuests were LobbyOnly with default "" -- every profile that
+--   ever saved settings stored "" for them, so the new J / K defaults are handed out ONCE. A key the
+--   player clears after this stays cleared.
+SettingsConfig.Rev = 1
+
+function SettingsConfig.Migrate(s: { [string]: any }): { [string]: any }
+	local rev = tonumber(s.Rev) or 0
+	if rev < 1 then
+		if s.Key_OpenUnits == "" then s.Key_OpenUnits = SettingsConfig.Defaults.Key_OpenUnits end
+		if s.Key_OpenQuests == "" then s.Key_OpenQuests = SettingsConfig.Defaults.Key_OpenQuests end
+	end
+	s.Rev = SettingsConfig.Rev
+	return s
 end
 
 return SettingsConfig

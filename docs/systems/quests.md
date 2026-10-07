@@ -71,3 +71,18 @@ claimable → Claim → reveal Silver x300 + Battlepass EXP x100, server `[DATA]
 `Quest CLAIMED D_Summon`; GoldSpent 1300/5000 on the weekly quest; search "spend"; Story link → Play menu.
 **Not yet observed live:** the completion toast; the Game-side Infinite/Hard counters (code-read only —
 the Game is not play-tested, user rule).
+
+## In the GAME (B123) -- K / the MatchHUD K button: view, pin and claim
+The user copied `StarterGui.QuestsGUI` into the Game. Bookkeeping is the SHARED `RS.Shared.QuestBook` (box reshape,
+baselines, claim marks, pins -- extracted from QuestService, which now calls it), rules stay in the shared
+QuestRegistry, so both Places write the identical `Data.Quests`. Game server: `Server.Meta.MatchQuestService` (remotes
+GetQuests / ClaimQuest / ClaimAllQuests / SetQuestPin). Only the GRANT differs (GrantService is Lobby-only):
+- Currency -> `PlayerInventoryService.AddScalarCurrency`; Item -> `AddItem` (MaxOwned-capped);
+  BattlepassXP -> `RewardCalculator.AddPendingBattlepassXP` (rides MatchReturn; BattlepassService stays its one writer).
+- Anything else (unit / title / event token) refuses the WHOLE claim with `claim_in_lobby`; nothing is written.
+- Achievements stay Lobby-only (button hidden by `QuestsGUI.QuestsMatchMode`, which also turns `ShowRewards` into a toast).
+- Game-copy patches in QuestsController: `claim_in_lobby` text, Lobby-only links toast "Open that from the Lobby",
+  `ClientEvents.ToggleQuests` (K toggles).
+- Studio harness: `MatchQuestService:SetAttribute("DevBumpCounter", "Clears,10")` during Play.
+- Known limit (same as match BP XP): Battle Pass EXP from an in-match claim is lost if the player leaves without the
+  return teleport.

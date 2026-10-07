@@ -1,5 +1,5 @@
 -- tools/hash_shared.luau
--- TOOLVERSION: B123-1
+-- TOOLVERSION: B123-2
 -- DRIFT CHECK: run via execute_luau (Edit datamodel) in ANY Place at bootstrap.
 -- Prints fnv1a32 hashes of the deployed shared canon; compare against shared/manifest.json.
 -- Anything absent in this Place returns "MISSING" (expected before its first deploy).
@@ -316,6 +316,7 @@ local MODULES = {
 	UnitFamilyConfig = "ReplicatedStorage.Configs.Meta.UnitFamilyConfig",
 	UnitSort = "StarterPlayer.StarterPlayerScripts.Client.UI.UnitSort",
 	ScreenFX = "StarterPlayer.StarterPlayerScripts.Client.UI.ScreenFX",
+	QuestBook = "ReplicatedStorage.Shared.QuestBook", -- B123b
 }
 
 -- GuiObject subtrees. Promoted by AD-UI 2026-08-06; a Place that has not received the kit
