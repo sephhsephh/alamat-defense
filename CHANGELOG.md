@@ -1,4 +1,9 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-07 [game] B119 -- **Melee units teleport ONTO their target and stick to it; Bantong idles in the hotbar.**
+- `Server.Towers.MeleeMover`: every melee attack (all `Movement` styles) teleports to the enemy's edge (radius + 1, min 1.5 studs) and is re-pinned to the enemy's live position each step through the swing, then teleports home. Before: a fixed spot `StandOff` (3-4) short of where the enemy WAS, so a walking enemy was hit from far away. Affects Bantong, Baltog, Amomongo, LamAng, Tikbalang, Aswang, Tiyanak (+ evolved forms). `docs/systems/tower-authoring.md` section 4.
+- Game `RS.TowerModels.Bantong` had no `IdleAnim` attribute (its rig was rebuilt), so the hotbar fell back to the stock idle; set to `rbxassetid://125610139973073` (the config's idle, same as the Lobby's `UnitModels.Bantong`). Hotbar code untouched.
+- Verified live: hotbar Bantong plays 125610139973073 (hand moving); 4 placed Bantongs struck Grunts from 1.71-1.78 studs while following them; no errors. Pre-existing: `[CONTRACT] UnitStatsCatalog is STALE (Bantong.SPA 1.4 vs 5.4)`.
+
 ## 2026-10-07 [lobby+game] B118 -- **StageTag shows the real difficulty; animated XP bar in both Places.**
 - Game `MatchDirector`: `Difficulty` from `DifficultyMode` (Insane -> "Hard"); `HudPanels` ModeLine coloured.
 - XP bar animation (slide, roll-up, level-up pop + refill, sheen) in Game `HudPanels` and Lobby `ExpBarController`; authored `Sheen` + label `Pop` UIScale in both. Fixed: a 0-XP profile left the "Lv. 1 (0 / 0 XP)" placeholder (label now painted immediately).

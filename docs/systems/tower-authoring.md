@@ -102,16 +102,19 @@ Shapes and their required fields: **Circle** `ShapeRadius` · **Box** `ShapeWidt
 
 ---
 
-## 4. Melee: dash out, dash home
+## 4. Melee: teleport onto the target, teleport home
 
 `Movement` on the profile moves the **model** only. The tower's placement never changes:
 `TowerController.HomeCFrame` is captured once and `GetPosition()` always answers from it — so range,
 auras, selling, the placement grid and the client's range ring all behave as if the tower never left.
 A knight that lunges 10 studs does **not** gain 10 studs of range.
 
-The dash stops `StandOff` studs short of the enemy and faces it. The whole trip (out, hold, back) is
-fitted inside `AnimLength`, so the tower is home before it may fire again. `Style = "Teleport"` is the
-same trip with no travel time.
+**B119 (user): every melee attack TELEPORTS** (`Dash` included; `Speed` is no longer read). The rig
+lands hugging the enemy -- its radius (`GetExtentsSize`) + 1 stud, at least 1.5 studs from its centre;
+an authored `StandOff` can only pull it CLOSER -- faces it, and is **re-pinned to the enemy's live
+position every 1/30 s for the whole swing**, so a walking enemy is struck from arm's length. A target
+that dies mid-swing leaves the rig where it is. The visit (in, hold, out) is fitted inside `AnimLength`,
+so the tower is home before it may fire again. Measured live: 1.7-1.8 studs from a Grunt, tracking it.
 
 ### ⚠ The return keeps its facing (B90)
 
@@ -185,7 +188,7 @@ produced and how it picked its target.
 | `Server.Towers.AttackProfile` | Resolves tier → profile (+ the legacy inline shape), normalises the hit list, and answers "is this a sequenced attack?" |
 | `Server.Towers.AttackSequencer` | Plays the animation and runs the hit list: markers, projectiles, delays, VFX. |
 | `Server.Towers.AttackResolver` | All damage math. Anchors the shape, finds who is inside, rolls crit once per hit. |
-| `Server.Towers.MeleeMover` | The dash. Model only, never the placement. |
+| `Server.Towers.MeleeMover` | The melee teleport + follow. Model only, never the placement. |
 | `Server.Towers.TargetingSystem` | `SelectTarget` (one) and `SelectTargets` (N, for `Fresh` hits). |
 | `Server.Towers.RigAnimator` | The only place that touches Animators. Accepts number or string ids. |
 | `ServerScriptService.TowerAttackValidate` | Boot-time check of every config. |
