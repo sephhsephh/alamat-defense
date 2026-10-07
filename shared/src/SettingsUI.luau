@@ -95,6 +95,26 @@ applySideEffects(ClientSettings.GetAll())
 -- object's Position must read its AnchorPoint, not assume the authored one.
 --   * the screens in UISCALE_SKIP: Settings itself (so a bad scale can always be undone), admin/dev tools.
 -- At 100% nothing is created at all. A UIScale is a size modifier on an authored panel, not generated UI.
+-- B127: panels tagged `AD_ScaleGroup` scale TOGETHER as one block (see SCALE GROUPS below). A panel's
+-- `AD_ScaleMax` attribute caps ITS scale (e.g. 1 = a popup that keeps its designed size on phones, where
+-- there is no room for it to grow).
+-- B127 (user: "fix all ui to look good in all devices"): the EFFECTIVE scale = the UI Scale setting x a
+-- DEVICE factor. Small screens (the viewport's short side under DEVICE_REF px -- phones) get up to
+-- DEVICE_MAX more, because the HUD is authored at 1080p and its text drops to 3-8 px tall on a 375 px
+-- phone. Tablets / PCs: factor 1, nothing changes. Recomputed when the viewport resizes (rotation, window).
+-- A panel with its OWN UIScale (an open/close pop animation) cannot take a second one, so it is scaled by
+-- SIZE instead: its authored Size is kept in the `AD_BaseSize` attribute and Size = base x scale (after the
+-- same anchorInward). Pop animations only touch their UIScale, so nothing fights; a script that resizes the
+-- panel itself (a fitPanel) is adopted as the new base. UIScales named `Responsive` are a screen's OWN
+-- device scaling (DailyRewards, TraitReroll) -- left alone.
+local DEVICE_REF, DEVICE_MAX = 560, 1.4
+local function deviceFactor(): number
+	local cam = workspace.CurrentCamera
+	local v = cam and cam.ViewportSize or Vector2.new(1920, 1080)
+	local short = math.min(v.X, v.Y)
+	if short <= 1 or short >= DEVICE_REF then return 1 end
+	return math.clamp(DEVICE_REF / short, 1, DEVICE_MAX)
+end
 local UISCALE_SKIP = { Settings = true, Freecam = true, AdminPanel = true, AdminBroadcastGUI = true, ScreenFXLayer = true }
 local uiScaleValue = 1
 local watchedParents: { [Instance]: boolean } = setmetatable({}, { __mode = "k" }) :: any
@@ -133,6 +153,186 @@ local function anchorInward(o: GuiObject)
 	o.AnchorPoint = Vector2.new(ax, ay)
 end
 local scaleNode: (Instance, number) -> ()
+-- B127: a panel on a screen that has never been shown (Enabled = false at boot) has no layout yet, so it
+-- cannot be re-anchored; scale it the moment it is first laid out instead of growing it from the wrong side.
+local waitingLayout: { [GuiObject]: boolean } = setmetatable({}, { __mode = "k" }) :: any
+local function whenLaidOut(o: GuiObject, fn: () -> ())
+	if waitingLayout[o] then return end
+	waitingLayout[o] = true
+	local conn: RBXScriptConnection? = nil
+	conn = o:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+		if o.AbsoluteSize.X >= 1 and conn then
+			conn:Disconnect()
+			waitingLayout[o] = nil
+			fn()
+		end
+	end)
+end
+-- B127: Size-based scale for panels that own an animated UIScale (see the header).
+local sizeExpected: { [GuiObject]: UDim2 } = setmetatable({}, { __mode = "k" }) :: any
+-- B127: FIT. A scaled panel never outgrows the screen: the big menus are authored at 1080p and already
+-- fill a phone (some even overflow it at 100%), so the device boost would push them off the edges. Given
+-- the panel's UNSCALED pixel size, its factor is capped -- below 1 when needed -- so it fits the screen
+-- with a margin, and on an IgnoreGuiInset screen clears the Roblox top bar above AND below (centred).
+local FIT_MARGIN = 0.96
+local function fitCap(o: Instance, basePx: Vector2): number
+	local sg = o:FindFirstAncestorOfClass("ScreenGui")
+	if sg == nil or basePx.X < 1 or basePx.Y < 1 then return math.huge end
+	local avail = sg.AbsoluteSize
+	local h = avail.Y
+	if sg.IgnoreGuiInset then
+		h = math.max(h - 2 * (game:GetService("GuiService"):GetGuiInset()).Y, avail.Y * 0.6)
+	end
+	return math.min(avail.X * FIT_MARGIN / basePx.X, h * FIT_MARGIN / basePx.Y)
+end
+local function scaleFor(o: Instance, basePx: Vector2?): number
+	local cap = tonumber(o:GetAttribute("AD_ScaleMax"))
+	local k = if cap then math.min(uiScaleValue, math.max(cap, 1)) else uiScaleValue
+	if basePx then
+		k = math.min(k, fitCap(o, basePx))
+	end
+	return math.floor(k * 100 + 0.5) / 100
+end
+local function applySize(o: GuiObject)
+	local base = o:GetAttribute("AD_BaseSize")
+	if typeof(base) ~= "UDim2" then return end
+	local ps = (o.Parent :: any).AbsoluteSize :: Vector2
+	local k = scaleFor(o, Vector2.new(base.X.Scale * ps.X + base.X.Offset, base.Y.Scale * ps.Y + base.Y.Offset))
+	local want = UDim2.new(base.X.Scale * k, base.X.Offset * k, base.Y.Scale * k, base.Y.Offset * k)
+	sizeExpected[o] = want
+	o.Size = want
+end
+local function scaleBySize(o: GuiObject)
+	if typeof(o:GetAttribute("AD_BaseSize")) ~= "UDim2" then
+		if uiScaleValue == 1 then return end
+		anchorInward(o)
+		if not o:GetAttribute("AD_Anchored") then
+			whenLaidOut(o, function() scaleBySize(o) end)
+			return
+		end
+		o:SetAttribute("AD_BaseSize", o.Size)
+		o:GetPropertyChangedSignal("Size"):Connect(function()
+			local exp = sizeExpected[o]
+			if exp and o.Size == exp then return end
+			-- somebody else sized it (a layout script): that is the new authored base
+			o:SetAttribute("AD_BaseSize", o.Size)
+			applySize(o)
+		end)
+	end
+	applySize(o)
+end
+-- ===== SCALE GROUPS (B127) =====
+-- Panels sharing an `AD_ScaleGroup` attribute (across screens, e.g. "HUD.Bottom" = hotbar + XP bar + cash)
+-- scale as ONE rigid block about the group's own anchor corner (thirds of the group's box, like
+-- anchorInward): every member's centre moves away from that pivot by the same factor as its size, so the
+-- GAPS grow with them and members can never collide (one-by-one scaling overlapped the HUD on phones).
+-- Each member's authored AnchorPoint / Position (+ Size for an animated panel) are kept as attributes and
+-- restored before every pass, so a viewport change re-lays it from the authored design. At scale 1 the
+-- members are simply put back. A member may set `AD_GroupPivot` (a UDim2 in SCREEN space) to choose the
+-- pivot instead -- the HUD's bottom row pivots on the hotbar's bottom edge so it stays above the hotbar.
+-- Members on IgnoreGuiInset = false screens are measured in the same (whole-screen) space as the rest.
+local function groupMembers(name: string): { GuiObject }
+	local list = {}
+	for _, d in ipairs(playerGui:GetDescendants()) do
+		if d:IsA("GuiObject") and d:GetAttribute("AD_ScaleGroup") == name then
+			table.insert(list, d :: GuiObject)
+		end
+	end
+	return list
+end
+local groupBusy: { [string]: boolean } = {}
+local function scaleGroup(name: string)
+	if groupBusy[name] then return end
+	groupBusy[name] = true
+	local members = groupMembers(name)
+	-- 1) authored state
+	for _, m in ipairs(members) do
+		if typeof(m:GetAttribute("AD_GBasePos")) ~= "UDim2" then
+			m:SetAttribute("AD_GBasePos", m.Position)
+			m:SetAttribute("AD_GBaseAnchor", m.AnchorPoint)
+		end
+		m.Position = m:GetAttribute("AD_GBasePos")
+		m.AnchorPoint = m:GetAttribute("AD_GBaseAnchor")
+		local base = m:GetAttribute("AD_BaseSize")
+		if typeof(base) == "UDim2" then
+			sizeExpected[m] = base
+			m.Size = base
+		end
+		local u = m:FindFirstChild("AD_UIScale")
+		if u and u:IsA("UIScale") then u.Scale = 1 end
+	end
+	-- 2) measure the authored layout (a member on a never-shown screen re-runs the group once it lays out)
+	local k = uiScaleValue
+	local boxes: { { m: GuiObject, c: Vector2 } } = {}
+	local x0, y0, x1, y1 = math.huge, math.huge, -math.huge, -math.huge
+	local screen: Vector2? = nil
+	local GuiService = game:GetService("GuiService")
+	local topInset = (GuiService:GetGuiInset())
+	local function shift(o: Instance): Vector2
+		local sg = o:FindFirstAncestorOfClass("ScreenGui")
+		return if sg and not sg.IgnoreGuiInset then topInset else Vector2.zero
+	end
+	local pivotOverride: UDim2? = nil
+	for _, m in ipairs(members) do
+		local pv = m:GetAttribute("AD_GroupPivot")
+		if typeof(pv) == "UDim2" then pivotOverride = pv end
+		local p, sz = m.AbsolutePosition + shift(m), m.AbsoluteSize
+		if sz.X < 1 then
+			if k ~= 1 then whenLaidOut(m, function() scaleGroup(name) end) end
+		else
+			table.insert(boxes, { m = m, c = p + sz / 2 })
+			x0, y0 = math.min(x0, p.X), math.min(y0, p.Y)
+			x1, y1 = math.max(x1, p.X + sz.X), math.max(y1, p.Y + sz.Y)
+			local sg = m:FindFirstAncestorOfClass("ScreenGui")
+			screen = screen or (sg and (sg.AbsoluteSize + (if sg.IgnoreGuiInset then Vector2.zero else topInset)))
+		end
+	end
+	if k == 1 or #boxes == 0 or screen == nil then
+		groupBusy[name] = nil
+		return
+	end
+	-- 3) pivot = the group box's corner / edge / centre by thirds of the screen
+	local cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+	local fx = if cx / screen.X < 0.34 then 0 elseif cx / screen.X > 0.66 then 1 else 0.5
+	local fy = if cy / screen.Y < 0.34 then 0 elseif cy / screen.Y > 0.66 then 1 else 0.5
+	local pivot = Vector2.new(x0 + (x1 - x0) * fx, y0 + (y1 - y0) * fy)
+	if pivotOverride then
+		pivot = Vector2.new(screen.X * pivotOverride.X.Scale + pivotOverride.X.Offset, screen.Y * pivotOverride.Y.Scale + pivotOverride.Y.Offset)
+	end
+	-- 4) place + size every member
+	for _, b in ipairs(boxes) do
+		local m = b.m
+		local nc = pivot + (b.c - pivot) * k
+		local par = m.Parent :: any
+		local pp, ps = par.AbsolutePosition + shift(m), par.AbsoluteSize
+		m.AnchorPoint = Vector2.new(0.5, 0.5)
+		m.Position = UDim2.fromScale((nc.X - pp.X) / math.max(ps.X, 1), (nc.Y - pp.Y) / math.max(ps.Y, 1))
+		local anim = m:FindFirstChildOfClass("UIScale")
+		if anim and anim.Name ~= "AD_UIScale" then
+			if anim.Name ~= "Responsive" then
+				if typeof(m:GetAttribute("AD_BaseSize")) ~= "UDim2" then
+					m:SetAttribute("AD_BaseSize", m.Size)
+					m:GetPropertyChangedSignal("Size"):Connect(function()
+						local exp = sizeExpected[m]
+						if exp and m.Size == exp then return end
+						m:SetAttribute("AD_BaseSize", m.Size)
+						applySize(m)
+					end)
+				end
+				applySize(m)
+			end
+		else
+			local u = m:FindFirstChild("AD_UIScale") :: UIScale?
+			if u == nil then
+				u = Instance.new("UIScale")
+				;(u :: UIScale).Name = "AD_UIScale"
+				;(u :: UIScale).Parent = m
+			end
+			(u :: UIScale).Scale = scaleFor(m)
+		end
+	end
+	groupBusy[name] = nil
+end
 local function watchChildren(parent: Instance, depth: number)
 	if watchedParents[parent] then return end
 	watchedParents[parent] = true
@@ -142,9 +342,23 @@ local function watchChildren(parent: Instance, depth: number)
 end
 function scaleNode(o: Instance, depth: number)
 	if not o:IsA("GuiObject") or o.Parent == nil or o.Name:find("Template$") or o.Name:find("_Retired") then return end
+	local group = o:GetAttribute("AD_ScaleGroup")
+	if type(group) == "string" and group ~= "" then
+		scaleGroup(group) -- B127: scaled with its group, see SCALE GROUPS
+		return
+	end
+	if scaleFor(o) == 1 and o:FindFirstChild("AD_UIScale") == nil and typeof(o:GetAttribute("AD_BaseSize")) ~= "UDim2" then
+		return -- capped at 1 (AD_ScaleMax) and never scaled: nothing to do
+	end
 	local own = o:FindFirstChild("AD_UIScale")
 	if own == nil then
-		if o:FindFirstChildOfClass("UIScale") then return end
+		local anim = o:FindFirstChildOfClass("UIScale")
+		if anim then
+			if anim.Name ~= "Responsive" then
+				scaleBySize(o :: GuiObject) -- B127: an animated panel, see the header
+			end
+			return
+		end
 		-- a LAYOUT ITEM (its parent has a UIListLayout / UIGridLayout) is always scaled as one unit, whatever
 		-- its size -- the HUD's button column items are {1,0},{1,0} cells
 		local inLayout = o.Parent ~= nil and (o.Parent :: Instance):FindFirstChildWhichIsA("UIGridStyleLayout") ~= nil
@@ -157,11 +371,28 @@ function scaleNode(o: Instance, depth: number)
 		end
 		if uiScaleValue == 1 then return end
 		anchorInward(o :: GuiObject)
+		if not o:GetAttribute("AD_Anchored") and o.AutomaticSize == Enum.AutomaticSize.None then
+			-- B127: not laid out yet (hidden screen) -- re-anchor + scale once it is, not from the wrong side
+			whenLaidOut(o :: GuiObject, function() scaleNode(o, depth) end)
+			return
+		end
 		own = Instance.new("UIScale")
 		own.Name = "AD_UIScale"
 		own.Parent = o
 	end
-	(own :: UIScale).Scale = uiScaleValue
+	-- unscaled pixel size = what it shows now / the scale it has now (1 when just created)
+	local cur = (own :: UIScale).Scale
+	local g = o :: GuiObject
+	-- (a panel on a hidden screen measures 0: reuse its last measure)
+	local basePx: Vector2? = nil
+	if cur > 0.01 and g.AbsoluteSize.X >= 1 then
+		basePx = g.AbsoluteSize / cur
+		o:SetAttribute("AD_BasePx", basePx)
+	else
+		local last = o:GetAttribute("AD_BasePx")
+		basePx = if typeof(last) == "Vector2" then last else nil
+	end
+	(own :: UIScale).Scale = scaleFor(o, basePx)
 end
 local function scaleGui(g: Instance)
 	if not g:IsA("ScreenGui") or UISCALE_SKIP[g.Name] or g.Name:find("_Retired") then return end
@@ -169,7 +400,8 @@ local function scaleGui(g: Instance)
 	for _, c in ipairs(g:GetChildren()) do scaleNode(c, 1) end
 end
 local function applyUIScale(settings: any)
-	local v = tonumber(settings.UIScale) or 1
+	local v = (tonumber(settings.UIScale) or 1) * deviceFactor()
+	v = math.floor(v * 100 + 0.5) / 100
 	if v == uiScaleValue then return end
 	uiScaleValue = v
 	for _, g in ipairs(playerGui:GetChildren()) do scaleGui(g) end
@@ -178,6 +410,19 @@ playerGui.ChildAdded:Connect(function(g) task.defer(scaleGui, g) end)
 ClientSettings.Changed:Connect(applyUIScale)
 uiScaleValue = 0 -- force the first pass to walk (and wire) every screen
 applyUIScale(ClientSettings.GetAll())
+-- B127: the device factor follows the viewport (phone rotation, window resize, camera swap).
+do
+	local function watchCam()
+		local cam = workspace.CurrentCamera
+		if cam then
+			cam:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+				applyUIScale(ClientSettings.GetAll())
+			end)
+		end
+	end
+	watchCam()
+	workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(watchCam)
+end
 
 local gui = playerGui:FindFirstChild("Settings") or playerGui:WaitForChild("Settings", 10)
 if gui == nil then

@@ -139,6 +139,8 @@ since v1.
   (HUD.Left/Right/Top/Bottom) are recursed (layout items always scaled whole); full-axis VISIBLE panels (Unit
   Manager) keep their size. Before the first scale each object is re-anchored to its side of the parent with
   Position compensated (attr `AD_Anchored`), so it grows inward. Nothing is created at 100 %.
+- **B127:** the effective scale is the setting x a phone DEVICE factor, with HUD scale groups and a FIT cap -- see
+  `responsive-ui.md`.
 - **Keybinds** (new tab): `Key_<Action>` flat string settings (Enum.KeyCode name, "" = unbound), Type `key`,
   `Group` Global / Placement / Selected (a rebind clears the same-Group holder; E = Place Unit AND Upgrade Unit on
   purpose). `SettingsConfig.IsBindableKey` refuses gamepad/mouse/touch codes + Escape/Slash/Tab/Return/F9-F12.

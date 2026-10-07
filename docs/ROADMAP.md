@@ -815,7 +815,7 @@ uuid-aware, so a duplicate tower never fought and was granted XP twice.
 - ✅ **Enemy names + kill FX + summon walk — B94.** Name over the bar (Simplify hides it), authored `RS.EnemyDeathFX` (placeholder burst), summons walk and slowed (Charger 10 / Fighter 6).
 - ✅ **Placement precision + feel — B95.** Geometry path test (49% false blocks gone), edge assist, panel pop, invalid flash, placed pulse.
 - ✅ **Hill / Hybrid towers + flying enemies — B96.** `TowerPlacementRules`; Manananggal (placeholder rig); 2 placeholder hills on TestMap.
-- 🟡 **Console + mobile foundation — B97.** `InputMode`, `GamepadMenus` (tag-driven focus), pad placement (D-pad, reticle, A/X/B). B99: match pad map (R2 select, L1/L2 panels). TODO: Lobby HUD pad shortcuts, mobile layout pass.
+- 🟡 **Console + mobile foundation — B97.** `InputMode`, `GamepadMenus` (tag-driven focus), pad placement (D-pad, reticle, A/X/B). B99: match pad map (R2 select, L1/L2 panels). ✅ B127 mobile layout pass: device factor + HUD scale groups + FIT cap (no menu off-screen on phones), every match keycap device-aware (`KeyHint`), Y cycles HUD roots (J/K reachable on pad), `UIAudit` / `UIPhonePreview` tools (`responsive-ui.md`). TODO: Lobby HUD pad shortcuts, real-device check.
 - ✅ **Cleanup pass — B98.** Knight 64-track flood fixed (weak Instance-keyed cache), retired scripts archived. Follow-ups: shared `AuthoredFX`, doc-cap trims.
 - 🔲 Event framework (event banner + EventTokens + event quests bundle; Pre-Release first)
 - 🔲 News/update board + banner showcase on join

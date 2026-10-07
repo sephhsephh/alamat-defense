@@ -16,6 +16,8 @@
 -- "GamepadHud" (the Lobby's left button column, the match's right buttons) -- then the stick walks
 -- every HUD button. Y again, or B, leaves it. Y is skipped while a tagged menu is open, which is
 -- also what keeps the Game's tower panel (Y = cycle targeting) working.
+-- B127: with SEVERAL HUD roots open, Y steps through them in `GamepadHudOrder` order before leaving
+-- (the match: right buttons -> the bottom-left J / K corner, which the stick could not reach).
 --
 -- B102: KEY HINTS. Tag a keycap TextLabel "KeyHint" and it follows the device: keyboard shows its
 -- AUTHORED text, a pad shows its `Pad` attribute (e.g. "L1"; missing/empty = hidden on a pad), touch
@@ -111,14 +113,38 @@ UserInputService.InputBegan:Connect(function(input: InputObject, processed: bool
 	if processed or input.KeyCode ~= Enum.KeyCode.ButtonY or #openOrder > 0 then
 		return
 	end
+	-- B127: several HUD roots (the match: right column, then the J / K corner) -- Y walks them in
+	-- `GamepadHudOrder` order (number attribute, default 0; ties by path), and leaves after the last.
+	local roots = {}
+	for _, root in ipairs(CollectionService:GetTagged(HUD_TAG)) do
+		if root:IsDescendantOf(playerGui) and isOpen(root) then
+			table.insert(roots, root)
+		end
+	end
+	table.sort(roots, function(a: Instance, b: Instance): boolean
+		local oa = tonumber(a:GetAttribute("GamepadHudOrder")) or 0
+		local ob = tonumber(b:GetAttribute("GamepadHudOrder")) or 0
+		if oa ~= ob then
+			return oa < ob
+		end
+		return a:GetFullName() < b:GetFullName()
+	end)
 	local sel = GuiService.SelectedObject
 	if sel ~= nil then
+		for i, root in ipairs(roots) do
+			if sel:IsDescendantOf(root) then
+				local nxt = roots[i + 1]
+				if nxt and InputMode.FocusFirst(nxt, true) then
+					return
+				end
+				break
+			end
+		end
 		GuiService.SelectedObject = nil -- Y again: leave the HUD
 		return
 	end
-	for _, root in ipairs(CollectionService:GetTagged(HUD_TAG)) do
-		if root:IsDescendantOf(playerGui) and isOpen(root) then
-			InputMode.FocusFirst(root, true)
+	for _, root in ipairs(roots) do
+		if InputMode.FocusFirst(root, true) then
 			return
 		end
 	end
