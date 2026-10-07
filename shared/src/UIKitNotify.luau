@@ -100,8 +100,10 @@ local function tween(o: Instance, t: number, props: { [string]: any }, style: En
 	return tw
 end
 
+-- B126: direct child first, then anywhere inside -- the card's edge chrome (Wash / Accent / TimerBar / Sheen)
+-- lives in a rounded `Chrome` CanvasGroup so it is clipped to the card's corners, even while it tilts.
 local function find(card: Instance, name: string): any
-	return card:FindFirstChild(name)
+	return card:FindFirstChild(name) or card:FindFirstChild(name, true)
 end
 
 local seq = 0

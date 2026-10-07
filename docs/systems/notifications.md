@@ -42,3 +42,12 @@ Inbox mark-all-read + fired `RefreshBadges`, and the Inbox badge cleared immedia
 ## Cross-refs
 `inbox.md` (unread source) · `daily-rewards.md` (CanClaim + Event) · `quests.md` · `battlepass.md` ·
 `ui-feedback.md` (the HUD button conventions).
+
+## Card clean-up (B126, both Places)
+The card is rounded (UICorner 14px) but `ClipsDescendants` only clips to the RECTANGLE -- and not at all while
+the card tilts in -- so the Accent bar, Wash, TimerBar and the 2.2x-tall Sheen showed square corners outside the
+rounded edge. They now live in `CardTemplate.Chrome`, a CanvasGroup with the same UICorner, which clips to the
+rounded shape even when rotated; the card itself has ClipsDescendants off. Text, IconBadge, Count and the
+AccentStroke stay on the card (crisp). `UIKit.Notify`'s `find` searches deep, so no other code changed.
+Game only: `Notifications.DisplayOrder` 100000 (as the Lobby; it was 0 and tied the HUD) and the Container moved
+to y 0.115 so it no longer covers the HUD StatusLine.
