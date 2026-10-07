@@ -61,8 +61,8 @@ screens. They are pure subscribers / requesters with no authority.
 
 ## Match lifecycle
 `WaitingForData -> Preparing` (profiles awaited, loadouts validated, MapLoader loads the map, economy
-init, wave list + health scale resolved) `-> Countdown` (build phase + the start vote; the Units screen
-can still change loadouts, B123) `-> InProgress` (towers + status effects start; WaveDirector runs;
+init, wave list + health scale resolved) `-> Countdown` (the READY wait -- B125: NO placing; teleporting players arrive, loadouts change on
+the Units screen; no timer until the first vote, B124) `-> InProgress` (towers + status effects start; WaveDirector runs;
 win/lose polled every 0.25 virtual s) `-> Victory | Defeat` (MatchEnded) `-> Cleanup` (clear enemies /
 towers / effects, reset economy, unload map + restore lighting) `-> WaitingForData`.
 Lives are SHARED team-wide; only leaks change them; the GameMode lose condition just reads Lives.

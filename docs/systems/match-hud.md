@@ -166,7 +166,7 @@ NameText sat ABOVE a 0.55-stud canvas, and a BillboardGui only draws inside its 
 never visible. `FloatingHealthbars` sets the text from the enemy's `DisplayName`; Simplify Health Bar hides it.
 
 ## B116 -- wave flow rebuilt (user's spec)
-Timeline (`WavePrepConfig`, virtual seconds): READY phase -- B124: NO timer until someone votes (solo: READY / Auto Vote Start starts at once; party: the first vote starts the 30s `InitialCountdown`, everyone voting ends it early; `PrepWaiting` in the snapshot, `RunPrep{ WaitForFirstVote }`) -> per wave:
+Timeline (`WavePrepConfig`, virtual seconds): READY phase -- a WAIT, not a build phase (B125: NOTHING can be placed until the match starts; it waits for players still arriving through the teleport and for loadout changes on the Units screen) -- B124: NO timer until someone votes (solo: READY / Auto Vote Start starts at once; party: the first vote starts the 30s `InitialCountdown`, everyone voting ends it early; `PrepWaiting` in the snapshot, `RunPrep{ WaitForFirstVote }`) -> per wave:
 **5s COUNTDOWN** (`WaveCountdown`, prep label `Countdown`; the counter still shows the previous wave, 0 / 15
 first) -> wave starts (counter up, income paid, enemies spawn -- one instant) -> **+10s NEXT-WAVE INFO**
 (`NextWaveInfoDelay`; WavePrep.Preview "NEXT: WAVE N+1", income + enemy chips; data = `WavePreview`, now
