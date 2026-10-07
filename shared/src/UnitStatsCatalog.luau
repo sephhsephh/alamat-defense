@@ -31,7 +31,7 @@ UnitStatsCatalog.REFERENCE = {
 -- towerId -> { DMG?, RNG, SPA? }. Support towers (Lakapati) have no DMG/SPA -- those keys are absent.
 UnitStatsCatalog.Stats = {
 	Handyong    = { DMG = 15, RNG = 20, SPA = 6 },
-	Bantong     = { DMG = 35, RNG = 10, SPA = 1.4 },
+	Bantong     = { DMG = 35, RNG = 10, SPA = 5.4 },
 	Oryol       = { DMG = 30, RNG = 18, SPA = 2 },
 	Lakapati    = { RNG = 18 },
 	Babaylan    = { DMG = 20, RNG = 22, SPA = 2.5 },

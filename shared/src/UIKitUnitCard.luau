@@ -314,6 +314,40 @@ function UnitCard.paintPrice(root: Instance?, towerId: string?)
 	end
 end
 
+-- ===== ELEMENT BADGE (B122, user: "placement cost + element on the unit icon") =====
+-- `ElementIcons` (the user's authored badge: Element1 over Element2) shows the tower's element from
+-- the shared UnitInfoCatalog through IconCatalog.element. A tower has ONE element today, so Element2
+-- hides. No data (unknown tower, a Place missing either catalog) hides the whole badge -- never the
+-- authored placeholder art. Same contract as paintPrice: pass nil to hide.
+local UnitInfoCatalog = loadOptional(
+	optional(optional(ReplicatedStorage, "Shared"), "UnitInfoCatalog"), "UnitInfoCatalog")
+local IconCatalog = loadOptional(optional(optional(ReplicatedStorage, "Shared"), "IconCatalog"), "IconCatalog")
+
+function UnitCard.paintElement(root: Instance?, towerId: string?)
+	if root == nil then
+		return
+	end
+	local node = root:FindFirstChild("ElementIcons", true)
+	if node == nil or not node:IsA("GuiObject") then
+		return
+	end
+	local icon = ""
+	if UnitInfoCatalog ~= nil and IconCatalog ~= nil and type(towerId) == "string" and towerId ~= "" then
+		local info = UnitInfoCatalog.Get(towerId)
+		icon = IconCatalog.element(info and info.Element or nil)
+	end
+	node.Visible = icon ~= ""
+	local first = node:FindFirstChild("Element1")
+	if first ~= nil and first:IsA("ImageLabel") then
+		first.Image = icon
+		first.Visible = icon ~= ""
+	end
+	local second = node:FindFirstChild("Element2")
+	if second ~= nil and second:IsA("GuiObject") then
+		second.Visible = false
+	end
+end
+
 -- ===== IDLE IN A VIEWPORT (B78; default idle B79; stepper REMOVED B81) =====
 --
 -- *** WHY THE UNITS JUST STOOD THERE (B79, user) -- AND THE WRONG FIX THAT SHIPPED WITH IT ***

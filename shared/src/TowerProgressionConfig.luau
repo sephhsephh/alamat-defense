@@ -73,9 +73,9 @@ function TowerProgressionConfig.ApplyXP(
 		levelsGained += 1
 	end
 
-	if level >= TowerProgressionConfig.MaxLevel then
-		xp = 0 -- maxed: nothing left to accumulate toward
-	end
+	-- B122 (user): a MAXED unit BANKS its XP instead of discarding it. The XP stays on the unit and the
+	-- loop above spends it automatically the day MaxLevel rises. At max, xpForNext is math.huge, so a
+	-- display must show "MAX", never xp / xpForNext.
 
 	local xpForNext = TowerProgressionConfig.GetXPForNextLevel(level, towerConfig)
 	return level, xp, levelsGained, xpForNext

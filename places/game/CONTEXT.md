@@ -148,7 +148,7 @@ Boot order in `ReplicationBridge`: data services first; `[DATA]`/`[CONTRACT]` li
 - **HARNESS GOTCHA — `Signal:Fire` runs handlers SEQUENTIALLY on ONE thread.** A `MatchEnded` handler that YIELDS blocks every later handler, including `MatchEndPresenter`, which drives the
   reward/counter commit (A9 burned three runs on this). To inspect post-commit state, `task.spawn`
   the body and return immediately — never `task.wait` inside a Signal handler here.
-- A unit at `MAX_META_LEVEL` LOSES stored XP (overflow discarded) — cosmetic, visible on Units. `DevSetOwnedTowers` replaces `data.Units` with new uuids, orphaning `Data.Loadout` (fails safe).
+- B122: a unit at `MAX_META_LEVEL` BANKS its XP (`TowerProgressionConfig.ApplyXP` keeps it; spent if MaxLevel rises); displays show MAX. `DevSetOwnedTowers` replaces `data.Units` with new uuids, orphaning `Data.Loadout` (fails safe).
 - **Stat rolls live + actually rolling (A3+):** `TowerStatResolver` reads each unit's `StatRolls` +
   `Ascension`. **All grant paths ROLL** via `StatGradeConfig.RollAll(rng)` off one persistent
   `Random`. Pre-existing units and the v1→v2 migration stay grandfathered at 0.5.

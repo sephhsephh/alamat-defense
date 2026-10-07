@@ -1,4 +1,11 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-07 [lobby+game] B122 -- **Fix batch: stats catalog, max-level XP bank, element badge, two stale PENDINGs closed.**
+- SHARED `UnitStatsCatalog` `5f0331e8` -> `7799dbd4` (both Places): Bantong SPA 1.4 -> 5.4 (the user's live config), so the boot validator is silent.
+- SHARED `TowerProgressionConfig` `87acbd94` -> `aa3682e9` (both Places): a maxed unit BANKS XP instead of zeroing it (user). Feeding still refuses `max_level`; Lobby `AscensionController` hover shows "MAX" at max.
+- SHARED `UIKitUnitCard` `8bec4245` -> `06fc42bb` (both Places): NEW `UnitCard.paintElement` fills the user's authored `ElementIcons` badge (top-right, Element1 only). Lobby `UnitsController` + `IndexController` call it (they hid it: "no data source"). Cost was already painted by `paintPrice`.
+- CLOSED, no code: the "64 tracks for Knight" flood was fixed at B98 (`RigAnimator` strong cache); `Kit_ItemHoverCard` master/clone is moot -- `ItemsGUI.HoverPreview` has never shown since B108 pt16 (the Lobby-wide ItemInfo card replaced it). STATE PENDINGs removed.
+- Verified live (Lobby): Units grid cards show Cosmic/Holy/Dark element icons + peso cost, no errors. All three modules hash-match disk in both Places.
+
 ## 2026-10-07 [game] B121 -- **Units can only stand on a REAL zone surface, never on decor.**
 - `Shared.TowerPlacementRules`: NEW `SurfaceZoneAt(position, zones)` (raycast down against ActiveMap only, first surface must be a zone part; transparent non-colliding helpers skipped); `CheckZone` uses it instead of the 6-stud box test, so the server, the ghost and Auto Play all reject decor (e.g. the MapDesigns rock formations) that stood on the Ground zone.
 - Verified live: Bantong on MapDesigns decor 4.45 studs up -> InvalidZone (old rule accepted it); on real ground -> placed; Bulalakaw placed on all 3 TowerZones rock hills; client rule agrees; no errors.
