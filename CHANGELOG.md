@@ -1,4 +1,8 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-07 [game] B121 -- **Units can only stand on a REAL zone surface, never on decor.**
+- `Shared.TowerPlacementRules`: NEW `SurfaceZoneAt(position, zones)` (raycast down against ActiveMap only, first surface must be a zone part; transparent non-colliding helpers skipped); `CheckZone` uses it instead of the 6-stud box test, so the server, the ghost and Auto Play all reject decor (e.g. the MapDesigns rock formations) that stood on the Ground zone.
+- Verified live: Bantong on MapDesigns decor 4.45 studs up -> InvalidZone (old rule accepted it); on real ground -> placed; Bulalakaw placed on all 3 TowerZones rock hills; client rule agrees; no errors.
+
 ## 2026-10-07 [game] B120 -- **A Model in TowerZones is a zone; the RockFormations are TestMap's hills.**
 - `Shared.TowerPlacementRules`: NEW `ZonePartsIn(folder)` (BasePart children + every BasePart inside a Model/Folder child); `ZoneTypeOf` now inherits `ZoneType` (or a "Hill*" name) from ancestors up to the TowerZones folder. `MapLoader.resolveTowerZones` (keys "<Model>/<n>") and `PlacementController.getTowerZones` both use it.
 - `ServerStorage.Maps.Stage1.TestMap.TowerZones`: `ZoneType = "Hill"` on `RockFormation1`, `RockFormation`, `RockFormation3` (the user's models); placeholder parts `Hill1`/`Hill2` DELETED.

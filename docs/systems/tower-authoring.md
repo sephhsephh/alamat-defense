@@ -251,6 +251,11 @@ exists**. Full rules, attach modes and the authoring contract: `tower-vfx.md`. T
   `TowerPlacementRules.ZonePartsIn` is the one discovery the server (`MapLoader`) and the ghost
   (`PlacementController`) share. TestMap's hills are the user's 3 `RockFormation` models (the 2 placeholder
   `Hill1`/`Hill2` parts are deleted).
+- **Only REAL zone surfaces count (B121):** `TowerPlacementRules.CheckZone` uses `SurfaceZoneAt` -- a ray
+  straight down at the point against `ActiveMap` only; the FIRST surface it meets must BE a zone part
+  (invisible non-colliding helpers are looked through). A decor model standing on the ground zone is
+  therefore never placeable ("InvalidZone"), whatever unit. To make decor placeable, put it in
+  `TowerZones` (a Model there is a zone, see above).
 
 - **Never on the path.** `Shared.PathClearance` blocks any footprint touching the map's `PathDesigns`,
   client ghost and server alike. Your `Footprint` is the radius it tests.
