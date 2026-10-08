@@ -5,6 +5,18 @@
 User (B127): "fix all ui to look good in all devices, make sure console controls are also included".
 Screens are authored at 1080p on PC (the main platform). Runtime adapts them; authors only follow the rules below.
 
+## B131 RULE: SCALE ONLY, NEVER OFFSET (user, 2026-10-08)
+User: "use all scale, not offset, never use offset so ui will look same on all device". Every authored
+Size / Position / UICorner / UIPadding / list & grid padding is SCALE; a shape that must stay square gets a
+UIAspectRatioConstraint; fixed text is TextScaled + a UITextSizeConstraint cap (`AD_TextCap`, its 1080p size in
+attribute AD_BaseTextSize -- SettingsUI grows the cap on taller screens). Convert an offset screen with
+`tools/ui_to_scale.luau` (`ServerStorage.DevTools.UIToScale`, both Places): `Run(name, {dry=true})` -> `Run(name)`
+backs up to `ServerStorage._UIBackup_B131`, converts, and proves the 1080p layout did not move; `Restore(name)`.
+Left in offset by design: items placed directly in a ScrollingFrame / UIGridLayout, anything under an
+AutomaticSize frame, `*Template*` roots, panels with a `Responsive` UIScale (DailyRewards, TraitReroll fit
+themselves), Hotbar (never touched), ScreenFXLayer, UIStroke thickness, UISizeConstraint limits.
+**The phone DEVICE boost below is OFF since B131 (DEVICE_MAX = 1)** -- it is what made the UI look zoomed.
+
 ## How a screen is scaled (shared `SettingsUI`, UI SCALE section)
 - **Effective scale = the UI Scale setting x a DEVICE factor.** Device factor = `560 / short side` clamped to
   1..1.4 (phones only; tablets and PCs are x1, so at 100 % on PC nothing is created at all). Recomputed on

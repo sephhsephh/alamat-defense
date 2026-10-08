@@ -107,7 +107,10 @@ applySideEffects(ClientSettings.GetAll())
 -- same anchorInward). Pop animations only touch their UIScale, so nothing fights; a script that resizes the
 -- panel itself (a fitPanel) is adopted as the new base. UIScales named `Responsive` are a screen's OWN
 -- device scaling (DailyRewards, TraitReroll) -- left alone.
-local DEVICE_REF, DEVICE_MAX = 560, 1.4
+-- B131 (user: "some ui are zoomed ... use all scale ... so ui will look same on all device"): the phone boost
+-- is OFF (DEVICE_MAX = 1). The authored UI is now SCALE (tools/ui_to_scale.luau), so it already keeps its
+-- proportions on every screen; boosting it on phones is what made it look zoomed.
+local DEVICE_REF, DEVICE_MAX = 560, 1
 local function deviceFactor(): number
 	local cam = workspace.CurrentCamera
 	local v = cam and cam.ViewportSize or Vector2.new(1920, 1080)
@@ -422,6 +425,37 @@ do
 	end
 	watchCam()
 	workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(watchCam)
+end
+
+-- B131: authored text is TextScaled with a UITextSizeConstraint `AD_TextCap` whose cap is its 1080p size
+-- (attribute AD_BaseTextSize, written by tools/ui_to_scale.luau). On a screen TALLER than 1080 the cap grows
+-- with the screen, so text keeps its proportion there too instead of stopping at the 1080p size. (Smaller
+-- screens need nothing: the text box itself shrinks.)
+do
+	local function capK(): number
+		local cam = workspace.CurrentCamera
+		local v = if cam then cam.ViewportSize else Vector2.new(1920, 1080)
+		return math.max(1, v.Y / 1080)
+	end
+	local function paintCap(c: Instance)
+		if c:IsA("UITextSizeConstraint") and c.Name == "AD_TextCap" then
+			local base = tonumber(c:GetAttribute("AD_BaseTextSize"))
+			if base then
+				c.MaxTextSize = math.clamp(math.floor(base * capK() + 0.5), 1, 100)
+			end
+		end
+	end
+	local function paintAll()
+		for _, d in ipairs(playerGui:GetDescendants()) do paintCap(d) end
+	end
+	playerGui.DescendantAdded:Connect(paintCap)
+	local function watch()
+		local cam = workspace.CurrentCamera
+		if cam then cam:GetPropertyChangedSignal("ViewportSize"):Connect(paintAll) end
+	end
+	watch()
+	workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(watch)
+	task.defer(paintAll)
 end
 
 local gui = playerGui:FindFirstChild("Settings") or playerGui:WaitForChild("Settings", 10)

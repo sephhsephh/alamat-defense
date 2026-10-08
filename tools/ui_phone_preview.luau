@@ -12,7 +12,7 @@
 
 local Preview = {}
 
-local DEVICE_REF, DEVICE_MAX = 560, 1.4
+local DEVICE_REF, DEVICE_MAX = 560, 1 -- B131: the phone boost is off in SettingsUI
 local SCREENS = { "MatchHUD", "Hotbar", "XPBarGui", "WavePrep", "Notifications", "PlacementControls", "BossHealth" }
 
 function Preview.Hide()
