@@ -25,7 +25,7 @@ C1, so this is the consistent path, the same shape ascension moved to at B11.
 | Diwata | 0.175% | +20% Damage, -18% SPA, +8% Range | 850 |
 | Anointed | 0.1% | +250% Damage, -10% SPA, +10% Range, placement limit 1 | 1500 |
 
-Legacy ids resolve through `TraitRegistry.LEGACY` (Blitz->Tempest, Sniper->Hawkeye, Deadeye->Sharpshot, Godly->Anointed) and the Lobby's `UnitDiscoveryService` rewrites stored ids (active, stored, pity keys, filters) on profile load. Pity caps are PLACEHOLDERS (~1.5x expected rolls). Summon trait chance unchanged at 15.8% (`None` weight 53191). The reroll screen's stat line shows SPA as "-5% SPA" and lists crit/XP/cash/cost perks.
+**B128: the legacy ids (Blitz/Sniper/Deadeye/Godly), `TraitRegistry.LEGACY`/`Canonical` and the Lobby's load-time rewrite are DELETED** -- a save still holding an old id now reads as no trait. (Lines below naming those traits are history.) Pity caps are PLACEHOLDERS (~1.5x expected rolls). Summon trait chance unchanged at 15.8% (`None` weight 53191). The reroll screen's stat line shows SPA as "-5% SPA" and lists crit/XP/cash/cost perks.
 
 ## Where everything lives
 

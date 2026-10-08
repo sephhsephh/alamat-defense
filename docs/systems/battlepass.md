@@ -99,8 +99,8 @@ user creating the Alamat Pass gamepass and pasting its id into `BattlepassConfig
 User: "enhance and improve overall battlepass ui"; picked the **river** layout + Jump to next claim,
 reward hover card, milestone highlights, season timer, gradient borders and animations.
 
-- **Authored** in `StarterGui.BattlePassGUI.Main` (old `Main` parked as `Main_RetiredB108pt15`,
-  Visible=false -- delete when happy). Script only clones `Track.Columns.ColumnTemplate` per tier.
+- **Authored** in `StarterGui.BattlePassGUI.Main` (the old `Main_RetiredB108pt15` was
+  deleted at B128). Script only clones `Track.Columns.ColumnTemplate` per tier.
 - **Track**: horizontal `ScrollingFrame`; FREE cells above, ALAMAT cells below, a `Node` per tier on
   the river. `RiverBase` spans column 1 -> MaxTier; `RiverFill` runs to the current level + the XP
   fraction toward the next column (tweened 1.1 s on open). Mouse wheel scrolls it sideways.

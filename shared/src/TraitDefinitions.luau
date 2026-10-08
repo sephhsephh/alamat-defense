@@ -4,9 +4,7 @@
 --
 -- ===== B108: THE TRAIT SET WAS REPLACED (user-approved) =====
 -- Our own 11 traits (three of them RANKED I/II/III), modelled on a reference list but with our own
--- names and shifted numbers. The four B12-era traits map onto them through `TraitRegistry.LEGACY`
--- (Blitz -> Tempest, Sniper -> Hawkeye, Deadeye -> Sharpshot, Godly -> Anointed), so a unit that still
--- stores an old id reads as its new trait everywhere, and the Lobby rewrites stored ids on load.
+-- names and shifted numbers. (B128: the B12-era ids and their LEGACY mapping are deleted.)
 --
 -- ===== WEIGHT =====
 -- Rerollable weights are in HUNDREDTHS OF A PERCENT and sum to 10,000, so `Weight / 100` IS the

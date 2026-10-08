@@ -1,6 +1,9 @@
 # challenges — the daily challenge stage (Game meta, AD-Game)
 <!-- owner: AD-Game | scope: game + lobby (ChallengeConfig/MatchModifiersConfig/MetaMath/MetaConfig shared) | added: 2026-09-04 (B51 Game side, B52 Lobby tab), Phase D/D2 -->
 
+> **B108/B128:** challenges now pay **Mutya** (Green + the day's colour; weekly Rainbow Mutya), never
+> fragments -- the Fragment/Artifact items were deleted at B128. "Fragment" below is history.
+
 Blueprint Phase D / D2. A **daily-rotating challenge**: a harder match (modifiers) whose Victory
 drops the crafting **fragments** — the real SOURCE the crafting loop (D1, B50) was built for. Until
 this landed, fragments came only from an interim shop source; challenges are the intended faucet.

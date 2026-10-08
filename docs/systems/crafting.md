@@ -1,6 +1,10 @@
 # crafting — fragments -> artifacts -> rainbow (Lobby meta, AD-Meta/AD-Gacha)
 <!-- owner: AD-Meta/AD-Gacha | scope: lobby (items shared) | added: 2026-09-02 (B50, Phase D/D1) -->
 
+> **HISTORY ONLY (B128).** The fragment/artifact economy below was replaced by MUTYA stones at B108, and at
+> B128 its 15 `ItemCatalog` ids and the load-time conversion (`UnitDiscoveryService.migrateCrafting`) were
+> DELETED. Live crafting = Mutya recipes in `CraftingRecipes` / `CraftingService`.
+
 Blueprint Phase D / D1. Combine crafting **fragments** into colour **artifacts** (2:1), then all 7
 colour artifacts into the **Rainbow** artifact.
 
