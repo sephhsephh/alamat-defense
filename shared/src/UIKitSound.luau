@@ -190,13 +190,20 @@ function Sound.playBGM(name: string, opts: { [string]: any }?): boolean
 	end
 
 	if currentBgm ~= nil and currentBgm ~= s then
-		fade(currentBgm, 0, tonumber(opts.fadeOut) or Sound.Tuning.BgmFadeOut, true)
+		-- B132 (user): `opts.hold = true` keeps the outgoing track PLAYING at volume 0 instead of stopping it,
+		-- so asking for it again later fades it back in from where it is (the act music under a boss fight
+		-- resumes, it does not start over). Without `hold` the old track fades out and stops, as before.
+		fade(currentBgm, 0, tonumber(opts.fadeOut) or Sound.Tuning.BgmFadeOut, opts.hold ~= true)
 	end
 	-- Looped is an AUTHORED property, not forced here: a designer may deliberately want a one-shot
 	-- sting as a stage's "music". Whatever they set in Studio is what plays.
 	local target = baseVolume(s)
-	s.Volume = 0
-	s:Play()
+	-- A track still playing (held at 0 by an earlier `hold`) is NOT restarted: it fades back in where it is.
+	if not s.IsPlaying or opts.restart == true then
+		s.Volume = 0
+		s.TimePosition = if opts.restart == true then 0 else s.TimePosition
+		s:Play()
+	end
 	fade(s, target, tonumber(opts.fadeIn) or Sound.Tuning.BgmFadeIn)
 	currentBgm, currentBgmName = s, name
 	return true

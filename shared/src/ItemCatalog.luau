@@ -92,17 +92,17 @@ ItemCatalog.Entries = {
 	-- B109 M5: Infernal Hunt chest. An openable ITEM: the Lobby opens it (InfernalHuntService) and rolls
 	-- InfernalHuntConfig.ChestDrops. Dropped by the Game's Infernal boss (daily limit).
 	InfernalChest = { Kind = "Item", Tier = "Mythic", Name = "Infernal Chest", Description = "Open for a chance at Trait Reroll Tokens, Stat Chips, Focus Chips, Event Coins or a Rainbow Mutya!", Icon = { Image = "rbxassetid://591644027" }, MaxOwned = 9999, Tradeable = false },
-	StatRerolls = { Kind = "Currency", Tier = "Rare",   Name = "Stat Chip",   Description = "Rerolls all three of a unit's stats.", Icon = { Image = "rbxassetid://0" }, Tradeable = false },
+	StatRerolls = { Kind = "Currency", Tier = "Rare",   Name = "Stat Chip",   Description = "Rerolls all three of a unit's stats.", Icon = { Image = "rbxassetid://140199469455074" }, Tradeable = false },
 
 	-- ===== Items (existing stage drops) =====
 	BannerTicket     = { Kind = "Item", Tier = "Rare",      Name = "Banner Ticket",      Description = "A free banner pull.",       Icon = { Image = "rbxassetid://6731922404" }, MaxOwned = 9999, Tradeable = false },
 	TraitRerollToken = { Kind = "Item", Tier = "Epic",      Name = "Trait Reroll Token", Description = "Reroll a unit's trait.",     Icon = { Image = "rbxassetid://91484105947557" }, MaxOwned = 9999, Tradeable = false },
 	GoldenSeed       = { Kind = "Item", Tier = "Legendary", Name = "Golden Seed",        Description = "Rare crafting material.",    Icon = { Image = "rbxassetid://124757602236693" }, MaxOwned = 9999, Tradeable = false },
 	-- B106: evolution relic. Drops from the Stage 1 boss act (Stage1_Act3 DropTable). Icon PLACEHOLDER (user).
-	ScarecrowCrown   = { Kind = "Item", Tier = "Legendary", Name = "Scarecrow Crown",    Description = "Relic of the Scarecrow King; used to evolve units.", Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	ScarecrowCrown   = { Kind = "Item", Tier = "Legendary", Name = "Scarecrow Crown",    Description = "Relic of the Scarecrow King; used to evolve units.", Icon = { Image = "rbxassetid://86834094445192" }, MaxOwned = 9999, Tradeable = false },
 	-- B108: the second stat-reroll chip (user: "second chip is used to reroll only a specific stat"). An ITEM, not a
 	-- currency, so no ProfileTemplate change. The first chip is the StatRerolls currency ("Stat Chip"). Icon PLACEHOLDER (user).
-	FocusChip        = { Kind = "Item", Tier = "Epic",      Name = "Focus Chip",         Description = "Rerolls ONE chosen stat of a unit.", Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	FocusChip        = { Kind = "Item", Tier = "Epic",      Name = "Focus Chip",         Description = "Rerolls ONE chosen stat of a unit.", Icon = { Image = "rbxassetid://106107042638572" }, MaxOwned = 9999, Tradeable = false },
 
 	-- ===== B108: MUTYA stones (user-approved crafting economy, the reference's model) =====
 	-- ONE base stone (Green Mutya) + Silver crafts each colour Mutya; Rainbow = 1 of each colour + 1 Green
