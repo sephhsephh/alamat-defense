@@ -81,8 +81,8 @@ ItemCatalog.Entries = {
 	-- is its one source, exactly as TraitRerollToken is C1's.
 	-- ⚠ ICON IS A PLACEHOLDER (rbxassetid://0) -- FOR THE USER TO AUTHOR, same as the five entries
 	-- they filled at B22. It renders as a blank square until then; nothing else breaks.
-	Gold        = { Kind = "Currency", Tier = "Common", Name = "Gold",        Description = "Gacha / banner roll currency.",       Icon = { Image = "rbxassetid://128910310881167" }, Tradeable = false },
-	Silver      = { Kind = "Currency", Tier = "Common", Name = "Silver",      Description = "Soft currency from dupes / sells.",   Icon = { Image = "rbxassetid://119213648374305" }, Tradeable = false },
+	Gold        = { Kind = "Currency", Tier = "Common", Name = "Gold",        Description = "Gacha / banner roll currency.",       Icon = { Image = "rbxassetid://73875777842170" }, Tradeable = false },
+	Silver      = { Kind = "Currency", Tier = "Common", Name = "Silver",      Description = "Soft currency from dupes / sells.",   Icon = { Image = "rbxassetid://137372260979804" }, Tradeable = false },
 	-- B109: Battle Pass EXP as a REWARD (quests/achievements). Not a stored currency: GrantService routes Kind
 	-- "BattlepassXP" to BattlepassService (ServerStorage.BattlepassAddXP), the one writer of Data.Battlepass.
 	BattlepassXP = { Kind = "BattlepassXP", Tier = "Rare", Name = "Battlepass EXP", Description = "Experience for the Battle Pass.", Icon = { Image = "rbxassetid://3057073083" }, Tradeable = false },
@@ -96,7 +96,7 @@ ItemCatalog.Entries = {
 
 	-- ===== Items (existing stage drops) =====
 	BannerTicket     = { Kind = "Item", Tier = "Rare",      Name = "Banner Ticket",      Description = "A free banner pull.",       Icon = { Image = "rbxassetid://6731922404" }, MaxOwned = 9999, Tradeable = false },
-	TraitRerollToken = { Kind = "Item", Tier = "Epic",      Name = "Trait Reroll Token", Description = "Reroll a unit's trait.",     Icon = { Image = "rbxassetid://12590248124" }, MaxOwned = 9999, Tradeable = false },
+	TraitRerollToken = { Kind = "Item", Tier = "Epic",      Name = "Trait Reroll Token", Description = "Reroll a unit's trait.",     Icon = { Image = "rbxassetid://91484105947557" }, MaxOwned = 9999, Tradeable = false },
 	GoldenSeed       = { Kind = "Item", Tier = "Legendary", Name = "Golden Seed",        Description = "Rare crafting material.",    Icon = { Image = "rbxassetid://124757602236693" }, MaxOwned = 9999, Tradeable = false },
 	-- B106: evolution relic. Drops from the Stage 1 boss act (Stage1_Act3 DropTable). Icon PLACEHOLDER (user).
 	ScarecrowCrown   = { Kind = "Item", Tier = "Legendary", Name = "Scarecrow Crown",    Description = "Relic of the Scarecrow King; used to evolve units.", Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
@@ -120,12 +120,12 @@ ItemCatalog.Entries = {
 
 	-- ===== B108: EXP FOOD (user). Feed a unit for XP (`ExpFood` = XP per item); each unit also needs its
 	-- own food to ASCEND (AscensionConfig.FoodFor). Drop from stage acts + the shop Food tab. Icons PLACEHOLDER. =====
-	FoodPandesal = { Kind = "Item", Tier = "Common", Name = "Pandesal", Description = "Warm bread roll. Grants 20 EXP to a unit.", ExpFood = 20, Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
-	FoodTuron    = { Kind = "Item", Tier = "Uncommon", Name = "Turon", Description = "Sweet banana roll. Grants 45 EXP to a unit.", ExpFood = 45, Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
-	FoodBibingka = { Kind = "Item", Tier = "Rare", Name = "Bibingka", Description = "Rice cake from the clay oven. Grants 75 EXP to a unit.", ExpFood = 75, Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
-	FoodAdobo    = { Kind = "Item", Tier = "Epic", Name = "Adobo", Description = "The house classic. Grants 150 EXP to a unit.", ExpFood = 150, Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
-	FoodSinigang = { Kind = "Item", Tier = "Legendary", Name = "Sinigang", Description = "Sour tamarind stew. Grants 280 EXP to a unit.", ExpFood = 280, Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
-	FoodLechon   = { Kind = "Item", Tier = "Mythic", Name = "Lechon", Description = "The feast centrepiece. Grants 300 EXP to a unit.", ExpFood = 300, Icon = { Image = "rbxassetid://0" }, MaxOwned = 9999, Tradeable = false },
+	FoodPandesal = { Kind = "Item", Tier = "Common", Name = "Pandesal", Description = "Warm bread roll. Grants 20 EXP to a unit.", ExpFood = 20, Icon = { Image = "rbxassetid://89378490445303" }, MaxOwned = 9999, Tradeable = false },
+	FoodTuron    = { Kind = "Item", Tier = "Uncommon", Name = "Turon", Description = "Sweet banana roll. Grants 45 EXP to a unit.", ExpFood = 45, Icon = { Image = "rbxassetid://105044014219137" }, MaxOwned = 9999, Tradeable = false },
+	FoodBibingka = { Kind = "Item", Tier = "Rare", Name = "Bibingka", Description = "Rice cake from the clay oven. Grants 75 EXP to a unit.", ExpFood = 75, Icon = { Image = "rbxassetid://127325479952643" }, MaxOwned = 9999, Tradeable = false },
+	FoodAdobo    = { Kind = "Item", Tier = "Epic", Name = "Adobo", Description = "The house classic. Grants 150 EXP to a unit.", ExpFood = 150, Icon = { Image = "rbxassetid://89853676921693" }, MaxOwned = 9999, Tradeable = false },
+	FoodSinigang = { Kind = "Item", Tier = "Legendary", Name = "Sinigang", Description = "Sour tamarind stew. Grants 280 EXP to a unit.", ExpFood = 280, Icon = { Image = "rbxassetid://99971917740789" }, MaxOwned = 9999, Tradeable = false },
+	FoodLechon   = { Kind = "Item", Tier = "Mythic", Name = "Lechon", Description = "The feast centrepiece. Grants 300 EXP to a unit.", ExpFood = 300, Icon = { Image = "rbxassetid://77167564249002" }, MaxOwned = 9999, Tradeable = false },
 }
 
 function ItemCatalog.Get(id: string): any?
