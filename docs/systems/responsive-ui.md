@@ -23,7 +23,10 @@ themselves), Hotbar (never touched), ScreenFXLayer, UIStroke thickness, UISizeCo
   `ViewportSize` change (rotation, window resize).
 - Each top-level panel gets a UIScale `AD_UIScale`, re-anchored INWARD first (`AD_Anchored`). A panel that owns
   its own (animated) UIScale is scaled by Size instead (`AD_BaseSize`). UIScales named `Responsive` are a screen's
-  own fit (DailyRewards, TraitReroll) -- left alone.
+  own fit (DailyRewards, TraitReroll) -- left alone. **B134 fits** (authored at 1080p, `s` clamped 0.45..1.6):
+  TraitReroll `s = min(H/1080, 0.47 W / reach, 0.9 H / 640)`, `reach` = the IndexPanel's right edge from centre
+  (755 px), `Main.Size = 1/s` -- so "Show chances" never leaves the screen (s = 1 at 1920x1080). DailyRewards
+  `min(1.2 H/1080, 0.86 W/1080, 0.62 H/300)`.
 - **FIT:** a scaled panel never outgrows the screen -- its factor is capped (below 1 if needed) to 96 % of the
   screen, and on an IgnoreGuiInset screen it also clears the Roblox top bar (centred). Last measure kept in
   `AD_BasePx` for panels on hidden screens.
