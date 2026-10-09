@@ -30,7 +30,14 @@ Free always (once unlocked); **Paid requires `Owned`**. Validate tier/track → 
 Reason codes: `bad_tier` · `bad_track` · `no_such_tier` · `not_unlocked` · `not_owned` ·
 `already_claimed` · `nothing_to_claim` · `grant_failed` · `profile_not_loaded` · `busy`.
 
-## ✅ THE XP SOURCE IS WIRED (B43, AD-Game)
+## ✅ B133: MATCH XP IS BANKED IN THE PROFILE (user: "fix the battlepass xp")
+The Game adds each match's BP XP (and in-match quest BP XP) to `Counters.Global.BattlepassXPEarned` (lifetime,
+monotonic, Game-written). On every Lobby join `BattlepassService.applyMatchXP` grants `Earned - BattlepassXPApplied`
+through `addXP` and raises `BattlepassXPApplied` (Lobby-written). Closing the game no longer loses XP; nothing is
+paid twice. Verified: an Infinite defeat banked +34, the next Lobby join logged `applied 34 match XP`.
+The B43 flow below (XP inside the MatchReturn teleport) is history -- the payload now carries 0.
+
+## (history) THE XP SOURCE IS WIRED (B43, AD-Game)
 
 BP XP is committed **at match end**, `f(waves, outcome, difficulty)`, and travels
 **Game → `MatchReturn` → Lobby**:

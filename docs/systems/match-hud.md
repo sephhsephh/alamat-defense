@@ -201,3 +201,11 @@ wave fully cleared -> both hide -> next COUNTDOWN. Last wave: no skip phase.
   slides (Quint), XP number rolls up, level-up = fill to 100% -> gold "LEVEL UP!" pop -> refill from 0,
   sheen (`Fill.Sheen.Sweep` gradient) sweeps every 4 s, first paint animates from empty. Harness attribute
   `DevXP` ("level,xp,need" Game / "level,xp" Lobby) plays it without touching data.
+
+## Game speed (B133, user)
+- `MatchHUD.SpeedControl` chips are **1x / 1.5x / 2x** (labels painted by `SpeedControlUI` from its CHIPS table).
+- **Only the host** changes speed (server-checked in `GameSpeedRequestHandler`; in a matchmade match the host is
+  the elected player -- user decision, closes the B23 question). Non-hosts do not see the control.
+- **2x is premium**: Game Pass `MonetizationConfig.GameSpeedPremiumGamePassId` (**0 = locked for everyone; paste the
+  real id**). Locked 2x shows the PRO badge and prompts the purchase; a mid-match purchase unlocks it at once.
+  Studio grants it (`DevGrantPremiumSpeedInStudio`). Snapshot field: `CanUsePremiumSpeed` (was `CanUseX3`).

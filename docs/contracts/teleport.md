@@ -182,10 +182,12 @@ and travels on the single return.
 - Sanitized like any wire value: absent, non-numeric, negative or NaN → 0, and clamped to a
   blast-radius cap far above what the curve can pay.
 
-**KNOWN LIMIT, ACCEPTED:** XP that is never carried back is lost — a player who closes the game
-instead of returning to the Lobby drops what that session accumulated. Persisting it properly needs
-a stored field (a **v5** schema bump) or a second writer; neither is worth it for a placeholder
-economy. Stated here so it is a known limit rather than a surprise.
+**B133: THE KNOWN LIMIT IS FIXED, and `MatchReturn.BattlepassXP` now always carries 0** (the field stays,
+additive + forward-tolerant; the Lobby ignores 0). The Game banks every match's BP XP in the lifetime counter
+`Counters.Global.BattlepassXPEarned`; the Lobby's BattlepassService applies `Earned - BattlepassXPApplied` on
+every join and moves `BattlepassXPApplied` up. No schema bump (Counters.Global is free-form), no second writer
+of `Data.Battlepass`, and a player who closes the game keeps the XP. (History: B43 carried it in this payload
+and lost it when a player left any other way.)
 
 ## Cross-server delivery (v4, matchmade launches only)
 
