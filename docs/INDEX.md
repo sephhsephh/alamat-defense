@@ -110,6 +110,7 @@
   `NextDay` — a bug that was invisible to reading. Split out of `rewards.md` at B38 on its cap.
 - `lobby-ui.md` — the LOBBY's screens only (Units, Items, Collection, Hotbar, CurrencyBar, HUD buttons,
   the legacy script-built four) + the `DevAutoOpen` harness. Split from `lobby/CONTEXT.md` at A5.
+- `alamat-ui.md` — **AD-UI canon** (B138): THE Alamat UI kit — Sun-gem button (one master, Theme + Variant), palettes, animator, image VFX, the Lobby HUD "Command Rails" layout, how to add a button / port to the Game.
 - `loading-screen.md` — **AD-UI canon, BOTH Places** (B136): the one `LoadingScreen` veil (same instances + module in
   both), its API, seamless teleports (`SetTeleportGui` + `ReplicatedFirst.ArrivingLoadingScreen`), every place it shows.
 - `reward-reveal.md` — **AD-UI canon, LOBBY** (B135 rebuild): `ObtainRewardsGUI`, THE reward reveal behind

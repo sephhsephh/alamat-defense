@@ -166,6 +166,28 @@ Send them one at a time. After the FIRST one you like, start every next message 
 
 ---
 
+### Lobby HUD buttons (B138 Alamat UI kit) — use the ONE-SHOT prompt, these go in its top box
+The icon sits on a coloured gem, so keep it bright, bold and centred; white/gold highlights read best.
+
+| Asset key | SUBJECT | DOMINANT COLOURS |
+|---|---|---|
+| `HUD_Units` | a heroic stylized warrior's helmet with a small gold crest, facing three-quarter | steel blue, gold trim |
+| `HUD_Inventory` | an ornate leather satchel with a gold buckle, a glowing gem peeking out | warm teal, brown leather, gold |
+| `HUD_Quests` | a rolled parchment scroll with a red wax seal and a feather quill | parchment cream, ember red |
+| `HUD_Index` | an open ancient tome with glowing runes rising from its pages | indigo cover, gold runes |
+| `HUD_Shop` | a bulging coin pouch with a few gold coins spilling out | jade green, bright gold |
+| `HUD_Profile` | a gold-framed oval portrait medallion with a simple hero silhouette | rose pink, gold |
+| `HUD_Summon` | a swirling summoning orb crackling with magic on a small claw stand | violet, magenta, gold |
+| `HUD_Play` | two crossed Filipino kris swords over a small round sun shield | silver blades, gold sun |
+| `HUD_BattlePass` | a royal pass scroll-banner topped with a small crown | gold, deep violet |
+| `HUD_Events` | a glowing parol (Filipino star lantern) with short tassels | ember orange, warm yellow glow |
+| `HUD_DailyRewards` | a gift box with a gold ribbon and a little sun charm on the bow | sky blue box, gold ribbon |
+| `HUD_Codes` | a small present with a golden tag on a string | violet box, gold tag |
+| `HUD_Leaderboards` | a trophy cup with laurel leaves | gold, green laurels |
+| `HUD_Invite` | two small friendly figures side by side with a sparkle between them | sky blue, gold |
+| `HUD_Inbox` | a sealed envelope with a gold wax seal | cream paper, gold seal |
+| `HUD_Settings` | a gold cog gear with a violet gem in its centre | gold, violet |
+
 ## Consistency workflow (any generator)
 
 1. **One chat per family.** Paste Block A, then the family's Block B, then the first Block C line.

@@ -5,6 +5,7 @@ The social/meta Place: collection, banners, stage + difficulty select, parties, 
 
 ## Current live state
 
+- **B138 HUD:** rebuilt with the **Alamat UI kit** (`RS.AlamatUI`: Sun-gem buttons, one master + Theme/Variant, image VFX, one animator) in the "Command Rails" layout -- PLAY/SUMMON moved to `HUD.Right.Hero` -- **`docs/systems/alamat-ui.md`**. Old HUD in `ServerStorage._UIBackup_B138`.
 - **B136:** `LoadingScreen` rebuilt + shared with the Game (join veil, waystone/water-rescue travel veil via `Remotes.LobbyTravel`, launch headlines) -- **`docs/systems/loading-screen.md`**; Trait Reroll filters scroll / rare-trait borders / pity / picker perf, Stat Reroll chip icons.
 - **B135:** the account XP bar is the Game's `XPBarGui` (+ `XPBarController`; old `ExpBar` archived) -- `match-hud.md`; `ObtainRewardsGUI` rebuilt -- **`docs/systems/reward-reveal.md`**; Daily Rewards auto-opens only when unclaimed.
 - **B134 MAP:** `Workspace.Lobby.Map` = the night-island map from the user's concept (themed districts = NPC homes, travel waystones + water rescue in `SSS.Server.Lobby.LobbyMapService`, plaza seating, night lighting) -- **`docs/systems/lobby-map.md`**. `Lighting.Technology` = Future is a MANUAL setting. Old props archived in `ServerStorage._OldLobby_B134` (the builders still read it).
