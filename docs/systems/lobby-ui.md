@@ -111,76 +111,8 @@ It owns its own Mythic+ picker, so it needs nothing from the Units screen. Full 
 
 ## `ObtainRewardsGUI` — the reward-reveal surface
 
-Built at **B1 (2026-08-08)**; animated at **B4 (2026-08-09)**.
-**Entry point** (client-side, matching the `ClientEvents` house pattern):
-`RS.ClientEvents.ShowRewards:Fire({ { Id = "Archer", Level = 12 }, { Id = "Gold", Qty = 250 } })` —
-a bare string id also works. **First production caller = gacha (B3)**, which passes
-`RequestSummon`'s returned views straight through unchanged.
-
-- **ONE grid, MIXED units + items.** Unit cell = this screen's own `RewardsFrame.UnitTemplate`
-  (150×150, locked by its own `UISizeConstraint`, adopted as-is per ADR-0007, kept **Lobby-local,
-  NOT shared canon**). Anything else = a FRESH clone of shared `Kit.ItemIcon` on every show
-  (deliberately not baked in at build time — that is what caused `Kit_ItemHoverCard`'s stale-master
-  bug). Kind is inferred from `ItemCatalog` (`Kind == "Tower"` → unit), forceable with `Kind`. An id
-  absent from the catalog **still renders** (name falls back to the id, tier Common).
-- **Layout:** 5 columns; `cols = min(n, maxCols)` so 3 rewards make a 3-wide frame, not a 5-wide one
-  with gaps. Rows 1–3 grow the frame; row 4+ freezes Y at the 3-row height and scrolls with
-  `CanvasSize` still covering every row. **Every metric is READ from the instances**
-  (`UIGridLayout.CellSize`/`CellPadding`/`FillDirectionMaxCells`, `UIPadding`,
-  `RewardsFrame:GetAttribute("MaxVisibleRows")`) — retune spacing in Studio, no code change.
-- **Back-to-back grants QUEUE, never merge**, so each reward source stays visually distinct.
-
-### Reveal animation + two-stage click (B4, 2026-08-09 — REVIEWED + APPROVED by AD-UI at B5)
-
-> **Review status:** written by AD-Gacha inside AD-UI's canon on the user's authorisation; AD-UI
-> re-tested every claim independently at B5 rather than trusting the changelog — **all PASS**. The
-> only change was the padding fix below, which was a B1 defect, not a B4 one.
-
-Cells reveal **one at a time** (pop-in, `UIScale` `RevealStartScale` → 1, Back/Out). Then
-**click 1 = SKIP**, **click 2 = CLOSE**.
-
-- **Skip is NOT dead-period gated; close is.** Skipping only ever shows you *more*, so a stray click
-  cannot rob you of a rare pull — but the close click is gated by `InputDeadSeconds` measured **from
-  when the reveal FINISHED**, not from when the popup opened. With an animation, "seen" happens at
-  the end of the reveal. Letting the animation finish on its own lands in the identical state as a
-  skip, because both go through one `finishReveal()`.
-- **Tunables are attributes on the ScreenGui** (same philosophy as the layout metrics):
-  `RevealStaggerSeconds` (0.08), `RevealPopSeconds` (0.22), `RevealStartScale` (0.60),
-  `RevealMaxTotalSeconds` (1.20 — caps the whole stagger so a 20-cell batch compresses instead of
-  crawling), plus the existing `InputDeadSeconds` (0.35).
-- **Why `UIScale` and not `Size`:** `UIGridLayout` FORCES `CellSize` onto every child, so a `Size`
-  tween is overwritten every frame. `UIScale` is the only size animation that survives a grid.
-- **It is created on the runtime CLONE, never on a template.** `Kit_ItemIcon` is hashed **shared
-  canon** — adding anything to it would be drift. The controller already creates
-  `UIGradient`/`WorldModel`/`Camera` on clones, so this matches its own practice.
-- **Why it pops from the centre:** the `UIScale` goes on the cell's `Main` child after re-anchoring
-  it to `(0.5,0.5)` at `(0.5,0.5)` — identical coverage, but it grows from the middle. **The
-  grid-positioned ROOT is never re-anchored** — that would shift the cell out of its slot.
-- **Keep the overshoot small.** `RewardsFrame.ClipsDescendants = true`, so Back/Out from 0.6 (peak
-  measured live at **1.0400**) must fit inside the padding. A much lower start scale or a stronger
-  easing **will clip** on the outer edges.
-- **`UIPadding` is 15px, not the 8px it was built with — and the reason is not decoration.**
-  `UnitTemplate.UnitLevel` overflows its own 150px cell by **10.8px to the left** (14.2px at peak
-  overshoot), so at 8px the leftmost badge was permanently clipped. **Do not drop below ~15px**, and
-  re-measure if `RevealStartScale` is lowered. Found by AD-UI's B5 review; it predated the animation.
-  Fixed on the CONTAINER on purpose — `UnitTemplate` is the user's design, adopted under ADR-0007.
-- **Cells are hidden until their turn, and this does NOT reflow.** `UIGridLayout` skips invisible
-  children, but because cells reveal in ascending `LayoutOrder` each one lands in the next free slot
-  and the ones already shown never move. Asserted live, not assumed: cell 1 held its
-  `AbsolutePosition` across the whole reveal at n=10 and n=20.
-- **A `revealToken` guards the queue.** It is bumped on every render, and an in-flight reveal loop
-  from a previous batch checks it and bails — so walking the queue quickly can never leave an old
-  loop animating the new batch's cells.
-- The `ClickToCloseLbl` hint stays hidden until closing is *actually* possible (reveal finished AND
-  dead period passed). During the reveal a click skips rather than closes, so showing a close hint
-  then would be a lie.
-- **Studio harness:** the `DevDismiss` attribute routes through the **same `advance()`** a real click
-  does, so it skips while revealing and closes afterwards, dead-period check included
-  (`MouseButton1` cannot be fired from tooling). Left OFF.
-
-**Verified live at B4** (n=1/3/6/10/15/20): one-at-a-time stagger, cell 1 never moved, mid-reveal
-skip → all instantly full-scale and still open, close refused during the dead period and accepted
-after, queue animates each batch, layout numbers identical to B1's. Drift stayed 23/23 GREEN.
+**Rebuilt from scratch at B135** -- full doc: **`reward-reveal.md`** (entry point `ClientEvents.ShowRewards`,
+unchanged since B1; look, motion, input, layout, tunables). The B1-B4 grid/animation notes are history (CHANGELOG).
 
 ## Screens
 

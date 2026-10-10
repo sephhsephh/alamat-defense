@@ -33,6 +33,13 @@ good — the UNIT MANAGER button replaces it.
 **Why the XP bar has its own ScreenGui:** `MatchHUD` and `Hotbar` both use DisplayOrder 0, so the
 hotbar drew over the bar. `XPBarGui` is DisplayOrder 1.
 
+**B135 -- one XP bar in BOTH Places.** The Lobby now uses this same `XPBarGui` (user copied it; the B33 Lobby
+`ExpBar` is archived in `ServerStorage._UIBackup_B135`), driven there by `XPBarGui.XPBarController` (GetUnitViews +
+`PlayerLevelConfig`) with the same animation as `HudPanels`. Look (authored by `tools/xpbar_style.luau`, run in
+both Places): fill `Tint` gold -> orchid -> violet, `Gloss` top highlight, glowing `Tip` on the leading edge
+(pulses; wide-X box + aspect 0.3), label `Outline`. Motion: a bright shine band sweeps every 2.4 s (was a faint
+one every 4 s) and the tip flares with it; XP gain = shine + label pop; level-up = gold "LEVEL UP!" + double shine.
+
 ## The placed-unit counter (B83)
 
 `HotbarSlot1.PlacedUnitCounter` is the user's own label; the other five slots get a **copy of it**

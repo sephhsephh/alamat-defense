@@ -10,6 +10,11 @@ there.
 
 **Entirely Lobby-local. Shared canon unchanged at 35; save schema unchanged at v3.**
 
+**Auto-open on join (B131, narrowed B135 by the user):** once per join, after the loading screen, the starter
+pick and any reward reveal, `DailyRewardsScreenController` syncs `GetDailyState` and opens the screen **only if a
+reward is still unclaimed today** (`CanClaim` on the normal track, else the event track -- it opens on that
+track's tab). Nothing to claim = no popup (`[DIAG] ... not auto-opened (B135)`).
+
 | piece | what it is |
 |---|---|
 | `RS.Configs.Meta.DailyRewardConfig` | PURE rules — the 7-day table, the day number, the streak arithmetic |
