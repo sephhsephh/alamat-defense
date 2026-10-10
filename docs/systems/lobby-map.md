@@ -1,75 +1,90 @@
-# Lobby map -- night islands, themed districts, travel waystones (Lobby)
-<!-- owner: AD-Lobby | scope: Lobby | last-verified: 2026-10-10 (B134) -->
+# Lobby map -- night islands, stylized districts, travel waystones (Lobby)
+<!-- owner: AD-Lobby | scope: Lobby | last-verified: 2026-10-10 (B139 stylized revamp) -->
 
 The Lobby is the user's "Map Concept" image built for real: a night archipelago on the terrain islands from B130
 (`tools/lobby_islands_gen.luau`). Every NPC lives in its own themed district; glowing waystones make the long
 walks optional. **Design canon = this doc + `tools/lobby_map/*.luau`; the built map is Studio (Lobby).**
 
+## Art direction (B139, user: "no bland blocks called a plaza / pole / beam")
+Anime-tower-defense hub look (Anime Vanguards / Anime Expeditions / Anime Defenders lobbies): every landmark is a
+**stylized hand-painted MESH** (Studio AI mesh generator), every light source has **real particle VFX**, district
+beacons are **soft Beam light pillars**, never neon bricks. Rules for any future edit:
+- **No part-built landmarks, poles, torches, sky-beam bricks or flat discs.** Need a new prop? Generate it
+  (prompt suffix: `stylized hand-painted anime fantasy game asset`), harvest it into `Protos` as `M_<Name>`.
+- Light = a VFX preset (below), never a Neon part. Neon is only allowed INSIDE a mesh's texture.
+- Plain parts that must stay (steps, piers, deck colliders) wear the generated MaterialVariants
+  `Alamat_StylizedStone` (Slate) / `Alamat_StylizedPlanks` (WoodPlanks) in `MaterialService`.
+
 ## Where things live
-- **`Workspace.Lobby.Map.<District>`** -- everything built. `Workspace.Lobby` MUST stay: `SettingsConfig.Place()`
-  detects the Lobby by it. Kept untouched at the workspace root: `NPC_*`, `SpawnLocation`, `PersistentScene`,
-  `Terrain` and the user's south area (`Workspace.Model` = Yasu's tree pack etc., the user's "keep untouched").
-- **Builders:** `tools/lobby_map/Lib.luau` (mirrored at `ServerStorage.DevTools.LobbyMap.Lib` -- keep the two
-  byte-identical) + `01_arrival_altar` .. `07_npcs_travel`. Paste a step into `execute_luau` (Lobby, Edit). Every
-  step is idempotent (`Lib.folder` clears its district first). Order matters: 06 scatters around what 01-05 built.
-- **Prototypes:** `ServerStorage.DevTools.LobbyMap.Protos` (AI meshes `AI_NipaHut`, `AI_Statue`, `AI_Ship` -- made
-  with Studio's mesh generator, anchored -- + `Bush1/2`). `Lib.proto` falls back to **`ServerStorage._OldLobby_B134`**
-  (the archived old lobby: LampPost, BannerPole, palms, `Tree_*`, rocks). **Do not delete that archive while the
-  scripts may be re-run** -- move the protos you still want into `Protos` first.
+- **`Workspace.Lobby.Map.<District>`** -- everything built; each district's B139 work is in its `Revamp` folder.
+  `Workspace.Lobby` MUST stay: `SettingsConfig.Place()` detects the Lobby by it. Kept untouched at the workspace
+  root: `NPC_*`, `SpawnLocation`, `PersistentScene`, `Terrain` and the user's south area (`Workspace.Model` etc.).
+- **Builders** (paste into `execute_luau`, Lobby, Edit): B134 `Lib.luau` + `01`..`07` built the layout;
+  B139 `08_vfx_lib` (VFX presets), `09_arrival`, `10_waystones`, `11_districts` (one function per district).
+  B139 scripts DELETE the B134 block parts they replace, so a full rebuild = 01-07 then 08-11.
+- **Prototypes:** `ServerStorage.DevTools.LobbyMap.Protos` -- 44 models; the B139 AI meshes are `M_*` (one
+  MeshPart `Mesh` = PrimaryPart, pivot at origin): PlazaFloor, FloorSun, FloorMoon, FloorWave, RunePlatform, Temple,
+  FireAltar, Arena, Torii, PagodaTower, Forge, ForgeStall, MarketStall, Lookout, Lighthouse, RuinArch, BridgeSeg,
+  Brazier, StoneLantern, StoneLantern2, LanternPost, Tiki, Banner, Waystone, Monolith, ShrinePillar, CrystalBlue,
+  CrystalPurple, Fountain, Campfire, Barrels, Bangka, Palm, TreeBloom, Bush, Mushrooms, Boulder, LavaRocks,
+  LanternString (unused). `Lib.proto` still falls back to `ServerStorage._OldLobby_B134` (keep that archive).
+- **VFX presets:** `ServerStorage.DevTools.LobbyMap.VFX` -- Attachments cloned onto invisible anchor parts:
+  `Fire_<C>` (flipbook flame + core + embers + halo + light), `Motes_<C>` / `Fireflies` (area = the anchor part's
+  box), `Shaft_<C>` (3 Beams to a `ShaftTop` attachment + rising sparkles), `Aura_<C>` (crystal halo + sparkles +
+  light), `Sigil_<C>` (flat spinning magic circle), `VolcanoPlume`, `FountainSpray`, `WaterRipples`, `WaterfallBase`.
+  `<C>` = Gold / Crimson / Violet / Jade / Azure. Textures are Creator Store ids (no packs kept in the place).
 - **Runtime:** `ServerScriptService.Server.Lobby.LobbyMapService` (travel + water rescue, below).
 
 ## Districts (world coords; the plaza faces north = -Z)
-| District | Centre | NPC | Colour / landmark |
+| District | Centre | NPC | B139 look |
 |---|---|---|---|
-| Arrival Plaza (spawn) | (-330, 97.5, 772) | Guide | gold compass mosaic, 8 lamps, 6 waystones |
-| Golden Flame Altar | (-300, 118, 560) | -- | 3-tier altar, great gold brazier |
-| Sky Temple | (-420, 207, 362) | Ascension (forecourt) | blue door glow + sky beam, twin AI guardians |
-| Rune Circle | (-560, 169, 462) | Evolve | 12 runes, 4 glyph monoliths |
-| Waterfall | lip (-462, 166, 549) | -- | neon sheets, mist |
-| Blue Beacon | (-612, 82, 815) | -- | crystal + sky beam |
-| Beach Village | market (-846, 15, 748) | Shop, Craft (stalls) | 6 AI nipa huts, piers, bangkas, campfire |
-| Jungle | (-850, ~150, 430) | -- | stair chain, lookout tower, ruined arch |
-| Red Gate Fortress | gate ~(-90, 120, 580) | Stat Reroll (forge, (100, 628)) | torii gate, crimson brazier, watchtower |
-| Crystal Shrine | (292, 143, 352) | Trait Reroll | purple crystal spire + sky beam |
-| Green Arena | (40, 104, 815) | Challenge | green beacon + sky beam, ledge stairs |
-| Sea / volcano | lagoon ship (-115, 662), sea ship, lighthouse (-262, 56, 980), crater (-24, 210, -312) | -- | |
+| Arrival Plaza (spawn) | (-330, 97.5, 772) | Guide | sun-compass court, gold spawn sigil + motes, 8 stone lanterns, 2 great braziers |
+| Sun Altar | (-300, 118, 560) | -- | 3-tier fire altar + giant flame, 4 braziers, sun floor, purple banners |
+| Sky Temple | (-420, 207, 362) | Ascension (forecourt) | blue 3-roof pagoda (x1.15) on Base1, azure braziers + light pillar, paper lanterns |
+| Rune Circle | (-560, 169, 462) | Evolve | rune dais, azure sigil, 4 carved runestones with auras |
+| Waterfall | lip (-478, 171, 543) | -- | **the user's original waterfall model restored** (beams + mist, from `_OldLobby_B134`) |
+| Blue Beacon | (-612, 82, 815) | -- | blue crystal cluster + light pillar, wave floor, 6 azure lanterns |
+| Beach Village | market (-846, 15, 748) | Shop, Craft (stalls) | AI market + forge stalls, campfire, 8 tiki torches, bangka boats, nipa huts |
+| Jungle | (-850, ~150, 430) | -- | AI lookout tower, ruined vine arch (+2 invisible pillar colliders), glow mushrooms |
+| Red Gate Fortress | gate ~(-78, 121, 584) | Stat Reroll (forge, (100, 628)) | lacquered torii, crimson braziers, great brazier + pillar, forge workshop, pagoda tower |
+| Crystal Shrine | (292, 143, 352) | Trait Reroll | amethyst cluster + violet pillar, moon floor, marble crystal pillars |
+| Green Arena | (40, 104, 815) | Challenge | colosseum ring (visual), jade brazier + pillar, banners |
+| Sea / volcano | lighthouse (-262, 56, 980), crater (-24, 211, -312) | -- | AI lighthouse + glow; smoke plume, embers, lava rocks |
 
-Bridges (`Lib.bridge`: planks, rope rails, invisible guard rails, piers over 70 studs) and stairs (`Lib.stairs`)
-link every district; paths are terrain `Sandstone` strips (`Lib.path`).
+Bridges: the AI rope-bridge segment tiled along each bridge's planks (planks stay as INVISIBLE colliders; piers
+re-skinned). Stairs: stylized stone re-skin. Every old stick torch is now a stone lantern or tiki torch.
+
+## Collision rules (B139)
+- **Floor discs are visual** (`collide = false`); the B134 `Floor`/`Rim` cylinders are invisible walk colliders.
+- Gates / arches / colosseum meshes are `collide = false` (a mesh hull would block the passage); the arena keeps
+  its 3-stud B134 walls as invisible colliders, the jungle arch has 2 `ArchCollider` parts.
+- `CollisionFidelity` can NOT be set from `execute_luau` (silently stays Default = hull). Monuments with hulls
+  (temple, altar, forge, stalls, towers) are fine because nobody walks inside them.
 
 ## Travel waystones (`Map.Travel`)
-- `Plaza_<District>` x6 on the plaza's south arc (r 44) and `Stone_<District>` x6 (one per district, near its
-  NPC). Each `Shaft` holds a **ProximityPrompt `TravelPrompt`** ("Travel", hold 0.25 s, range 9 -- keyboard E,
-  gamepad X, tap on mobile) with attribute **`TravelTo` = destination stone name**; district stones go to
-  `Plaza`. The destination's invisible **`Arrival`** part is where the player lands.
-- Labels are BillboardGuis cloned from `NPC_Guide.Body.NameTag`, sized in studs (scale 7 x 1.7, MaxDistance 60).
-- `LobbyMapService` does the teleport (`RequestStreamAroundAsync` first -- StreamingEnabled is on). `NpcPromptRouter`
-  ignores these prompts (no NPC ancestor, no `OpensEvent`).
+- `Plaza_<District>` x6 on the plaza's south arc (r 44) and `Stone_<District>` x6. Each model = invisible `Shaft`
+  holding **ProximityPrompt `TravelPrompt`** (attribute **`TravelTo`**) + `Label` + invisible `Arrival`, plus the
+  B139 visuals (`Waystone` mesh, `Aura_<Palette>`, `Sigil_<Palette>`; the model's `Palette` attribute).
+- `LobbyMapService` does the teleport (`RequestStreamAroundAsync` first). `NpcPromptRouter` ignores these prompts.
 
 ## Water rescue
-The sea is a thin terrain band (Y -4..4) under sheer cliffs -- a swimmer cannot climb out. `LobbyMapService` puts a
-player swimming for 4 s (root below Y 6 AND a terrain ray hits Water -- piers and boats sit higher) on `Plaza`.
+A player swimming for 4 s (root below Y 6 AND a terrain ray hits Water) is put back on `Plaza`.
 
-## Plaza seating (why `Lib.plaza` carves)
-Smooth terrain poked 0.3-2.9 studs through flat discs and grass decoration grew through them. `Lib.seat` (called by
-`Lib.plaza` unless `NoSeat`) carves 2 studs under the disc inside r+2, a shallow bowl out to r+14, and turns the
-grass under it into `Ground`. Props inside a bowl must be re-seated (06 does).
+## Lighting + terrain (B134; unchanged by B139)
+Night: ClockTime 0.5, Brightness 3, ExposureCompensation 0.55, Atmosphere density 0.24, Bloom 0.55 / 28 / threshold
+1.5, ColorCorrection +0.04 / 0.14 / 0.18. **`Lighting.Technology` must be set to `Future` BY HAND.**
 
-## Lighting + terrain (B134; previous values in attributes `Lighting.B134_Before`, `Terrain.B134_BeforeColors`)
-- Night: ClockTime 0.5, Brightness 3, ExposureCompensation 0.55, Ambient (78,84,118), OutdoorAmbient
-  (128,142,196), Env diffuse/specular 0.7. Atmosphere density 0.24, offset 0.1, colour (110,130,190), decay
-  (52,66,120), glare 0.15, haze 1.1. Bloom 0.55 / 28 / threshold 1.5 (only neon glows). ColorCorrection
-  +0.04 / contrast 0.14 / saturation 0.18 / tint (228,234,255). Sky kept (user: "the skybox is good").
-- Warm point lights (flames, lamps, huts) against cool moonlight; only 4 lights cast shadows.
-- **`Lighting.Technology` must be set to `Future` BY HAND** -- scripts cannot write it.
-- Terrain: Grass (62,112,44), LeafyGrass (46,92,34), Sand (176,154,112), Sandstone paths (198,178,140), Rock
-  (86,84,88), Slate (70,72,80), Ground (122,98,70); water (14,96,128), transparency 0.45.
+## Working notes (B139, hard-won)
+- **AI mesh generator: at most ~4 jobs at once** (8 concurrent = most fail "Unable to generate Model"). Results land
+  at the workspace root with the prompt as name and usually SMALLER than the requested size -- scale after.
+- **`screen_capture` with camera_position renders the scene wrong** (clipping); set `workspace.CurrentCamera.CFrame`
+  from `execute_luau`, then capture with no camera args. Particles need a second capture to show.
+- `ShowDevelopmentGui = false` also hides SurfaceGuis; preload images (`ContentProvider:PreloadAsync`) before
+  previewing texture boards.
 
 ## Rules
-- **`PersistentScene.PlayGUICamera` is the USER'S framing -- never move it** (`play-menu.md`). It still frames the
-  pre-island view (volcano); re-framing it is the user's call.
-- NPCs are free to move: every lookup is by name (`NpcPromptRouter`, `WaypointController`, `DialogueConfig`,
-  quests). They are `ModelStreamingMode = Persistent`. Stand them with a parts-aware raycast (07's `floorAt`).
-- Budget (B134): map 4.5k parts (nature 3.1k; palms are 58-118 parts each, trees/rocks 2), 132 lights (4 shadowed
-  after the lamp fix), 91 emitters. Prefer trees/rocks over palms; no new shadowed lights without a reason.
+- **`PersistentScene.PlayGUICamera` is the USER'S framing -- never move it** (`play-menu.md`).
+- NPCs are free to move: every lookup is by name. They are `ModelStreamingMode = Persistent`.
+- Budget (B139): map ~1.9k parts (was 4.5k -- palms are 1 mesh now), ~610 meshes, ~540 emitters (mostly low-rate),
+  23 beams, ~150 lights (none new with shadows). Keep new lights shadowless.
 - A new unit still needs its rig in `RS.UnitModels` here -- unrelated to the map, but the rule stands.
