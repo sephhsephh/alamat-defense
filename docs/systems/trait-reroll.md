@@ -3,6 +3,14 @@
 <!-- owner: AD-Traits | home Place: Lobby | scope: lobby -->
 <!-- last-verified: 2026-08-30 (B44, live Play) | blueprint: docs/blueprints/phases-b-f-meta.md Phase C -->
 
+**B136 UI (user):** the filter popup's `ChipGrid` is a ScrollingFrame (chips no longer overlap); the TRAIT
+REROLLS badge shows the token icon (`TokenBadge.Icon`, `ItemId`-tagged); the Index list has padding, rare traits
+(pity-capped or Legendary+) wear an animated gold/violet border (`RareGradient`), a hunted trait shows a HUNTING
+tag (the green border is gone), and pity rows grow to show a bold gold "PITY have / cap (guaranteed in N)" line
+over a shimmering gold -> violet bar. The Clear button is gone -- clicking the selected unit re-opens the picker.
+**Picker perf:** the grid is cached (rebuilt only when `views` changes; changed trait badges repaint on reuse),
+search toggles visibility instead of rebuilding, and unit portraits fill 6 per frame.
+
 Blueprint **Phase C task C1**. Built at **B44 (2026-08-30)**. AD-Traits' row (`OWNERSHIP.md`);
 ascension (C3) is AD-Gacha's, and **stat reroll (C2) + worthiness are still AD-Traits' and unbuilt**.
 

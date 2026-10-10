@@ -3,6 +3,9 @@
 <!-- owner: AD-Traits | home Place: Lobby | scope: lobby -->
 <!-- last-verified: 2026-08-30 (B44, live Play) | blueprint: docs/blueprints/phases-b-f-meta.md Phase C -->
 
+**B136 UI (user):** the `ChipCounters` boxes show the Stat Chip (`StatRerolls`) and Focus Chip icons above their
+`x#` counts (authored `Icon`, re-applied from `ItemCatalog` by `paintCounts`, `ItemId`-tagged for the hover card).
+
 Blueprint **Phase C task C2**. Built at **B44 (2026-08-30)**, the same session as C1. AD-Traits' row
 (`OWNERSHIP.md`). Sibling of the trait reroll (`trait-reroll.md`); it copies **ADR-0010's
 NPC-opened-screen shape** exactly.

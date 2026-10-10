@@ -109,6 +109,8 @@
   `NextDay` — a bug that was invisible to reading. Split out of `rewards.md` at B38 on its cap.
 - `lobby-ui.md` — the LOBBY's screens only (Units, Items, Collection, Hotbar, CurrencyBar, HUD buttons,
   the legacy script-built four) + the `DevAutoOpen` harness. Split from `lobby/CONTEXT.md` at A5.
+- `loading-screen.md` — **AD-UI canon, BOTH Places** (B136): the one `LoadingScreen` veil (same instances + module in
+  both), its API, seamless teleports (`SetTeleportGui` + `ReplicatedFirst.ArrivingLoadingScreen`), every place it shows.
 - `reward-reveal.md` — **AD-UI canon, LOBBY** (B135 rebuild): `ObtainRewardsGUI`, THE reward reveal behind
   `ClientEvents.ShowRewards` -- look, motion, PC/console/mobile input, layout, tunables, `DevDismiss` harness.
 - `lobby-map.md` — **AD-Lobby canon, LOBBY** (B134): the night-island map -- districts + NPC homes, travel

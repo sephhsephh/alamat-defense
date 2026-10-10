@@ -4,6 +4,10 @@
 The match Place: loads a map, runs waves, towers fight, rewards commit to the profile.
 Server-authoritative, registry/config-driven, signal-decoupled. `--!strict` throughout.
 
+**B136:** `StarterGui.LoadingScreen` (same veil as the Lobby) + `LoadingBoot` show the stage/act/difficulty on first
+load and "Returning to lobby" on the way out; `ReplicatedFirst.ArrivingLoadingScreen` catches the Lobby's
+teleport screen -- **`docs/systems/loading-screen.md`**. B135: gold/violet XP bar + shine (`match-hud.md`).
+
 ## Architecture in one paragraph
 
 `MatchDirector` (SSS.Server) is the lifecycle state machine (WaitingForData → Preparing → Countdown
