@@ -20,6 +20,7 @@
 - `teleport.md` — Lobby→Game / Game→Lobby TeleportData payloads (owner: Lobby). **v2**
 
 ## design/
+- `icon-art-style.md` — **THE icon art style** (B137): image-generator prompts — style lock (Block A), family modules (items / symbols / placement), one line per icon, consistency workflow. Reuse for every future icon batch.
 - `unit-roster.md` — **B106 DRAFT, the unit roadmap**: 27 new Philippine-myth units per tier, balance bands, passive catalogue (C/P/S tags), evolved forms, new systems + build order, and the B106 renames of the 8 old towers.
 
 ## systems/
