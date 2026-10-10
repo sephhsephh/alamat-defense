@@ -7,6 +7,65 @@ Tweaks for a new family (stats, currencies, materials...) go in a new **Block B*
 
 ---
 
+## THE ONE-SHOT PROMPT (user's preferred, B137) — send it whole every time, edit only the top box
+
+```
+=== ICON TO MAKE (edit only this box) ===
+ICON NAME: [e.g. Element_Fire]
+ICON TYPE: [ITEM = a physical collectible object | SYMBOL = a tiny emblem badge shown at 24-32 px]
+SUBJECT: [what to draw, e.g. "a stylized living flame shaped like a rising sun's tongue of fire"]
+DOMINANT COLOURS: [e.g. "ember orange-red, golden-yellow core"]
+EXTRA DETAILS: [optional tweaks, e.g. "slightly brighter glow", "three-quarter view", or "none"]
+=========================================
+
+Create ONE game icon for ALAMAT DEFENSE, a Filipino-mythology Roblox tower defense game, in the fixed
+ALAMAT ICON STYLE below. This style is identical for every icon in the game — only the subject changes.
+If I attach a previous Alamat icon, match its rendering, lighting, outline and colour treatment exactly.
+
+ART STYLE (never change)
+- Premium stylized fantasy game icon, mobile/Roblox UI quality: cartoon/anime-inspired, NOT photoreal,
+  NOT realistic 3D, NOT manga, NOT pixel art, NOT flat vector clip-art, NOT childish.
+- Chunky, slightly exaggerated shapes and one bold, instantly readable silhouette.
+- Smooth painterly rendering: soft gradients, strong dimensional shading, bright specular highlights
+  on the important surfaces.
+- Clean outline in a dark warm colour (deep brown / deep indigo, never pure black), medium weight,
+  slightly thicker on the outer silhouette than inside.
+- Lighting: key light from the TOP-LEFT, soft warm rim light on the right edge, gentle ambient occlusion.
+- Palette: rich but controlled saturation; warm GOLD trim (#FFCA5C to #BE782C) is the signature accent,
+  deep violet (#965FFF) the secondary accent, used only where it fits the subject. The DOMINANT COLOURS
+  above lead.
+- Magic glow only where the subject is magical; the glow hugs the object, never fills the canvas.
+- Filipino-myth identity comes from the overall feel (gold, sun motifs, carved wood, brass, shell) when it
+  makes sense — never forced ornaments.
+
+BY ICON TYPE
+- ITEM: draw it as an official Alamat Defense inventory collectible; readable at 48 px; controlled detail.
+- SYMBOL: an emblem, not a scene — one bold motif, thick silhouette, very little internal detail, maximum
+  contrast, readable at 24-32 px; one dominant colour + gold accent + a soft inner glow of its own colour;
+  same visual weight as every other Alamat symbol icon.
+
+COMPOSITION
+- ONE subject only, centred, front or three-quarter view (whichever reads best), slight tilt allowed.
+- It fills about 80% of a square 1:1 1024 x 1024 canvas, with even padding on every side.
+- No hands, characters, pedestal, ground plane, scene, or environment.
+
+BACKGROUND — CRITICAL
+- TRUE TRANSPARENT background with real alpha. Not white, not black, not a gradient, and not a
+  checkerboard painted into the image. Only the subject (and glow hugging it) has pixels.
+  (If true transparency is impossible, use a perfectly flat solid #FF00FF background with no shadow on it.)
+
+NEVER INCLUDE
+- No text, letters, numbers, logos, watermark, border, frame, card, badge, circular container, or UI.
+
+Output: one high-resolution standalone icon, ready to import into Roblox UI.
+```
+
+The 12 element/placement subjects for the box are in the Block C table below (SUBJECT = the text after the key,
+ICON TYPE = SYMBOL; for the three terrain ones add EXTRA DETAILS: "small floating terrain chunk, grass top, rocky
+underside tapering to a point, high three-quarter angle, gold-capped placement pin").
+
+---
+
 ## Block A — STYLE LOCK (paste once, at the start of the chat)
 
 ```
