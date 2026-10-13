@@ -43,21 +43,21 @@ menu's Story panel shows them in `Details.Recommended` (authored) and warns (red
 the loadout cannot answer a threat (Flying needs a Hill/Hybrid unit). `UnitStatsCatalog` (shared) regenerated B141.
 
 ## Enemy modifiers (B142)
-Numbers:  (commented). Logic:  -- hooks called by
+Numbers: `Configs.Enemies.EnemyModifierConfig` (commented). Logic: `Server.Enemies.EnemyModifiers` -- hooks called by
 EnemyController: Apply (spawn), OnDamage (before armor; 0 = blocked, no min-1 chip), Step (Regen / Commander aura /
-Bulwark), OnDeath (Explosive -> ; Splitter -> , counted via
- in WaveDirector). A wave line gives them: .
+Bulwark), OnDeath (Explosive -> `TowerController:Stun`; Splitter -> `EnemySpawner.SpawnChild`, counted via
+`EnemySpawner.ExtraSpawned` in WaveDirector). A wave line gives them: `grunt(6, { mods = { "Shielded" } })`.
 Set: Shielded 3 hits · Overshield 50% bar / 50% DR · Regen 1%/s (Burn stops it) · Explosive r8 stun 1.5 s · Fast x1.3 ·
 Strong x1.5 HP · Splitter 2 x 35% · Commander r10 +20% speed · Immune (Stun/Slow/Sleep) · Bulwark 2 s every 10 s.
 Model attributes for the client: Modifiers, Shields, Overshield(+Max), Bulwark; towers get Stunned.
 Stage 1 schedule: Act 3 Shielded, Act 4 + Regen, Act 5 + Explosive. Verified B142 (shield/overshield/strong/fast/splitter math).
 
 ## Stage headliner drop (B142)
- -> RewardCalculator, Victory only, after the Weekend
-Rush doubling (a unit is never doubled): pity counter , reset on a hit; routed
-by ItemCatalog Kind "Tower" -> . Stage 1: Apolaki 0.5% / 1.5% Hard, pity 30.
+`StageConfig.HeadlinerDrop = { TowerId, Chance, HardChance, Pity }` -> RewardCalculator, Victory only, after the Weekend
+Rush doubling (a unit is never doubled): pity counter `Counters.Global["HeadlinerPity_<actId>"]`, reset on a hit; routed
+by ItemCatalog Kind "Tower" -> `PlayerInventoryService.GrantUnit`. Stage 1: Apolaki 0.5% / 1.5% Hard, pity 30.
 
 ## Not built yet
-Client: modifier icons/shield count on enemy HP bars, an Explosive FX ( is fired if it exists),
+Client: modifier icons / shield count on enemy HP bars, an Explosive FX (`Remotes.EnemyExploded` is fired if it exists),
 a Stunned icon on units, the end screen's card for a UNIT drop, Lobby display of the pity counter. Boss abilities.
 Stage 1 Infinite on the new roster. A farm-unit role.
