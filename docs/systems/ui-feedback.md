@@ -94,7 +94,7 @@ it for nobody in particular.
 
 ## The confirmation dialog
 
-`UIKit.Confirm.ask{ Title, Text, YesText?, NoText?, Delay? } -> boolean`. It **yields** and returns
+`UIKit.Confirm.ask{ Title, Text, YesText?, NoText?, Delay?, Tone? } -> boolean`. It **yields** and returns
 a boolean, so a caller reads top-to-bottom instead of splitting across two callbacks; every screen
 here already does its remote work inside `task.spawn`, so the yield costs nothing.
 
@@ -120,6 +120,18 @@ and **every failure path returns `false`** — the safe answer to a question nob
 B32 renamed the two authored buttons: they were **both** called `SellButton` (duplicate names make
 dot access pick an arbitrary one) and were identified by their `ButtonText` to become
 `YesButton` / `NoButton`. `DisplayOrder` was raised 10 → 100 so the dialog draws above `PartyScreen`.
+
+### B144 rebuild -- the Alamat look (user: "better effects, animation, vfx, alamat defense style")
+- GUI rebuilt by **`tools/confirm_popup_build.luau`** -- the SAME script was run in both Places (old GUI kept in
+  `ServerStorage._UIBackup_B144`). Night-violet gem panel + gold rim + corner gem studs, a gold `Emblem` riding the
+  top edge with sun `Aura` (rays + magic circle + glow) behind it, gold serif title + divider, gem pill buttons
+  (`Core` gradient, gloss, `ShineClip` streak, `Gate` fill, `Burst`), twinkling `Sparkles`. Scale-only.
+- Module `0a33cc2c` (both Places): `ask{ ..., Tone? }` -- **`Tone = "Danger"`** (red "!" -- selling, overwriting a
+  team, rerolling a matching stat, leaving / restarting a match) | **`"Premium"`** (gold -- spending currency, unit slots)
+  | default `"Normal"` (green "?"). Open = scrim fade + Back pop + panel shine; while open the aura spins and the
+  sparkles twinkle (one RenderStepped); the gate is a fill bar AND the countdown label; unlock = burst + pop + shine.
+- Gamepad: focus starts on **NO** (the safe answer); **ButtonB = NO** (the close button). The scrim never dismisses.
+- Every new part is OPTIONAL -- an older GUI (no `Pop` / `Core`) still slides and tints as before.
 
 ## The trap that cost this session an hour
 
