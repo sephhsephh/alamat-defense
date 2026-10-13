@@ -1,4 +1,11 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-13 [lobby] B146 -- **HUD "Areas" button + screen (from the user's reference): categories, picture cards, travel / open, favourites, waypoints.**
+- `HUD.Left.Buttons.AreasButton` (Index tile clone, Azure; grid grown to 4 rows at the same cell size; placeholder compass icon -- prompt `HUD_Areas` added to `icon-art-style.md`).
+- `StarterGui.AreasGUI` built by `tools/areas_build.luau` + `AreasController`: AREAS ribbon (recoloured per category), Upgrade / Game Modes / Lobby / Shop & Summon tabs (scroll-to + live highlight), search, one wrapping list of section headers + picture cards (TRAVEL/OPEN tag, favourite star; Favourites section on top), Add Waypoint (pick mode -> marker with live distance, auto-clears on arrival).
+- `RS.Configs.AreasConfig` (17 areas). `LobbyMapService` gains `Remotes.AreaAction` (Info / Travel with the travel veil / Fav in `Counters.Global.AreaFavs`, no schema bump). New `Map.Travel.Area_{SunAltar, Waterfall, BlueBeacon, Jungle, Lighthouse}` arrivals (raycast-checked ground).
+- Card pictures: 13 Studio captures of the districts uploaded as images to the user's account (asset ids in AreasConfig).
+- Verified in Play: open from HUD, travel to Crystal Shrine + Sky Temple, waypoint on Stat Forge, no client errors.
+
 ## 2026-10-13 [lobby] B145 -- **Items / Inventory screen rebuilt from the user's references (own Alamat layout).**
 - `StarterGui.ItemsGUI` rebuilt by `tools/inventory_build.luau` (old Main + controller in `ServerStorage._UIBackup_B145`): category tabs with owned counts, search + Filters (Rarity / Favourites / Locked), **owned-only grid** (user rule: 0-owned items never shown) on the shared ItemIcon cards with favourite / lock marks, detail panel (rarity + type line, name, animated showcase, Owned + Unit EXP / Max chips, description, possible rewards for chests, amount stepper, Use button), action rail (Favourite, Lock, View showcase reveal, Obtainments, Discard). DisplayOrder 5 (above the HUD side panels). Gamepad B = close (View first).
 - New `RS.Configs.Meta.InventoryConfig` (categories, type words, what Use does): chests open in place (`OpenInfernalChests`, stepper up to 50); food -> Units (Feed hint), tickets / tokens / chips / materials / relics / currencies jump to Summon / Trait / Stat / Crafting / Evolution / Shop / Events.

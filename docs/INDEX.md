@@ -117,6 +117,7 @@
   both), its API, seamless teleports (`SetTeleportGui` + `ReplicatedFirst.ArrivingLoadingScreen`), every place it shows.
 - `reward-reveal.md` — **AD-UI canon, LOBBY** (B135 rebuild): `ObtainRewardsGUI`, THE reward reveal behind
   `ClientEvents.ShowRewards` -- look, motion, PC/console/mobile input, layout, tunables, `DevDismiss` harness.
+- `areas.md` — **AD-Lobby, LOBBY** (B146): the HUD Areas screen (categories, picture cards, travel / open, favourites, waypoints), `AreasConfig`, `AreaAction` remote, new `Map.Travel.Area_*` spots.
 - `inventory.md` — **AD-Lobby, LOBBY** (B145): the rebuilt Items screen (tabs, owned-only grid, details, Use / Favourite / Lock / View / Obtainments / Discard), `InventoryConfig`, `ItemActionsService` (`Counters.Global.ItemFlags`).
 - `balance.md` — **AD-Game canon, GAME (+Lobby display)** (B141): ONE balance formula (WAVE_HP column x HpRatio x stage x act x Hard x co-op), `BalanceConfig` + `WaveKit` + Stage 1 roster/bosses, starters, the rarity ladder, economy, `tools/balance/sim.js`. Design: `proposals/2026-10-13-balance-overhaul.md`.
 - `lobby-map.md` — **AD-Lobby canon, LOBBY** (B134): the night-island map -- districts + NPC homes, travel

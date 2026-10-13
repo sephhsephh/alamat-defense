@@ -66,6 +66,8 @@ re-skinned). Stairs: stylized stone re-skin. Every old stick torch is now a ston
   holding **ProximityPrompt `TravelPrompt`** (attribute **`TravelTo`**) + `Label` + invisible `Arrival`, plus the
   B139 visuals (`Waystone` mesh, `Aura_<Palette>`, `Sigil_<Palette>`; the model's `Palette` attribute).
 - `LobbyMapService` does the teleport (`RequestStreamAroundAsync` first). `NpcPromptRouter` ignores these prompts.
+- B146: `Area_<Id>` models (invisible `Arrival` only, no prompt) for the HUD **Areas** screen's scenic spots; the
+  `AreaAction` remote travels to any AreasConfig row -- `docs/systems/areas.md`.
 
 ## Water rescue
 A player swimming for 4 s (root below Y 6 AND a terrain ray hits Water) is put back on `Plaza`.

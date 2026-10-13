@@ -187,6 +187,7 @@ The icon sits on a coloured gem, so keep it bright, bold and centred; white/gold
 | `HUD_Invite` | two small friendly figures side by side with a sparkle between them | sky blue, gold |
 | `HUD_Inbox` | a sealed envelope with a gold wax seal | cream paper, gold seal |
 | `HUD_Settings` | a gold cog gear with a violet gem in its centre | gold, violet |
+| `HUD_Areas` (B146) | a gold compass rose over a small folded island map | azure blue map, gold compass |
 
 ## Consistency workflow (any generator)
 
