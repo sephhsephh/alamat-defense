@@ -63,6 +63,7 @@ local function make(parent, name, variant, theme, label, icon, order)
 		main.UICorner.CornerRadius = UDim.new(1, 0)
 		main.Depth.UICorner.CornerRadius = UDim.new(1, 0)
 		main.Gloss.UICorner.CornerRadius = UDim.new(1, 0)
+		main.ShineClip.UICorner.CornerRadius = UDim.new(1, 0) -- B140: the CanvasGroup mask follows the round gem
 		main.Gloss.Size = UDim2.fromScale(0.76, 0.42)
 		main.Gloss.Position = UDim2.fromScale(0.5, 0.06)
 		main.Icon.Size = UDim2.fromScale(0.6, 0.6)
@@ -111,6 +112,7 @@ local function make(parent, name, variant, theme, label, icon, order)
 		for _, n in ipairs({ "UICorner" }) do main[n].CornerRadius = UDim.new(1, 0) end
 		main.Depth.UICorner.CornerRadius = UDim.new(1, 0)
 		main.Gloss.UICorner.CornerRadius = UDim.new(1, 0)
+		main.ShineClip.UICorner.CornerRadius = UDim.new(1, 0) -- B140
 		main.Gloss.Size = UDim2.fromScale(0.92, 0.45)
 		main.Engraving.Visible = false
 		main.Icon.Visible = false

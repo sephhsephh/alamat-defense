@@ -179,7 +179,7 @@ first) -> wave starts (counter up, income paid, enemies spawn -- one instant) ->
 (`NextWaveInfoDelay`; WavePrep.Preview "NEXT: WAVE N+1", income + enemy chips; data = `WavePreview`, now
 pushed from `WaveDirector.UpcomingWave` for the NEXT wave) -> **+15s SKIP WAVE** (`SkipVoteDelay`) with a
 **30s timer** (`SkipWindow`; WavePrep.Root TimerLabel + draining TimerBar) -> skip (unanimous) / timer /
-wave fully cleared -> both hide -> next COUNTDOWN. Last wave: no skip phase.
+wave fully cleared -> skip hides -> next COUNTDOWN (**B140: the Preview STAYS through the countdown and hides only when that wave starts; it also appears in the countdown if the wave was cleared before the 10s delay**). Last wave: no skip phase.
 - `WavePrepService` replicates `PrepDuration` (client derives elapsed). Widgets: WavePrep.Countdown
   ("WAVE N INCOMING" + big number, pulses each second), Root (skip), Preview (info); all animate in (Back pop)
   and out (shrink, then hide) via `setShown`.
@@ -216,3 +216,10 @@ wave fully cleared -> both hide -> next COUNTDOWN. Last wave: no skip phase.
 - **2x is premium**: Game Pass `MonetizationConfig.GameSpeedPremiumGamePassId` (**0 = locked for everyone; paste the
   real id**). Locked 2x shows the PRO badge and prompts the purchase; a mid-match purchase unlocks it at once.
   Studio grants it (`DevGrantPremiumSpeedInStudio`). Snapshot field: `CanUsePremiumSpeed` (was `CanUseX3`).
+
+
+## Placement zone overlay (B140)
+`Client.Placement.ZoneOverlay`: while placing, client-only translucent Neon copies of every `TowerZones` part glow
+**green** where the unit may stand and **red** where it may not (TowerPlacementRules.Allows -- same rule as the server),
+and every `PathDesigns` part glows red. Built once per map (CanQuery=false, never hit by rays), recoloured per unit.
+Show/Hide from `PlacementController.Start` / `.Cancel`. Colours + transparency at the top of the module.

@@ -33,6 +33,8 @@ press: squash 0.92 · activated: glow-ring pulse + radial burst flash + icon pop
 (`setAttention`): faster shines + a pulse every 1.6 s · `glint`: silent shine (currency went up) · `flash`.
 One Heartbeat loop for all buttons; skipped while their ScreenGui is disabled. Rim / ribbon / text stroke
 widths follow each button's on-screen size, so the look is identical on every device; all sizes are scale.
+**B140: `Main.ShineClip` is a CanvasGroup + UICorner, not a ClipsDescendants Frame** -- hover tilts Main -2.5 deg and Roblox
+stops clipping under a rotated ancestor, so the streak spilled out of the gem. Never go back to a clipping Frame here.
 
 ## VFX art (white on transparent, tinted by a UIGradient named `Tint`) — Creator Store, picked visually
 RuneRing 108844775186607 · MagicCircle 113290594421442 · Engraving 95270696231518 · GlowRing 9864075653 ·

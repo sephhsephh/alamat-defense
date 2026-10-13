@@ -12,8 +12,8 @@ calls those existing remotes and counts:
 | Button | Source remote | Count |
 |---|---|---|
 | `HUD.Right.UpperRight.InboxButton` | `GetInbox` | `.Unread` |
-| `HUD.Right.Buttons.DailyRewardsButton` | `GetDailyState` | `.CanClaim` → 1 |
-| `HUD.Right.Buttons.EventButton` | `GetDailyState` | `.Event.CanClaim` → 1 |
+| `HUD.Right.Buttons.DailyRewardsButton` | `GetDailyState` | `.CanClaim` + `.Event.CanClaim` (B140: BOTH daily tracks live on the Daily screen) |
+| `HUD.Right.Buttons.EventButton` | `GetEventQuests` | claimable event quests + unit-hunt rewards (B140, `RS.Shared.EventClaimables`) |
 | `HUD.Left.Buttons.QuestsButton` | `GetQuests` | count of `Quests[].CanClaim` |
 | `HUD.Right.Buttons.BattlePassButton` | `GetBattlepass` | unlocked+unclaimed tiers (Free always, Paid if `Owned`) |
 
@@ -51,3 +51,10 @@ rounded shape even when rotated; the card itself has ClipsDescendants off. Text,
 AccentStroke stay on the card (crisp). `UIKit.Notify`'s `find` searches deep, so no other code changed.
 Game only: `Notifications.DisplayOrder` 100000 (as the Lobby; it was 0 and tied the HUD) and the Container moved
 to y 0.115 so it no longer covers the HUD StatusLine.
+
+
+## B140: Events screen badges
+`EventsGUI` has authored `Badge` frames (clones of `HUD.NotifBadgeTemplate`) on each sidebar `CardTemplate` (that event's
+quests + unit-hunt rewards), on `Detail.Actions.QuestsButton` (selected event's claimable quests) and on each quest
+`PageTemplate` tab. ONE rule for all of them and the HUD Events badge: `RS.Shared.EventClaimables.count(cfg, snapshot)`
+(event Active, page unlocked, Cur >= Target, not Claimed; evolve rewards Done and not Claimed).

@@ -79,7 +79,10 @@ grad(gloss, "Fade", { Rotation = 90, Transparency = NS({ NK(0, 0.76), NK(1, 1) }
 local icon = new("ImageLabel", { Name = "Icon", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromScale(0.62, 0.62),
 	BackgroundTransparency = 1, Image = IMG.PlaceholderIcon, ScaleType = Enum.ScaleType.Fit, ZIndex = 5 }, main)
 new("UIScale", { Name = "Bob" }, icon)
-local clip = new("Frame", { Name = "ShineClip", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ClipsDescendants = true, ZIndex = 6 }, main)
+-- B140: a CanvasGroup, not a ClipsDescendants Frame -- hover tilts Main (-2.5 deg) and Roblox stops clipping under a
+-- rotated ancestor, so the streak spilled out of the gem. A CanvasGroup + UICorner masks to the rounded gem at any angle.
+local clip = new("CanvasGroup", { Name = "ShineClip", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 6 }, main)
+corner(clip, 0.22)
 local streak = new("ImageLabel", { Name = "Streak", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(-0.5, 0.5), Size = UDim2.fromScale(1.8, 0.7),
 	Rotation = 62, BackgroundTransparency = 1, Image = IMG.Streak, ImageTransparency = 0.05, ZIndex = 6 }, clip)
 grad(streak, "Tint", { Color = CS(Color3.new(1, 1, 1), Color3.fromRGB(255, 236, 190)) })
