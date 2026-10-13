@@ -64,6 +64,9 @@ function UnitStatPreview.Final(view: any): any
 			end
 			local add = tonumber(tAdd[cfgName])
 			if add then v += add end
+			-- B149 GAME RULE (user): damage is a WHOLE number (round half up, at least 1) -- the Game's
+			-- TowerStatResolver rounds the same way, so every card matches the match. SPA / RNG keep decimals.
+			if key == "DMG" and v > 0 then v = math.max(1, math.floor(v + 0.5)) end
 			out[key] = v
 		end
 	end

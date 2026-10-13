@@ -1,4 +1,13 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-14 [game+shared] B149 -- **Match rules + bars: read-only towers after a match, whole-number damage, unaffordable slots go dark, thin fantasy health bars, boss portrait fix.**
+- Towers STAY after the match (user): `MatchDirector` cleanup calls `TowerManager.FreezeAll()` (ReadOnly field + model attribute, auto-upgrade off; PlaceTower refused while frozen) instead of `ClearAll`; Preparing of the NEXT match calls `ClearAll` (also unfreezes). `TowerRequestHandler` refuses every action with `MatchOver` while frozen (findOwnedTower + Sell All + Auto-Upgrade All).
+- GAME RULE whole-number damage (round half up, min 1): `TowerStatResolver`, `AttackResolver`, `EnemyController:TakeDamage` (+ after armour), DoT ticks, `EveryNthAttack`, `Nuke`; **shared `UnitStatPreview` 709bbe53 -> 0e269fe5, deployed to BOTH Places** (hash verified in each), manifest updated. SPA / range keep decimals.
+- Hotbar: the dim never showed because the Hotbar GUI booted after the match's opening CashChanged and kept cash 0 (every slot looked equal). HUD now mirrors cash into a client attribute `MatchCash`; the hotbar reads it at boot. Too-poor slots: overlay 0.3 + red price (was 0.55, unreadable).
+- Health bars (`tools/healthbar_fantasy_build.luau`, backups `_UIBackup_B149`): enemy + boss billboards half as thick, jewel track, gold edge, gloss, gem caps, HP number on the name line. Near-zero overlap fixed with `MaskFill` layers cut by a `Mask` gradient (`HealthBarFX.frameMask`; overshield in FloatingHealthbars / BossHealthUI); screen boss bar's trail + overshield masked too.
+- Boss portrait: `PortraitCam` authored in StarterGui never replicates to PlayerGui -> `fillPortrait` returned early; it now creates the camera.
+- Verified in Game Play with client stand-in models: boss portrait draws, thin bars + caps, 3/120 cuts cleanly at the left, 90/120 correct; hotbar at ₱800 = Oryol (₱520) clear, the 3 dearer slots dark with red prices. NOT yet verified live: the end-of-match freeze (needs a full match; checked with the selected-unit panel work next) and integer damage numbers in a real wave.
+- Contract impact: shared UnitStatPreview hash (both Places deployed, no PENDING).
+
 ## 2026-10-14 [lobby] B148 -- **Feedback batch 1: Events veil + Claim All, Daily tab badges, Items -> NPC travel, no Areas waypoints.**
 - `EventsController`: open / Back / gamepad B run behind the loading veil (`veil()`, Play-menu pattern; another screen opening still closes instantly).
   `QuestsPopup.Window.ClaimAllButton` (new, beside the page title) claims every finished quest on every unlocked page, re-sweeping as pages unlock, merges duplicate rewards into one reveal, unpins claimed quests; label shows the count.

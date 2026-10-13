@@ -4,6 +4,11 @@
 The match Place: loads a map, runs waves, towers fight, rewards commit to the profile.
 Server-authoritative, registry/config-driven, signal-decoupled. `--!strict` throughout.
 
+**B149:** towers **stay on the map after a match, read-only** (`TowerManager.FreezeAll` at cleanup, `ReadOnly` attribute,
+requests refuse `MatchOver`; the next match's Preparing clears them); **whole-number damage** rule (`balance.md`); hotbar
+slots you cannot afford go dark with a red price (`MatchCash` attribute); thin fantasy health bars + masked fill, boss
+portrait camera fix -- `match-hud.md`.
+
 **B143:** Stage 1 enemies are **DirtImp / IronOx / FieldRat** (English names rule: `docs/design/naming-rules.md`) on
 their own rigs (`ServerStorage.Enemies.Stage1`), fast enemies RUN; health bars carry modifier diamonds + status discs,
 an overshield layer and a boss portrait; shield orbit / sprint trail / explosion / stunned-unit FX -- `match-hud.md`.

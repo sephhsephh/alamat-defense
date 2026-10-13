@@ -246,3 +246,15 @@ boss billboard, 6 on the boss screen bar, then a `+N` badge.
   Shielded enemy, each showing the hits left; one shatters per absorbed hit), **SprintTrail** (wind streaks + dust on
   Role Sprinter / Fast), **Explosion** (`Remotes.EnemyExploded`, new), **Stunned** (Stun badge + stars over a stunned unit).
 - Studio note: `screen_capture` does not draw `AlwaysOnTop` billboards -- flip it off on the client to screenshot bars.
+
+## Thin fantasy bars + masked layers (B149, user)
+- Both billboards reshaped by `tools/healthbar_fantasy_build.luau` (old: `ServerStorage._UIBackup_B149`): the bar is about
+  half as thick (enemy 0.13 of a 4.4 x 1.9 board, boss 0.15 of 12 x 2.6), a dark jewel track (`Glass`), thin gold `Edge`,
+  a static `Gloss`, scale-width quarter `Ticks`, gold diamond **`CapL` / `CapR`** with a gem (red enemy, violet boss).
+  The **HP number left the bar** -> `NameRow.HealthText` after the name (LayoutOrder 50 name / 200 number; found by name).
+- **`MaskFill` layers**: `Fill`, `DamageTrail`, `Overshield` stay FULL size and are cut by their rotation-0 UIGradient
+  `Mask` (`HealthBarFX.frameMask`, `HealthBarFX.MaskSequence`; overshield in FloatingHealthbars / BossHealthUI). A
+  width-scaled rounded frame turned into a tall capsule near 0 and poked out past the track's left end -- gone. The screen
+  boss bar's DamageTrail + Overshield are masked too (its Fill was already an image mask). Simplify hides Gloss / caps.
+- **Boss portrait fix**: a Camera authored in StarterGui never reaches PlayerGui, so `PortraitCam` was nil at runtime and
+  nothing drew; `fillPortrait` now builds the camera (FOV 30) when it is missing.

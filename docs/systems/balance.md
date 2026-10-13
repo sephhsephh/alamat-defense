@@ -64,6 +64,12 @@ welded AI-mesh accessories, built at final size (ModelScale 1): Imp 1.9 / Ox 2.8
 when `Gait = "Run"` or it has the Fast modifier (`EnemyController.IsRunning`). Badges / shield orbit / sprint trail /
 explosion / stunned-unit marker: `match-hud.md` (B143).
 
+## Whole-number damage (B149 GAME RULE, user)
+"No unit deals decimal damage" -- damage is rounded half up, minimum 1, everywhere: `TowerStatResolver.Resolve` (the stat
+every panel shows), shared `UnitStatPreview.Final` (cards, both Places, `0e269fe5`), `AttackResolver` (per hit after crit /
+falloff / element / passives), `EnemyController:TakeDamage` (incoming hit + after armour), DoT ticks (`StatusEffectManager`),
+`EveryNthAttack`, `Nuke`. Only **attack speed (SPA) and range** keep decimals. Tune base damage in whole numbers.
+
 ## Not built yet
 The end screen's card for a UNIT drop, Lobby display of the pity counter. Boss abilities. Stage 1 Infinite on the new
 roster. A farm-unit role. The generated combat icons (prompts in `docs/design/combat-icons.md`).

@@ -583,15 +583,15 @@
     },
     "UnitStatPreview": {
       "file": "shared/src/UnitStatPreview.luau",
-      "hash": "709bbe53",
+      "hash": "0e269fe5",
       "owner": "meta",
       "deployPath": "ReplicatedStorage.Shared.UnitStatPreview",
       "deployed": {
-        "Game": "709bbe53",
-        "Lobby": "709bbe53"
+        "Game": "0e269fe5",
+        "Lobby": "0e269fe5"
       },
       "kind": "module",
-      "comment": "NEW at B108 pt11 (user: show final calculated stats in every unit hover preview). Pure: final DMG/SPA/RNG of one unit = UnitStatsCatalog base x MetaScalingConfig(level) x trait x StatGradeConfig grade x AscensionConfig -- the TowerStatResolver composition over the shared reference numbers. Used by UIKit.Hotbar (both Places), the Lobby Units screen, Ascension hover card and the Feed level-up card. 70436e1c -> 709bbe53 at B108 pt11c: Format rounds to 1 decimal."
+      "comment": "NEW at B108 pt11 (user: show final calculated stats in every unit hover preview). Pure: final DMG/SPA/RNG of one unit = UnitStatsCatalog base x MetaScalingConfig(level) x trait x StatGradeConfig grade x AscensionConfig -- the TowerStatResolver composition over the shared reference numbers. Used by UIKit.Hotbar (both Places), the Lobby Units screen, Ascension hover card and the Feed level-up card. 70436e1c -> 709bbe53 at B108 pt11c: Format rounds to 1 decimal. 709bbe53 -> 0e269fe5 at B149 2026-10-14 (user GAME RULE: no decimal damage): Final rounds DMG to a whole number (half up, min 1), matching the Game TowerStatResolver; SPA/RNG keep decimals. Deployed to BOTH Places same session."
     },
     "UnitInfoCatalog": {
       "file": "shared/src/UnitInfoCatalog.luau",
