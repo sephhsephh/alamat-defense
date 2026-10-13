@@ -7,7 +7,7 @@
 | Stage/act curve, Hard, co-op, kill-cash split, boss size, wave income | `Global.BalanceConfig` | every line commented |
 | Grunt HP per wave, counts, mini-boss, boss | `Waves/Stage1/Stage1_ActN_Waves` | `WAVE_HP = { ... }` column + one `W(i, { grunt(6), tank(2) })` line per wave |
 | Wave line helpers + group options (`every`, `delay`, `hp`, `mods`, `path`) | `Waves.WaveKit` | `WaveKit.Column(20, 1.10, 15)` prints a column |
-| Enemy roles (HpRatio, speed, kill cash, model scale) | `Enemies/Stage1/{Lamanglupa,Kalabaw,DagangBukid}` | grunt / tank (x1.6, 0.75 speed) / sprinter (x0.7, 1.8 speed) |
+| Enemy roles (HpRatio, speed, kill cash, gait) | `Enemies/Stage1/{DirtImp,IronOx,FieldRat}` (B143 English names) | grunt / tank (x1.6, 0.75 speed) / sprinter (x0.7, 1.8 speed, `Gait = "Run"`) |
 | Act bosses (unit rigs walking the path) | `Enemies/Stage1/Stage1Bosses` | one line per boss: unit rig, name, HpRatio, speed, kill cash |
 | Starting cash, sell refund | `Global.EconomyConfig` | start 800; wave income lives in the wave files (StartCash) |
 | Act names, Recommended, headliner drop | `Stages/Stage1/Stage1_ActN` | Act 5: `HeadlinerDrop = { TowerId = "Apolaki", Chance, HardChance, Pity = 30 }` |
@@ -57,7 +57,13 @@ Stage 1 schedule: Act 3 Shielded, Act 4 + Regen, Act 5 + Explosive. Verified B14
 Rush doubling (a unit is never doubled): pity counter `Counters.Global["HeadlinerPity_<actId>"]`, reset on a hit; routed
 by ItemCatalog Kind "Tower" -> `PlayerInventoryService.GrantUnit`. Stage 1: Apolaki 0.5% / 1.5% Hard, pity 30.
 
+## Enemy rigs + gait (B143)
+Rigs `ServerStorage.Enemies.Stage1.{DirtImp, IronOx, FieldRat}` = the blocky R15 Grunt (AnimationController) recoloured +
+welded AI-mesh accessories, built at final size (ModelScale 1): Imp 1.9 / Ox 2.8 / Rat 1.6 studs. Rebuild:
+`tools/enemy_rigs/build_stage1_rigs.luau`. Gait: `Animations = { Walk, Run }`; an enemy RUNS (the player's sprint clip)
+when `Gait = "Run"` or it has the Fast modifier (`EnemyController.IsRunning`). Badges / shield orbit / sprint trail /
+explosion / stunned-unit marker: `match-hud.md` (B143).
+
 ## Not built yet
-Client: modifier icons / shield count on enemy HP bars, an Explosive FX (`Remotes.EnemyExploded` is fired if it exists),
-a Stunned icon on units, the end screen's card for a UNIT drop, Lobby display of the pity counter. Boss abilities.
-Stage 1 Infinite on the new roster. A farm-unit role.
+The end screen's card for a UNIT drop, Lobby display of the pity counter. Boss abilities. Stage 1 Infinite on the new
+roster. A farm-unit role. The generated combat icons (prompts in `docs/design/combat-icons.md`).

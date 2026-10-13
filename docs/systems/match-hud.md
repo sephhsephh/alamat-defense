@@ -223,3 +223,26 @@ wave fully cleared -> skip hides -> next COUNTDOWN (**B140: the Preview STAYS th
 **green** where the unit may stand and **red** where it may not (TowerPlacementRules.Allows -- same rule as the server),
 and every `PathDesigns` part glows red. Built once per map (CanQuery=false, never hit by rays), recoloured per unit.
 Show/Hide from `PlacementController.Start` / `.Cancel`. Colours + transparency at the top of the module.
+
+## Combat badges, overshield, boss portrait (B143, user)
+Layout rule: **MODIFIERS on the name line** (dark diamond, red rim -- what the enemy IS), **STATUS EFFECTS under the bar**
+(round disc in the effect's colour + stack number -- what your units did to it). Max 3 per row on enemy billboards, 4 on the
+boss billboard, 6 on the boss screen bar, then a `+N` badge.
+- Data: model attributes only -- `Modifiers` ("A,B"), `Shields`, `Overshield`/`OvershieldMax` (EnemyModifiers),
+  `Status_<id>` = stacks (StatusEffectManager), `Role` (EnemyController). Icons/names/colours/tips:
+  `RS.Configs.Global.CombatIconConfig` (paste generated ids into `Icon`; "" shows the 2-letter `Glyph`). Prompts:
+  `docs/design/combat-icons.md`.
+- `Client.UI.CombatIcons.Bind(model, nameRow, statusRow, {Max, ModBase, OnBadge})` clones `RS.UITemplates.CombatIcons`
+  (`ModifierIcon` / `StatusIcon` / `MoreIcon`). Used by `FloatingHealthbars` (opt `Icons = true` from EnemyHealthbars) and
+  `BossHealthUI` (both bars; the screen bar's badges show `BossHealth.IconTip` on hover / tap).
+- `EnemyHealthbar` = `NameRow` (badges + `NameText`, UIFlexItem fill) / `Background` (+ `Overshield` frame over the fill) /
+  `StatusRow`; 4.4 x 2.1 studs, lifted to **0.2 studs over the rig's real top** (bounding box) instead of a fixed offset.
+  `BossHealthbar` billboard: same three rows. Overshield = pale-cyan layer, width = Overshield/Max, text "h/mh  +os".
+- `BossHealth.BarTemplate` = `Portrait` (ViewportFrame, `PortraitCam` FOV 30, `World`, `Fade` gradient) + `Body`
+  {`NameRow`, `BarBG` (+`Overshield` on the DamageTrail channel), `StatusRow`} side by side (UIListLayout, centred);
+  `Body` aspect 3.6 keeps the rows as wide as the 8:1 bar art. Portrait = still clone of the boss rig, head + chest.
+  `Container` widened 0.24 -> 0.30. Built by `tools/combat_bars_build.luau`.
+- World FX `Client.VFX.EnemyModifierFX` (authored `RS.EnemyModifierFX`): **ShieldOrbit** (up to 3 AI-mesh shields orbit a
+  Shielded enemy, each showing the hits left; one shatters per absorbed hit), **SprintTrail** (wind streaks + dust on
+  Role Sprinter / Fast), **Explosion** (`Remotes.EnemyExploded`, new), **Stunned** (Stun badge + stars over a stunned unit).
+- Studio note: `screen_capture` does not draw `AlwaysOnTop` billboards -- flip it off on the client to screenshot bars.

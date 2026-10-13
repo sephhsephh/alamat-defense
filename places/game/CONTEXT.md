@@ -4,6 +4,11 @@
 The match Place: loads a map, runs waves, towers fight, rewards commit to the profile.
 Server-authoritative, registry/config-driven, signal-decoupled. `--!strict` throughout.
 
+**B143:** Stage 1 enemies are **DirtImp / IronOx / FieldRat** (English names rule: `docs/design/naming-rules.md`) on
+their own rigs (`ServerStorage.Enemies.Stage1`), fast enemies RUN; health bars carry modifier diamonds + status discs,
+an overshield layer and a boss portrait; shield orbit / sprint trail / explosion / stunned-unit FX -- `match-hud.md`.
+B141-142 balance + modifiers: `docs/systems/balance.md`.
+
 **B136:** `StarterGui.LoadingScreen` (same veil as the Lobby) + `LoadingBoot` show the stage/act/difficulty on first
 load and "Returning to lobby" on the way out; `ReplicatedFirst.ArrivingLoadingScreen` catches the Lobby's
 teleport screen -- **`docs/systems/loading-screen.md`**. B135: gold/violet XP bar + shine (`match-hud.md`).

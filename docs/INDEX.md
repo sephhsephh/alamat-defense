@@ -21,6 +21,8 @@
 
 ## design/
 - `icon-art-style.md` — **THE icon art style** (B137): image-generator prompts — style lock (Block A), family modules (items / symbols / placement), one line per icon, consistency workflow. Reuse for every future icon batch.
+- `combat-icons.md` — status-effect + enemy-modifier badge icons (B143): the list, one-shot prompt rows, where the ids go (`CombatIconConfig`).
+- `naming-rules.md` — **player-facing names (user rule B143)**: normal enemies / statuses / items in ENGLISH; Filipino / myth names only for towers + bosses.
 - `unit-roster.md` — **B106 DRAFT, the unit roadmap**: 27 new Philippine-myth units per tier, balance bands, passive catalogue (C/P/S tags), evolved forms, new systems + build order, and the B106 renames of the 8 old towers.
 
 ## systems/
