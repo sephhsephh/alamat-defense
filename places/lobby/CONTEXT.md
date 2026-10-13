@@ -5,6 +5,7 @@ The social/meta Place: collection, banners, stage + difficulty select, parties, 
 
 ## Current live state
 
+- **B144-145:** confirmation popup rebuilt in the Alamat look (`tools/confirm_popup_build.luau`, shared `UIKit.Confirm` `0a33cc2c` with `Tone`) -- `ui-feedback.md`; **Items screen rebuilt** (tabs, owned-only grid, details, Use / Favourite / Lock / View / Obtainments / Discard; `InventoryConfig`, `ItemActionsService`) -- **`docs/systems/inventory.md`**.
 - **B138 HUD:** rebuilt with the **Alamat UI kit** (`RS.AlamatUI`: Sun-gem buttons, one master + Theme/Variant, image VFX, one animator) in the "Command Rails" layout -- PLAY/SUMMON moved to `HUD.Right.Hero` -- **`docs/systems/alamat-ui.md`**. Old HUD in `ServerStorage._UIBackup_B138`.
 - **B136:** `LoadingScreen` rebuilt + shared with the Game (join veil, waystone/water-rescue travel veil via `Remotes.LobbyTravel`, launch headlines) -- **`docs/systems/loading-screen.md`**; Trait Reroll filters scroll / rare-trait borders / pity / picker perf, Stat Reroll chip icons.
 - **B135:** the account XP bar is the Game's `XPBarGui` (+ `XPBarController`; old `ExpBar` archived) -- `match-hud.md`; `ObtainRewardsGUI` rebuilt -- **`docs/systems/reward-reveal.md`**; Daily Rewards auto-opens only when unclaimed.
