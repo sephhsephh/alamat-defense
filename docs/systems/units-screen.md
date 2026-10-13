@@ -15,7 +15,9 @@ features **upgrade path, View Unit inspect, Teams save/load, Select-by-Filter se
 - **Bottom bar**: `UN/EquipButton` | `CapacityBar` (+ slots) | `UnequipAllButton` | `TeamsButton` | `QuickSellButton`;
   in sell mode `SellButtons` (Sell N Units / Select by Filter / Clear / Cancel) replaces Unequip All + Teams.
 - Popups: `TeamsPopup`, `FilterSelectPopup` (+ `*Scrim`, which never closes anything), `Inspect` (full screen),
-  `Tooltip` (one shared card), `CardHover` (grid hover card: portrait, chips, level, pills, trait / asc / worth).
+  `Tooltip` (one shared card), `CardHover` (grid hover card, B147 rebuild by `tools/units_hover_build.luau`, same in
+  the Game copy: portrait on a rarity `PortraitBg`, name / rarity / chips (Frames) / level bar, three labelled stat tiles
+  DMG / SPA / RNG with grade, footer pills trait / ascension stars / worth; all scale, placed in scale by `showPreview`).
 
 ## Scripts
 - `UnitsController` (data, grid, equip, sell mode, favourite/lock, Feed) -- at Luau's 200-local ceiling, so new state

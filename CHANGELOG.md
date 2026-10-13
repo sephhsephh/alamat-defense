@@ -1,4 +1,12 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-13 [lobby+game] B147 -- **Units screen hover card rebuilt in the Alamat look (no more overlaps).**
+- `UnitsGUI.CardHover` rebuilt by `tools/units_hover_build.luau` in BOTH Places (the Game's B123 copy too); old cards in `ServerStorage._UIBackup_B147`.
+  Portrait on a rarity backdrop (`PortraitBg.Tier`, painted from `TierConfig.GradientFor`), name / rarity / Element-Placement-Max chips (Frames, were dead TextButtons),
+  level + XP bar, three labelled stat tiles (icon, value, grade, caption), footer pills (trait, ascension stars, worth), hint line. All scale (the old 356 px stat row is gone).
+- `UnitsController.showPreview` places the card in SCALE against the ScreenGui; `UnitsHeroController.onPreview` paints the portrait backdrop and `fitPill` centres a pill label when its dot / icon is hidden. Node names unchanged.
+- Verified in Lobby Play: hover on the left column (card right of the unit) and the right column (flips left); Alamat + Secret backdrops; no console errors. Game copy: same code, not Play-tested.
+- Contract impact: none. Open: trait-icon pill not seen live (no traited unit on the test account).
+
 ## 2026-10-13 [lobby] B146 -- **HUD "Areas" button + screen (from the user's reference): categories, picture cards, travel / open, favourites, waypoints.**
 - `HUD.Left.Buttons.AreasButton` (Index tile clone, Azure; grid grown to 4 rows at the same cell size; placeholder compass icon -- prompt `HUD_Areas` added to `icon-art-style.md`).
 - `StarterGui.AreasGUI` built by `tools/areas_build.luau` + `AreasController`: AREAS ribbon (recoloured per category), Upgrade / Game Modes / Lobby / Shop & Summon tabs (scroll-to + live highlight), search, one wrapping list of section headers + picture cards (TRAVEL/OPEN tag, favourite star; Favourites section on top), Add Waypoint (pick mode -> marker with live distance, auto-clears on arrival).

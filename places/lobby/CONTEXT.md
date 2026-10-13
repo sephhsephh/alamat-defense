@@ -5,6 +5,7 @@ The social/meta Place: collection, banners, stage + difficulty select, parties, 
 
 ## Current live state
 
+- **B147:** Units grid **hover card rebuilt** (`UnitsGUI.CardHover`, also in the Game copy) -- `docs/systems/units-screen.md`.
 - **B146:** HUD **Areas** button + screen (categories, picture cards that travel / open, favourites, waypoints) -- **`docs/systems/areas.md`**; new `Map.Travel.Area_*` spots.
 - **B144-145:** confirmation popup rebuilt in the Alamat look (`tools/confirm_popup_build.luau`, shared `UIKit.Confirm` `0a33cc2c` with `Tone`) -- `ui-feedback.md`; **Items screen rebuilt** (tabs, owned-only grid, details, Use / Favourite / Lock / View / Obtainments / Discard; `InventoryConfig`, `ItemActionsService`) -- **`docs/systems/inventory.md`**.
 - **B138 HUD:** rebuilt with the **Alamat UI kit** (`RS.AlamatUI`: Sun-gem buttons, one master + Theme/Variant, image VFX, one animator) in the "Command Rails" layout -- PLAY/SUMMON moved to `HUD.Right.Hero` -- **`docs/systems/alamat-ui.md`**. Old HUD in `ServerStorage._UIBackup_B138`.
