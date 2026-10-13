@@ -1,5 +1,5 @@
 -- areas_build.luau (B146) -- run with execute_luau in the LOBBY (Edit). Builds StarterGui.AreasGUI, the HUD "Areas"
--- screen (user refs B146): categories on the left + Add Waypoint, search, one scrolling list of category sections
+-- screen (user refs B146): categories on the left, search, one scrolling list of category sections
 -- (header with a glowing underline + picture cards with a favourite star), a waypoint marker template.
 -- Real Instances only; AreasController clones the Templates and fills them from RS.Configs.AreasConfig.
 -- LAYOUT TRICK (same as the Items grid, B108): Content is ONE wrapping UIListLayout -- a section header is a
@@ -150,7 +150,7 @@ local cx = label("ButtonText", { AnchorPoint = Vector2.new(0.5, 0.5), Position =
 	Text = "X", FontFace = F_LABEL, TextColor3 = C(255, 255, 255), ZIndex = 12 }, close)
 new("UIStroke", { Name = "Outline", Color = C(70, 10, 16), Thickness = 2 }, cx)
 
--- Category tabs + Add Waypoint
+-- Category tabs
 local tabs = new("Frame", { Name = "Tabs", Position = UDim2.fromScale(0.018, 0.13), Size = UDim2.fromScale(0.17, 0.66), BackgroundTransparency = 1, ZIndex = 4 }, main)
 new("UIListLayout", { Padding = UDim.new(0.018, 0), SortOrder = Enum.SortOrder.LayoutOrder, HorizontalAlignment = Enum.HorizontalAlignment.Center }, tabs)
 local tab = new("TextButton", { Name = "TabTemplate", Visible = false, Size = UDim2.fromScale(1, 0.13), Text = "", AutoButtonColor = false,
@@ -166,11 +166,10 @@ local tLabel = label("Label", { Position = UDim2.fromScale(0.3, 0.2), Size = UDi
 	TextColor3 = C(255, 255, 255), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 8 }, tab)
 new("UIStroke", { Name = "Outline", Color = C(20, 12, 30), Thickness = 1.5 }, tLabel)
 new("UITextSizeConstraint", { MaxTextSize = 27, MinTextSize = 8 }, tLabel)
-local hint = label("Hint", { Position = UDim2.fromScale(0.018, 0.8), Size = UDim2.fromScale(0.17, 0.05), Text = "Click an area to travel there.",
+local hint = label("Hint", { Position = UDim2.fromScale(0.018, 0.88), Size = UDim2.fromScale(0.17, 0.06), Text = "Click an area to travel there.",
 	FontFace = F_BOLD, TextColor3 = C(190, 176, 220), ZIndex = 5 }, main)
 new("UITextSizeConstraint", { MaxTextSize = 15 }, hint)
-local wp = pill("WaypointButton", { Position = UDim2.fromScale(0.018, 0.865), Size = UDim2.fromScale(0.17, 0.09), ZIndex = 6 },
-	CS(C(156, 240, 122), C(28, 138, 72)), "Add Waypoint", main)
+-- (B148, user: the Add Waypoint button and its marker template were removed.)
 
 -- Content
 local cPlate = new("Frame", { Name = "ContentPlate", Position = UDim2.fromScale(0.205, 0.13), Size = UDim2.fromScale(0.778, 0.84),
@@ -234,23 +233,5 @@ img("Icon", IMG.StarEmpty, { Size = UDim2.fromScale(0.66, 0.66), ImageColor3 = C
 local sel = new("Frame", { Name = "Select", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 9, Visible = false }, card)
 corner(sel, 0.08)
 new("UIStroke", { Color = C(255, 236, 160), Thickness = 3 }, sel)
-
--- Waypoint marker: a BillboardGui adorned (by the controller) to an Attachment over the area. Sized in studs and
--- held at DistanceUpperLimit, so it stays readable from across the map without pixel sizing.
-local wpm = new("BillboardGui", { Name = "WaypointTemplate", Enabled = false, Size = UDim2.fromScale(7, 3.2), AlwaysOnTop = true,
-	LightInfluence = 0, MaxDistance = 100000, DistanceUpperLimit = 70, StudsOffsetWorldSpace = Vector3.new(0, 7, 0) }, T)
-local disc = new("Frame", { Name = "Disc", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.fromScale(0.5, 0), Size = UDim2.fromScale(3, 0.55),
-	BackgroundColor3 = C(255, 255, 255) }, wpm)
-aspect(disc, 1, Enum.DominantAxis.Height)
-corner(disc, 1)
-core(disc, CS(C(124, 204, 255), C(34, 82, 198)))
-rim(disc, 2)
-img("Icon", IMG.Compass, { Size = UDim2.fromScale(0.7, 0.7), ZIndex = 2 }, disc)
-local wName = label("Name", { Position = UDim2.fromScale(0, 0.56), Size = UDim2.fromScale(1, 0.26), Text = "Sky Temple", FontFace = F_LABEL,
-	TextColor3 = C(255, 240, 200) }, wpm)
-new("UIStroke", { Color = C(10, 6, 20), Thickness = 2 }, wName)
-local wDist = label("Distance", { Position = UDim2.fromScale(0, 0.82), Size = UDim2.fromScale(1, 0.18), Text = "120m", FontFace = F_BOLD,
-	TextColor3 = C(220, 230, 255) }, wpm)
-new("UIStroke", { Color = C(10, 6, 20), Thickness = 1.5 }, wDist)
 
 return "AreasGUI built"

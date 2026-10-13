@@ -5,6 +5,8 @@ The social/meta Place: collection, banners, stage + difficulty select, parties, 
 
 ## Current live state
 
+- **B148:** Events opens/closes behind the veil + quest **Claim All**; Daily Rewards tab badges; Items NPC items TRAVEL to
+  their NPC; Areas waypoints removed -- `events.md`, `daily-rewards.md`, `inventory.md`, `areas.md`.
 - **B147:** Units grid **hover card rebuilt** (`UnitsGUI.CardHover`, also in the Game copy) -- `docs/systems/units-screen.md`.
 - **B146:** HUD **Areas** button + screen (categories, picture cards that travel / open, favourites, waypoints) -- **`docs/systems/areas.md`**; new `Map.Travel.Area_*` spots.
 - **B144-145:** confirmation popup rebuilt in the Alamat look (`tools/confirm_popup_build.luau`, shared `UIKit.Confirm` `0a33cc2c` with `Tone`) -- `ui-feedback.md`; **Items screen rebuilt** (tabs, owned-only grid, details, Use / Favourite / Lock / View / Obtainments / Discard; `InventoryConfig`, `ItemActionsService`) -- **`docs/systems/inventory.md`**.

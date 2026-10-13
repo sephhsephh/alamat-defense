@@ -17,9 +17,11 @@ Opens from HUD **Inventory**. Rebuilt at B145 from the user's reference screensh
 
 ## What Use does -- `RS.Configs.Meta.InventoryConfig` (Lobby, edit freely)
 - Chests (`Action = "OpenChest"`, amount stepper, max 50): `OpenInfernalChests(n)` -> `ShowRewards` reveal -> reload.
+- **NPC items TRAVEL (B148, user):** a row with `Area` (an `AreasConfig` id) teleports to that NPC behind the veil
+  (`AreaAction("Travel")`), closes Items and toasts its `Hint`: Trait token -> Trait Shrine, Stat/Focus chips -> Stat
+  Forge, Scarecrow Crown -> Rune Circle, Mutya / Golden Seed -> Crafting, Silver -> Silver Shop. Button reads "Go to ...".
 - Everything else jumps to the screen that spends it (`Event` = a ClientEvents BindableEvent; the Items screen closes
-  itself): food -> Units (Feed, with a hint toast), Banner Ticket -> Summon, Trait token -> Trait Reroll, Stat/Focus
-  chips -> Stat Reroll, Mutya / Golden Seed -> Crafting, Scarecrow Crown -> Evolution, Gold / Silver -> Shop,
+  itself): food -> Units (Feed, with a hint toast), Banner Ticket -> Summon, Gold -> Shop,
   Event Coin -> Events. No row = a disabled "Use Item".
 - `Categories` (first match wins), `TypeLabel`, `ShownKinds`, `CurrencyField` (EventToken ids read
   `Currencies.EventTokens[id]`), `NoDiscard`.

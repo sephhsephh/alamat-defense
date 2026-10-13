@@ -110,6 +110,7 @@ walking a live profile through seven days was not worth the round trips, and the
 ## B39 — the EVENT track
 
 A second, time-boxed ladder beside the permanent one, on its own tab of `StarterGui.DailyRewards`.
+B148: each tab (`NormalTab` DAILY / `EventTab` EVENT) carries a red `Badge` ("1") while that track can claim (`paintTabs`).
 
 | piece | what it is |
 |---|---|

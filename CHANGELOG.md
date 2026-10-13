@@ -1,4 +1,12 @@
 # CHANGELOG (append-only; newest first)
+## 2026-10-14 [lobby] B148 -- **Feedback batch 1: Events veil + Claim All, Daily tab badges, Items -> NPC travel, no Areas waypoints.**
+- `EventsController`: open / Back / gamepad B run behind the loading veil (`veil()`, Play-menu pattern; another screen opening still closes instantly).
+  `QuestsPopup.Window.ClaimAllButton` (new, beside the page title) claims every finished quest on every unlocked page, re-sweeping as pages unlock, merges duplicate rewards into one reveal, unpins claimed quests; label shows the count.
+- `DailyRewards.Main.Tabs.{NormalTab, EventTab}.Badge` (clone of the Events badge) -- red "1" while that track can claim (`paintTabs`).
+- `InventoryConfig.Use`: Trait token / Stat + Focus chips / Scarecrow Crown / Mutya + Golden Seed / Silver carry `Area` -> `ItemsController.doUse` travels there via `AreaAction("Travel")`, closes Items, toasts the hint ("Go to Trait Shrine" ...).
+- Areas: `WaypointButton` + `WaypointTemplate` removed (backup `ServerStorage._UIBackup_B148`), controller + `tools/areas_build.luau` cleaned, hint moved down.
+- Verified in Lobby Play: Events veil up on open; Claim All (3) -> one reveal, Back closes + HUD returns; both Daily tabs badged; Trait token -> landed at the Crystal Shrine with the hint. No contract impact.
+
 ## 2026-10-13 [lobby+game] B147 -- **Units screen hover card rebuilt in the Alamat look (no more overlaps).**
 - `UnitsGUI.CardHover` rebuilt by `tools/units_hover_build.luau` in BOTH Places (the Game's B123 copy too); old cards in `ServerStorage._UIBackup_B147`.
   Portrait on a rarity backdrop (`PortraitBg.Tier`, painted from `TierConfig.GradientFor`), name / rarity / Element-Placement-Max chips (Frames, were dead TextButtons),
