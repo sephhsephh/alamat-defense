@@ -5,6 +5,8 @@ The social/meta Place: collection, banners, stage + difficulty select, parties, 
 
 ## Current live state
 
+- **B150:** pills show icons + empty pills hide (Units hover card, hotbar hover card, shared `UIKit.Hotbar` `ea2e37f5`);
+  `IconCatalog` drift reconciled (`521beba2`, your new element/placement icons) -- `ui-kit.md`, `units-screen.md`.
 - **B148:** Events opens/closes behind the veil + quest **Claim All**; Daily Rewards tab badges; Items NPC items TRAVEL to
   their NPC; Areas waypoints removed -- `events.md`, `daily-rewards.md`, `inventory.md`, `areas.md`.
 - **B147:** Units grid **hover card rebuilt** (`UnitsGUI.CardHover`, also in the Game copy) -- `docs/systems/units-screen.md`.

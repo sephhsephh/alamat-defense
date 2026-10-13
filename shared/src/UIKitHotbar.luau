@@ -146,6 +146,16 @@ local StatGradeConfig = require(meta:WaitForChild("StatGradeConfig"))
 local traitsFolder = RS:FindFirstChild("Configs") and RS.Configs:FindFirstChild("Traits")
 local TraitRegistry = (traitsFolder and traitsFolder:FindFirstChild("TraitRegistry"))
 	and require(traitsFolder.TraitRegistry) or nil
+-- B150 (user): pills carry their ICON (element / placement art) and the element comes from the shared unit catalog.
+-- Optional requires: a Place caught mid-deploy shows plain pills instead of failing to boot the hotbar.
+local function optRequire(name: string): any
+	local m = RS:FindFirstChild("Shared") and RS.Shared:FindFirstChild(name)
+	if not m then return nil end
+	local ok, v = pcall(require, m)
+	return if ok then v else nil
+end
+local IconCatalog = optRequire("IconCatalog")
+local UnitInfoCatalog = optRequire("UnitInfoCatalog")
 
 local HOVER_TIME = 0.18
 local HOVER_INFO = TweenInfo.new(HOVER_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
@@ -484,30 +494,49 @@ local function attachV3(container: GuiObject, opts: { [string]: any })
 			end
 		end
 
-		-- Chips. TRAIT shows the trait's name, SHINY only for a shiny unit, and ELEMENT reads "None"
-		-- until the element system lands (user: "I'm adding elements soon") -- it is wired to
-		-- `entry.Element` already, so the day that field exists the chip fills itself.
+		-- Chips. B150 (user: "If an item or something has an icon, display it beside the pill ... dont display a
+		-- pill at all if theres nothing" + "I see a None on the pills ... theres also cases when all 4 pills are
+		-- present, it overflows"): every pill shows its ICON when one exists (`Icon` / `TraitIcon` inside the pill),
+		-- a pill with nothing real to say is HIDDEN (the old Element chip read "None" for every unit -- the element is
+		-- now read from the shared UnitInfoCatalog), and the authored UIFlexItem on each pill shrinks the row to fit.
 		local chips = preview:FindFirstChild("ElementsTraitsFrame", true)
 		if chips then
+			local function chipIcon(chip: Instance, img: string?)
+				local ic = chip:FindFirstChild("Icon") or chip:FindFirstChild("TraitIcon")
+				local l = chip:FindFirstChildWhichIsA("TextLabel")
+				local has = img ~= nil and img ~= ""
+				if ic and ic:IsA("ImageLabel") then
+					ic.Image = img or ""
+					ic.Visible = has
+				end
+				if l then
+					l.Position = UDim2.fromScale(if has then 0.3 else 0.06, 0)
+					l.Size = UDim2.fromScale(if has then 0.64 else 0.88, 1)
+				end
+			end
 			local traitChip = chips:FindFirstChild("Trait")
 			local traitName = entry.Trait or entry.ActiveTrait
 			if traitChip and traitChip:IsA("GuiObject") then
-				traitChip.Visible = traitName ~= nil and traitName ~= "None"
-				local l = traitChip:FindFirstChildWhichIsA("TextLabel")
-				-- B108: the trait's DISPLAY name ("Might II"), not its id ("Might2"); legacy ids resolve too.
-				if l then l.Text = (TraitRegistry and traitName and TraitRegistry.Get(traitName).DisplayName) or tostring(traitName) end
-				-- B108 pt11: the trait's ICON beside its name, once TraitDefinitions carries one (hidden until then).
-				local ic = traitChip:FindFirstChild("TraitIcon")
-				if ic and ic:IsA("ImageLabel") then
-					local img = TraitRegistry and traitName and TraitRegistry.Icon(traitName) or nil
-					ic.Image = img or ""
-					ic.Visible = img ~= nil
+				local show = type(traitName) == "string" and traitName ~= "" and traitName ~= "None"
+				traitChip.Visible = show
+				if show then
+					local l = traitChip:FindFirstChildWhichIsA("TextLabel")
+					-- B108: the trait's DISPLAY name ("Might II"), not its id ("Might2"); legacy ids resolve too.
+					if l then l.Text = (TraitRegistry and TraitRegistry.Get(traitName).DisplayName) or tostring(traitName) end
+					chipIcon(traitChip, TraitRegistry and TraitRegistry.Icon(traitName) or nil)
 				end
 			end
 			local elementChip = chips:FindFirstChild("Element")
 			if elementChip and elementChip:IsA("GuiObject") then
-				local l = elementChip:FindFirstChildWhichIsA("TextLabel")
-				if l then l.Text = tostring(entry.Element or "None") end
+				local info = UnitInfoCatalog and UnitInfoCatalog.Get(towerId) or nil
+				local element = entry.Element or (info and info.Element) or nil
+				local show = type(element) == "string" and element ~= "" and element ~= "None"
+				elementChip.Visible = show
+				if show then
+					local l = elementChip:FindFirstChildWhichIsA("TextLabel")
+					if l then l.Text = element end
+					chipIcon(elementChip, IconCatalog and IconCatalog.element(element) or nil)
+				end
 			end
 			-- B105: WHERE the unit stands (Ground / Hill / Hybrid), from the shared catalog so both
 			-- Places read the same word. No catalog entry = the chip hides rather than guessing.
@@ -515,8 +544,11 @@ local function attachV3(container: GuiObject, opts: { [string]: any })
 			if placementChip and placementChip:IsA("GuiObject") then
 				local placement = UnitStatsCatalog.GetPlacement(towerId)
 				placementChip.Visible = placement ~= nil
-				local l = placementChip:FindFirstChildWhichIsA("TextLabel")
-				if l and placement then l.Text = placement end
+				if placement then
+					local l = placementChip:FindFirstChildWhichIsA("TextLabel")
+					if l then l.Text = placement end
+					chipIcon(placementChip, IconCatalog and IconCatalog.placement(placement) or nil)
+				end
 			end
 			local shinyChip = chips:FindFirstChild("Shiny")
 			if shinyChip and shinyChip:IsA("GuiObject") then

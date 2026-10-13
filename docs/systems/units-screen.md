@@ -17,7 +17,8 @@ features **upgrade path, View Unit inspect, Teams save/load, Select-by-Filter se
 - Popups: `TeamsPopup`, `FilterSelectPopup` (+ `*Scrim`, which never closes anything), `Inspect` (full screen),
   `Tooltip` (one shared card), `CardHover` (grid hover card, B147 rebuild by `tools/units_hover_build.luau`, same in
   the Game copy: portrait on a rarity `PortraitBg`, name / rarity / chips (Frames) / level bar, three labelled stat tiles
-  DMG / SPA / RNG with grade, footer pills trait / ascension stars / worth; all scale, placed in scale by `showPreview`).
+  DMG / SPA / RNG with grade, footer pills trait / ascension stars / worth; all scale, placed in scale by `showPreview`). B150: chips show their icon (`pillIcon`: element / placement /
+  MaxPlacement), Trait + Ascension pills HIDE when empty).
 
 ## Scripts
 - `UnitsController` (data, grid, equip, sell mode, favourite/lock, Feed) -- at Luau's 200-local ceiling, so new state
