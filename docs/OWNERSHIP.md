@@ -40,6 +40,7 @@ task touches — resolved at bootstrap per the constitution.
 | Tower configs & combat (targeting, attacks, passives, abilities, summons) | AD-Game | Game | Studio (Game) `RS.Configs.Towers`, `Server.Towers`, `Server.Summons` |
 | Enemies (configs, controller, behaviors) | AD-Enemies | Game | Studio (Game) `RS.Configs.Enemies`, `Server.Enemies` |
 | Traits (rarity table) | AD-Traits | **both** | `shared/src/{TraitRegistry,TraitDefinitions}.luau` — **SHARED since B12, 2026-08-09**, deployed byte-identical in both Places. Was Game-only, which blocked C1/C2 and left trait-on-summon inert. API is `TraitRegistry.Roll(rng)`; there is no `RollTrait`. The two deploy TOGETHER (Registry requires its sibling). |
+| Balance (BalanceConfig, WaveKit, enemy roster, starter + rarity-ladder numbers, tools/balance) | AD-Game | Game | Studio (Game) `RS.Configs.Global.BalanceConfig` + `RS.Configs.Waves.WaveKit` + `docs/systems/balance.md` + `tools/balance/` (B141) |
 | Maps / stages / waves content | AD-Game | Game | Studio (Game) `RS.Configs.{Maps,Stages,Waves}`, `ServerStorage.Maps` |
 | Settings (client settings pipeline) | AD-Game | both | Studio (Game) `Server.Settings` + profile `Settings` field |
 | Repo / constitution / tooling | AD-Integration | — | this repo root + `tools/` |

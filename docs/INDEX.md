@@ -115,6 +115,7 @@
   both), its API, seamless teleports (`SetTeleportGui` + `ReplicatedFirst.ArrivingLoadingScreen`), every place it shows.
 - `reward-reveal.md` — **AD-UI canon, LOBBY** (B135 rebuild): `ObtainRewardsGUI`, THE reward reveal behind
   `ClientEvents.ShowRewards` -- look, motion, PC/console/mobile input, layout, tunables, `DevDismiss` harness.
+- `balance.md` — **AD-Game canon, GAME (+Lobby display)** (B141): ONE balance formula (WAVE_HP column x HpRatio x stage x act x Hard x co-op), `BalanceConfig` + `WaveKit` + Stage 1 roster/bosses, starters, the rarity ladder, economy, `tools/balance/sim.js`. Design: `proposals/2026-10-13-balance-overhaul.md`.
 - `lobby-map.md` — **AD-Lobby canon, LOBBY** (B134): the night-island map -- districts + NPC homes, travel
   waystones + water rescue (`LobbyMapService`), plaza seating, lighting/terrain values, the `tools/lobby_map` builders.
 - `notifications.md` — **AD-Meta/AD-Gacha canon, LOBBY**: the HUD "new/claimable" count badges (B49). Reads authoritative counts from existing remotes (Inbox/Daily/Event/Quests/BP), `NotificationController` + `NotifBadgeTemplate` + `RefreshBadges`; no server code. Read before adding a badge.
