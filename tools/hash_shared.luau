@@ -320,6 +320,7 @@ local MODULES = {
 	ScreenFX = "StarterPlayer.StarterPlayerScripts.Client.UI.ScreenFX",
 	QuestBook = "ReplicatedStorage.Shared.QuestBook", -- B123b
 	CombatIconConfig = "ReplicatedStorage.Configs.Global.CombatIconConfig", -- B157: passives status icons (Lobby too)
+	UnitScale = "ReplicatedStorage.Shared.UnitScale", -- B159: rigs stored full size, shown at GameScale
 }
 
 -- GuiObject subtrees. Promoted by AD-UI 2026-08-06; a Place that has not received the kit

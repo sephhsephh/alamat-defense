@@ -325,5 +325,8 @@ capture, and a slide would fight the veil.
 - `UnitCard.tierStroke(stroke, tier, neutral?)` -- animated tier border for any unit portrait (`TierLoop` gradient, or the
   stroke's own authored gradient); `tier = nil` = neutral. `UnitCard.paintTier` now loops every kit unit card.
 - `UnitCard.paintGrade(label, grade)` / `gradeColor(grade)` -- Stat Index colours; AL = animated orange/purple (`GradeFX`).
+- `UnitCard.toGameSize(model)` (B159) -- unit rigs are STORED full size; this ScaleTo's a unit-rig clone to its
+  `GameScale` (`Shared.UnitScale`; enemy / avatar models pass through). `viewport()` and `UIKit.Hotbar` call it
+  themselves, so the fixed hotbar pose frames every unit the same; a screen placing its own rig calls it first.
 - `ItemIcon` qty `nil` = display card (full colour); only qty 0 darkens.
 - Stats display: ONE decimal (`UnitStatPreview.Format`, hotbar `short`).

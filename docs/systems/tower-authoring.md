@@ -158,6 +158,11 @@ tower ever *does* revert, look at whatever moved the model last, not at `FaceTar
    `RS.UnitModels` or every card, hotbar slot and preview of that unit draws `Placeholder` instead.
    **A new unit is not done until it exists in both.** Give it a `PrimaryPart` and an
    `AnimationController` or `Humanoid`, and stamp the same `IdleAnim` attribute on both copies.
+   **Store the rig at its FULL R15 size -- do not shrink it (B159).** The game shows it at its
+   `GameScale` attribute (Model scale; default 0.34 = the standard ~2-stud unit, written at boot by
+   `Server.UnitScaleTagger` when missing) in the match, the placement ghost AND every viewport
+   (`Shared.UnitScale`). A bigger / smaller unit: set `GameScale` on both copies. Measure a SCALED CLONE,
+   never the stored rig times a ratio (layered-clothing cages do not resize with `ScaleTo`).
 4. **Fill `Attacks`**: one profile per distinct attack, each with its hit list. Weights sum to 1.
 5. **Fill `Upgrades`**: numbers per tier; name an `Attack` on tier 1 and again wherever it changes.
 6. **Author the clips** and put the marker names from step 4 in them. Set `IdleAnim` on the display

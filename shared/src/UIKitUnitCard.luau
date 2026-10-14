@@ -50,6 +50,9 @@ local TierConfig = loadOptional(
 -- other two -- a Place caught mid-deploy must cost the PRICE, never the whole card.
 local UnitStatsCatalog = loadOptional(
 	optional(optional(optional(ReplicatedStorage, "Configs"), "Meta"), "UnitStatsCatalog"), "UnitStatsCatalog")
+-- B159: rigs are STORED at full R15 size; a unit rig is shown at its in-game size (Shared.UnitScale,
+-- the rig's `GameScale` attribute). Optional like the others: without it a rig is shown as stored.
+local UnitScale = loadOptional(optional(script.Parent.Parent, "UnitScale"), "UnitScale")
 
 -- ===== camera framing =====
 -- The ONE definition of how a unit is framed in a ViewportFrame. Tune here and every screen follows.
@@ -71,6 +74,8 @@ local UnitStatsCatalog = loadOptional(
 -- ⚠ IT IS A FIXED POSE, NOT A FIT. A rig much larger or smaller than a standard R15 body will frame
 -- differently -- that is the same deal the hotbar already lives with, and the fix is the same one:
 -- re-pose the hotbar camera and re-bake, then paste the new components here.
+-- B159: that no longer depends on how big a rig was STORED -- viewport() first scales a unit rig to its
+-- in-game size (`toGameSize`), so every unit arrives at the size this pose was tuned on.
 UnitCard.Framing = {
 	FieldOfView = 70,
 	Relative = CFrame.new(
@@ -84,6 +89,16 @@ UnitCard.Framing = {
 	-- relative to, and so two cards never disagree about where "here" is.
 	Anchor = CFrame.new(0, 0, 0),
 }
+
+-- B159: scale a unit-rig clone to its in-game size (a no-op for enemy / avatar models, and when the
+-- UnitScale module is missing). viewport() does it itself; a screen that places and measures its own rig
+-- calls this BEFORE measuring it.
+function UnitCard.toGameSize(model: Instance?): Instance?
+	if UnitScale then
+		UnitScale.applyIfUnit(model)
+	end
+	return model
+end
 
 -- Put `model` in `vf` and frame it. The caller owns WHERE the model came from -- that is the single
 -- difference the four copies had, and keeping it out here is what let them merge.
@@ -105,6 +120,7 @@ function UnitCard.viewport(vf: ViewportFrame?, model: Model?): boolean
 	if model == nil then
 		return false
 	end
+	UnitCard.toGameSize(model) -- B159: stored full size, framed at its in-game size
 	model.Parent = wm
 
 	local f = UnitCard.Framing

@@ -106,6 +106,7 @@ local function showModel(vf: ViewportFrame, modelSource: Instance?, towerId: str
 	for _, d in ipairs(m:GetDescendants()) do
 		if d:IsA("LuaSourceContainer") then d:Destroy() end
 	end
+	UnitCard.toGameSize(m) -- B159: stored full size, shown at its in-game size
 	m.Parent = wm
 	local cf, size = m:GetBoundingBox()
 	local centre = cf.Position
@@ -321,6 +322,7 @@ local function showModelKeepCamera(vf: ViewportFrame, modelSource: Instance?, to
 	for _, d in ipairs(m:GetDescendants()) do
 		if d:IsA("LuaSourceContainer") then d:Destroy() end
 	end
+	UnitCard.toGameSize(m) -- B159: stored full size, shown at its in-game size (the baked camera's size)
 	m.Parent = wm
 	if typeof(anchor) == "CFrame" and m:IsA("Model") then
 		m:PivotTo(anchor)
