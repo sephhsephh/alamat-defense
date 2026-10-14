@@ -595,15 +595,15 @@
     },
     "UnitInfoCatalog": {
       "file": "shared/src/UnitInfoCatalog.luau",
-      "hash": "0e1d71af",
+      "hash": "aa16c8b9",
       "owner": "game",
       "deployPath": "ReplicatedStorage.Shared.UnitInfoCatalog",
       "deployed": {
-        "Game": "0e1d71af",
-        "Lobby": "0e1d71af"
+        "Game": "aa16c8b9",
+        "Lobby": "aa16c8b9"
       },
       "kind": "module",
-      "comment": "NEW at B108 pt14 (user: rebuild the Units screen like the reference -- upgrade path with hover cost/attack, passives & abilities, more stats). GENERATED from the Game's RS.Configs.Towers.* (48 towers): element, placement, placement limit, cost, crit, hits per attack, ability, passives (names from the config's trailing comments), and every upgrade tier's DMG/RNG/SPA/UpgradeCost/attack/shape/on-hit effects (Attack/Shape/Effects only stored when they change). Get(towerId) decodes + caches; DescribeAttack/DescribePassive/DescribeAbility turn params into player text. The Game configs stay the source of truth -- REGENERATE + rehash after retuning a tower (the generator pass verified 443 tier rows against the live configs, 0 mismatches). No Game consumer yet; deployed there for drift parity."
+      "comment": "NEW at B108 pt14 (user: rebuild the Units screen like the reference -- upgrade path with hover cost/attack, passives & abilities, more stats). GENERATED from the Game's RS.Configs.Towers.* (48 towers): element, placement, placement limit, cost, crit, hits per attack, ability, passives (names from the config's trailing comments), and every upgrade tier's DMG/RNG/SPA/UpgradeCost/attack/shape/on-hit effects (Attack/Shape/Effects only stored when they change). Get(towerId) decodes + caches; DescribeAttack/DescribePassive/DescribeAbility turn params into player text. The Game configs stay the source of truth -- REGENERATE + rehash after retuning a tower (the generator pass verified 443 tier rows against the live configs, 0 mismatches). No Game consumer yet; deployed there for drift parity. B154: 0e1d71af -> aa16c8b9 -- REGENERATED from the live configs (B141-142 had retuned every tower; e.g. Bathala placement cost 700 -> 4000) by the new tools/unit_info_gen.luau; the Game's new Server.UnitInfoCatalogValidate fails boot loud on any drift."
     },
     "MetaScalingConfig": {
       "file": "shared/src/MetaScalingConfig.luau",

@@ -24,8 +24,11 @@ features **upgrade path, View Unit inspect, Teams save/load, Select-by-Filter se
 - `UnitsController` (data, grid, equip, sell mode, favourite/lock, Feed) -- at Luau's 200-local ceiling, so new state
   lives in tables (`Lazy`) and the new features live in **`UnitsHeroController`**, talking through **`UnitsState`**
   (views / loadout / selected + hooks `reload`, `selectUnit`, `sell.*`, `setLoadout`, `onPreview`, event `Changed`).
-- Data: `Shared.UnitInfoCatalog` (new shared canon, generated from the Game's tower configs) + `UnitStatPreview`
-  (per-unit final numbers; upgrade-tier numbers = catalog tier x the unit's final/base ratio).
+- Data: `Shared.UnitInfoCatalog` (shared canon, GENERATED from the Game's tower configs by `tools/unit_info_gen.luau`)
+  + `UnitStatPreview` (per-unit final numbers; upgrade-tier numbers = catalog tier x the unit's final/base ratio).
+  **Synced (B154):** the Game's `Server.UnitInfoCatalogValidate` compares every row (cost, limit, placement, element,
+  ability, passives, every tier's DMG / RNG / SPA / upgrade cost / income / attack / shape / effects) with the live
+  configs at each boot and errors `[CONTRACT] UnitInfoCatalog is STALE` -- retune a tower => rerun the generator.
 - Server: `Server.Lobby.LoadoutService` adds `SetLoadout(list)` (Unequip All / load), and `Data.UnitTeams` (schema v10):
   `GetUnitTeams`, `SaveUnitTeam(i)` (= current loadout), `LoadUnitTeam(i)` (re-cleaned: owned, one per family, unlocked
   slots), `RenameUnitTeam(i, name)` (TextService filtered, max 20 chars). 5 teams.
