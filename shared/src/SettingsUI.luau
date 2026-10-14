@@ -790,7 +790,12 @@ end
 -- grid cells in PIXELS from the real width (scale cells inside auto-sized frames collapse); 2 columns,
 -- 1 on a narrow screen
 local function sizeGrids()
-	local w = content.AbsoluteSize.X - 18
+	-- B152 (user: "all are cramped to the left"): measure the GRID itself. The old estimate (content width - 18)
+	-- came out 2 px wider than the real grid, so two cells never fitted and every row wrapped into ONE
+	-- half-width column on the left.
+	local first = next(sections)
+	local gw = if first then sections[first].Grid.AbsoluteSize.X else 0
+	local w = if gw > 0 then gw - 2 else content.AbsoluteSize.X - 24
 	if w <= 0 then return end
 	local cols = if w < 520 then 1 else 2
 	local cw = math.floor((w - (cols - 1) * 8) / cols)

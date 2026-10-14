@@ -158,6 +158,16 @@ since v1.
   open only), `HudEntry.activate(path)`, PlayController `OpenStageSelect("Menu")`.
 - Not remappable (engine-owned / no system): Shift Lock toggle, "Quick Placement", Areas menu; MatchEnd L/R/E.
 
+## B152 -- two columns for real + the Alamat look + Hotbar Rarity Glow
+- The 2-column grid never showed: `sizeGrids` estimated the grid as content width - 18 px, 2 px wider than the real
+  grid, so two cells never fitted and every row stacked in one half-width column ("all are cramped to the left").
+  It now measures the section `Grid` itself (`SettingsUI` e27f5dd9, both Places).
+- Look (`tools/settings_fantasy_pass.luau`, both Places, backups `_UIBackup_B152`): rows = violet -> night `Card`
+  gradient, gold-gradient `Edge`, gold `Accent` bar, a faint tinted `Rune` (Engraving) watermark, gold-serif titles;
+  Toggle / action Button / KeyButton are Alamat PLATES (SettingsUI still paints on/off green/red); slider = night track,
+  gold -> violet fill, gold GEM handle + glow; section headers gold; panel gold stroke + a faint `Seal` + sparkles.
+- New preference `HotbarTierGlow` (Graphics, default on; SettingsConfig a1135404) -> the hotbar rarity glow (`ui-kit.md`).
+
 ## Migrations (B123)
 A saved value always beats a default, so a NEW default never reaches a profile that saved settings before it existed.
 `Data.Settings.Rev` (a number Sanitize keeps) + `SettingsConfig.Migrate` (run by SettingsService on every profile load;

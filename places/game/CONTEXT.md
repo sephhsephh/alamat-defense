@@ -4,6 +4,9 @@
 The match Place: loads a map, runs waves, towers fight, rewards commit to the profile.
 Server-authoritative, registry/config-driven, signal-decoupled. `--!strict` throughout.
 
+**B151-152:** RS.AlamatUI is now in the Game too (shared canon) + every rectangle button is a Plate; hotbar rarity glow;
+Settings fixed to two columns + Alamat look (`alamat-ui.md`, `settings.md`).
+
 **B149:** towers **stay on the map after a match, read-only** (`TowerManager.FreezeAll` at cleanup, `ReadOnly` attribute,
 requests refuse `MatchOver`; the next match's Preparing clears them); **whole-number damage** rule (`balance.md`); hotbar
 slots you cannot afford go dark with a red price (`MatchCash` attribute); thin fantasy health bars + masked fill, boss

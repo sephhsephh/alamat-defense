@@ -157,6 +157,38 @@ end
 local IconCatalog = optRequire("IconCatalog")
 local UnitInfoCatalog = optRequire("UnitInfoCatalog")
 
+-- ===== B152 RARITY GLOW (user: "glowing effect behind the card starting from units tiered Legendary and above in
+-- the unit hotbar. from legendary only slight glow, growing gradually more extreme effects the higher the tier.
+-- alamat being the most overdramatic ... add option to disable that hotbar effect in the settings") =====
+-- The art is AUTHORED: `<Slots>.Parent.TierGlows.GlowTemplate` (tools/hotbar_glow_build.luau, both Places) =
+-- white images tinted by their `Tint` gradients. One clone per glowing slot sits in the TierGlows layer BEHIND the
+-- cards and follows its card every frame (the Game lifts a selected card). Per-layer opacity (0 = hidden), size
+-- (x card height), pulse and speeds below; colour = the tier's own gradient. Setting: HotbarTierGlow (Graphics).
+local TIER_GLOW: { [string]: any } = {
+	Legendary = { Size = 1.55, Aura = 0.5, Pulse = 0.08, Rays = 0, Circle = 0, Rune = 0, Flare = 0, Sparks = 0, Spin = 0 },
+	Mythic = { Size = 1.7, Aura = 0.62, Pulse = 0.12, Rays = 0.3, Circle = 0, Rune = 0, Flare = 0, Sparks = 1, Spin = 14 },
+	Limited = { Size = 1.85, Aura = 0.7, Pulse = 0.14, Rays = 0.42, Circle = 0, Rune = 0, Flare = 0, Sparks = 2, Spin = 20 },
+	Secret = { Size = 2.0, Aura = 0.8, Pulse = 0.16, Rays = 0.5, Circle = 0.3, Rune = 0, Flare = 0.6, Sparks = 2, Spin = 26 },
+	Alamat = { Size = 2.35, Aura = 0.95, Pulse = 0.22, Rays = 0.72, Circle = 0.55, Rune = 0.5, Flare = 1, Sparks = 3, Spin = 40 },
+}
+local glowSettings: any = nil
+local function glowEnabled(): boolean
+	if glowSettings == nil then
+		local lp = game:GetService("Players").LocalPlayer
+		local ps = lp and lp:FindFirstChild("PlayerScripts")
+		local m = ps and ps:FindFirstChild("Client") and ps.Client:FindFirstChild("Settings")
+			and ps.Client.Settings:FindFirstChild("ClientSettings")
+		if m then
+			local ok, cs = pcall(require, m)
+			glowSettings = if ok then cs else false
+		end
+	end
+	if glowSettings and glowSettings.Get then
+		return glowSettings.Get("HotbarTierGlow") ~= false
+	end
+	return true
+end
+
 local HOVER_TIME = 0.18
 local HOVER_INFO = TweenInfo.new(HOVER_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 
@@ -346,6 +378,9 @@ local function attachV3(container: GuiObject, opts: { [string]: any })
 
 	local rng = Random.new()
 	local slots: { any } = {}
+	-- B152: the rarity-glow layer (authored beside the Slots container, drawn behind it)
+	local glowLayer = container.Parent and container.Parent:FindFirstChild("TierGlows") :: GuiObject?
+	local glowTemplate = glowLayer and glowLayer:FindFirstChild("GlowTemplate") :: GuiObject?
 	for i = 1, LoadoutConfig.MaxSlots do
 		local btn = authored[i]
 		if btn == nil then
@@ -603,6 +638,42 @@ local function attachV3(container: GuiObject, opts: { [string]: any })
 			tierName = entry.Tier or ItemCatalog.GetTier(entry.TowerId)
 		end
 		s.TierName = tierName
+		-- B152: the rarity glow behind the card (Legendary and up, the setting on)
+		do
+			local cfg = filled and TIER_GLOW[tierName] or nil
+			if cfg and glowTemplate and glowLayer and glowEnabled() then
+				if s.Glow == nil then
+					local g = glowTemplate:Clone()
+					g.Name = "Glow" .. i
+					g.Visible = true
+					g.Parent = glowLayer
+					s.Glow = g
+				end
+				local seq = TierConfig.GradientFor(tierName)
+				local bright = if TierConfig.BrightestColor then TierConfig.BrightestColor(tierName) else seq.Keypoints[1].Value
+				for _, d in ipairs(s.Glow:GetDescendants()) do
+					if d:IsA("UIGradient") and d.Name == "Tint" then
+						-- a BRIGHT tint everywhere (a dark tier gradient -- Secret's black -- vanished on the dark bar);
+						-- only Alamat's rays keep the full rainbow
+						d.Color = if tierName == "Alamat" and d.Parent and d.Parent.Name == "Rays" then seq
+							else ColorSequence.new(bright:Lerp(Color3.new(1, 1, 1), 0.35), bright)
+					end
+				end
+				for _, layer in ipairs({ "Aura", "Rays", "Circle", "Rune", "Flare" }) do
+					local img = s.Glow:FindFirstChild(layer)
+					if img and img:IsA("GuiObject") then img.Visible = (cfg[layer] or 0) > 0 end
+				end
+				for k = 1, 3 do
+					local sp = s.Glow:FindFirstChild("Spark" .. k)
+					if sp and sp:IsA("GuiObject") then sp.Visible = k <= (cfg.Sparks or 0) end
+				end
+				s.GlowCfg = cfg
+			elseif s.Glow then
+				s.Glow:Destroy()
+				s.Glow = nil
+				s.GlowCfg = nil
+			end
+		end
 		if s.Gradient then
 			local seq, rotation = TierConfig.GradientFor(tierName)
 			s.Gradient.Color = seq
@@ -736,6 +807,60 @@ local function attachV3(container: GuiObject, opts: { [string]: any })
 					gradient.Color = whitened(s.TierName, lift)
 				end
 			end
+			-- B152: the rarity glow follows its card (a lifted card included) and breathes / turns by tier
+			local g, cfg = s and s.Glow, s and s.GlowCfg
+			if g and cfg and glowLayer then
+				local la, ls = glowLayer.AbsolutePosition, glowLayer.AbsoluteSize
+				local b = s.Button
+				if ls.X > 0 and ls.Y > 0 and b.Visible then
+					local c = b.AbsolutePosition + b.AbsoluteSize * 0.5 - la
+					g.Position = UDim2.fromScale(c.X / ls.X, c.Y / ls.Y)
+					local pulse = math.sin(clock * 2.4 + s.Phase)
+					g.Size = UDim2.fromScale(10, (b.AbsoluteSize.Y * cfg.Size * (1 + pulse * cfg.Pulse * 0.4)) / ls.Y)
+					local aura = g:FindFirstChild("Aura") :: ImageLabel?
+					if aura then aura.ImageTransparency = 1 - cfg.Aura * (0.82 + 0.18 * pulse) end
+					local rays = g:FindFirstChild("Rays") :: ImageLabel?
+					if rays and cfg.Rays > 0 then
+						rays.Rotation = (clock * cfg.Spin) % 360
+						rays.ImageTransparency = 1 - cfg.Rays * (0.75 + 0.25 * pulse)
+					end
+					local circle = g:FindFirstChild("Circle") :: ImageLabel?
+					if circle and cfg.Circle > 0 then
+						circle.Rotation = (-clock * cfg.Spin * 0.5) % 360
+						circle.ImageTransparency = 1 - cfg.Circle
+					end
+					local rune = g:FindFirstChild("Rune") :: ImageLabel?
+					if rune and cfg.Rune > 0 then
+						rune.Rotation = (clock * cfg.Spin * 0.8) % 360
+						rune.ImageTransparency = 1 - cfg.Rune * (0.7 + 0.3 * pulse)
+					end
+					local flare = g:FindFirstChild("Flare") :: ImageLabel?
+					if flare and cfg.Flare > 0 then
+						-- a sharp twinkle every couple of seconds
+						local tw = math.max(0, math.sin(clock * 1.7 + s.Phase)) ^ 8
+						flare.ImageTransparency = 1 - cfg.Flare * tw
+						flare.Rotation = (clock * 20) % 360
+					end
+					for k = 1, (cfg.Sparks or 0) do
+						local sp = g:FindFirstChild("Spark" .. k) :: GuiObject?
+						if sp then
+							local a = clock * (0.9 + k * 0.25) + k * 2.1 + s.Phase
+							sp.Position = UDim2.fromScale(0.5 + math.cos(a) * 0.42, 0.5 + math.sin(a) * 0.42)
+							sp.Rotation = (clock * 90 * k) % 360
+						end
+					end
+				end
+				g.Visible = b.Visible
+			end
+		end
+	end)
+	-- B152: the setting flips the glow on / off live
+	task.spawn(function()
+		glowEnabled()
+		if glowSettings and glowSettings.Changed then
+			glowSettings.Changed:Connect(function()
+				for i = 1, LoadoutConfig.MaxSlots do paint(i) end
+			end)
 		end
 	end)
 

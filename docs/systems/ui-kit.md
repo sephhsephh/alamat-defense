@@ -315,6 +315,7 @@ capture, and a slide would fight the veil.
 ## B108 pt11
 - `UIKit.ItemIcon.applyTint(image, itemId)` -- animated tint from ItemCatalog `Icon.Gradient`; screens that set an item image
   by hand call it too.
+- `UIKit.Hotbar` RARITY GLOW (B152, `7a868be8`): Legendary+ cards get an authored glow behind them (`<Slots>.Parent.TierGlows.GlowTemplate`, `tools/hotbar_glow_build.luau`; Z: decor 1 < TierGlows 2 < Slots 3) -- `TIER_GLOW` escalates Legendary (soft aura) -> Mythic (+rays, a spark) -> Limited -> Secret (+magic circle, flare) -> Alamat (big, rune ring, 3 orbiting sparks, rainbow rays); bright tier tint; follows its card every frame; setting `HotbarTierGlow` toggles it live.
 - `UIKit.Hotbar` hover card (B150, `ea2e37f5`): pills carry ICONS (`Icon` / `TraitIcon` inside the pill, IconCatalog element / placement), the Element pill reads the shared `UnitInfoCatalog` and HIDES when absent (no more "None"), Trait hides when none, pills shrink to fit (UIFlexItem Shrink); template fix `tools/hotbar_hover_fix.luau` (info column 108% -> fits).
 - `UIKit.Hotbar` hover card: FINAL stats via `Shared.UnitStatPreview`; anchored bottom-centre above the hovered slot;
   Trait chip `TraitIcon`.

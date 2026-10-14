@@ -50,6 +50,7 @@ SettingsConfig.Defaults = {
 	ShowMatchEndRewards = true,     -- Game: the item-by-item reward reveal before the results screen
 	ShowPinnedQuests = true,        -- both: the pinned-quest panel (match HUD / Lobby tracker)
 	ScreenShake = true,             -- both: camera shake + screen flashes (off = Player attr ReducedMotion)
+	HotbarTierGlow = true,          -- B152 both: the rarity glow behind Legendary+ hotbar cards (UIKit.Hotbar)
 	-- B112: UI Scale (the user's refs, Misc). Applied by SettingsUI as an `AD_UIScale` UIScale on every
 	-- top-level panel that has no UIScale of its own (see SettingsUI "UI SCALE").
 	UIScale = 1,
@@ -123,6 +124,7 @@ SettingsConfig.Schema = {
 	-- ===== Graphics =====
 	{ Key = "ScreenShake", Type = "boolean", Label = "Show Camera Shake", Desc = "Show camera shake and screen flash effects", Category = "Graphics" },
 	{ Key = "LowDetail", Type = "boolean", Label = "Low Detail Mode", Desc = "Greatly reduce game visual details", Category = "Graphics" },
+	{ Key = "HotbarTierGlow", Type = "boolean", Label = "Hotbar Rarity Glow", Desc = "Glowing effects behind Legendary and rarer units on your hotbar", Category = "Graphics" },
 	{ Key = "EnableVFX", Type = "boolean", Label = "Show Unit VFX", Desc = "Show unit attack effects and damage numbers", Category = "Graphics", Scope = "GameOnly" },
 
 	-- ===== Units -- B87 AUTOMATION. The Unit Manager carries its own buttons for these four; the rows
