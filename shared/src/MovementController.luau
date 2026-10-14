@@ -105,9 +105,11 @@ local function paintSprintButton()
 	btn.BackgroundColor3 = on and Color3.fromRGB(90, 190, 120) or Color3.fromRGB(0, 0, 0)
 end
 
--- Typing in a chat/text box must not sprint or dash the character.
+-- Typing in a chat/text box must not sprint or dash the character. B157: neither may a menu that holds the
+-- movement lock (the player attribute MenuLocked, set by Client.UI.MenuMovementLock while Units / Play / Events
+-- are open) -- the walk is off there too, so a dash or an air jump would be the only thing still moving them.
 local function typing(): boolean
-	return UserInputService:GetFocusedTextBox() ~= nil
+	return UserInputService:GetFocusedTextBox() ~= nil or player:GetAttribute("MenuLocked") == true
 end
 
 local function setSprint(on: boolean)

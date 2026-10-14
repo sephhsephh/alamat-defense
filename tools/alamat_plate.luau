@@ -40,8 +40,38 @@ local function tintGrad(o: Instance, name: string?)
 end
 
 -- restyle an existing button in place
+-- B157 (user: "it looks like there's a button inside a button"): a UIPadding on the button ROOT also insets the
+-- Plate's own layers (Gloss / Lip / Inner / Flash), so the face drew as a smaller rectangle inside the rim. The
+-- padding moves onto the CONTENT instead: every non-layer child is remapped into the padded rectangle, then the
+-- UIPadding goes. A button whose children a UIListLayout / UIGridLayout places is left alone (and reported).
+local PAD_LAYERS = { Inner = true, Gloss = true, Lip = true, ShineClip = true, Flash = true, Burst = true, Sparkles = true }
+function P.unpad(btn: GuiObject): boolean
+	local pad = btn:FindFirstChildOfClass("UIPadding")
+	if not pad then return false end
+	if btn:FindFirstChildWhichIsA("UIGridStyleLayout") then
+		warn("[AlamatPlate] unpad skipped (a layout places its children): " .. btn:GetFullName())
+		return false
+	end
+	local abs = btn.AbsoluteSize
+	local function frac(u: UDim, axis: number): number
+		return u.Scale + (if axis > 0 then u.Offset / axis else 0)
+	end
+	local L, R = frac(pad.PaddingLeft, abs.X), frac(pad.PaddingRight, abs.X)
+	local T, B = frac(pad.PaddingTop, abs.Y), frac(pad.PaddingBottom, abs.Y)
+	local w, h = math.max(0.05, 1 - L - R), math.max(0.05, 1 - T - B)
+	for _, c in ipairs(btn:GetChildren()) do
+		if c:IsA("GuiObject") and not PAD_LAYERS[c.Name] then
+			c.Position = UDim2.new(L + c.Position.X.Scale * w, c.Position.X.Offset, T + c.Position.Y.Scale * h, c.Position.Y.Offset)
+			c.Size = UDim2.new(c.Size.X.Scale * w, c.Size.X.Offset, c.Size.Y.Scale * h, c.Size.Y.Offset)
+		end
+	end
+	pad:Destroy()
+	return true
+end
+
 function P.convert(btn: GuiButton, themeName: string?): GuiButton
 	assert(btn and btn:IsA("GuiButton"), "AlamatPlate.convert: not a GuiButton")
+	P.unpad(btn) -- B157: content keeps its inset, the Plate's layers span the whole button
 	for _, n in ipairs(PLATE_LAYERS) do
 		local old = btn:FindFirstChild(n)
 		if old then old:Destroy() end
@@ -70,7 +100,7 @@ function P.convert(btn: GuiButton, themeName: string?): GuiButton
 	local core: UIGradient? = nil
 	for _, c in ipairs(btn:GetChildren()) do
 		if c:IsA("UIGradient") then
-			if core == nil then core = c else c:Destroy() end
+			if core == nil then core = c else warn("[AlamatPlate] dropped extra UIGradient '" .. c.Name .. "' on " .. btn:GetFullName() .. " -- check scripts that use it") c:Destroy() end
 		end
 	end
 	if core == nil then core = new("UIGradient", { Name = "Core" }, btn) end
@@ -85,7 +115,7 @@ function P.convert(btn: GuiButton, themeName: string?): GuiButton
 	local rim: UIStroke? = nil
 	for _, c in ipairs(btn:GetChildren()) do
 		if c:IsA("UIStroke") then
-			if rim == nil then rim = c else c:Destroy() end
+			if rim == nil then rim = c else warn("[AlamatPlate] dropped extra UIStroke '" .. c.Name .. "' on " .. btn:GetFullName() .. " -- a script may use it (B157: Play's SelectedStroke)") c:Destroy() end
 		end
 	end
 	if rim == nil then rim = new("UIStroke", { Name = "Rim" }, btn) end

@@ -26,6 +26,12 @@ Equip, Claim, Buy, Summon x1, Teams, Apply, Cancel ... ONE look + ONE motion eve
   `tools/alamat_plate.luau`; the rollout list (every converted button + its theme): `tools/alamat_plate_rollout.luau`.
 - Gotchas fixed in the tool: a re-used UIStroke may be `ScaledSize` (thickness = a FRACTION of the button -> a 176 px
   ellipse) -> forced FixedSize; a TextButton whose own text is hidden behind a Label child gets no PlateText.
+- **No UIPadding on a plate ROOT (B157, user: "looks like a button inside a button").** A root UIPadding insets the
+  plate's own layers, so the colour root shows as a rim around a smaller plate. `P.unpad(btn)` (run first by
+  `P.convert`) remaps the button's content children into the padded rect and deletes the padding (skips a button
+  that lays out children with a UIGridStyleLayout). Rolled out B157: Lobby 65 + Game 21 plates
+  (`ServerStorage._UIBackup_B157`). `convert` now WARNS when it drops a second UIStroke / UIGradient (the PlayGUI
+  difficulty `SelectedStroke` died that way in B151; selection is the authored `SelectedRing` overlay now).
 - Rolled out B151: Lobby 140 buttons (Units, Quests/Achievements, Silver Shop -- Buy shows the Silver ICON + price, Summon,
   Events, Items, Daily, Battle Pass, Codes, Play menu, Ascension, Evolve, Crafting, Stat/Trait reroll, misc); Game 50
   (Units copy, Quests, Match End, Match HUD right buttons + speed, Wave prep READY, Placement controls, Auto Play
@@ -63,7 +69,8 @@ stops clipping under a rotated ancestor, so the streak spilled out of the gem. N
 ## VFX art (white on transparent, tinted by a UIGradient named `Tint`) — Creator Store, picked visually
 RuneRing 108844775186607 · MagicCircle 113290594421442 · Engraving 95270696231518 · GlowRing 9864075653 ·
 Burst 7229481183 · Flare 124607288176561 · Streak 3052949762 · Sparkles 6997866340 / 71639137167582 /
-81834701835654. No frame-built VFX (user rule).
+81834701835654. No frame-built VFX (user rule) -- B158 swapped every one left (`tools/vfx_images_build.luau`,
+`docs/systems/screen-fx.md`). **Burst is NOT white-on-transparent** (dark body): never lay it over a scene.
 
 ## The Lobby HUD (tools/alamat_hud_build.luau — "Command Rails", user pick)
 - `Left.Buttons` 2x3 tiles: Units, Inventory, Quests, Index, **Shop** (new: ClientEvents.OpenShop), Profile

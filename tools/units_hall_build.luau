@@ -204,6 +204,26 @@ if qs then
 end
 place(bottom:FindFirstChild("SellButtons"), S(0.025, FOOT_Y), S(0.293, FOOT_H))
 mob(bottom:FindFirstChild("SellButtons"), S(0.025, MFOOT_Y), S(0.293, MFOOT_H))
+do -- B157: four EQUAL fixed-width buttons (they were AutomaticSize X and overlapped), short labels
+	local sbtn = bottom:FindFirstChild("SellButtons")
+	local sll = sbtn and sbtn:FindFirstChildOfClass("UIListLayout")
+	if sll then
+		sll.Padding = UDim.new(0.02, 0)
+		sll.SortOrder = Enum.SortOrder.LayoutOrder
+		sll.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	end
+	local LBL = { SellButton = { "Sell", 1 }, SelectAllByRarityButton = { "By Filter", 2 }, ClearSelectionButton = { "Clear", 3 }, CancelButton = { "Cancel", 4 } }
+	for _, b in ipairs(sbtn and sbtn:GetChildren() or {}) do
+		local spec = LBL[b.Name]
+		if spec and b:IsA("GuiButton") then
+			b.AutomaticSize = Enum.AutomaticSize.None
+			b.Size = S(0.235, 1)
+			b.LayoutOrder = spec[2]
+			local t = b:FindFirstChild("ButtonText") :: TextLabel?
+			if t then t.Text = spec[1] t.TextScaled = true t.TextWrapped = false end
+		end
+	end
+end
 local ss = bottom:FindFirstChild("SellStatus") :: GuiObject?
 place(ss, S(0.025, 0.73), S(0.293, 0.045))
 for _, n in ipairs({ "UnequipAllButton", "QuickSellButton", "TeamsButton" }) do
@@ -263,6 +283,12 @@ right("BaseStatsFrame", { 0.69, 0.276, 0.28, 0.05 }, { 0.69, 0.308, 0.28, 0.075 
 local chips = stats:FindFirstChild("ChipsRow")
 local cl = chips and chips:FindFirstChildOfClass("UIListLayout")
 if cl then cl.HorizontalAlignment = Enum.HorizontalAlignment.Center end
+for _, n in ipairs({ "ChipsRow", "TraitRow", "AscRow" }) do -- B157: an auto-width pill must never wrap ("Max / 1")
+	local row = stats:FindFirstChild(n)
+	for _, d in ipairs(row and row:GetDescendants() or {}) do
+		if d:IsA("TextLabel") then d.TextWrapped = false end
+	end
+end
 local moreBtn = stats:FindFirstChild("MoreStatsButton") :: GuiObject?
 if moreBtn then moreBtn.Visible = false end -- the Stats tab IS More Stats
 drop(sel, "Divider")
@@ -320,6 +346,24 @@ if pp then
 	if t then t.Position, t.Size = S(0.05, 0.02), S(0.9, 0.07) end
 	local l = pp:FindFirstChild("List") :: GuiObject?
 	if l then l.Position, l.Size = S(0.03, 0.11), S(0.94, 0.87) end
+	-- B157: a passive's status words get an icon on their LEFT (UnitsHeroController statusIcons): the Body sits in
+	-- a BodyRow next to a hidden StatusIconTemplate; `IconPad` makes room when icons show.
+	local et = l and l:FindFirstChild("EntryTemplate")
+	local body = et and et:FindFirstChild("Body") :: TextLabel?
+	if et and body and not et:FindFirstChild("BodyRow") then
+		local ell = et:FindFirstChildOfClass("UIListLayout")
+		if ell then ell.SortOrder = Enum.SortOrder.LayoutOrder end
+		local head = et:FindFirstChild("Head") :: GuiObject?
+		if head then head.LayoutOrder = 1 end
+		local row = new("Frame", { Name = "BodyRow", Size = S(1, 0), AutomaticSize = Enum.AutomaticSize.Y,
+			BackgroundTransparency = 1, LayoutOrder = 2, ZIndex = body.ZIndex }, et)
+		body.Parent = row
+		body.RichText = true
+		new("UIPadding", { Name = "IconPad" }, body)
+		local ic = new("ImageLabel", { Name = "StatusIconTemplate", Size = S(0.07, 1), BackgroundTransparency = 1,
+			Visible = false, ZIndex = body.ZIndex + 1 }, row)
+		new("UIAspectRatioConstraint", { AspectRatio = 1 }, ic)
+	end
 end
 local path = sel:FindFirstChild("UpgradePath") :: GuiObject?
 place(path, S(0.685, 0.342), S(0.29, 0.04))

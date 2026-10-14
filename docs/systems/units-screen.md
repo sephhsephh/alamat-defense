@@ -87,3 +87,21 @@ Three columns + a bottom bar (the user's reference: roster left, hero centre, in
 - Tab + Teams labels share one size, the round buttons' captions another (`UITextSizeConstraint "Even"`, capped at
   runtime to the smallest VISIBLE label). `attackChanged` = name, effects or shape KIND (also the Lobby `EvolveController`).
 - Harness: `DevHero = "tab:Upgrades"` etc. The Game copy (B123 loadout-only mode) runs the identical hall code.
+
+## B157 polish (both Places)
+- **Pills fit their words:** `Hall.fitRow` sets the chip/trait row labels' TextSize from the row height (x0.5) and
+  shrinks them together if the row overflows; the labels are `TextWrapped = false` ("Max 1" never wraps).
+- **Lists scroll to the end:** `Hall.fitCanvas` (TierList, MoreStats) drives `CanvasSize` from the UIListLayout's
+  content (AutomaticCanvasSize ignores aspect-ratio rows -- it stopped one row short).
+- **Sell row:** four EQUAL fixed-width buttons (Sell / By Filter / Clear / Cancel); they were AutomaticSize X and overlapped.
+- **Status words in passives:** a status id or name in a passive's text (`CombatIconConfig.Status`, shared to the
+  Lobby B157) is bold, underlined and coloured, and its icon sits on the LEFT (`EntryTemplate.BodyRow.StatusIconTemplate`
+  clones, up to 3; `Body.IconPad` makes room).
+- **Card gradients swing diagonally:** `UIKit.UnitCard.paintTier` loops the tier gradient at Rotation 35 +/- 20
+  (`Motion.loopGradient` opts `Rotation` / `Sway`), not straight vertical.
+- **Every rig in a viewport idles:** `Client.UI.ViewportIdle` (both Places) plays `UnitCard.playIdle` (IdleAnim
+  attribute, else the default idle) on any rig placed in a WorldModel under a ViewportFrame that has no track playing.
+- **No walking behind a menu:** `Client.UI.MenuMovementLock` (both Places) sets the `MenuLocked` player attribute,
+  disables the controls + proximity prompts while UnitsGUI / PlayGUI / EventsGUI (+ `ExtraScreens` attr) is enabled;
+  the shared `MovementController` treats it like a focused TextBox.
+- **Inventory Feed** opens through `screenOpened` first (closes Inventory), then the veil, then picks the unit.

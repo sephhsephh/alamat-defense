@@ -407,8 +407,13 @@ function ScreenFX.success(anchor: GuiObject?, opts: any?)
 		tween(burst, 0.55, { Size = UDim2.fromOffset(target, target) }, Enum.EasingStyle.Quart)
 		local rays = burst:FindFirstChild("Rays") :: GuiObject
 		if rays then tween(rays, 0.9, { Rotation = 90 }, Enum.EasingStyle.Quad) end
+		-- B158: the burst is IMAGE art now (rays / glow / rune ring / flare): the ring turns the other way
+		local ring = burst:FindFirstChild("Ring") :: GuiObject?
+		if ring then tween(ring, 0.9, { Rotation = -70 }, Enum.EasingStyle.Quad) end
 		for _, d in ipairs(burst:GetDescendants()) do
-			if d:IsA("Frame") then
+			if d:IsA("ImageLabel") then
+				tween(d, 0.6, { ImageTransparency = 1 }, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0.3)
+			elseif d:IsA("Frame") then
 				tween(d, 0.6, { BackgroundTransparency = 1 }, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0.3)
 			elseif d:IsA("UIStroke") then
 				tween(d, 0.6, { Transparency = 1 }, Enum.EasingStyle.Quad, Enum.EasingDirection.In, 0.3)
@@ -422,25 +427,30 @@ function ScreenFX.success(anchor: GuiObject?, opts: any?)
 		if sp then
 			paint(sp, seq)
 			sp.Position = UDim2.fromOffset(c.X, c.Y)
-			local s0 = math.random(8, big and 18 or 13)
+			local img = sp:IsA("ImageLabel") -- B158: an image spark is mostly soft glow, so it starts bigger
+			local s0 = math.random(8, big and 18 or 13) * (if img then 2.4 else 1)
 			sp.Size = UDim2.fromOffset(s0, s0)
 			sp.Parent = l
 			local a = (i / (big and 18 or 10)) * math.pi * 2 + math.random() * 0.4
 			local dist = size * (0.8 + math.random() * (big and 1.4 or 0.8))
+			local fade = if img then "ImageTransparency" else "BackgroundTransparency"
+			local s1 = if img then s0 * 0.4 else 2 -- a sparkle image shrunk to 2px is an invisible dot
 			tween(sp, 0.6 + math.random() * 0.3, {
 				Position = UDim2.fromOffset(c.X + math.cos(a) * dist, c.Y + math.sin(a) * dist),
 				Rotation = sp.Rotation + 180,
-				BackgroundTransparency = 1,
-				Size = UDim2.fromOffset(2, 2),
+				[fade] = 1,
+				Size = UDim2.fromOffset(s1, s1),
 			}, Enum.EasingStyle.Quart)
 			task.delay(1, function() sp:Destroy() end)
 		end
 	end
 
-	local flash = l:FindFirstChild("Flash") :: Frame
+	local flash = l:FindFirstChild("Flash") :: GuiObject?
 	if flash then
-		flash.BackgroundTransparency = big and 0.35 or 0.7
-		tween(flash, big and 0.5 or 0.3, { BackgroundTransparency = 1 })
+		-- B158: the flash is a soft image light (ImageTransparency); an older Frame flash still works
+		local key = if flash:IsA("ImageLabel") then "ImageTransparency" else "BackgroundTransparency"
+		;(flash :: any)[key] = if big then 0.25 else 0.55
+		tween(flash, if big then 0.6 else 0.4, { [key] = 1 })
 	end
 
 	if type(o.Text) == "string" and o.Text ~= "" then

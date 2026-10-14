@@ -323,7 +323,7 @@ end
 --
 -- Returns a handle with `:Cancel()` (the old return was a Tween; `Cancel` is the only method any
 -- caller used, so every existing call site keeps working unchanged).
-type Loop = { stops: { Stop }, speed: number, phase: number, written: ColorSequence? }
+type Loop = { stops: { Stop }, speed: number, phase: number, written: ColorSequence?, rot: number?, sway: number? }
 local loops: { [UIGradient]: Loop } = {}
 local loopConn: RBXScriptConnection? = nil
 local loopClock = 0
@@ -375,6 +375,10 @@ local function ensureLoopDriver()
 				local seq = Motion.phased(e.stops, (loopClock * e.speed + e.phase) % 1)
 				grad.Color = seq
 				e.written = seq
+				-- B157: an optional slow SWAY of the gradient's angle (a diagonal sheen that breathes)
+				if e.sway and e.rot then
+					grad.Rotation = e.rot + math.sin(loopClock * 0.45 + e.phase * 6.283) * e.sway
+				end
 			end
 		end
 	end)
@@ -382,7 +386,8 @@ end
 
 -- Loop `grad`'s CURRENT colours. `periodOverride` = seconds per full loop (default Tuning).
 -- `opts.Phase` (0..1) staggers a gradient; `opts.Reverse` runs it the other way.
-function Motion.loopGradient(grad: UIGradient?, periodOverride: number?, opts: { Phase: number?, Reverse: boolean? }?): { Cancel: (any) -> () }?
+-- B157: `opts.Rotation` (degrees) sets the sheen's angle and `opts.Sway` (degrees) rocks it gently around it.
+function Motion.loopGradient(grad: UIGradient?, periodOverride: number?, opts: { Phase: number?, Reverse: boolean?, Rotation: number?, Sway: number? }?): { Cancel: (any) -> () }?
 	if not grad then return nil end
 	grad.Offset = Vector2.new(0, 0)
 	local period = math.max(0.1, periodOverride or Motion.Tuning.IdleGradientPeriod)
@@ -392,7 +397,10 @@ function Motion.loopGradient(grad: UIGradient?, periodOverride: number?, opts: {
 		speed = (1 / period) * (if o.Reverse then -1 else 1),
 		phase = o.Phase or 0,
 		written = nil,
+		rot = o.Rotation,
+		sway = o.Sway,
 	}
+	if o.Rotation then grad.Rotation = o.Rotation end
 	ensureLoopDriver()
 	return {
 		Cancel = function(_self)

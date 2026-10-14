@@ -21,6 +21,11 @@ user's reference screenshots; decisions: project doc `claude/B108-playgui-decisi
   Regular/Weekly challenge pay via `ConsumeChallengeClear`), `MatchEntryService` (challenge kind), stages
   `Stage1_Act4` "Night of Wings", `Stage1_Act5` "The Scarecrow King", `Stage1_Infinite` (+ wave lists).
 
+**B157 (user: "cant select apolaki stage"):** the stage panel's Normal / Hard selection is the authored
+`DifficultyRow.{NormalButton,HardButton}.SelectedRing` overlay (gold `Ring` stroke); `PlayController.paintDifficulty`
+toggles it via `ring()`. The old `SelectedStroke` was dropped by the B151 plate convert and the panel errored on open.
+While PlayGUI is open the player cannot walk and prompts are off (`Client.UI.MenuMovementLock`).
+
 Split out of `docs/systems/lobby-ui.md` at B15 when that file passed its 300-line cap (ADR-0006
 governs STATE.md only; every other doc splits). Implementation law is `docs/blueprints/playgui.md`
 — read it before changing anything here. Session tasks P1–P7 live in its §9.

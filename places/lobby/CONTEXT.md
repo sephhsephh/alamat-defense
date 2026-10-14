@@ -5,6 +5,8 @@ The social/meta Place: collection, banners, stage + difficulty select, parties, 
 
 ## Current live state
 
+- **B157-158:** menus freeze movement (`Client.UI.MenuMovementLock`), every viewport rig idles (`Client.UI.ViewportIdle`),
+  plates un-padded, every frame-built VFX is image art (`screen-fx.md`); details in `units-screen.md` "B157 polish".
 - **B155-156:** the Units screen is the full-screen **HERO HALL** in the user's reference layout (roster left, unit
   centre, info panel right, nav bar of tabs + Teams + big Equip; duplicate buttons removed; veil; phone layout) -- `units-screen.md`. **B154:**
   `UnitInfoCatalog` regenerated + validated at Game boot, More Stats synced.

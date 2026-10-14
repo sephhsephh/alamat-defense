@@ -148,6 +148,9 @@ and `Flash`. Every reel step paints the trait's icon (`TraitRegistry.Icon`) and 
 shakes the card. The good-trait reveal shows the icon with the name under it. Sounds (empty = silent):
 `SoundService.UI.TraitReelTick`, `TraitLand`, `TraitGoodReveal`. Fill `TraitDefinitions.Icon` and every surface picks it up
 (Units card, hotbar slot, hover Trait chip `TraitIcon`, trait reroll list, reveal).
+**B158 (user: "i hate vfx built on frames"):** `IconHolder.Ray1` = sparkle-star rays, `Ray2` = RuneRing, `Glow` = Flare,
+`Card.Flash` = a Flare bloom -- all ImageLabels painted through `ImageColor3` / faded through `ImageTransparency`
+(were stroked rounded squares + flat rectangles). The "trait gained" burst is the shared ScreenFX (image art too).
 
 ## B108 pt11c
 "Skip animation" skips only the reel. A good (Special) trait ALWAYS plays the full reveal and clicks cannot skip it

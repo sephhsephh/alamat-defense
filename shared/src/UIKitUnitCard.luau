@@ -147,7 +147,9 @@ function UnitCard.paintTier(root: Instance?, tier: string, opts: PaintOpts?)
 		-- B108 pt11 (user: every unit portrait's tier colours move): EVERY kit unit card now runs the
 		-- seamless colour loop, not just the ones that asked for `Idle`. Speed varies a little per card.
 		if Motion and Motion.loopGradient then
-			Motion.loopGradient(g, 2.5 + math.random() * 1.5)
+			-- B157 (user: "i hate its straight vertical"): the card's sheen runs DIAGONAL and sways slowly,
+			-- each card on its own phase and pace, so a grid shimmers instead of marching in stripes.
+			Motion.loopGradient(g, 4 + math.random() * 2, { Phase = math.random(), Rotation = 35, Sway = 20 })
 		elseif o.Idle and Motion then
 			Motion.idleGradient(g)
 		end

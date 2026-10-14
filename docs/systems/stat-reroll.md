@@ -153,3 +153,8 @@ Lobby-local; no shared canon changed, **no schema bump** (`StatRolls` and `Worth
 ## B108 pt11c -- AL reveal
 Any reroll / instant roll that lands AL on a rolled stat plays `StarterGui.ALRevealScreen` (modal, no skip, ~3.3s,
 sound `SoundService.UI.ALReveal`). Grade letters use `UnitCard.paintGrade` (AL animated).
+B158: its spinning rays (RuneRing / sparkle star / MagicCircle), glow (Flare) and flash (Flare bloom) are images.
+
+## B157 -- no chips, no animation
+`haveChips(stat)` runs before Reroll / Instant Roll: with 0 rerolls (or 0 focus chips for a single stat) it shows the
+`insufficient_*` notice and returns, so the roll animation never starts (it used to play, then the server refused).

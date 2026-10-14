@@ -4,6 +4,7 @@
 The match Place: loads a map, runs waves, towers fight, rewards commit to the profile.
 Server-authoritative, registry/config-driven, signal-decoupled. `--!strict` throughout.
 
+**B157-158:** `Client.UI.MenuMovementLock` + `Client.UI.ViewportIdle` here too; 21 plates un-padded; ScreenFX + LoadingScreen VFX are image art.
 **B155-156:** the match's Units copy (J) is the same full-screen **Hero Hall** (reference layout; loadout-only mode kept) -- `units-screen.md`.
 **B154:** `Server.UnitInfoCatalogValidate` fails boot loud when the shared `UnitInfoCatalog` drifts from the configs.
 

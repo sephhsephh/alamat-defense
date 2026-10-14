@@ -23,6 +23,19 @@ ScreenFX call is guarded (`if ScreenFX then`), so a screen still works without t
 - **Never UIScale a panel on OPEN.** Controllers size grids from `AbsoluteSize` while rendering on open, and a
   scaled-down panel made the Silver Shop lay out shrunken cards. Open = Position + Rotation only; popups the same.
 - Templates are authored `Visible = false`; `template()` turns the clone on (a Folder does not hide GuiObjects).
+- **VFX are IMAGES, never frames (B158, user: "i hate vfx built on frames").** The layer art is the Alamat image
+  kit tinted by `TierGradient` (`tools/screenfx_layer_build.luau`, both Places): `Burst` = transparent container
+  { `Glow` GlowRing, `Rays` { `RayA`, `RayB` = crossed Sparkles[1] }, `Ring` RuneRing (counter-rotates), `Flare` };
+  `Spark` = a sparkle image (starts 2.4x the frame size, shrinks to 40%, never to a 2px dot); `Charge` = container
+  { `Glow` GlowRing overhanging the anchor's rect }; `Flash` = a screen-wide `Flare` bloom (ImageTransparency).
+  The code fades `ImageTransparency` on images and still handles a legacy Frame piece.
+- **Never `Theme.Images.Burst` over a scene**: it is black-and-white with a dark body and paints a dark disc (GUI has
+  no additive blending). Clean white-on-transparent kit images: Sparkles[1..3], Flare, GlowRing, RuneRing, MagicCircle.
+- The other screens' frame-built effects were swapped the same way (`tools/vfx_images_build.luau`): the trait-reroll
+  reel, the AL reveal, the summon reveal (orb / rays / flash), Obtain Rewards (sunburst, card shockwave / glow /
+  flash), the loading screen (both Places), the Crafting ring, the Daily Rewards ready-card shine, Starter Choice
+  glows. Their controllers tween `ImageTransparency` / `ImageColor3`. Still frames on purpose: plate press `Flash`
+  layers, card shine SWEEPS, bar fills, dims, and the two Philippine-sun LOGOS (await emblem art from the user).
 - The only instance made in code is the `FXScale` UIScale (Motion.isolate precedent).
 
 ## Per screen
