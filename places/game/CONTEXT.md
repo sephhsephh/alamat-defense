@@ -4,6 +4,9 @@
 The match Place: loads a map, runs waves, towers fight, rewards commit to the profile.
 Server-authoritative, registry/config-driven, signal-decoupled. `--!strict` throughout.
 
+**B153:** selected-unit panel = side panel PC/console, **bottom sheet on mobile**; Auto Upgrade toggle + Unit Manager
+"Auto Upgrade All"; effects/passives chips; breakdown names buffs + folds passive damage (`StatRows` hook) -- `unit-selection.md`.
+
 **B151-152:** RS.AlamatUI is now in the Game too (shared canon) + every rectangle button is a Plate; hotbar rarity glow;
 Settings fixed to two columns + Alamat look (`alamat-ui.md`, `settings.md`).
 

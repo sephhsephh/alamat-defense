@@ -150,3 +150,10 @@ Explorer. (Its authored value currently reads `{1, 900}, {0.5, 0}`, which no bat
 button that opened a panel is underneath it. That is what the reference screenshots do, which is why
 **F** (Unit Manager) and **C** (Stage Info) are the real way to switch -- one slides in as the other
 goes out.
+
+## B153 -- Auto Upgrade All + plates + read-only cards
+- Footer = **Close / Auto Upgrade All / Sell All** (x 0.03 / 0.355 / 0.68, width 0.29 each; all Alamat Plates).
+  `Root.AutoAllButton` calls the existing `RequestAutoUpgradeAll(on)`: ON for every unit, or OFF when every unit is
+  already on; its label / colour follow (`updateFooter`). Proven live: every unit flipped on, Oryol auto-bought 2 tiers.
+- A card whose tower is `ReadOnly` (match over, B149 freeze) hides Upgrade / ButtonRow / AutoRow / Target -- the
+  server refuses them anyway (`MatchOver`).

@@ -224,3 +224,26 @@ badges, Range/VFX/Info icon strip, priority row, red Sell + green Upgrade with k
 - **VFX toggle** (eye): TAP hides this unit's VFX, HOLD (0.5 s) toggles every unit of that player. Client-only
   attribute `ClientHideVFX` on the model, honoured by `VFXController` (sounds still play).
 - Child labels are named `Title`, never `Name` (a child called Name collides with Instance.Name).
+
+## B153 -- mobile bottom sheet, auto-upgrade toggle, effects chips, honest breakdown
+Layout (`tools/tower_panel_build.luau`, Edit, re-runnable; backups `ServerStorage._UIBackup_B153`): user pick =
+**side panel on PC / console, bottom sheet on mobile**. Every re-placed node carries BOTH layouts as attributes
+(`PcPos/PcSize/PcAnchor/PcVisible` + `Mob*`; grid `PcCell/MobCell/PcPad/MobPad`; list `PcVAlign/MobVAlign`; Root
+aspect `PcRatio 0.56 Height` / `MobRatio 4.7 Width`) -- edit them in Studio, `applyLayout` only picks the set.
+`fitPanel`: mobile = viewport < 900 px or touch-only; harness `TowerSelection.DevMobileLayout` (leave OFF). Key
+chips hide on mobile.
+- **Auto Upgrade toggle** on the card (`PortraitCard.AutoUpgradeButton`, Z) + **Auto Upgrade All** in the Unit
+  Manager footer (`Root.AutoAllButton`: turns auto ON for all, or OFF when every unit is already on).
+- **Effects & Passives** card (`Root.EffectsCard.Chips`, `Templates.EffectChipTemplate`): one chip per on-hit
+  status (`OnHitEffects`, icon from `CombatIconConfig.Get("Status", id)`, e.g. Oryol "Slow 2s") + one per passive
+  (tooltip = `DescribePassive`). Every button is an Alamat Plate.
+- **Breakdown is honest now.** Buff rows carry a `Label` (`AddBuff(spec.Label)`: "Crowd bonus", "Frenzy",
+  "Aura: <unit>", the ability name) instead of the raw source key (`crowd:table: 0x...`). Damage-time passives
+  expose an optional **`StatRows(ctx)`** hook (KillStack, PerWaveRamp, ConsecutiveHits, SiblingBonus, BonusVs);
+  `StatSources` lists them by their `UnitInfoCatalog` name ("Feeding (3 kills, max +40%)") and folds the
+  unconditional ones into **`Effective`** -- what the stats card and the breakdown TOTAL show ("passives included").
+  `Conditional = true` rows (BonusVs) are listed, never folded. Damage stays a whole number (B149 rule), the
+  next-tier preview too.
+- **Read-only after a match** (B149 freeze): `ReadOnlyBanner` (a Frame + `Label` -- a UIGradient on a TextLabel
+  tints its TEXT too) replaces Sell / Upgrade / Auto / priority arrows / hotkey row; the Unit Manager card hides its
+  actions. Proven live after a real defeat: tower kept on the map, `ReadOnly = true`.
