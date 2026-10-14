@@ -5,8 +5,8 @@ The social/meta Place: collection, banners, stage + difficulty select, parties, 
 
 ## Current live state
 
-- **B155:** the Units screen is the full-screen **HERO HALL** (roster left, showcase right with Stats / Passives /
-  Upgrades / Traits tabs, tier stage, team strip, veil on open/close, phone layout) -- `units-screen.md`. **B154:**
+- **B155-156:** the Units screen is the full-screen **HERO HALL** in the user's reference layout (roster left, unit
+  centre, info panel right, nav bar of tabs + Teams + big Equip; duplicate buttons removed; veil; phone layout) -- `units-screen.md`. **B154:**
   `UnitInfoCatalog` regenerated + validated at Game boot, More Stats synced.
 - **B151-152:** universal Alamat **PLATE** button on every rectangle button (`alamat-ui.md`); hotbar rarity glow +
   Settings two-column fix + Alamat look + `HotbarTierGlow` setting (`settings.md`, `ui-kit.md`).

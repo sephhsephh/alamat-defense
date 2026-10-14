@@ -1,20 +1,22 @@
--- tools/units_hall_build.luau (B155) -- run with execute_luau in EACH Place (Edit). Re-runnable.
--- User pick "Hero Hall, full screen": the Units screen becomes a full-screen hall --
---   LEFT  : the roster grid (6 per row), a tools row (capacity / Unequip All / Teams / Quick Sell) and the TEAM
---           STRIP (the equipped loadout, 6 slots, locked ones show their level)
---   RIGHT : the SHOWCASE -- name / tier / chips, the unit on a tier-tinted STAGE (rays, aura, magic-circle floor),
---           stars / trait / level / stat pills under it, and four TABS: Stats (More Stats list), Passives,
---           Upgrades (the path bar + one row per tier) and Traits (trait + swap, ascension)
---           with the action PLATES (Feed / Passives / View / Favorite / Lock / Sell) and Equip under it.
--- Every node the controllers already resolve keeps its NAME and PARENT (UnitsController / UnitsHeroController
--- WaitForChild them), so this only re-places them and adds new authored nodes the B155 controller code drives:
---   Main.HallBG, Main.Top.Crest, Bottom.TeamStrip{Label, Slots.Slot1..6}, sel.Stage{Rays, Aura, Floor, Rune, Glow},
---   sel.Tabs{TabStats, TabPassives, TabUpgrades, TabTrait}, sel.UpgradesPage.TierList{TierRowTemplate},
---   sel.TraitPage{TraitCard, AscCard}. Tab plates carry OnColor / OffColor attributes.
--- Scale only, every rectangle action button an Alamat Plate. Backup: ServerStorage._UIBackup_B155.UnitsGUI.
+-- tools/units_hall_build.luau (B155, v2 = B156) -- run with execute_luau in EACH Place (Edit). Re-runnable, from the
+-- pristine screen or from v1. User (B156, with a reference screenshot): "i like the layout of this, apply that for
+-- units, fit the buttons, reduce duplicate buttons". THREE COLUMNS + a bottom bar:
+--   LEFT   : the roster panel (ribbon "UNITS", search + filters, 4 per row, footer capacity / Unequip All / Sell;
+--            in sell mode the sell row takes the whole footer)
+--   CENTRE : the unit, big, full body on its tier-tinted stage
+--   RIGHT  : the info panel = the hero BG (its TierStroke wears the unit's tier): name, tier, chips, stars + trait,
+--            level, stat pills, the open TAB page, and a row of ROUND icon buttons (Feed / View / Favorite / Lock)
+--   BOTTOM : nav bar = tabs Stats / Passives / Upgrades / Traits + Teams, and the big EQUIP button (the ref's PLAY)
+-- Duplicates removed: the rail's Passives (= the Passives tab), the rail's Sell (= Sell, which now pre-ticks the
+-- shown unit), the trait chip's Swap (= the Traits page Swap), the team strip (= equipped checkmarks + Teams).
+-- Every node the controllers resolve keeps its NAME and PARENT; Top / Bottom / SelectedUnitFrame / Stats become
+-- full-screen transparent frames so every position below is a fraction of the SCREEN.
+-- PC / console = Pc*; phone = Mob* (taller rows / bar, 3 per row), picked by UnitsHeroController.Hall.applyLayout.
+-- Scale only; rectangle buttons are Alamat Plates; round icon buttons are discs. Backup: _UIBackup_B155 (pristine).
 local RS = game:GetService("ReplicatedStorage")
 local SS = game:GetService("ServerStorage")
 local SG = game:GetService("StarterGui")
+local CollectionService = game:GetService("CollectionService")
 local Theme = require(RS:WaitForChild("AlamatUI"):WaitForChild("Theme")) :: any
 local P = require(SS.DevTools.AlamatPlate:Clone())
 local Icons = require(RS.Shared.IconCatalog) :: any
@@ -35,11 +37,10 @@ local function new(class: string, props: { [string]: any }, parent: Instance?): 
 	o.Parent = parent
 	return o
 end
-local function drop(o: Instance, name: string) local c = o:FindFirstChild(name) if c then c:Destroy() end end
--- place() authors the PC / console layout AND records it (PcPos / PcSize); mob() records the PHONE layout
--- (MobPos / MobSize). UnitsHeroController picks the set at runtime (touch-only or a short screen = phone).
-local function place(o: GuiObject?, pos: UDim2, size: UDim2, anchor: Vector2?)
-	if not o then return end
+local function drop(o: Instance?, name: string) local c = o and o:FindFirstChild(name) if c then c:Destroy() end end
+-- place() authors the PC / console layout AND records it (PcPos / PcSize); mob() records the PHONE layout.
+local function place(o: Instance?, pos: UDim2, size: UDim2, anchor: Vector2?)
+	if not o or not o:IsA("GuiObject") then return end
 	o.AnchorPoint = anchor or V2(0, 0)
 	o.Position = pos
 	o.Size = size
@@ -52,8 +53,8 @@ local function mob(o: Instance?, pos: UDim2, size: UDim2)
 	o:SetAttribute("MobSize", size)
 end
 local function corner(o: Instance, r: number?) return new("UICorner", { CornerRadius = UDim.new(r or 0.12, 0) }, o) end
-local function goldStroke(o: Instance, t: number?)
-	local s = new("UIStroke", { Name = "Rim", Color = C(255, 255, 255), Thickness = t or 1.5, Transparency = 0.25,
+local function goldStroke(o: Instance, t: number?, a: number?)
+	local s = new("UIStroke", { Name = "Rim", Color = C(255, 255, 255), Thickness = t or 1.5, Transparency = a or 0.2,
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border }, o)
 	new("UIGradient", { Name = "Gold", Color = Theme.Gold }, s)
 	return s
@@ -76,6 +77,30 @@ local function nightPanel(o: GuiObject, alpha: number?)
 	for _, g in ipairs(o:GetChildren()) do if g:IsA("UIGradient") and g.Name == "Night" then g:Destroy() end end
 	new("UIGradient", { Name = "Night", Rotation = 90, Color = CS(C(40, 26, 74), C(16, 10, 32)) }, o)
 end
+local function even(l: TextLabel?)
+	if not l then return end
+	for _, k in ipairs(l:GetChildren()) do if k:IsA("UITextSizeConstraint") then k:Destroy() end end
+	new("UITextSizeConstraint", { Name = "Even", MaxTextSize = 100, MinTextSize = 1 }, l) -- capped to the set's smallest at runtime
+end
+-- a framed panel: night gradient, gold rim, a thin inner line, four corner sparkles
+local function framePanel(name: string, parent: Instance, z: number): Frame
+	drop(parent, name)
+	local f = new("Frame", { Name = name, ZIndex = z, BorderSizePixel = 0 }, parent)
+	nightPanel(f, 0.12)
+	corner(f, 0.03)
+	goldStroke(f, 2, 0.1)
+	local inner = new("Frame", { Name = "Inner", AnchorPoint = V2(0.5, 0.5), Position = S(0.5, 0.5), Size = S(0.97, 0.975),
+		BackgroundTransparency = 1, ZIndex = z }, f)
+	corner(inner, 0.03)
+	new("UIStroke", { Name = "Line", Color = C(255, 214, 140), Thickness = 1, Transparency = 0.7 }, inner)
+	for i, at in ipairs({ V2(0, 0), V2(1, 0), V2(0, 1), V2(1, 1) }) do
+		local sp = img("Corner" .. i, Theme.Images.Sparkles[(i - 1) % 3 + 1], f, { Position = S(at.X, at.Y), Size = S(1, 0.05),
+			ImageTransparency = 0.15, ZIndex = z + 1 })
+		new("UIAspectRatioConstraint", { AspectRatio = 1, DominantAxis = Enum.DominantAxis.Height }, sp)
+		new("UIGradient", { Name = "Tint", Color = Theme.tint("Gold") }, sp)
+	end
+	return f
+end
 
 local main = gui:WaitForChild("Main") :: ImageLabel
 local top = main:WaitForChild("Top") :: Frame
@@ -83,215 +108,194 @@ local bottom = main:WaitForChild("Bottom") :: Frame
 local sel = bottom:WaitForChild("SelectedUnitFrame") :: Frame
 local stats = sel:WaitForChild("Stats") :: Frame
 
+-- a re-run starts clean: no layout set from an older build survives
+for _, d in ipairs(gui:GetDescendants()) do
+	for _, a in ipairs({ "PcPos", "PcSize", "MobPos", "MobSize" }) do
+		if d:GetAttribute(a) ~= nil then d:SetAttribute(a, nil) end
+	end
+end
+drop(top, "Crest") -- v1
+drop(bottom, "TeamStrip") -- v1: the equipped checkmarks + the Teams screen already say this
+drop(sel, "Tabs") -- v1 (the tabs live in the bottom bar now)
+
 -- ===== the hall: full screen =====
 local ar = main:FindFirstChildOfClass("UIAspectRatioConstraint")
-if ar then ar:Destroy() end -- 16:9 lock; the hall fills any screen (the backup keeps it)
+if ar then ar:Destroy() end
 if main.Image ~= "" and main:GetAttribute("HallOldImage") == nil then main:SetAttribute("HallOldImage", main.Image) end
 main.ImageTransparency = 1
 main.BackgroundTransparency = 1
 place(main, S(0.5, 0.5), S(1, 1), V2(0.5, 0.5))
 local pad = main:FindFirstChildOfClass("UIPadding")
-if pad then
-	pad.PaddingLeft, pad.PaddingRight, pad.PaddingTop, pad.PaddingBottom = UDim.new(), UDim.new(), UDim.new(), UDim.new()
-end
+if pad then pad.PaddingLeft, pad.PaddingRight, pad.PaddingTop, pad.PaddingBottom = UDim.new(), UDim.new(), UDim.new(), UDim.new() end
 drop(main, "HallBG")
 local bg = new("Frame", { Name = "HallBG", Size = S(1, 1), BackgroundColor3 = C(255, 255, 255), BorderSizePixel = 0, ZIndex = 0 }, main)
 new("UIGradient", { Name = "Night", Rotation = 90, Color = CS({ CK(0, C(34, 20, 64)), CK(0.55, C(20, 12, 40)), CK(1, C(8, 5, 18)) }) }, bg)
-local glow = img("Glow", Theme.Images.GlowRing, bg, { Position = S(0.79, 0.45), Size = S(1.2, 1.2), ImageTransparency = 0.82, ZIndex = 0 })
+local glow = img("Glow", Theme.Images.GlowRing, bg, { Position = S(0.5, 0.42), Size = S(1.2, 1.15), ImageTransparency = 0.78, ZIndex = 0 })
 new("UIAspectRatioConstraint", { AspectRatio = 1, DominantAxis = Enum.DominantAxis.Height }, glow)
 new("UIGradient", { Name = "Tint", Color = Theme.tint("Violet") }, glow)
-local seal = img("Seal", Theme.Images.MagicCircle, bg, { Position = S(0.29, 0.5), Size = S(1, 1.1), ImageTransparency = 0.95, ZIndex = 0 })
+local seal = img("Seal", Theme.Images.MagicCircle, bg, { Position = S(0.5, 0.46), Size = S(1, 0.95), ImageTransparency = 0.93, ZIndex = 0 })
 new("UIAspectRatioConstraint", { AspectRatio = 1, DominantAxis = Enum.DominantAxis.Height }, seal)
 new("UIGradient", { Name = "Tint", Color = Theme.tint("Gold") }, seal)
-for i, y in ipairs({ 0.097, 0.993 }) do
-	local rule = new("Frame", { Name = "Rule" .. i, AnchorPoint = V2(0.5, 0.5), Position = S(0.5, y), Size = S(0.96, 0.003),
-		BackgroundColor3 = C(255, 255, 255), BorderSizePixel = 0, ZIndex = 0 }, bg)
-	new("UIGradient", { Color = CS(C(255, 222, 140), C(214, 140, 46)),
-		Transparency = NS({ NK(0, 1), NK(0.15, 0.2), NK(0.85, 0.2), NK(1, 1) }) }, rule)
-end
 
--- ===== header =====
-place(top, S(0.02, 0.018), S(0.96, 0.07))
-mob(top, S(0.02, 0.012), S(0.96, 0.085))
-top.BackgroundTransparency = 1
-drop(top, "Crest")
-local crest = new("Frame", { Name = "Crest", Position = S(0, 0), Size = S(0.2, 1), BackgroundTransparency = 1 }, top)
-local cIcon = img("Icon", Theme.Images.MagicCircle, crest, { AnchorPoint = V2(0, 0.5), Position = S(0, 0.5), Size = S(1, 1.15), ZIndex = 2 })
-new("UIAspectRatioConstraint", { AspectRatio = 1, DominantAxis = Enum.DominantAxis.Height }, cIcon)
-new("UIGradient", { Name = "Tint", Color = Theme.tint("Gold") }, cIcon)
-label("Kicker", "HERO HALL", crest, { Position = S(0.2, 0.02), Size = S(0.8, 0.32), TextColor3 = C(196, 170, 255), ZIndex = 2 })
-local title = label("Title", "UNITS", crest, { Position = S(0.2, 0.32), Size = S(0.8, 0.68), TextColor3 = C(255, 255, 255), ZIndex = 2 })
-new("UIGradient", { Name = "Gold", Rotation = 90, Color = Theme.LabelGold }, title)
-new("UIStroke", { Name = "Outline", Color = C(40, 20, 6), Thickness = 1.5 }, title)
-place(top:FindFirstChild("SearchBar") :: GuiObject, S(0.215, 0.5), S(0.235, 0.8), V2(0, 0.5))
-place(top:FindFirstChild("FiltersButton") :: GuiObject, S(0.46, 0.5), S(0.105, 0.8), V2(0, 0.5))
-local close = top:FindFirstChild("CloseButton") :: GuiObject?
-if close then
-	place(close, S(1, 0.5), S(0.06, 0.95), V2(1, 0.5))
-	drop(close, "Square")
-	new("UIAspectRatioConstraint", { Name = "Square", AspectRatio = 1, DominantAxis = Enum.DominantAxis.Height }, close)
-end
-
--- ===== the body =====
-place(bottom, S(0.02, 0.105), S(0.96, 0.88))
-mob(bottom, S(0.02, 0.11), S(0.96, 0.88))
-bottom.BackgroundTransparency = 1
-for _, c in ipairs(bottom:GetChildren()) do if c:IsA("UIStroke") then c.Enabled = false end end
-
--- roster grid: 6 per row (UIListLayout wraps; padding is -0.015 of the width)
-local grid = bottom:WaitForChild("UnitsContainer") :: ScrollingFrame
-place(grid, S(0, 0), S(0.565, 0.835))
-mob(grid, S(0, 0), S(0.5, 0.78))
-nightPanel(grid, 0.25)
-drop(grid, "Rim")
-goldStroke(grid, 1.5)
-for _, c in ipairs(grid:GetChildren()) do
-	if c:IsA("GuiObject") and c.Name == "UnitIconV2" then c.Size = S(0.1783, 0) end
-end
-grid:SetAttribute("CardWidth", 0.1667) -- UnitsController sizes each card's layout slot from this (6 per row)
-grid:SetAttribute("PcCardWidth", 0.1667)
-grid:SetAttribute("MobCardWidth", 0.25) -- 4 per row on a phone: bigger touch targets
-
--- tools row
-place(bottom:FindFirstChild("CapacityBar") :: GuiObject, S(0, 0.85), S(0.125, 0.065))
-place(bottom:FindFirstChild("UnequipAllButton") :: GuiObject, S(0.135, 0.85), S(0.135, 0.065))
-place(bottom:FindFirstChild("TeamsButton") :: GuiObject, S(0.28, 0.85), S(0.135, 0.065))
-place(bottom:FindFirstChild("QuickSellButton") :: GuiObject, S(0.425, 0.85), S(0.14, 0.065))
-place(bottom:FindFirstChild("SellButtons") :: GuiObject, S(0.135, 0.85), S(0.43, 0.065))
-mob(bottom:FindFirstChild("CapacityBar"), S(0, 0.795), S(0.11, 0.095))
-mob(bottom:FindFirstChild("UnequipAllButton"), S(0.12, 0.795), S(0.12, 0.095))
-mob(bottom:FindFirstChild("TeamsButton"), S(0.25, 0.795), S(0.12, 0.095))
-mob(bottom:FindFirstChild("QuickSellButton"), S(0.38, 0.795), S(0.12, 0.095))
-mob(bottom:FindFirstChild("SellButtons"), S(0.12, 0.795), S(0.38, 0.095))
-local sellStatus = bottom:FindFirstChild("SellStatus") :: TextLabel?
-if sellStatus then
-	place(sellStatus, S(0, 0.785), S(0.565, 0.05))
-	mob(sellStatus, S(0, 0.72), S(0.5, 0.06))
-	sellStatus.ZIndex = 8
-end
-
--- team strip (the equipped loadout)
-drop(bottom, "TeamStrip")
-local strip = new("Frame", { Name = "TeamStrip", ZIndex = 3 }, bottom)
-place(strip, S(0, 0.925), S(0.565, 0.075))
-mob(strip, S(0, 0.9), S(0.5, 0.1))
-nightPanel(strip, 0.15)
-corner(strip, 0.25)
-goldStroke(strip, 1.2)
-local stripLbl = label("Label", "TEAM", strip, { Position = S(0.015, 0.15), Size = S(0.08, 0.7), ZIndex = 4,
-	TextXAlignment = Enum.TextXAlignment.Center, TextColor3 = C(255, 255, 255) })
-new("UIGradient", { Name = "Gold", Rotation = 90, Color = Theme.LabelGold }, stripLbl)
-local slots = new("Frame", { Name = "Slots", Position = S(0.105, 0.08), Size = S(0.885, 0.84), BackgroundTransparency = 1, ZIndex = 4 }, strip)
-new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0.012, 0),
-	HorizontalAlignment = Enum.HorizontalAlignment.Center, VerticalAlignment = Enum.VerticalAlignment.Center,
-	SortOrder = Enum.SortOrder.LayoutOrder }, slots)
-for i = 1, 6 do
-	local s = new("TextButton", { Name = "Slot" .. i, LayoutOrder = i, Size = S(0.155, 1), Text = "", AutoButtonColor = false,
-		BackgroundColor3 = C(24, 15, 44), BackgroundTransparency = 0.1, ZIndex = 5, Selectable = true }, slots)
-	corner(s, 0.2)
-	local st = new("UIStroke", { Name = "Rim", Color = C(255, 255, 255), Thickness = 1, Transparency = 0.5 }, s)
-	new("UIGradient", { Name = "Gold", Color = Theme.Gold }, st)
-	label("Empty", "EMPTY", s, { AnchorPoint = V2(0.5, 0.5), Position = S(0.5, 0.5), Size = S(0.8, 0.4), ZIndex = 6,
-		TextXAlignment = Enum.TextXAlignment.Center, TextColor3 = C(150, 136, 186) })
-	local lk = img("Lock", Icons.get("Lock"), s, { Position = S(0.5, 0.36), Size = S(0.5, 0.42), ZIndex = 6, Visible = false,
-		ImageColor3 = C(255, 214, 120) })
-	new("UIAspectRatioConstraint", { AspectRatio = 1, DominantAxis = Enum.DominantAxis.Height }, lk)
-end
-
--- ===== the showcase =====
-place(sel, S(0.58, 0), S(0.42, 0.835))
-mob(sel, S(0.51, 0), S(0.49, 0.78))
-local selBG = sel:FindFirstChild("BG") :: GuiObject?
-place(selBG, S(0, 0), S(1, 1))
-if selBG then selBG.ZIndex = 1 end
+-- Top, Bottom, the showcase and Stats span the screen: positions below are fractions of the screen
+place(top, S(0, 0), S(1, 1))
+place(bottom, S(0, 0), S(1, 1))
+place(sel, S(0, 0), S(1, 1))
 place(stats, S(0, 0), S(1, 1))
+top.BackgroundTransparency, bottom.BackgroundTransparency, sel.BackgroundTransparency, stats.BackgroundTransparency = 1, 1, 1, 1
+for _, f in ipairs({ top, bottom, sel }) do
+	for _, c in ipairs(f:GetChildren()) do if c:IsA("UIStroke") then c.Enabled = false end end
+end
 stats.ZIndex = 4
+top.ZIndex = 5 -- search / filters / X draw over the panels (both frames span the screen; transparent, so no input is eaten)
 
--- the stage behind the unit (white art, tinted by the controller in the tier's colours)
+-- ===== LEFT: the roster panel =====
+local roster = framePanel("RosterPanel", bottom, 1)
+place(roster, S(0.012, 0.055), S(0.315, 0.79))
+mob(roster, S(0.012, 0.04), S(0.315, 0.8))
+local ribbon = new("Frame", { Name = "Ribbon", AnchorPoint = V2(0.5, 0.5), Position = S(0.5, 0), Size = S(0.42, 0.055),
+	BackgroundColor3 = C(255, 255, 255), ZIndex = 3 }, roster)
+corner(ribbon, 0.35)
+new("UIGradient", { Name = "Night", Rotation = 90, Color = CS(C(70, 46, 120), C(30, 18, 56)) }, ribbon)
+goldStroke(ribbon, 2, 0)
+local rt = label("Title", "UNITS", ribbon, { AnchorPoint = V2(0.5, 0.5), Position = S(0.5, 0.5), Size = S(0.8, 0.72),
+	TextXAlignment = Enum.TextXAlignment.Center, TextColor3 = C(255, 255, 255), ZIndex = 4 })
+new("UIGradient", { Name = "Gold", Rotation = 90, Color = Theme.LabelGold }, rt)
+new("UIStroke", { Name = "Outline", Color = C(40, 20, 6), Thickness = 1.5 }, rt)
+
+place(top:FindFirstChild("SearchBar"), S(0.025, 0.088), S(0.19, 0.045))
+mob(top:FindFirstChild("SearchBar"), S(0.025, 0.07), S(0.19, 0.07))
+place(top:FindFirstChild("FiltersButton"), S(0.22, 0.088), S(0.098, 0.045))
+mob(top:FindFirstChild("FiltersButton"), S(0.22, 0.07), S(0.098, 0.07))
+for _, d in ipairs((top:FindFirstChild("FiltersButton") :: Instance):GetDescendants()) do
+	if d:IsA("TextLabel") then -- a taller phone button wrapped "Filter / s"; the Game copy had a fixed 14 px label
+		d.TextWrapped = false
+		d.TextScaled = true
+	end
+end
+
+local grid = bottom:WaitForChild("UnitsContainer") :: ScrollingFrame
+place(grid, S(0.022, 0.142), S(0.296, 0.632))
+mob(grid, S(0.022, 0.15), S(0.296, 0.585))
+grid.BackgroundTransparency = 1
+drop(grid, "Rim")
+for _, g in ipairs(grid:GetChildren()) do if g:IsA("UIGradient") and g.Name == "Night" then g:Destroy() end end
+grid.ZIndex = 2
+for _, c in ipairs(grid:GetChildren()) do
+	if c:IsA("GuiObject") and c.Name == "UnitIconV2" then c.Size = S(0.26, 0) end
+end
+grid:SetAttribute("CardWidth", 0.25) -- UnitsController sizes each card's layout slot from this
+grid:SetAttribute("PcCardWidth", 0.25) -- 4 per row
+grid:SetAttribute("MobCardWidth", 0.333) -- 3 per row on a phone: bigger touch targets
+
+-- footer: capacity / Unequip All / Sell; the sell row takes the whole footer in sell mode
+local FOOT_Y, FOOT_H, MFOOT_Y, MFOOT_H = 0.785, 0.05, 0.75, 0.075
+place(bottom:FindFirstChild("CapacityBar"), S(0.025, FOOT_Y), S(0.093, FOOT_H))
+mob(bottom:FindFirstChild("CapacityBar"), S(0.025, MFOOT_Y), S(0.093, MFOOT_H))
+place(bottom:FindFirstChild("UnequipAllButton"), S(0.123, FOOT_Y), S(0.095, FOOT_H))
+mob(bottom:FindFirstChild("UnequipAllButton"), S(0.123, MFOOT_Y), S(0.095, MFOOT_H))
+local qs = bottom:FindFirstChild("QuickSellButton") :: GuiObject?
+place(qs, S(0.223, FOOT_Y), S(0.095, FOOT_H))
+mob(qs, S(0.223, MFOOT_Y), S(0.095, MFOOT_H))
+if qs then
+	qs:SetAttribute("IdleText", "Sell") -- ONE sell button (the rail's "Sell this unit" is gone): it pre-ticks the shown unit
+	local t = qs:FindFirstChild("ButtonText") :: TextLabel?
+	if t then t.Text = "Sell" end
+end
+place(bottom:FindFirstChild("SellButtons"), S(0.025, FOOT_Y), S(0.293, FOOT_H))
+mob(bottom:FindFirstChild("SellButtons"), S(0.025, MFOOT_Y), S(0.293, MFOOT_H))
+local ss = bottom:FindFirstChild("SellStatus") :: GuiObject?
+place(ss, S(0.025, 0.73), S(0.293, 0.045))
+for _, n in ipairs({ "UnequipAllButton", "QuickSellButton", "TeamsButton" }) do
+	local b = bottom:FindFirstChild(n)
+	if b then b.ZIndex = 3 end
+end
+for _, n in ipairs({ "CapacityBar", "SellButtons" }) do
+	local b = bottom:FindFirstChild(n)
+	if b then b.ZIndex = 3 end
+end
+
+-- ===== CENTRE: the unit on its stage =====
 drop(sel, "Stage")
 local stage = new("Frame", { Name = "Stage", BackgroundTransparency = 1, ZIndex = 2 }, sel)
-place(stage, S(0.02, 0.235), S(0.47, 0.51))
-mob(stage, S(0.02, 0.29), S(0.47, 0.43))
+place(stage, S(0.335, 0.055), S(0.33, 0.79))
+mob(stage, S(0.335, 0.04), S(0.33, 0.8))
 local function stageImg(name: string, image: string, pos: UDim2, size: UDim2, alpha: number, square: boolean)
 	local i = img(name, image, stage, { Position = pos, Size = size, ImageTransparency = alpha, ZIndex = 2 })
 	if square then new("UIAspectRatioConstraint", { AspectRatio = 1, DominantAxis = Enum.DominantAxis.Width }, i) end
 	new("UIGradient", { Name = "Tint", Color = Theme.tint("Gold") }, i)
 	return i
 end
-stageImg("Rays", Theme.Images.Burst, S(0.5, 0.44), S(1.15, 1.15), 0.55, true)
-stageImg("Aura", Theme.Images.GlowRing, S(0.5, 0.46), S(0.95, 0.95), 0.35, true)
-stageImg("Floor", Theme.Images.MagicCircle, S(0.5, 0.88), S(0.95, 0.2), 0.25, false)
-stageImg("Rune", Theme.Images.RuneRing, S(0.5, 0.88), S(0.66, 0.13), 0.35, false)
-stageImg("Glow", Theme.Images.GlowRing, S(0.5, 0.9), S(0.85, 0.09), 0.2, false)
-local vf = sel:FindFirstChild("ViewportFrame") :: GuiObject?
-place(vf, S(0.02, 0.235), S(0.47, 0.51))
-mob(vf, S(0.02, 0.29), S(0.47, 0.43))
-if vf then vf.ZIndex = 3 end
+stageImg("Rays", Theme.Images.Burst, S(0.5, 0.42), S(1.25, 1.25), 0.55, true)
+stageImg("Aura", Theme.Images.GlowRing, S(0.5, 0.44), S(1, 1), 0.35, true)
+stageImg("Floor", Theme.Images.MagicCircle, S(0.5, 0.86), S(1, 0.16), 0.2, false)
+stageImg("Rune", Theme.Images.RuneRing, S(0.5, 0.86), S(0.72, 0.11), 0.3, false)
+stageImg("Glow", Theme.Images.GlowRing, S(0.5, 0.88), S(0.9, 0.07), 0.15, false)
+local vf = sel:FindFirstChild("ViewportFrame")
+place(vf, S(0.335, 0.075), S(0.33, 0.73))
+mob(vf, S(0.335, 0.06), S(0.33, 0.74))
+if vf and vf:IsA("GuiObject") then vf.ZIndex = 3 end
 
--- glance column (left, under / over the unit)
-place(stats:FindFirstChild("TierName") :: GuiObject, S(0.04, 0.1), S(0.45, 0.035))
-place(stats:FindFirstChild("UnitName") :: GuiObject, S(0.04, 0.132), S(0.47, 0.06)) -- the controller tweens it home from here
-place(stats:FindFirstChild("ChipsRow") :: GuiObject, S(0.04, 0.198), S(0.46, 0.038))
-place(stats:FindFirstChild("AscRow") :: GuiObject, S(0.04, 0.748), S(0.3, 0.038))
-place(stats:FindFirstChild("TraitRow") :: GuiObject, S(0.04, 0.792), S(0.46, 0.044))
-place(stats:FindFirstChild("LevelBar") :: GuiObject, S(0.04, 0.846), S(0.45, 0.038))
-place(stats:FindFirstChild("BaseStatsFrame") :: GuiObject, S(0.04, 0.898), S(0.45, 0.075))
-mob(stats:FindFirstChild("TierName"), S(0.04, 0.115), S(0.45, 0.045))
-mob(stats:FindFirstChild("UnitName"), S(0.04, 0.155), S(0.47, 0.07))
-mob(stats:FindFirstChild("ChipsRow"), S(0.04, 0.23), S(0.46, 0.05))
-mob(stats:FindFirstChild("AscRow"), S(0.04, 0.725), S(0.3, 0.045))
-mob(stats:FindFirstChild("TraitRow"), S(0.04, 0.775), S(0.46, 0.05))
-mob(stats:FindFirstChild("LevelBar"), S(0.04, 0.835), S(0.45, 0.05))
-mob(stats:FindFirstChild("BaseStatsFrame"), S(0.04, 0.892), S(0.45, 0.09))
-local moreBtn = stats:FindFirstChild("MoreStatsButton") :: GuiObject?
-if moreBtn then moreBtn.Visible = false end -- the Stats tab IS More Stats in the hall
-
--- tabs (right)
-drop(sel, "Tabs")
-local tabs = new("Frame", { Name = "Tabs", BackgroundTransparency = 1, ZIndex = 6 }, sel)
-place(tabs, S(0.02, 0.018), S(0.96, 0.065))
-mob(tabs, S(0.02, 0.012), S(0.96, 0.09))
-new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0.016, 0),
-	HorizontalAlignment = Enum.HorizontalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder }, tabs)
-local bsf = stats:FindFirstChild("BaseStatsFrame")
-local dmgIcon = bsf and bsf:FindFirstChild("DMG") and bsf.DMG:FindFirstChild("ImageIcon") :: ImageLabel?
-local TABS = {
-	{ "Stats", "Stats", if dmgIcon then dmgIcon.Image else Icons.get("Info") },
-	{ "Passives", "Passives", Icons.get("Passives") },
-	{ "Upgrades", "Upgrades", Icons.get("Arrow") },
-	{ "Trait", "Traits", Icons.get("Sparkle") },
-}
-local ON, OFF = Theme.plateColor("Gold"), Theme.plateColor("Night")
-for i, t in ipairs(TABS) do
-	local b = new("TextButton", { Name = "Tab" .. t[1], LayoutOrder = i, Size = S(0.235, 1), Text = "", ZIndex = 6,
-		BackgroundColor3 = if i == 1 then ON else OFF }, tabs)
-	local ic = img("Icon", t[3], b, { AnchorPoint = V2(0, 0.5), Position = S(0.07, 0.5), Size = S(0.3, 0.62), ZIndex = 7 })
-	new("UIAspectRatioConstraint", { AspectRatio = 1, DominantAxis = Enum.DominantAxis.Height }, ic)
-	local tl = label("Label", t[2], b, { Position = S(0.3, 0.2), Size = S(0.64, 0.6), ZIndex = 7, TextXAlignment = Enum.TextXAlignment.Center })
-	new("UITextSizeConstraint", { Name = "Even", MaxTextSize = 100, MinTextSize = 1 }, tl) -- capped to the set's smallest at runtime
-	P.convert(b, nil)
-	b:SetAttribute("OnColor", ON)
-	b:SetAttribute("OffColor", OFF)
-	b:SetAttribute("Tooltip", if t[1] == "Trait" then "Trait & Ascension" else t[2])
+-- ===== RIGHT: the info panel (the hero BG; its TierStroke wears the unit's tier) =====
+local selBG = sel:FindFirstChild("BG") :: GuiObject?
+place(selBG, S(0.673, 0.055), S(0.315, 0.79))
+mob(selBG, S(0.673, 0.04), S(0.315, 0.8))
+if selBG then
+	selBG.ZIndex = 1
+	nightPanel(selBG, 0.12)
+	local cr = selBG:FindFirstChildOfClass("UICorner") or new("UICorner", {}, selBG)
+	cr.CornerRadius = UDim.new(0.03, 0)
 end
+local function right(n: string, pc: { number }, mb: { number }, center: boolean?)
+	local o = stats:FindFirstChild(n)
+	place(o, S(pc[1], pc[2]), S(pc[3], pc[4]))
+	mob(o, S(mb[1], mb[2]), S(mb[3], mb[4]))
+	if center and o and o:IsA("TextLabel") then o.TextXAlignment = Enum.TextXAlignment.Center end
+	return o
+end
+right("UnitName", { 0.685, 0.075, 0.29, 0.05 }, { 0.685, 0.055, 0.29, 0.065 }, true)
+right("TierName", { 0.685, 0.124, 0.29, 0.028 }, { 0.685, 0.12, 0.29, 0.035 }, true)
+right("ChipsRow", { 0.69, 0.16, 0.28, 0.032 }, { 0.69, 0.16, 0.28, 0.045 })
+right("AscRow", { 0.69, 0.2, 0.13, 0.03 }, { 0.69, 0.212, 0.13, 0.04 })
+right("TraitRow", { 0.825, 0.198, 0.15, 0.034 }, { 0.825, 0.21, 0.15, 0.045 })
+right("LevelBar", { 0.69, 0.24, 0.28, 0.028 }, { 0.69, 0.262, 0.28, 0.04 })
+right("BaseStatsFrame", { 0.69, 0.276, 0.28, 0.05 }, { 0.69, 0.308, 0.28, 0.075 })
+local chips = stats:FindFirstChild("ChipsRow")
+local cl = chips and chips:FindFirstChildOfClass("UIListLayout")
+if cl then cl.HorizontalAlignment = Enum.HorizontalAlignment.Center end
+local moreBtn = stats:FindFirstChild("MoreStatsButton") :: GuiObject?
+if moreBtn then moreBtn.Visible = false end -- the Stats tab IS More Stats
+drop(sel, "Divider")
+local div = new("Frame", { Name = "Divider", BackgroundColor3 = C(255, 255, 255), BorderSizePixel = 0, ZIndex = 5 }, sel)
+place(div, S(0.69, 0.333), S(0.28, 0.002))
+mob(div, S(0.69, 0.39), S(0.28, 0.002))
+new("UIGradient", { Color = CS(C(255, 222, 140), C(214, 140, 46)), Transparency = NS({ NK(0, 1), NK(0.2, 0.2), NK(0.8, 0.2), NK(1, 1) }) }, div)
 
--- pages (right): Stats = More Stats, Passives = the passives panel, Upgrades = path + tier rows, Traits
-local PAGE_POS, PAGE_SIZE = S(0.52, 0.1), S(0.46, 0.875)
-local MOB_POS, MOB_SIZE = S(0.52, 0.115), S(0.46, 0.865)
+-- the open tab's page
+local PG, MPG = { 0.685, 0.342, 0.29, 0.4 }, { 0.685, 0.397, 0.29, 0.33 }
+local function page(o: Instance?)
+	place(o, S(PG[1], PG[2]), S(PG[3], PG[4]))
+	mob(o, S(MPG[1], MPG[2]), S(MPG[3], MPG[4]))
+end
 local more = stats:FindFirstChild("MoreStats") :: ScrollingFrame?
 if more then
-	place(more, PAGE_POS, PAGE_SIZE)
-	mob(more, MOB_POS, MOB_SIZE)
+	page(more)
 	more.ZIndex = 6
-	nightPanel(more, 0.08)
+	nightPanel(more, 0.35)
 	local row = more:FindFirstChild("RowTemplate") :: Frame?
 	if row then
 		row.Size = S(1, 0)
 		drop(row, "Shape")
 		-- ScaleWithParentSize: a zero-height row in an auto canvas would otherwise fit to 0 x 0
-		new("UIAspectRatioConstraint", { Name = "Shape", AspectRatio = 9, DominantAxis = Enum.DominantAxis.Width,
+		new("UIAspectRatioConstraint", { Name = "Shape", AspectRatio = 11, DominantAxis = Enum.DominantAxis.Width,
 			AspectType = Enum.AspectType.ScaleWithParentSize }, row)
-		-- the row's icon (filled by renderMore when the catalog has one); the key label moves right of it
+		for _, n in ipairs({ "Key", "Value" }) do -- one text height for every row
+			local l = row:FindFirstChild(n) :: GuiObject?
+			if l then
+				l.Position = S(l.Position.X.Scale, 0.18)
+				l.Size = S(l.Size.X.Scale, 0.64)
+			end
+		end
 		drop(row, "Icon")
 		local ric = img("Icon", "", row, { AnchorPoint = V2(0, 0.5), Position = S(0.02, 0.5), Size = S(0.1, 0.7),
 			ZIndex = row.ZIndex + 1, Visible = false })
@@ -307,26 +311,27 @@ if more then
 end
 local pp = sel:FindFirstChild("PassivesPanel") :: Frame?
 if pp then
-	place(pp, PAGE_POS, PAGE_SIZE)
-	mob(pp, MOB_POS, MOB_SIZE)
-	nightPanel(pp, 0.08)
+	page(pp)
+	nightPanel(pp, 0.35)
 	local pc = pp:FindFirstChild("CloseButton") :: GuiObject?
 	if pc then pc.Visible = false end -- a TAB page; the hall's X is the one close button
-	place(pp:FindFirstChild("Title") :: GuiObject, S(0.05, 0.02), S(0.9, 0.06))
-	place(pp:FindFirstChild("List") :: GuiObject, S(0.04, 0.1), S(0.92, 0.88))
+	pp.AnchorPoint = V2(0, 0)
+	local t = pp:FindFirstChild("Title") :: GuiObject?
+	if t then t.Position, t.Size = S(0.05, 0.02), S(0.9, 0.07) end
+	local l = pp:FindFirstChild("List") :: GuiObject?
+	if l then l.Position, l.Size = S(0.03, 0.11), S(0.94, 0.87) end
 end
 local path = sel:FindFirstChild("UpgradePath") :: GuiObject?
-place(path, S(0.52, 0.1), S(0.46, 0.055))
-mob(path, S(0.52, 0.115), S(0.46, 0.07))
+place(path, S(0.685, 0.342), S(0.29, 0.04))
+mob(path, S(0.685, 0.397), S(0.29, 0.05))
 if path then path.ZIndex = 6 path.Visible = false end
 
 drop(sel, "UpgradesPage")
 local up = new("Frame", { Name = "UpgradesPage", Visible = false, ZIndex = 6 }, sel)
-place(up, S(0.52, 0.165), S(0.46, 0.81))
-mob(up, S(0.52, 0.195), S(0.46, 0.785))
-nightPanel(up, 0.08)
+place(up, S(0.685, 0.388), S(0.29, 0.354))
+mob(up, S(0.685, 0.452), S(0.29, 0.275))
+nightPanel(up, 0.35)
 corner(up, 0.04)
-goldStroke(up, 1.2)
 local list = new("ScrollingFrame", { Name = "TierList", Position = S(0.03, 0.02), Size = S(0.94, 0.96), BackgroundTransparency = 1,
 	CanvasSize = S(0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 6, ZIndex = 7,
 	ScrollBarImageColor3 = C(255, 214, 120), BorderSizePixel = 0 }, up)
@@ -335,7 +340,7 @@ local tr = new("TextButton", { Name = "TierRowTemplate", Size = S(0.97, 0), Text
 	BackgroundColor3 = C(30, 20, 56), ZIndex = 7 }, list)
 new("UIAspectRatioConstraint", { AspectRatio = 4.6, DominantAxis = Enum.DominantAxis.Width, AspectType = Enum.AspectType.ScaleWithParentSize }, tr)
 corner(tr, 0.14)
-local trs = new("UIStroke", { Name = "SelStroke", Color = C(255, 214, 120), Thickness = 2, Enabled = false }, tr)
+new("UIStroke", { Name = "SelStroke", Color = C(255, 214, 120), Thickness = 2, Enabled = false }, tr)
 local badge = new("Frame", { Name = "Badge", Position = S(0.025, 0.14), Size = S(0.13, 0.72), BackgroundColor3 = C(70, 175, 60), ZIndex = 8 }, tr)
 corner(badge, 0.25)
 new("UIAspectRatioConstraint", { AspectRatio = 1, DominantAxis = Enum.DominantAxis.Height }, badge)
@@ -351,11 +356,10 @@ label("Attack", "", tr, { Position = S(0.19, 0.68), Size = S(0.78, 0.24), ZIndex
 
 drop(sel, "TraitPage")
 local tp = new("Frame", { Name = "TraitPage", BackgroundTransparency = 1, Visible = false, ZIndex = 6 }, sel)
-place(tp, PAGE_POS, PAGE_SIZE)
-mob(tp, MOB_POS, MOB_SIZE)
+page(tp)
 local function card(name: string, pos: UDim2, size: UDim2): Frame
 	local f = new("Frame", { Name = name, Position = pos, Size = size, ZIndex = 6 }, tp)
-	nightPanel(f, 0.08)
+	nightPanel(f, 0.35)
 	corner(f, 0.06)
 	goldStroke(f, 1.2)
 	return f
@@ -375,7 +379,6 @@ label("ButtonText", "Swap Slots", swap, { AnchorPoint = V2(0.5, 0.5), Position =
 	TextXAlignment = Enum.TextXAlignment.Center })
 P.convert(swap, "Violet")
 swap:SetAttribute("Tooltip", "Swap the active and stored trait")
-
 local ac = card("AscCard", S(0, 0.53), S(1, 0.47))
 label("Header", "ASCENSION", ac, { Position = S(0.05, 0.05), Size = S(0.5, 0.11), ZIndex = 7, TextColor3 = C(196, 170, 255) })
 label("Stars", "", ac, { Position = S(0.05, 0.19), Size = S(0.9, 0.16), ZIndex = 7, RichText = true, TextColor3 = C(255, 214, 64) })
@@ -383,46 +386,137 @@ label("Desc", "", ac, { Position = S(0.05, 0.38), Size = S(0.9, 0.34), ZIndex = 
 	FontFace = Theme.Fonts.Body or Theme.Fonts.Label, TextColor3 = C(226, 218, 245) })
 label("Next", "", ac, { Position = S(0.05, 0.76), Size = S(0.9, 0.16), ZIndex = 7, RichText = true, TextColor3 = C(255, 214, 120) })
 
--- ===== actions under the showcase =====
+-- round icon buttons at the foot of the info panel (the ref's three discs): Feed / View / Favorite / Lock
 local rail = bottom:WaitForChild("ActionRail") :: Frame
-place(rail, S(0.58, 0.85), S(0.42, 0.065))
-mob(rail, S(0.51, 0.795), S(0.49, 0.095))
+place(rail, S(0.685, 0.752), S(0.29, 0.085))
+mob(rail, S(0.685, 0.735), S(0.29, 0.1))
 rail.BackgroundTransparency = 1
+rail.ZIndex = 4
 local rl = rail:FindFirstChildOfClass("UIListLayout")
 if rl then
 	rl.FillDirection = Enum.FillDirection.Horizontal
-	rl.Padding = UDim.new(0.012, 0)
+	rl.Padding = UDim.new(0.04, 0)
 	rl.HorizontalAlignment = Enum.HorizontalAlignment.Center
 	rl.VerticalAlignment = Enum.VerticalAlignment.Center
 end
-local RAIL = {
-	UpgradeUnitButton = { "Feed", "Jade" }, ViewPassivesButton = { "Passives", "Violet" }, ViewUnitButton = { "View", "Azure" },
-	FavoriteButton = { "Favorite", "Night" }, LockUnitButon = { "Lock", "Night" }, SellUnitButton = { "Sell", "Ruby" },
-}
-for name, spec in pairs(RAIL) do
-	local b = rail:FindFirstChild(name) :: GuiButton?
-	if b then
-		b.Size = S(0.155, 1)
-		local ic = b:FindFirstChild("Icon") :: GuiObject?
-		if ic then
-			place(ic, S(0.06, 0.5), S(0.36, 0.62), V2(0, 0.5))
-			drop(ic, "Square")
-			new("UIAspectRatioConstraint", { Name = "Square", AspectRatio = 1, DominantAxis = Enum.DominantAxis.Height }, ic)
+local PLATE_LAYERS = { "Inner", "Gloss", "Lip", "ShineClip", "Flash", "Burst", "Sparkles", "Disc" }
+local DISCS = { UpgradeUnitButton = { "Feed", 1 }, ViewUnitButton = { "View", 2 }, FavoriteButton = { "Favorite", 3 }, LockUnitButon = { "Lock", 4 } }
+for _, b in ipairs(rail:GetChildren()) do
+	if b:IsA("GuiButton") then
+		local spec = DISCS[b.Name]
+		if not spec then
+			b.Visible = false -- ViewPassivesButton (= the Passives tab) and SellUnitButton (= Sell) are duplicates now
+		else
+			-- un-plate: a transparent hit area holding a gold-rimmed night disc, the icon, a caption under it
+			for _, n in ipairs(PLATE_LAYERS) do drop(b, n) end
+			for _, c in ipairs(b:GetChildren()) do
+				if c:IsA("UIGradient") or c:IsA("UIStroke") or c:IsA("UICorner") or (c:IsA("UIScale") and c.Name == "Pop") then c:Destroy() end
+			end
+			CollectionService:RemoveTag(b, "AlamatButton")
+			for _, a in ipairs({ "Variant", "Theme", "PlateRim", "NoFX", "PlateOldImage", "PlateMirror" }) do b:SetAttribute(a, nil) end
+			b.BackgroundTransparency = 1
+			b.AutoButtonColor = false
+			b.LayoutOrder = spec[2]
+			b.Size = S(0.2, 1)
+			b.ZIndex = 4
+			local disc = new("Frame", { Name = "Disc", AnchorPoint = V2(0.5, 0), Position = S(0.5, 0), Size = S(1, 0.68),
+				BackgroundColor3 = C(255, 255, 255), ZIndex = 4 }, b)
+			new("UIAspectRatioConstraint", { AspectRatio = 1, DominantAxis = Enum.DominantAxis.Height }, disc)
+			corner(disc, 1)
+			new("UIGradient", { Name = "Night", Rotation = 90, Color = CS(C(70, 46, 120), C(22, 14, 42)) }, disc)
+			goldStroke(disc, 2, 0)
+			local ic = b:FindFirstChild("Icon") :: GuiObject?
+			if ic then
+				ic.AnchorPoint = V2(0.5, 0.5)
+				ic.Position = S(0.5, 0.34)
+				ic.Size = S(1, 0.42)
+				ic.ZIndex = 5
+				drop(ic, "Square")
+				new("UIAspectRatioConstraint", { Name = "Square", AspectRatio = 1, DominantAxis = Enum.DominantAxis.Height }, ic)
+			end
+			local t = b:FindFirstChild("ButtonText") :: TextLabel?
+			if not t then t = label("ButtonText", spec[1], b, {}) end
+			local tl = t :: TextLabel
+			tl.Text = spec[1]
+			tl.Visible = true
+			tl.TextScaled = true
+			tl.FontFace = Theme.Fonts.Label
+			tl.TextColor3 = C(255, 240, 206)
+			tl.TextXAlignment = Enum.TextXAlignment.Center
+			tl.AnchorPoint = V2(0.5, 0)
+			tl.Position = S(0.5, 0.72)
+			tl.Size = S(1.4, 0.28)
+			tl.ZIndex = 5
+			for _, k in ipairs(tl:GetChildren()) do if k:IsA("UIPadding") then k:Destroy() end end -- the old rail padding
+			even(tl)
 		end
-		local t = b:FindFirstChild("ButtonText") :: TextLabel?
-		if not t then t = label("ButtonText", spec[1], b, { TextXAlignment = Enum.TextXAlignment.Center }) end
-		local tl = t :: TextLabel
-		tl.Text = spec[1]
-		tl.Visible = true
-		tl.TextScaled = true
-		tl.TextXAlignment = Enum.TextXAlignment.Center
-		place(tl, S(0.38, 0.2), S(0.58, 0.6))
-		for _, k in ipairs(tl:GetChildren()) do if k:IsA("UITextSizeConstraint") then k:Destroy() end end
-		new("UITextSizeConstraint", { Name = "Even", MaxTextSize = 100, MinTextSize = 1 }, tl)
-		P.convert(b, spec[2])
 	end
 end
-place(bottom:FindFirstChild("UN/EquipButton") :: GuiObject, S(0.58, 0.925), S(0.42, 0.075))
-mob(bottom:FindFirstChild("UN/EquipButton"), S(0.51, 0.9), S(0.49, 0.1))
 
-return "Hero Hall built in " .. gui:GetFullName()
+-- ===== BOTTOM: the nav bar (tabs + Teams) and the big Equip =====
+local nav = framePanel("NavBar", bottom, 1)
+place(nav, S(0.012, 0.858), S(0.976, 0.124))
+mob(nav, S(0.012, 0.85), S(0.976, 0.14))
+drop(bottom, "Tabs")
+local tabs = new("Frame", { Name = "Tabs", BackgroundTransparency = 1, ZIndex = 3 }, bottom)
+place(tabs, S(0.02, 0.87), S(0.555, 0.1))
+mob(tabs, S(0.02, 0.862), S(0.555, 0.116))
+new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0.018, 0),
+	VerticalAlignment = Enum.VerticalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder }, tabs)
+local bsf = stats:FindFirstChild("BaseStatsFrame")
+local dmgIcon = bsf and bsf:FindFirstChild("DMG") and bsf.DMG:FindFirstChild("ImageIcon") :: ImageLabel?
+local TABS = {
+	{ "Stats", "Stats", if dmgIcon then dmgIcon.Image else Icons.get("Info") },
+	{ "Passives", "Passives", Icons.get("Passives") },
+	{ "Upgrades", "Upgrades", Icons.get("Arrow") },
+	{ "Trait", "Traits", Icons.get("Sparkle") },
+}
+local ON, OFF = Theme.plateColor("Gold"), Theme.plateColor("Night")
+local function navLabels(b: GuiObject, icon: string)
+	drop(b, "Icon")
+	local ic = img("Icon", icon, b, { AnchorPoint = V2(0, 0.5), Position = S(0.08, 0.5), Size = S(0.3, 0.56), ZIndex = b.ZIndex + 5 })
+	new("UIAspectRatioConstraint", { AspectRatio = 1, DominantAxis = Enum.DominantAxis.Height }, ic)
+	local t = b:FindFirstChild("Label") or b:FindFirstChild("ButtonText")
+	local tl = (t or label("Label", "", b, {})) :: TextLabel
+	tl.AnchorPoint = V2(0, 0)
+	tl.Position, tl.Size = S(0.3, 0.22), S(0.64, 0.56)
+	tl.TextXAlignment = Enum.TextXAlignment.Center
+	tl.TextScaled = true
+	even(tl)
+end
+for i, t in ipairs(TABS) do
+	local b = new("TextButton", { Name = "Tab" .. t[1], LayoutOrder = i, Size = S(0.235, 0.9), Text = "", ZIndex = 3,
+		BackgroundColor3 = if i == 1 then ON else OFF }, tabs)
+	label("Label", t[2], b, { ZIndex = 8 })
+	navLabels(b, t[3])
+	P.convert(b, nil)
+	b:SetAttribute("OnColor", ON)
+	b:SetAttribute("OffColor", OFF)
+	b:SetAttribute("Tooltip", if t[1] == "Trait" then "Trait & Ascension" else t[2])
+end
+local teams = bottom:FindFirstChild("TeamsButton") :: GuiObject?
+place(teams, S(0.585, 0.875), S(0.125, 0.09))
+mob(teams, S(0.585, 0.866), S(0.125, 0.108))
+if teams then
+	teams.BackgroundColor3 = OFF -- the nav bar's colour
+	teams:SetAttribute("Theme", "Night")
+	navLabels(teams, Icons.get("Players"))
+	local t = teams:FindFirstChild("ButtonText") :: TextLabel?
+	if t then t.Text = "Teams" end
+end
+local equip = bottom:FindFirstChild("UN/EquipButton") :: GuiObject?
+place(equip, S(0.735, 0.87), S(0.245, 0.1))
+mob(equip, S(0.735, 0.862), S(0.245, 0.116))
+if equip then equip.ZIndex = 3 end
+
+-- the close X sits on the info panel's top-right corner
+local close = top:FindFirstChild("CloseButton") :: GuiObject?
+if close then
+	place(close, S(0.985, 0.052), S(0.06, 0.075), V2(0.5, 0.5))
+	mob(close, S(0.982, 0.04), S(0.08, 0.1))
+	close.ZIndex = 8
+	drop(close, "Square")
+	new("UIAspectRatioConstraint", { Name = "Square", AspectRatio = 1, DominantAxis = Enum.DominantAxis.Height }, close)
+end
+
+return "Hero Hall v2 built in " .. gui:GetFullName()

@@ -59,25 +59,31 @@ HudEntry), equip refusals toast, `match_running` text. Game-only differences liv
 - Needs (all shared canon since B123): `UnitCapacityConfig`, `UnitFamilyConfig`, `UnitSort`, `ScreenFX` (+ the
   authored `StarterGui.ScreenFXLayer` and `Lighting.ScreenFXBlur`), `RS.ClientEvents` (Game folder of BindableEvents).
 
-## B155 -- the HERO HALL (user pick "Hero Hall, full screen"), both Places
-`tools/units_hall_build.luau` (Edit, each Place, re-runnable; backups `ServerStorage._UIBackup_B155`) re-lays the SAME
-authored nodes (names + parents kept, so every `WaitForChild` holds) full screen and adds the hall's own nodes:
-- **Left:** the roster grid, 6 per row (`UnitsContainer` attribute `CardWidth`, read by `UnitsController` per card
-  slot; was a hard 0.2); tools row (capacity / Unequip All / Teams / Quick Sell); **TEAM strip** (`Bottom.TeamStrip.Slots.
-  Slot1..6`: the equipped loadout, a locked slot shows its level; click = select that unit).
-- **Right, the showcase:** four tab PLATES across the top (`sel.Tabs.Tab{Stats,Passives,Upgrades,Trait}`, `OnColor` /
-  `OffColor` attributes, L1 / R1 cycle them): **Stats** = More Stats (now with a row icon where the catalog has one),
-  **Passives** = the passives panel, **Upgrades** = the path bar + `UpgradesPage.TierList` (one row per tier: badge in the
-  path colour, cost, THIS unit's DMG / SPA / RNG with the changed ones green, the attack line when it changes; click =
-  preview on the stat pills), **Traits** = `TraitPage` (active trait + stored + Swap plate; ascension ladder + next cost).
-  Under the tabs: name / tier / chips, the unit FULL BODY on a tier-tinted **stage** (`sel.Stage`: rays, aura, magic-circle
-  floor, rune, glow; `Hall.frameFull` re-aims the viewport camera on every new rig), stars / trait / level / stat pills.
-- **Actions:** the rail is a row of icon + label Plates (Feed / Passives / View / Favorite / Lock / Sell) + Equip.
-  The tab and rail labels share one text size (authored `UITextSizeConstraint "Even"`, capped at runtime).
-- **Veil:** opening and the player's own close (X, HUD / J toggle) go through the LoadingScreen (`Lazy.veil` /
-  `Lazy.leave` in `UnitsController`; the Game copy says "Back to the battle"). A close forced by another screen is instant.
+## The HERO HALL (B155, re-laid B156 from the user's reference) -- both Places
+`tools/units_hall_build.luau` (Edit, each Place, re-runnable from the pristine screen or any older build; backups
+`ServerStorage._UIBackup_B155`) re-lays the SAME authored nodes (names + parents kept, so every `WaitForChild` holds).
+`Top`, `Bottom`, `SelectedUnitFrame` and `Stats` span the screen, so every position is a fraction of the screen.
+Three columns + a bottom bar (the user's reference: roster left, hero centre, info right, section tabs + PLAY):
+- **Left -- `Bottom.RosterPanel`:** ribbon "UNITS", search + filters, the grid 4 per row (`UnitsContainer.CardWidth`,
+  read by `UnitsController` per card slot), footer capacity / Unequip All / **Sell**. In sell mode the sell row
+  (Sell N / Select by Filter / Clear / Cancel) takes the whole footer.
+- **Centre:** the unit FULL BODY on the tier-tinted `sel.Stage` (rays, aura, magic-circle floor, rune, glow);
+  `Hall.frameFull` re-aims the viewport camera on every new rig.
+- **Right -- the info panel (= the hero `BG`, its `TierStroke` wears the unit's tier):** name, tier, chips, stars +
+  trait chip, level bar, stat pills, the open tab's PAGE, and ROUND icon buttons (Feed / View / Favorite / Lock).
+- **Bottom -- `Bottom.NavBar`:** tab Plates `Bottom.Tabs.Tab{Stats,Passives,Upgrades,Trait}` (+ `OnColor`/`OffColor`;
+  L1 / R1 cycle them) and **Teams**, then the big **Equip** (the reference's PLAY).
+- **Pages:** Stats = More Stats (row icons where the catalog has one), Passives = the passives panel, Upgrades = the path
+  bar + `UpgradesPage.TierList` (one row per tier: path-colour badge, cost, this unit's DMG / SPA / RNG with the changed
+  ones green, the attack line when it changes; click = preview on the pills), Traits = `TraitPage` (trait + stored +
+  the ONE Swap, ascension ladder + next cost).
+- **One control per job (B156 user: "reduce duplicate buttons"):** gone -- the rail's Passives (= the Passives tab),
+  the rail's Sell (Sell now PRE-TICKS the shown unit; `QuickSellButton.IdleText = "Sell"`), the trait chip's Swap
+  (= the Traits page Swap), the team strip (= the equipped checkmarks + Teams).
+- **Veil:** opening and the player's own close go through the LoadingScreen (`Lazy.veil` / `Lazy.leave`, Game copy
+  "Back to the battle"); a close forced by another screen is instant.
 - **Phone:** every placed node carries `PcPos/PcSize` + `MobPos/MobSize`; `Hall.applyLayout` picks the set (touch-only
-  or a screen under 500 px tall): 4 cards per row, taller rows / tabs / buttons. Harness `UnitsGUI.DevMobileLayout` (OFF).
-- **Attack changes** = name, effects or shape KIND (`attackChanged`, also in the Lobby `EvolveController`): the B154 catalog
-  grows a shape each tier (Circle 4 -> 4.1), which is not a new attack.
+  or a screen under 500 px tall): 3 per row, taller rows / footer / bar. Harness `UnitsGUI.DevMobileLayout` (OFF).
+- Tab + Teams labels share one size, the round buttons' captions another (`UITextSizeConstraint "Even"`, capped at
+  runtime to the smallest VISIBLE label). `attackChanged` = name, effects or shape KIND (also the Lobby `EvolveController`).
 - Harness: `DevHero = "tab:Upgrades"` etc. The Game copy (B123 loadout-only mode) runs the identical hall code.
