@@ -4,6 +4,9 @@
 The match Place: loads a map, runs waves, towers fight, rewards commit to the profile.
 Server-authoritative, registry/config-driven, signal-decoupled. `--!strict` throughout.
 
+**B155:** the match's Units copy (J) is the same full-screen **Hero Hall** (loadout-only mode kept) -- `units-screen.md`.
+**B154:** `Server.UnitInfoCatalogValidate` fails boot loud when the shared `UnitInfoCatalog` drifts from the configs.
+
 **B153:** selected-unit panel = side panel PC/console, **bottom sheet on mobile**; Auto Upgrade toggle + Unit Manager
 "Auto Upgrade All"; effects/passives chips; breakdown names buffs + folds passive damage (`StatRows` hook) -- `unit-selection.md`.
 
