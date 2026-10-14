@@ -760,6 +760,30 @@
       },
       "kind": "module",
       "comment": "NEW B123b. The Data.Quests bookkeeping (Box, Period, EnsureBaselines, Claim(grant, bump), ClaimAll, SetPin(metaFor), SyncPinMeta) extracted from the Lobby QuestService (which now calls it) so the Game's Quests screen (Server.Meta.MatchQuestService) writes the identical shape. Rules stay in QuestRegistry; the grant is per Place."
+    },
+    "AlamatTheme": {
+      "file": "shared/src/AlamatTheme.luau",
+      "hash": "6cb525a5",
+      "owner": "ui",
+      "deployPath": "ReplicatedStorage.AlamatUI.Theme",
+      "deployed": {
+        "Game": "6cb525a5",
+        "Lobby": "6cb525a5"
+      },
+      "kind": "module",
+      "comment": "PROMOTED to shared canon at B151 2026-10-14 (was Lobby-only since B138): the Alamat UI brand -- gold frame, palettes (+ Ruby, Stone), fonts, VFX image ids, and the PLATE spec (the universal rectangle button: the root IS the colour, Core = luminance ramp). Deployed to BOTH Places (the Game got RS.AlamatUI for the first time)."
+    },
+    "AlamatButton": {
+      "file": "shared/src/AlamatButton.luau",
+      "hash": "ab2e8495",
+      "owner": "ui",
+      "deployPath": "ReplicatedStorage.AlamatUI.AlamatButton",
+      "deployed": {
+        "Game": "ab2e8495",
+        "Lobby": "ab2e8495"
+      },
+      "kind": "module",
+      "comment": "PROMOTED to shared canon at B151 2026-10-14: THE animator for every Alamat button (tag AlamatButton), + Variant Plate (hover lift x1.05, rim brightens, shine sweep, corner sparkles, press 0.94, white flash + tinted burst, TextButton text mirrored into PlateText). Bound in both Places by StarterPlayerScripts.AlamatUIBinder. Plates are authored by tools/alamat_plate.luau (ServerStorage.DevTools.AlamatPlate; template RS.AlamatUI.Templates.AlamatPlate is TOOL-BUILT in both Places, not hashed)."
     }
   },
   "templatesNote": "Templates are under drift control since 2026-08-06 (ADR-0005). They have NO shared/src file: the Instance is the canon. Two safe ways to get one into another Place: COPY it (Studio copy/paste) and prove equality by hash, OR build it with an identical DETERMINISTIC script run in both Places and hash-match (used for Kit_UnitIcon). Never rebuild by hand/by eye. See tools/checklists.md."

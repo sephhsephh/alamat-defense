@@ -310,6 +310,8 @@ local MODULES = {
 	StageMissionsConfig = "ReplicatedStorage.Configs.Global.StageMissionsConfig",
 	InfernalHuntConfig = "ReplicatedStorage.Configs.Meta.InfernalHuntConfig", -- B109 M5
 	GoalEval = "ReplicatedStorage.Configs.Meta.GoalEval", -- B109 M7
+	AlamatTheme = "ReplicatedStorage.AlamatUI.Theme", -- B151: the Alamat UI kit, shared canon (Plate = universal button)
+	AlamatButton = "ReplicatedStorage.AlamatUI.AlamatButton", -- B151
 	-- B123: the Units screen (J) in the match -- shared loadout rules + the Lobby modules it needs.
 	LoadoutRules = "ReplicatedStorage.Shared.LoadoutRules",
 	UnitCapacityConfig = "ReplicatedStorage.Configs.Meta.UnitCapacityConfig",

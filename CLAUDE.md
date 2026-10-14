@@ -119,7 +119,8 @@ up next session. Unlisted new system → add it to OWNERSHIP.md as part of build
   as REAL Instances in StarterGui so the user can edit them in Studio. Dynamic lists use a
   designed `*Template` instance (Visible=false) that scripts clone and fill. Controllers
   only: read data, clone templates, set text/visibility, wire events. Legacy script-built
-  screens get converted opportunistically when next touched.
+  screens get converted opportunistically when next touched. **Every rectangle action button = the Alamat
+  PLATE** (user rule 2026-10-14): `DevTools.AlamatPlate` convert / `Templates.AlamatPlate` -- `alamat-ui.md`.
 - **Looks changed or unusual? ASK THE USER whether they did it** (user rule, 2026-08-16); never "fix" it.
 - **EVERY NEW FEATURE SHIPS FOR PC + CONSOLE + MOBILE (user rule, 2026-09-27; PC is the main platform).** No mouse-only
   or key-only interaction: bind through ContextActionService / gamepad UI selection too. The foundation lands in the console batch.

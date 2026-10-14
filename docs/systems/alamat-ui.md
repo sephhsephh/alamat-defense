@@ -7,12 +7,36 @@ a deep coloured **core** with a faint engraved **magic seal**, a gloss, the icon
 **gold serif label**. Buttons differ ONLY by `Theme` (colours) and `Variant` (layout). Purple + gold is the
 house identity; each button family gets its own palette so the HUD stays colourful.
 
-## Where it lives (portable — copy the folder to the Game for the Game-HUD batch)
+## THE PLATE — the universal rectangle button (B151, user rule: every rectangle action button uses it)
+Equip, Claim, Buy, Summon x1, Teams, Apply, Cancel ... ONE look + ONE motion everywhere, colour per button.
+- **Look**: the button ROOT is the colour (`BackgroundColor3`; `Theme` attribute = a palette, or `Custom` = whatever
+  colour you set in Studio) with a `Core` luminance gradient; a gold `Rim` stroke whose light travels round; `Inner`
+  engraved line, `Gloss`, `Lip` (bevel shadow), `ShineClip.Streak`, `Flash`, `Burst` (tinted), two corner `Sparkles`,
+  `Pop` UIScale; labels in the gold-serif Label font with a dark outline (a TextButton's own text is mirrored into
+  `PlateText`). Because the colour lives on the root, a script that recolours (green Claim / grey Incomplete) or dims
+  (BackgroundTransparency) a button keeps working untouched.
+- **Motion** (AlamatButton, Variant `Plate`): hover / gamepad selection lift x1.05 + brighter rim + shine + sparkles;
+  press x0.94; Activated white flash + burst + Click sound; idle shine every 4-9 s. `StarterPlayerScripts.AlamatUIBinder`
+  binds every tagged button in PlayerGui (both Places). The old UIKit.Button tag / ScreenFX juice step aside (`NoFX`).
+- **Palettes for plates**: Gold primary/confirm · Jade claim · Ruby destructive (sell, discard, disband) · Stone
+  secondary (cancel, back, reset, filters) · Violet summon/special · Azure navigation · Ember events · Night quiet.
+- **Make one**: clone `RS.AlamatUI.Templates.AlamatPlate`, or in Edit:
+  `local P = require(game.ServerStorage.DevTools.AlamatPlate:Clone())` then `P.convert(btn, "Jade")` (restyles an existing
+  button IN PLACE, keeps its name + the children scripts use) / `P.make(parent, name, text, theme)`. Source:
+  `tools/alamat_plate.luau`; the rollout list (every converted button + its theme): `tools/alamat_plate_rollout.luau`.
+- Gotchas fixed in the tool: a re-used UIStroke may be `ScaledSize` (thickness = a FRACTION of the button -> a 176 px
+  ellipse) -> forced FixedSize; a TextButton whose own text is hidden behind a Label child gets no PlateText.
+- Rolled out B151: Lobby 140 buttons (Units, Quests/Achievements, Silver Shop -- Buy shows the Silver ICON + price, Summon,
+  Events, Items, Daily, Battle Pass, Codes, Play menu, Ascension, Evolve, Crafting, Stat/Trait reroll, misc); Game 50
+  (Units copy, Quests, Match End, Match HUD right buttons + speed, Wave prep READY, Placement controls, Auto Play
+  settings). Tower panel + Unit Manager convert in their B153 rebuild. Backups `ServerStorage._UIBackup_B151`.
+
+## Where it lives (shared canon in BOTH Places since B151; the Game has no Sun-gem HUD yet)
 `ReplicatedStorage.AlamatUI`
 - `Theme` — palettes, the gold rim sequence, label gold, fonts, image VFX ids.
 - `AlamatButton` — THE animator (tag `AlamatButton`); builds nothing.
 - `Templates.AlamatButton` — the authored master (tools/alamat_ui_build.luau), `Templates.Selector` (gamepad ring).
-Not shared canon yet (no manifest entry): promote to `shared/` when the Game adopts it.
+`Theme` + `AlamatButton` are SHARED CANON (`shared/src/AlamatTheme.luau`, `AlamatButton.luau`). Templates are tool-built.
 
 ## Variants (same parts, different layout) and palettes
 | Variant | Use | Notes |
