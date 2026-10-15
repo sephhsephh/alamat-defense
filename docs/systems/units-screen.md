@@ -82,8 +82,11 @@ Three columns + a bottom bar (the user's reference: roster left, hero centre, in
   (= the Traits page Swap), the team strip (= the equipped checkmarks + Teams).
 - **Veil:** opening and the player's own close go through the LoadingScreen (`Lazy.veil` / `Lazy.leave`, Game copy
   "Back to the battle"); a close forced by another screen is instant.
-- **Phone:** every placed node carries `PcPos/PcSize` + `MobPos/MobSize`; `Hall.applyLayout` picks the set (touch-only
-  or a screen under 500 px tall): 3 per row, taller rows / footer / bar. Harness `UnitsGUI.DevMobileLayout` (OFF).
+- **Layout = the user's, in Studio (B160).** No runtime re-layout: `Hall.applyLayout` and the `PcPos/MobPos` sets are gone
+  (user rule). Hierarchy: `Bottom.RosterPanel` holds search / filters / grid / capacity / Unequip All / Sell / sell row;
+  `SelectedUnitFrame` = stage + `BG` (the info panel) which holds `Stats` (exactly BG's size), `ActionRail`, `Divider`,
+  the tab pages + path bar and the CloseButton; `Bottom.NavBar` holds `Tabs`, Equip, Teams. No `Top` layer. Card width =
+  the `UnitsContainer.CardWidth` attribute (edit it in Studio).
 - Tab + Teams labels share one size, the round buttons' captions another (`UITextSizeConstraint "Even"`, capped at
   runtime to the smallest VISIBLE label). `attackChanged` = name, effects or shape KIND (also the Lobby `EvolveController`).
 - Harness: `DevHero = "tab:Upgrades"` etc. The Game copy (B123 loadout-only mode) runs the identical hall code.

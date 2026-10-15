@@ -111,8 +111,18 @@ local function fit(e: any)
 	local s = math.min(a.X, a.Y)
 	if s <= 0 then return end
 	if e.variant == "Plate" then
-		if e.rim then e.rim.Thickness = math.clamp(s * (if e.hovered then 0.1 else 0.075), 1.5, 5) end
-		if e.outline then e.outline.Thickness = math.clamp(s * 0.035, 1, 2.5) end
+		-- B160 (user: "huge strokes"): the thickness AUTHORED in Studio is the ceiling. The script only thins a
+		-- rim on a small plate (+1 px while hovered); it never thickens a plate past its design.
+		local function authored(st: UIStroke): number
+			local v = st:GetAttribute("AuthoredThickness")
+			if type(v) ~= "number" then
+				v = st.Thickness
+				st:SetAttribute("AuthoredThickness", v)
+			end
+			return v
+		end
+		if e.rim then e.rim.Thickness = math.clamp(s * 0.075, 1, authored(e.rim)) + (if e.hovered then 1 else 0) end
+		if e.outline then e.outline.Thickness = math.clamp(s * 0.035, 1, authored(e.outline)) end
 		return
 	end
 	if e.rim then e.rim.Thickness = math.clamp(s * (if e.variant == "Hero" then 0.035 else 0.042), 1.2, 7) end

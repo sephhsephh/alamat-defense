@@ -775,15 +775,15 @@
     },
     "AlamatButton": {
       "file": "shared/src/AlamatButton.luau",
-      "hash": "ab2e8495",
+      "hash": "ea205656",
       "owner": "ui",
       "deployPath": "ReplicatedStorage.AlamatUI.AlamatButton",
       "deployed": {
-        "Game": "ab2e8495",
-        "Lobby": "ab2e8495"
+        "Game": "ea205656",
+        "Lobby": "ea205656"
       },
       "kind": "module",
-      "comment": "PROMOTED to shared canon at B151 2026-10-14: THE animator for every Alamat button (tag AlamatButton), + Variant Plate (hover lift x1.05, rim brightens, shine sweep, corner sparkles, press 0.94, white flash + tinted burst, TextButton text mirrored into PlateText). Bound in both Places by StarterPlayerScripts.AlamatUIBinder. Plates are authored by tools/alamat_plate.luau (ServerStorage.DevTools.AlamatPlate; template RS.AlamatUI.Templates.AlamatPlate is TOOL-BUILT in both Places, not hashed)."
+      "comment": "PROMOTED to shared canon at B151 2026-10-14: THE animator for every Alamat button (tag AlamatButton), + Variant Plate (hover lift x1.05, rim brightens, shine sweep, corner sparkles, press 0.94, white flash + tinted burst, TextButton text mirrored into PlateText). Bound in both Places by StarterPlayerScripts.AlamatUIBinder. Plates are authored by tools/alamat_plate.luau (ServerStorage.DevTools.AlamatPlate; template RS.AlamatUI.Templates.AlamatPlate is TOOL-BUILT in both Places, not hashed). B160: a Plate rim / text outline never exceeds its AUTHORED (Studio) thickness; the script only thins small plates (+1 px on hover). Was up to 5 px (user: \"huge strokes\" in Settings)."
     },
     "CombatIconConfig": {
       "file": "shared/src/CombatIconConfig.luau",

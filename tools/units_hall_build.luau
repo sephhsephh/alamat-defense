@@ -1,3 +1,5 @@
+-- ⚠ RETIRED B160 -- DO NOT RUN. The Units layout is now the USER's, authored in Studio (user rule: never re-lay UI
+-- from a script). Re-running this would wipe it and restore the old full-screen layers. Hierarchy: tools/units_hall_reparent.luau.
 -- tools/units_hall_build.luau (B155, v2 = B156) -- run with execute_luau in EACH Place (Edit). Re-runnable, from the
 -- pristine screen or from v1. User (B156, with a reference screenshot): "i like the layout of this, apply that for
 -- units, fit the buttons, reduce duplicate buttons". THREE COLUMNS + a bottom bar:
