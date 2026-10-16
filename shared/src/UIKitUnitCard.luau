@@ -385,10 +385,12 @@ UnitCard.DefaultIdleAnim = "rbxassetid://507766666"
 -- ===== IDLE IN A VIEWPORT (B78, user) =====
 -- "The idle animations will be played on all the viewport frames that previews a unit."
 --
--- THE ID TRAVELS ON THE MODEL, NOT IN A CONFIG. The Game's `TowerConfig.Idle.Anim` is copied onto
--- the spawned rig as the `IdleAnim` attribute, and the display rigs in `TowerModels`/`UnitModels`
--- carry the same attribute -- so a preview asks the MODEL what its idle is. That is what lets the
--- LOBBY animate a unit it has no TowerConfig for (it has none, by design), with one authored id.
+-- B161 (user): THE UNIT'S CONFIG IS THE ONE SOURCE. `Idle.Anim` in the Game's RS.Configs.Towers.<Id> is what
+-- the placed tower and the placement ghost play, and every viewport in BOTH Places plays the same id: it comes
+-- from the shared UnitInfoCatalog (generated from those configs; Server.UnitInfoCatalogValidate fails the Game
+-- boot when it drifts), looked up by the rig's tower id -- its `TowerId` attribute, else its name. The old
+-- `IdleAnim` attribute on display rigs is GONE (it was a second source and went stale: Apolaki played the
+-- stock idle in every viewport while its config had a real one).
 --
 -- The rig must sit inside a WorldModel in the ViewportFrame (`viewport()` makes one) -- that is
 -- what lets the engine animate it -- and needs an AnimationController or a Humanoid. The track is
@@ -399,13 +401,12 @@ function UnitCard.playIdle(model: Instance?, animId: any): AnimationTrack?
 	if model == nil then
 		return nil
 	end
-	if animId == nil then
-		animId = model:GetAttribute("IdleAnim")
-	end
-	if animId == nil then
-		-- No authored idle on this rig: fall back to the stock one so a preview is never a statue.
-		animId = UnitCard.DefaultIdleAnim
-	end
+	-- the config's idle first; `animId` is only a fallback (a live tower's spawn-time copy of that same value)
+	local towerId = model:GetAttribute("TowerId")
+	if type(towerId) ~= "string" then towerId = model.Name end
+	local fromConfig = if UnitInfoCatalog and UnitInfoCatalog.IdleAnim then UnitInfoCatalog.IdleAnim(towerId) else nil
+	-- no idle in the config: the stock one, so a preview is never a statue
+	animId = fromConfig or animId or UnitCard.DefaultIdleAnim
 	if type(animId) == "number" then
 		animId = "rbxassetid://" .. tostring(math.floor(animId))
 	elseif type(animId) == "string" and animId:match("^%d+$") then
@@ -432,6 +433,10 @@ function UnitCard.playIdle(model: Instance?, animId: any): AnimationTrack?
 	local ok, track = pcall(function()
 		local animation = Instance.new("Animation")
 		animation.AnimationId = animId
+		-- one idle at a time: a second call (or an earlier stock idle) must not keep playing underneath
+		for _, old in ipairs((animator :: Animator):GetPlayingAnimationTracks()) do
+			if old.Priority == Enum.AnimationPriority.Idle then old:Stop(0) end
+		end
 		local t = (animator :: Animator):LoadAnimation(animation)
 		t.Looped = true
 		t.Priority = Enum.AnimationPriority.Idle

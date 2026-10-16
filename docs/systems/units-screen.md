@@ -102,7 +102,7 @@ Three columns + a bottom bar (the user's reference: roster left, hero centre, in
   clones, up to 3; `Body.IconPad` makes room).
 - **Card gradients swing diagonally:** `UIKit.UnitCard.paintTier` loops the tier gradient at Rotation 35 +/- 20
   (`Motion.loopGradient` opts `Rotation` / `Sway`), not straight vertical.
-- **Every rig in a viewport idles:** `Client.UI.ViewportIdle` (both Places) plays `UnitCard.playIdle` (IdleAnim
+- **Every rig in a viewport idles:** `Client.UI.ViewportIdle` (both Places) plays `UnitCard.playIdle` (the CONFIG idle, B161;
   attribute, else the default idle) on any rig placed in a WorldModel under a ViewportFrame that has no track playing.
 - **No walking behind a menu:** `Client.UI.MenuMovementLock` (both Places) sets the `MenuLocked` player attribute,
   disables the controls + proximity prompts while UnitsGUI / PlayGUI / EventsGUI (+ `ExtraScreens` attr) is enabled;

@@ -15,6 +15,9 @@
 
 local UnitInfoCatalog = {}
 local D: { [string]: any } = {}
+-- B161: I.<TowerId> = the unit's idle clip, GENERATED from its config's `Idle.Anim` (the ONE source of a unit's
+-- animation). Every viewport in both Places plays it through UIKit.UnitCard.playIdle.
+local I: { [string]: string } = {}
 D.AmanSinaya={"Water","Ground",2,2000,0.05,2,{Tsunami=2,Wave=1},{"Great Wave","Nuke",40,{Mult=6,Scope="Range"}},{{"Knockback","Tide",{Chance=1,StudsByTier={2,2,2.5,2.5,3,3,3.5,3.5,4,4}}}},{{46,14,2,675,0,"Wave","Box 6x14","Slow"},{52,15,1.98,865,0,"Wave","Box 6.3x15","Slow"},{58,15,1.96,1095,0,"Wave","Box 6.7x15","Slow"},{66,16,1.93,1410,0,"Wave","Box 7x16","Slow"},{75,17,1.91,1810,0,"Wave","Box 7.3x17","Slow"},{85,17,1.89,2315,0,"Wave","Box 7.7x17","Slow"},{96,18,1.87,2970,0,"Wave","Box 8x18","Slow"},{108,19,1.84,3790,0,"Wave","Box 8.3x19","Slow"},{122,19,1.82,4865,0,"Wave","Box 8.7x19","Slow"},{138,20,1.8,0,0,"Tsunami","Box 9x20","Slow"}}}
 D.AmanSinaya_Riptide={"Water","Ground",2,2000,0.05,2,{Tsunami=2,Wave=1},{"Great Wave","Nuke",40,{Mult=6,Scope="Map"}},{{"Knockback","Tide",{Chance=1,StudsByTier={2,2,2.5,2.5,3,3,3.5,3.5,4,4}}}},{{60,14,2,675,0,"Wave","Box 6x14","Slow"},{68,15,1.98,865,0,"Wave","Box 6.3x15","Slow"},{76,15,1.96,1095,0,"Wave","Box 6.7x15","Slow"},{86,16,1.93,1410,0,"Wave","Box 7x16","Slow"},{97,17,1.91,1810,0,"Wave","Box 7.3x17","Slow"},{110,17,1.89,2315,0,"Wave","Box 7.7x17","Slow"},{125,18,1.87,2970,0,"Wave","Box 8x18","Slow"},{141,19,1.84,3790,0,"Wave","Box 8.3x19","Slow"},{159,19,1.82,4865,0,"Wave","Box 8.7x19","Slow"},{179,20,1.8,0,0,"Tsunami","Box 9x20","Slow"}}}
 D.Amomongo={"Nature","Ground",3,780,0.07,2,{Claw=1,Rend=2},false,{{"KillFrenzy","Frenzy",{Duration=6,Kills=10,Mult=0.7,Stat="SPA"}}},{{53,9,2.6,340,0,"Claw","Box 4x5",""},{64,10,2.54,455,0,"Claw","Box 4.3x5.3",""},{77,10,2.49,610,0,"Claw","Box 4.6x5.6",""},{93,11,2.43,830,0,"Claw","Box 4.9x5.9",""},{113,12,2.37,1120,0,"Claw","Box 5.1x6.1",""},{137,12,2.31,1520,0,"Claw","Box 5.4x6.4",""},{165,13,2.26,2040,0,"Claw","Box 5.7x6.7",""},{200,14,2.2,0,0,"Rend","Box 6x7",""}}}
@@ -63,6 +66,15 @@ D.Tikbalang={"Neutral","Ground",3,520,0.06,2,{Kick=1},false,{{"Knockback","Lead 
 D.Tiyanak={"Dark","Ground",2,3200,0.06,2,{Bite=1},false,{{"EnterRangeStatus","Lost Child's Cry",{Duration=1,Status="Stun"}},{"ArmorPierce","Bite",{Fraction=1}}},{{71,13,2,1065,0,"Bite","Circle 3.5",""},{81,14,1.99,1340,0,"Bite","Circle 3.6",""},{92,14,1.97,1675,0,"Bite","Circle 3.8",""},{104,15,1.96,2070,0,"Bite","Circle 3.9",""},{118,15,1.95,2590,0,"Bite","Circle 4",""},{135,16,1.93,3260,0,"Bite","Circle 4.2",""},{153,16,1.92,4085,0,"Bite","Circle 4.3",""},{174,17,1.9,5090,0,"Bite","Circle 4.5",""},{199,17,1.89,6370,0,"Bite","Circle 4.6",""},{226,18,1.88,7955,0,"Bite","Circle 4.7",""},{257,18,1.86,9935,0,"Bite","Circle 4.9",""},{292,19,1.85,0,0,"Bite","Circle 5",""}}}
 D.Tiyanak_Changeling={"Dark","Ground",2,3200,0.06,2,{Bite=1},false,{{"EnterRangeStatus","Lost Child's Cry",{Duration=1,Status="Stun"}},{"ArmorPierce","Bite",{Fraction=1}},{"BonusVs","Prey",{Condition="Status",Mult=1.4,Status="Stun"}}},{{92,13,2,1065,0,"Bite","Circle 3.5",""},{105,14,1.99,1340,0,"Bite","Circle 3.6",""},{119,14,1.97,1675,0,"Bite","Circle 3.8",""},{135,15,1.96,2070,0,"Bite","Circle 3.9",""},{153,15,1.95,2590,0,"Bite","Circle 4",""},{175,16,1.93,3260,0,"Bite","Circle 4.2",""},{200,16,1.92,4085,0,"Bite","Circle 4.3",""},{227,17,1.9,5090,0,"Bite","Circle 4.5",""},{258,17,1.89,6370,0,"Bite","Circle 4.6",""},{293,18,1.88,7955,0,"Bite","Circle 4.7",""},{335,18,1.86,9935,0,"Bite","Circle 4.9",""},{380,19,1.85,0,0,"Bite","Circle 5",""}}}
 D.Urduja={"Neutral","Ground",2,1250,0.05,2,{},{"War Cry","TempStatBuff",25,{Duration=12,Mult=1.6,Stat="Damage"}},{{"AllyDamageAura","Ally Damage Aura",{Interval=0.5,Mult=1.08,Stat="Damage"}}},{{13,18,1,445,0,"","Circle 3",""},{15,19,0.97,605,0,"","Circle 3.1",""},{17,19,0.95,820,0,"","Circle 3.2",""},{19,20,0.93,1105,0,"","Circle 3.4",""},{22,20,0.9,1480,0,"","Circle 3.5",""},{25,21,0.88,2020,0,"","Circle 3.6",""},{28,22,0.85,2715,0,"","Circle 3.8",""},{32,22,0.83,3660,0,"","Circle 3.9",""},{37,23,0.8,0,0,"","Circle 4",""}}}
+I.Amomongo="rbxassetid://125610139973073"
+I.Apolaki="rbxassetid://100485253004120"
+I.Apolaki_Zenith="rbxassetid://100485253004120"
+I.Baltog="rbxassetid://103516829310806"
+I.Bantong="rbxassetid://125610139973073"
+I.Kapre="rbxassetid://125610139973073"
+I.LamAng="rbxassetid://125610139973073"
+I.Siyokoy="rbxassetid://125610139973073"
+I.Tikbalang="rbxassetid://125610139973073"
 UnitInfoCatalog.Data = D
 
 UnitInfoCatalog.ElementColors = {
@@ -124,6 +136,11 @@ function UnitInfoCatalog.Get(towerId: string?): any?
 	end
 	cache[towerId] = e
 	return e
+end
+
+-- B161: the unit's idle animation id (from its config's Idle.Anim), or nil when the config sets none.
+function UnitInfoCatalog.IdleAnim(towerId: string?): string?
+	return if type(towerId) == "string" then I[towerId] else nil
 end
 
 function UnitInfoCatalog.TierCount(towerId: string?): number
