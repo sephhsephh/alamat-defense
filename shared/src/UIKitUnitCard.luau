@@ -385,28 +385,45 @@ UnitCard.DefaultIdleAnim = "rbxassetid://507766666"
 -- ===== IDLE IN A VIEWPORT (B78, user) =====
 -- "The idle animations will be played on all the viewport frames that previews a unit."
 --
--- B161 (user): THE UNIT'S CONFIG IS THE ONE SOURCE. `Idle.Anim` in the Game's RS.Configs.Towers.<Id> is what
--- the placed tower and the placement ghost play, and every viewport in BOTH Places plays the same id: it comes
--- from the shared UnitInfoCatalog (generated from those configs; Server.UnitInfoCatalogValidate fails the Game
--- boot when it drifts), looked up by the rig's tower id -- its `TowerId` attribute, else its name. The old
--- `IdleAnim` attribute on display rigs is GONE (it was a second source and went stale: Apolaki played the
--- stock idle in every viewport while its config had a real one).
+-- B162 (user): WHERE THE ID COMES FROM, per Place.
+--   GAME  -- the unit's REAL config: `Idle.Anim` in RS.Configs.Towers.<Id> (what the placed tower and the
+--            placement ghost play), looked up by the rig's `TowerId` attribute, else its name.
+--   LOBBY -- there are no tower configs: the rig's own `IdleAnim` attribute (set it on the model in
+--            RS.UnitModels; keep it equal to the Game config's Idle.Anim).
+-- Then an id the caller passed, then the stock idle.
 --
 -- The rig must sit inside a WorldModel in the ViewportFrame (`viewport()` makes one) -- that is
 -- what lets the engine animate it -- and needs an AnimationController or a Humanoid. The track is
 -- loaded on the rig's own Animator.
 --
 -- Silent by design: no attribute, no animator, or an unauthored id simply means a still model.
+-- The Game's tower config registry, found once WITHOUT waiting (the Lobby has none: `false`).
+local towerRegistry: any = nil
+local function configIdle(towerId: string): string?
+	if towerRegistry == nil then
+		towerRegistry = false
+		local configs = ReplicatedStorage:FindFirstChild("Configs")
+		local towers = configs and configs:FindFirstChild("Towers")
+		local reg = towers and towers:FindFirstChild("TowerConfigRegistry")
+		if reg then
+			local ok, m = pcall(require, reg)
+			if ok and type(m) == "table" then towerRegistry = m end
+		end
+	end
+	if not towerRegistry then return nil end
+	local ok, c = pcall(towerRegistry.Get, towerId)
+	local idle = if ok and type(c) == "table" and type(c.Idle) == "table" then c.Idle.Anim else nil
+	return if type(idle) == "string" and idle ~= "" then idle else nil
+end
+
 function UnitCard.playIdle(model: Instance?, animId: any): AnimationTrack?
 	if model == nil then
 		return nil
 	end
-	-- the config's idle first; `animId` is only a fallback (a live tower's spawn-time copy of that same value)
 	local towerId = model:GetAttribute("TowerId")
 	if type(towerId) ~= "string" then towerId = model.Name end
-	local fromConfig = if UnitInfoCatalog and UnitInfoCatalog.IdleAnim then UnitInfoCatalog.IdleAnim(towerId) else nil
-	-- no idle in the config: the stock one, so a preview is never a statue
-	animId = fromConfig or animId or UnitCard.DefaultIdleAnim
+	-- no idle anywhere: the stock one, so a preview is never a statue
+	animId = configIdle(towerId) or model:GetAttribute("IdleAnim") or animId or UnitCard.DefaultIdleAnim
 	if type(animId) == "number" then
 		animId = "rbxassetid://" .. tostring(math.floor(animId))
 	elseif type(animId) == "string" and animId:match("^%d+$") then

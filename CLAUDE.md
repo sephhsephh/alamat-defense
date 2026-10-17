@@ -127,8 +127,8 @@ up next session. Unlisted new system → add it to OWNERSHIP.md as part of build
 - **EVERY NEW FEATURE SHIPS FOR PC + CONSOLE + MOBILE (user rule, 2026-09-27; PC is the main platform).** No mouse-only
   or key-only interaction: bind through ContextActionService / gamepad UI selection too. The foundation lands in the console batch.
 - **A NEW UNIT LIVES IN BOTH PLACES (user rule, 2026-09-19).** The rig goes in the GAME's
-  `RS.TowerModels` *and* the LOBBY's `RS.UnitModels`, same name (+ optional `GameScale` attribute), stored at FULL R15 size; its idle is set ONLY in its config
-  (`Idle.Anim`, B161 -- regenerate UnitInfoCatalog) (B159: the game shrinks it, `tower-authoring.md` §6) — the
+  `RS.TowerModels` *and* the LOBBY's `RS.UnitModels`, same name (+ optional `GameScale` attribute), stored at FULL R15 size; idle = the GAME config's `Idle.Anim`
+  + the SAME id as the LOBBY rig's `IdleAnim` attribute (B162) (B159: the game shrinks it, `tower-authoring.md` §6) — the
   Lobby has no TowerConfig, so a unit missing there previews as `Placeholder` in every card, slot and
   hover popup. **REMIND THE USER OF THIS whenever a new unit is created**, in either Place.
 

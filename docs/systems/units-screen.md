@@ -102,8 +102,11 @@ Three columns + a bottom bar (the user's reference: roster left, hero centre, in
   clones, up to 3; `Body.IconPad` makes room).
 - **Card gradients swing diagonally:** `UIKit.UnitCard.paintTier` loops the tier gradient at Rotation 35 +/- 20
   (`Motion.loopGradient` opts `Rotation` / `Sway`), not straight vertical.
-- **Every rig in a viewport idles:** `Client.UI.ViewportIdle` (both Places) plays `UnitCard.playIdle` (the CONFIG idle, B161;
-  attribute, else the default idle) on any rig placed in a WorldModel under a ViewportFrame that has no track playing.
+- **Every rig in a viewport idles:** `Client.UI.ViewportIdle` (both Places) plays `UnitCard.playIdle` (Game: the config idle; Lobby: the rig's `IdleAnim`
+  attribute; else the default idle, B162) on any rig placed in a WorldModel under a ViewportFrame that has no track playing.
+- **B162:** the roster grid (`UnitsContainer`, attribute `NoIdle = true`) keeps its rigs STILL; only the stage animates. The
+  stage shows the unit at its ORIGINAL scale (Hall.frameFull scales it to 1; it measures the box at game scale first --
+  a viewport never re-solves limbs after ScaleTo -- and stores it as `StageFitSize/StageFitOffset` on the rig).
 - **No walking behind a menu:** `Client.UI.MenuMovementLock` (both Places) sets the `MenuLocked` player attribute,
   disables the controls + proximity prompts while UnitsGUI / PlayGUI / EventsGUI (+ `ExtraScreens` attr) is enabled;
   the shared `MovementController` treats it like a focused TextBox.

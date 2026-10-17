@@ -14,6 +14,8 @@
 -- roster, Index, inventory...) now steps its idle LIST_FPS times a second instead of every frame, and not at all
 -- while scrolled out of view. Single portraits (the stage, hotbar, hover cards, reveals) keep full-rate motion.
 -- A ViewportFrame can override: attribute `IdleFps` (number; 0 = full rate) -- set it in Studio.
+-- B162 (user: "dont animate the roster panel anymore, just animate the one in stage"): any ancestor with the attribute
+-- `NoIdle = true` (set in Studio, e.g. the Lobby's Units roster grid) keeps its rigs STILL.
 local Players = game:GetService("Players")
 local RS = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -33,6 +35,15 @@ end
 
 local function isRig(model: Model): boolean
 	return model:FindFirstChildOfClass("Humanoid") ~= nil or model:FindFirstChildOfClass("AnimationController") ~= nil
+end
+
+local function noIdle(vf: Instance): boolean
+	local o: Instance? = vf
+	while o and o ~= playerGui do
+		if o:GetAttribute("NoIdle") == true then return true end
+		o = o.Parent
+	end
+	return false
 end
 
 -- ===== low-rate stepping for list cards =====
@@ -113,6 +124,10 @@ local function consider(model: Instance)
 			return
 		end
 		local a = animatorOf(m)
+		if noIdle(vf) then -- a still card: stop anything its screen started
+			if a then for _, t in ipairs(a:GetPlayingAnimationTracks()) do t:Stop(0) end end
+			return
+		end
 		if not (a and #a:GetPlayingAnimationTracks() > 0) then -- its screen may already animate it
 			pcall(UnitCard.playIdle, m)
 		end

@@ -65,7 +65,6 @@ local ids = {}
 for id in pairs(Registry.GetAll()) do table.insert(ids, id) end
 table.sort(ids)
 local lines = {}
-local idleLines = {} -- B161: I.<TowerId>="<idle anim>" rows, from each config's Idle.Anim
 for _, id in ipairs(ids) do
 	local c = Registry.Get(id)
 	local ups = c.Upgrades or {}
@@ -112,8 +111,5 @@ for _, id in ipairs(ids) do
 		if type(v) == "table" and next(v) == nil then table.insert(parts, "{}") else table.insert(parts, ser(v)) end
 	end
 	table.insert(lines, "D." .. id .. "={" .. table.concat(parts, ",") .. "}")
-	-- B161: the unit's idle clip, straight from its config (`Idle.Anim`) -- every viewport in both Places plays it
-	local idle = type(c.Idle) == "table" and c.Idle.Anim or nil
-	if type(idle) == "string" and idle ~= "" then table.insert(idleLines, "I." .. id .. "=" .. string.format("%q", idle)) end
 end
-return table.concat(lines, "\n") .. "\n" .. table.concat(idleLines, "\n")
+return table.concat(lines, "\n")

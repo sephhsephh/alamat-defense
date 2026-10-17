@@ -157,8 +157,8 @@ tower ever *does* revert, look at whatever moved the model last, not at `FaceTar
    `ModelStoragePath` (`RS.TowerModels`) to spawn the tower; the LOBBY needs the same rig in
    `RS.UnitModels` or every card, hotbar slot and preview of that unit draws `Placeholder` instead.
    **A new unit is not done until it exists in both.** Give it a `PrimaryPart` and an
-   `AnimationController` or `Humanoid`. **Its idle lives ONLY in its config** (`Idle = { Anim = ... }`, B161) -- no
-   attribute on the rigs; regenerate the shared UnitInfoCatalog (`tools/unit_info_gen.luau`) so the Lobby plays it too.
+   `AnimationController` or `Humanoid`. **Idle (B162):** the Game reads the config's `Idle = { Anim = ... }` everywhere
+   (tower, ghost, HUD viewports); the Lobby has no configs, so set the SAME id as the `IdleAnim` attribute on its rig.
    **Store the rig at its FULL R15 size -- do not shrink it (B159).** The game shows it at its
    `GameScale` attribute (Model scale; default 0.34 = the standard ~2-stud unit, written at boot by
    `Server.UnitScaleTagger` when missing) in the match, the placement ghost AND every viewport
@@ -166,8 +166,8 @@ tower ever *does* revert, look at whatever moved the model last, not at `FaceTar
    never the stored rig times a ratio (layered-clothing cages do not resize with `ScaleTo`).
 4. **Fill `Attacks`**: one profile per distinct attack, each with its hit list. Weights sum to 1.
 5. **Fill `Upgrades`**: numbers per tier; name an `Attack` on tier 1 and again wherever it changes.
-6. **Author the clips** and put the marker names from step 4 in them. Set `Idle.Anim` in the config and
-   regenerate UnitInfoCatalog (its `I.<Id>` rows) so every preview animates. **Author its VFX folder** at
+6. **Author the clips** and put the marker names from step 4 in them. Set `Idle.Anim` in the config and the
+   same id as the Lobby rig's `IdleAnim` attribute so every preview animates. **Author its VFX folder** at
    `VFXTemplates.Towers.<Id>` when you have art — until then it plays the house defaults (`tower-vfx.md`).
 7. **Price it** in `UnitStatsCatalog` (`Costs`) — the validator at boot checks the cache against the
    live config, so a mismatch is caught immediately.
@@ -198,7 +198,7 @@ produced and how it picked its target.
 | `Server.Towers.TargetingSystem` | `SelectTarget` (one) and `SelectTargets` (N, for `Fresh` hits). |
 | `Server.Towers.RigAnimator` | The only place that touches Animators. Accepts number or string ids. |
 | `ServerScriptService.TowerAttackValidate` | Boot-time check of every config. |
-| `Shared.UIKit.UnitCard.playIdle` | Plays the unit's CONFIG idle (`UnitInfoCatalog.IdleAnim(TowerId or model name)`, B161) inside a ViewportFrame's WorldModel (both Places); falls back to `UnitCard.DefaultIdleAnim`. Stops any idle already playing first. |
+| `Shared.UIKit.UnitCard.playIdle` | Plays a rig's idle inside a ViewportFrame's WorldModel (both Places): GAME = the real config (`TowerConfigRegistry.Get(TowerId or name).Idle.Anim`), LOBBY = the rig's `IdleAnim` attribute (B162); then a passed id, then `UnitCard.DefaultIdleAnim`. Stops any idle already playing first. |
 | `Client.Audio.GameSfx` | Plays `ReleaseSound` / `Projectile.Sound` / `ImpactSound` as 3D sounds (B81; see `match-audio.md`). |
 
 ## 8. Gotchas paid for in blood
