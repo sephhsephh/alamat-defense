@@ -120,6 +120,7 @@
 - `areas.md` — **AD-Lobby, LOBBY** (B146): the HUD Areas screen (categories, picture cards, travel / open, favourites, waypoints), `AreasConfig`, `AreaAction` remote, new `Map.Travel.Area_*` spots.
 - `inventory.md` — **AD-Lobby, LOBBY** (B145): the rebuilt Items screen (tabs, owned-only grid, details, Use / Favourite / Lock / View / Obtainments / Discard), `InventoryConfig`, `ItemActionsService` (`Counters.Global.ItemFlags`).
 - `balance.md` — **AD-Game canon, GAME (+Lobby display)** (B141): ONE balance formula (WAVE_HP column x HpRatio x stage x act x Hard x co-op), `BalanceConfig` + `WaveKit` + Stage 1 roster/bosses, starters, the rarity ladder, economy, `tools/balance/sim.js`. Design: `proposals/2026-10-13-balance-overhaul.md`.
+- `maps-apolaki.md` — **AD-Game, GAME** (B166): the Stage 1 map Apolaki Sun Terraces -- Blender build scripts (`tools/maps/apolaki`), 3D-Importer gotchas (180° turn, alpha SurfaceAppearance, Y offset), map layout, the collision model (zones 0.05 above solid surfaces), asset ids.
 - `lobby-map.md` — **AD-Lobby canon, LOBBY** (B134): the night-island map -- districts + NPC homes, travel
   waystones + water rescue (`LobbyMapService`), plaza seating, lighting/terrain values, the `tools/lobby_map` builders.
 - `notifications.md` — **AD-Meta/AD-Gacha canon, LOBBY**: the HUD "new/claimable" count badges (B49). Reads authoritative counts from existing remotes (Inbox/Daily/Event/Quests/BP), `NotificationController` + `NotifBadgeTemplate` + `RefreshBadges`; no server code. Read before adding a badge.

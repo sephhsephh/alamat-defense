@@ -58,6 +58,7 @@ everything untradeable at launch).
 - 🟡 Art: attack anim/VFX/sound ids placeholder; weapon grips approximate
 - ✅ Monetization (B48, AD-Meta): paid track = **permanent gamepass unlock**, WIRED. `BattlepassConfig.GamePassId` + `BattlepassService` ownership sync (`UserOwnsGamePassAsync` on load + `PromptGamePassPurchaseFinished`) + client `PromptGamePassPurchase`. `Owned` stays the one writer's field. **User creates the gamepass + sets the id.** 🔲 level-skip products (5/10/50) still unbuilt.
 - 🟡 Content: 1 map, 2 enemies, 8 towers, 1 stage — pipeline proven, content thin
+- ✅ **Stage 1 map: Apolaki Sun Terraces — B166.** Blender-scripted stylized map (painted textures, real stone geometry, VFX, golden-hour lighting), precise collision; every Stage 1 act uses it. `docs/systems/maps-apolaki.md`.
 - 🔲 Enemy behaviors (Flying = planned after placement, B94 plan / Splitting / Shielding) · 🔲 Endless + BossRush modes
 - 🔲 Persistence round-trip test (PENDING in STATE.md)
 - 💭 Spatial partitioning for enemy queries
