@@ -177,6 +177,13 @@ That is the whole loop — **no code, no config edit**, for every unit from here
 | Melee knight | dash trail as `Attach = "Follow"` on the rig, `Impact` at the target |
 | Per-tier upgrade look | a second attack profile + its own `Attacks/<Name>` folder |
 
+## Beams to the target (B165)
+
+Root attribute `AimEnd = true`: the Attachment named `AimEnd` inside the template is moved onto the TARGET (the event
+point + Dir -- a Release carries the tower's position and the direction to its target), so a Beam from an attachment
+at the root (`Attach = "Muzzle"`) to `AimEnd` spans mouth -> enemy. Per Beam: `Life` seconds, then it narrows out.
+Example: `Towers/Bakunawa/Release` (outer + inner spiral beams with opposite TextureSpeed, a core, flash, droplets).
+
 ## The rails
 
 - **Client only.** The server sends ids; templates never replicate and never touch gameplay.

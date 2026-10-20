@@ -203,6 +203,12 @@ produced and how it picked its target.
 
 ## 8. Gotchas paid for in blood
 
+- **A skinned (Bone) rig from the 3D Importer plays its clips TWISTED** (B165, Bakunawa "inside out" in a match):
+  the importer's keys are not bone Transforms. Convert them with `tools/fix_imported_bone_anims.luau`, then publish
+  the `*_Fixed` sequences; check a frame against Blender before shipping. Clips must come from THE SAME import as
+  the rig (another import's clips mismatch the bones). Add an `Animator` under the AnimationController (none is made).
+- **Ability presentation (B165):** an `Ability`/`Abilities` entry may carry `Anim` (played on the rig) and `VFX = { ids }`
+  (templates under `VFXTemplates.Towers.<Id>`, played like a Release) -- `TowerController:TryActivateAbility`.
 - **The router asks the profile, not the tier.** It used to check `stats.Anim or stats.Projectile`;
   the moment an attack moved into a named profile those tier fields vanished and the tower silently
   fell back to the instant path — no animation, no multi-hit, no VFX. It now asks `AttackProfile.Has`.
