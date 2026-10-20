@@ -85,19 +85,19 @@ ItemCatalog.Entries = {
 	Silver      = { Kind = "Currency", Tier = "Common", Name = "Silver",      Description = "Soft currency from dupes / sells.",   Icon = { Image = "rbxassetid://137372260979804" }, Tradeable = false },
 	-- B109: Battle Pass EXP as a REWARD (quests/achievements). Not a stored currency: GrantService routes Kind
 	-- "BattlepassXP" to BattlepassService (ServerStorage.BattlepassAddXP), the one writer of Data.Battlepass.
-	BattlepassXP = { Kind = "BattlepassXP", Tier = "Rare", Name = "Battlepass EXP", Description = "Experience for the Battle Pass.", Icon = { Image = "rbxassetid://3057073083" }, Tradeable = false },
+	BattlepassXP = { Kind = "BattlepassXP", Tier = "Rare", Name = "Battlepass EXP", Description = "Experience for the Battle Pass.", Icon = { Image = "rbxassetid://81722285104237" }, Tradeable = false },
 	-- B109 M3: the ONE shared event currency. Kind "EventToken" = stored in Currencies.EventTokens[id] (the nested map
 	-- reserved since v2 -- no schema bump). Earned from events, spent in the Event Shop (EventShopService).
-	EventCoin = { Kind = "EventToken", Tier = "Legendary", Name = "Event Coin", Description = "Precious event coins that can be spent in the Event Shop!", Icon = { Image = "rbxassetid://18560905584" }, Tradeable = false },
+	EventCoin = { Kind = "EventToken", Tier = "Legendary", Name = "Event Coin", Description = "Precious event coins that can be spent in the Event Shop!", Icon = { Image = "rbxassetid://112585764785098" }, Tradeable = false },
 	-- B109 M5: Infernal Hunt chest. An openable ITEM: the Lobby opens it (InfernalHuntService) and rolls
 	-- InfernalHuntConfig.ChestDrops. Dropped by the Game's Infernal boss (daily limit).
-	InfernalChest = { Kind = "Item", Tier = "Mythic", Name = "Infernal Chest", Description = "Open for a chance at Trait Reroll Tokens, Stat Chips, Focus Chips, Event Coins or a Rainbow Mutya!", Icon = { Image = "rbxassetid://591644027" }, MaxOwned = 9999, Tradeable = false },
+	InfernalChest = { Kind = "Item", Tier = "Mythic", Name = "Infernal Chest", Description = "Open for a chance at Trait Reroll Tokens, Stat Chips, Focus Chips, Event Coins or a Rainbow Mutya!", Icon = { Image = "rbxassetid://75146223647395" }, MaxOwned = 9999, Tradeable = false },
 	StatRerolls = { Kind = "Currency", Tier = "Rare",   Name = "Stat Chip",   Description = "Rerolls all three of a unit's stats.", Icon = { Image = "rbxassetid://140199469455074" }, Tradeable = false },
 
 	-- ===== Items (existing stage drops) =====
-	BannerTicket     = { Kind = "Item", Tier = "Rare",      Name = "Banner Ticket",      Description = "A free banner pull.",       Icon = { Image = "rbxassetid://6731922404" }, MaxOwned = 9999, Tradeable = false },
+	BannerTicket     = { Kind = "Item", Tier = "Rare",      Name = "Banner Ticket",      Description = "A free banner pull.",       Icon = { Image = "rbxassetid://110592975812790" }, MaxOwned = 9999, Tradeable = false },
 	TraitRerollToken = { Kind = "Item", Tier = "Epic",      Name = "Trait Reroll Token", Description = "Reroll a unit's trait.",     Icon = { Image = "rbxassetid://91484105947557" }, MaxOwned = 9999, Tradeable = false },
-	GoldenSeed       = { Kind = "Item", Tier = "Legendary", Name = "Golden Seed",        Description = "Rare crafting material.",    Icon = { Image = "rbxassetid://124757602236693" }, MaxOwned = 9999, Tradeable = false },
+	GoldenSeed       = { Kind = "Item", Tier = "Legendary", Name = "Golden Seed",        Description = "Rare crafting material.",    Icon = { Image = "rbxassetid://120691613140984" }, MaxOwned = 9999, Tradeable = false },
 	-- B106: evolution relic. Drops from the Stage 1 boss act (Stage1_Act3 DropTable). Icon PLACEHOLDER (user).
 	ScarecrowCrown   = { Kind = "Item", Tier = "Legendary", Name = "Scarecrow Crown",    Description = "Relic of the Scarecrow King; used to evolve units.", Icon = { Image = "rbxassetid://86834094445192" }, MaxOwned = 9999, Tradeable = false },
 	-- B108: the second stat-reroll chip (user: "second chip is used to reroll only a specific stat"). An ITEM, not a

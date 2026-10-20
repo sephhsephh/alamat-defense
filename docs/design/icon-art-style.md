@@ -208,3 +208,7 @@ The icon sits on a coloured gem, so keep it bright, bold and centred; white/gold
 Elements / placement ids live in the unit-card icon map (`Element_*`, `Placement_*`, `MaxPlacement` asset ids);
 item icons in `ItemCatalog` (`Icon.Image`). Upload the PNG to Roblox, then paste the new `rbxassetid://` into the
 same key.
+
+**B167:** every icon in the "still to generate" list (34 UI symbols, 3 stat icons, HUD_Areas, 5 items, Emblem_Sun) and the
+19 illustrations are uploaded (SuperLazy Devworks) and wired; name -> image id in `docs/design/uploaded-art-ids.txt`.
+Still toolbox: the two DialogueGUI arrows (an upward chevron does not fit a "continue" arrow) and the 7 optional Mutya variants.

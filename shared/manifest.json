@@ -16,12 +16,12 @@
     },
     "ItemCatalog": {
       "file": "shared/src/ItemCatalog.luau",
-      "hash": "47a514f6",
+      "hash": "1cfc5061",
       "owner": "ui",
       "deployPath": "ReplicatedStorage.Configs.Meta.ItemCatalog",
       "deployed": {
-        "Game": "47a514f6",
-        "Lobby": "47a514f6"
+        "Game": "1cfc5061",
+        "Lobby": "1cfc5061"
       },
       "comment": "34161c6f -> 47a514f6 at B132: user icons for Stat Chip, Scarecrow Crown, Focus Chip (authored in the Game, synced to disk + Lobby; every item now has an icon). 3cb33ebd -> 34161c6f at B129: the user's item icons (Gold, Silver, Trait Reroll Token, the 6 EXP foods), authored in the Game and synced to disk + Lobby. 9a8848d2 -> 3cb33ebd at B128 (user cleanup): the 15 retired B50 Fragment/Artifact items DELETED (87 -> 72 entries); the Lobby's load-time Mutya conversion went with them. 0930b37a -> 9a8848d2 at B109 M5: + InfernalChest (openable Item). 4349544e -> 0930b37a at B109 M3: + EventCoin (Kind \"EventToken\", Currencies.EventTokens). 563f621c -> 4349544e at B109: + BattlepassXP entry (Kind \"BattlepassXP\"; GrantService routes it to BattlepassService). 789dca4b -> fc4b8023 at B22 2026-08-16: the USER authored real icon assetids in the LOBBY Studio for the five entries that shipped as rbxassetid://0 placeholders (Gold 128910310881167, Silver 119213648374305, BannerTicket 6731922404, TraitRerollToken 12590248124, GoldenSeed 124757602236693). AD-Meta did not author this -- the bootstrap drift check caught it, the user confirmed it was theirs, and B22 RECORDED it: shared/src was updated to the live Lobby bytes and re-hashed to fc4b8023 (6520 bytes, byte-identical to the deployed Lobby copy). deployed.Game was LEFT at the stale 789dca4b by B22 on purpose (a Lobby-only session must not deploy to the Game). **RESOLVED at B23 2026-08-16 (AD-Integration): copied to the GAME, re-hashed there to fc4b8023 byte-identical, zero rbxassetid://0 remaining. Both Places match; the module was never re-authored -- owner is AD-UI and the five icon ids are the USER's own uploads.** Promoted to shared canon 2026-08-01 (A-phase Integration). THE authority on a grantable's Name/Tier/Icon; replaces the Lobby's interim UnitCatalog for name+tier. CHANGED at promotion: the TowerConfigRegistry require is now LAZY + OPTIONAL so the module loads in the Lobby (which has no tower configs); Validate() returns (ok, errors, notes) and reports the skipped Tower->TowerConfig cross-check. Added GetName/GetTier convenience readers. fc4b8023 -> 9be86a5f at B45 2026-08-30 (AD-Game, user-approved, cross-owner): added StatRerolls as Kind='Currency'. C2's stat reroll (B44) SPENDS Currencies.StatRerolls, but GrantService.Grant refuses any uncatalogued id (invariant 4), so nothing could mint it and the sink had no faucet -- C1's TraitRerollToken was reachable only because it was already catalogued. Its icon is a PLACEHOLDER rbxassetid://0 for the USER to author, same as the five they filled at B22. The currency block was re-aligned in the same edit. 9be86a5f -> 2ee5f976 at B50 2026-09-02 (AD-Meta, Phase D/D1 crafting): +15 Item entries -- 7 ROYGBIV fragments (Rare), 7 colour artifacts (Epic), 1 Rainbow artifact (Mythic). Additive only (new keys; no existing entry touched), icons placeholder rbxassetid://0. Deployed byte-identical to BOTH Places in one session, 36/36 verified. User republishes both. 0d97d08a -> 5e9dba43 at B107 2026-09-29: +8 evolved towers (Summonable=false, EvolvedFrom): Magwayen_Soulferry, Sidapa_LastMeasure, AmanSinaya_Riptide, Tala_MorningStar, Lalahon_Caldera, Aswang_BloodMoon, Tiyanak_Changeling, Batibat_NightTerror (70 entries). 5e9dba43 -> fe9597fd at B108: StatRerolls renamed Stat Chip (rerolls all three stats); + FocusChip item (Epic, rerolls ONE chosen stat; icon placeholder). fe9597fd -> 8302f56b at B108 pt7: + 7 Mutya stones (MutyaGreen base Epic, Red/Blue/Yellow/Purple/Pink Legendary, Rainbow Mythic) -- the user-approved crafting economy; Fragment*/Artifact* kept as LEGACY (converted on Lobby load). 8302f56b -> bb1244b8 at B108 pt9: + 6 EXP foods (FoodPandesal 20 / Turon 45 / Bibingka 75 / Adobo 150 / Sinigang 280 / Lechon 300 XP, field ExpFood); also each unit's ascension food. bb1244b8 -> 563f621c at B108 pt11: every Mutya uses the USER'S MutyaIcon asset (rbxassetid://72082627938021, authored by the user in the Lobby; Rainbow set to it too) + Icon.Gradient hex stops per stone (tinted by UIKit.ItemIcon.applyTint).",
       "kind": "module"
@@ -60,12 +60,12 @@
       "kind": "template"
     },
     "Kit_UnitPreviewTemplate": {
-      "hash": "2b423401",
+      "hash": "133946dc",
       "owner": "ui",
       "deployPath": "ReplicatedStorage.UITemplates.Kit.UnitPreviewTemplate",
       "deployed": {
-        "Game": "2b423401",
-        "Lobby": "2b423401"
+        "Game": "133946dc",
+        "Lobby": "133946dc"
       },
       "comment": "Kit TEMPLATE (unit hover panel (its ViewportFrame 3D contents are NOT hashed -- ADR-0005)). No shared/src file exists -- the INSTANCE is the canon (ADR-0005); copy it between Places and verify by hash, never rebuild by hand. Promoted 2026-08-06. STATUS 2026-08-06: now has a real consumer again -- UIKitHotbar clones it for the hover preview in BOTH Places. **55e17da8 -> 2b423401 at B27 2026-08-16: the level-bar node was RENAMED CanvasGroup -> EXPLevelBar in BOTH Places** (the user's own name for it; a node called 'CanvasGroup' names its class, not its job). This was a LATENT DEAD BRANCH, not a cosmetic tidy: both UIKit.Hotbar's hover preview AND UnitsController.fillStats looked for `UnitLevelBar`, which has NEVER existed on this template in either Place -- so the preview has shown the authored placeholder level since the preview was restored at B6. Same class of bug as IndexController's CountLabel. Both readers now use EXPLevelBar and the old name is deliberately NOT kept as a fallback, because nothing ever had it. The rename was applied by an IDENTICAL edit in each Place and hash-matched (2b423401 both sides) -- no cross-Place copy was needed, since renaming an instance is a within-Place operation. **B27 also made this template the Units screen's hover preview:** UnitsGUI held a copy of it, verified identical to this master across every hashed property EXCEPT that rename, so the copy was DELETED and UnitsController now clones this master exactly as UIKit.Hotbar does. ONE design, two cloners, no drift path.",
       "kind": "template"
@@ -631,12 +631,12 @@
     },
     "IconCatalog": {
       "file": "shared/src/IconCatalog.luau",
-      "hash": "521beba2",
+      "hash": "78b478a6",
       "owner": "ui",
       "deployPath": "ReplicatedStorage.Shared.IconCatalog",
       "deployed": {
-        "Game": "521beba2",
-        "Lobby": "521beba2"
+        "Game": "78b478a6",
+        "Lobby": "78b478a6"
       },
       "kind": "module",
       "comment": "NEW at B108 pt16 (user: never use emoji icons). THE one table of UI icon image ids (toolbox placeholders until the user uploads their own): unit actions, general glyph replacements, element / placement / max-placement icons. get(name), element(e), placement(p), apply(img, name). 576dc4da -> 521beba2 found as DRIFT at B150 2026-10-14: both Places carried NEW ids for the unit-info icons (MaxPlacement, Placement_*, Element_*) -- the user's generated art, pasted in Studio; disk adopted the live copy (identical in both Places)."

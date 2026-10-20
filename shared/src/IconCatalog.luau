@@ -1,48 +1,56 @@
 --!strict
 -- IconCatalog (B108 pt16, SHARED CANON -- byte-identical in Game, Lobby and shared/src/).
 -- THE one place every UI icon image lives. User: "never use emoji it looks goofy ... I will provide
--- icons ... browse the toolbox for now". These are FREE Creator Store placeholders (image ids, not
--- decal ids). To swap one: paste your own rbxassetid here, in BOTH Places + shared/src, and re-hash.
+-- icons ... browse the toolbox for now". B167: EVERY entry is now the user's own Alamat art (SuperLazy
+-- Devworks image ids; the toolbox placeholders are gone). To swap one: paste the new rbxassetid here,
+-- in BOTH Places + shared/src, and re-hash.
 -- UI reads icons ONLY through this module, e.g. `IconCatalog.get("Lock")`, `IconCatalog.element("Fire")`.
 
 local IconCatalog = {}
 
 IconCatalog.Icons = {
 	-- unit actions (Units rail etc.)
-	Feed = "rbxassetid://103988071260502",
-	Passives = "rbxassetid://120674109076896",
-	View = "rbxassetid://15875255096",
-	Favorite = "rbxassetid://3057073083",
-	Lock = "rbxassetid://187897034",
-	Unlock = "rbxassetid://187897041",
-	Sell = "rbxassetid://14002617467",
-	Swap = "rbxassetid://11769203234",
+	Feed = "rbxassetid://71373202560378",
+	Passives = "rbxassetid://120007478296776",
+	View = "rbxassetid://129838764739823",
+	Favorite = "rbxassetid://105467914399412",
+	Lock = "rbxassetid://113461681206626",
+	Unlock = "rbxassetid://113431413694343",
+	Sell = "rbxassetid://79454116646008",
+	Swap = "rbxassetid://111044708607666",
 	-- general
-	Star = "rbxassetid://3057073083",
-	StarEmpty = "rbxassetid://130377121632515",
-	Sparkle = "rbxassetid://13518130183",
-	Check = "rbxassetid://119214585520707",
-	Clock = "rbxassetid://17551409679",
-	Hourglass = "rbxassetid://88880092924313",
-	Search = "rbxassetid://15999597350",
-	Gem = "rbxassetid://111400866463625",
-	Gear = "rbxassetid://130515345307319",
-	Heart = "rbxassetid://101973663994130",
-	Skull = "rbxassetid://104438819470450",
-	Trophy = "rbxassetid://13321838559",
-	Megaphone = "rbxassetid://95949999607503",
-	Emote = "rbxassetid://96873497927072",
-	Players = "rbxassetid://1234540313",
-	Bookmark = "rbxassetid://10596127415",
-	Shield = "rbxassetid://7169354142",
-	Money = "rbxassetid://18560905584",
-	Wave = "rbxassetid://14963611911",
-	Fire = "rbxassetid://118675873199574",
+	Star = "rbxassetid://92064400353876",
+	StarEmpty = "rbxassetid://103132031058722",
+	Sparkle = "rbxassetid://78635282604738",
+	Check = "rbxassetid://132391593566606",
+	Clock = "rbxassetid://84231061032456",
+	Hourglass = "rbxassetid://121844732081089",
+	Search = "rbxassetid://74986984326602",
+	Gem = "rbxassetid://107685607825536",
+	Gear = "rbxassetid://108301817655324",
+	Heart = "rbxassetid://116583108548734",
+	Skull = "rbxassetid://123832050902220",
+	Trophy = "rbxassetid://126811666635816",
+	Megaphone = "rbxassetid://88425664163660",
+	Emote = "rbxassetid://101231165814673",
+	Players = "rbxassetid://113746206086192",
+	Bookmark = "rbxassetid://131387939648455",
+	Shield = "rbxassetid://129685435443454",
+	Money = "rbxassetid://102327421801087",
+	Wave = "rbxassetid://90673935238890",
+	Fire = "rbxassetid://70598796366947",
 	-- B108 pt17: Play menu / party
-	Crown = "rbxassetid://11322089611",
-	Gift = "rbxassetid://591644027",
-	Info = "rbxassetid://4871684504",
-	Arrow = "rbxassetid://4726772330",
+	Crown = "rbxassetid://124596280620309",
+	Gift = "rbxassetid://134552927651615",
+	Info = "rbxassetid://112805828959865",
+	Arrow = "rbxassetid://127180170694803",
+	-- B167: Units / Inventory filter + discard buttons
+	Filter = "rbxassetid://76543774291496",
+	Discard = "rbxassetid://77872937729898",
+	-- B167: stat pills (DMG / SPA / RNG) -- Units hall, Starter Choice, hotbar hover card
+	Stat_DMG = "rbxassetid://112443858103904",
+	Stat_SPA = "rbxassetid://74191266565551",
+	Stat_RNG = "rbxassetid://77039343948319",
 	-- unit info
 	MaxPlacement = "rbxassetid://75714208256013",
 	Placement_Hill = "rbxassetid://102988893682928",
