@@ -100,6 +100,26 @@ function UnitCard.toGameSize(model: Instance?): Instance?
 	return model
 end
 
+-- B168 (user: "fix bakunawa's camera on viewport frames. make sure full model can be fully seen"): the fixed
+-- head-and-shoulders pose only suits a humanoid. A rig carrying the attribute `ViewportFit = true` (set in Studio on
+-- the rig in BOTH Places -- Bakunawa, Bakunawa_Eclipse) is instead framed WHOLE: the camera keeps `cam`'s current
+-- viewing direction and backs off until the model's bounding sphere fits the narrower of the two FOVs.
+-- Returns true when it framed (the model asked for it), false otherwise (the caller keeps its own pose).
+function UnitCard.fitWhole(vf: ViewportFrame, cam: Camera, model: Model): boolean
+	if model:GetAttribute("ViewportFit") ~= true then
+		return false
+	end
+	local cf, size = model:GetBoundingBox()
+	local abs = vf.AbsoluteSize
+	local aspect = if abs.X > 0 and abs.Y > 0 then abs.X / abs.Y else 1
+	local halfV = math.rad(cam.FieldOfView * 0.5)
+	local halfH = math.atan(math.tan(halfV) * aspect)
+	local dist = (size.Magnitude * 0.5) / math.sin(math.min(halfV, halfH)) * 1.02
+	local look = cam.CFrame.LookVector
+	cam.CFrame = CFrame.lookAt(cf.Position - look * dist, cf.Position)
+	return true
+end
+
 -- Put `model` in `vf` and frame it. The caller owns WHERE the model came from -- that is the single
 -- difference the four copies had, and keeping it out here is what let them merge.
 -- Returns true when something was framed, false when there was nothing to frame.
@@ -139,6 +159,7 @@ function UnitCard.viewport(vf: ViewportFrame?, model: Model?): boolean
 	end
 	cam.FieldOfView = f.FieldOfView
 	cam.CFrame = f.Anchor * f.Relative
+	UnitCard.fitWhole(vf, cam, model) -- B168: a ViewportFit rig is framed whole from the same angle
 	vf.CurrentCamera = cam
 	return true
 end

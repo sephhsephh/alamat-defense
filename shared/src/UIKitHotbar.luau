@@ -327,6 +327,18 @@ local function showModelKeepCamera(vf: ViewportFrame, modelSource: Instance?, to
 	if typeof(anchor) == "CFrame" and m:IsA("Model") then
 		m:PivotTo(anchor)
 	end
+	-- B168: a ViewportFit rig (Bakunawa) is framed whole; the slot's baked camera is remembered on the viewport
+	-- the first time and restored for every other unit, so a slot that once held Bakunawa frames normally again.
+	local cam = vf.CurrentCamera or vf:FindFirstChildWhichIsA("Camera")
+	if cam and m:IsA("Model") then
+		local baked = vf:GetAttribute("HotbarBakedCam")
+		if typeof(baked) ~= "CFrame" then
+			vf:SetAttribute("HotbarBakedCam", cam.CFrame)
+		else
+			cam.CFrame = baked
+		end
+		UnitCard.fitWhole(vf, cam, m)
+	end
 	-- B78: the unit breathes in its slot. The id comes off the MODEL (`IdleAnim` attribute), so this
 	-- works in both Places and needs no config the Lobby does not have.
 	UnitCard.playIdle(m, nil)
