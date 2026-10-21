@@ -5,7 +5,7 @@
 - `ROADMAP.md` — one-glance feature status board: done / partial / planned / ideas (all chats update)
 
 ## archive/ (repo root) — HISTORY: never read at bootstrap; grep it for one subject
-- `CHANGELOG-archive.md` — every changelog entry older than the newest 10 (B160 and older at B170), newest first, verbatim
+- `CHANGELOG-archive.md` — every changelog entry older than the newest 10 (B161 and older at B170), newest first, verbatim
 - `STATE-history.md` · `game-CONTEXT-history.md` · `lobby-CONTEXT-history.md` — the long-form STATE / CONTEXT as of B169, verbatim
 
 ## blueprints/ (implementation law for the meta systems — read before building)
