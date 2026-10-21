@@ -1,6 +1,9 @@
 # SYSTEM — Play menu (PlayGUI + LoadingScreen)
 <!-- owner: AD-UI (screens/controllers) + AD-Lobby (flow/launch) | scope: lobby | last-verified: 2026-10-02 (B108 pt17) -->
 
+**B171 (2026-10-21): the Modes page, party styling and player card were re-skinned (ornate v3) — see
+`play-menu-v3.md` for the new instance names, tint layers and the 200-local hazard.**
+
 ## B108 pt17 REBUILD (2026-10-02) -- read this first
 
 The P2-P7 screen described further down is **retired** (`*_RetiredB108`, disabled). The menu was rebuilt from the

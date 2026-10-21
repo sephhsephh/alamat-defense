@@ -25,6 +25,7 @@
 
 ## design/
 - `icon-art-style.md` — **THE icon art style** (B137): image-generator prompts — style lock (Block A), family modules (items / symbols / placement), one line per icon, consistency workflow. Reuse for every future icon batch.
+- `white-tint-art.md` — **user rule B171**: tintable UI art is generated WHITE and coloured in Studio by a `UIGradient` child named `Tint`; split gold vs white layers.
 - `combat-icons.md` — status-effect + enemy-modifier badge icons (B143): the list, one-shot prompt rows, where the ids go (`CombatIconConfig`).
 - `naming-rules.md` — **player-facing names (user rule B143)**: normal enemies / statuses / items in ENGLISH; Filipino / myth names only for towers + bosses.
 - `unit-roster.md` — **B106 DRAFT, the unit roadmap**: 27 new Philippine-myth units per tier, balance bands, passive catalogue (C/P/S tags), evolved forms, new systems + build order, and the B106 renames of the 8 old towers.
@@ -142,6 +143,7 @@
   `Sound` under `SoundService`, never a code change** (name a Sound after an act id for stage music);
   `UIKit.Confirm`'s 2s grey→green gate; and the `optionalSibling` rule — a bare `WaitForChild` on a
   sibling module blocks FOREVER and froze the whole UI mid-deploy. Split from `ui-kit.md` at B32.
+- `play-menu-v3.md` — **B171, LOBBY**: the ornate Play menu skin (mode cards, special events template, party hex slots, player card), tint layers, `OrnateSliceScaler`, PlayController's 200-local hazard.
 - `play-menu.md` — **AD-UI canon for `PlayGUI` + `LoadingScreen`** (P2/B15): the Play-button entry
   and GUI hide/restore, the veil's `Show`/`Hide` module API, the menu camera + cursor parallax and
   its respawn release, and the CanvasGroup frame transitions. **Says why `MainMenu`/`StoryModeFrame`/
