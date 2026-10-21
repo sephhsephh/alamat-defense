@@ -1,0 +1,7 @@
+# Obsidian (the repo is opened as a vault): personal app state stays local
+.obsidian/workspace*.json
+.obsidian/cache
+.obsidian/plugins/*/data.json
+.trash/
+# generated
+__pycache__/

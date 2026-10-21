@@ -1,0 +1,13 @@
+{
+  "userIgnoreFilters": [
+    "tools/",
+    "shared/",
+    "archive/",
+    "Claude outputs/"
+  ],
+  "newFileLocation": "folder",
+  "newFileFolderPath": "notes",
+  "attachmentFolderPath": "notes/attachments",
+  "alwaysUpdateLinks": false,
+  "showUnsupportedFiles": false
+}
