@@ -11,6 +11,8 @@ Start a session from [[CLAUDE]] (the rules), [[STATE]] (where the project is + o
 
 ## Places
 - Game: `places/game/CONTEXT.md` · Lobby: `places/lobby/CONTEXT.md`
+- Testing in Studio: [[studio-testing]]
+- History (never read at bootstrap): `archive/` — [[CHANGELOG-archive]] · [[STATE-history]]
 
 ## Match (Game)
 [[match-architecture]] · [[match-modules]] · [[match-networking]] · [[match-hud]] · [[match-end]] · [[match-audio]] ·

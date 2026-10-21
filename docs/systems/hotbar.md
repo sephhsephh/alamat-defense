@@ -233,3 +233,9 @@ new components into `UnitCard.Framing`.
 ⚠ **Roblox's FOV is VERTICAL**, so a viewport's aspect ratio still changes how the same camera reads:
 a wide frame shows the same unit with more empty room beside it. Match the slot's 0.83 aspect if you
 want a card to look like a hotbar slot.
+
+**⚠ Price canon (B67/B68):** every `PlacementPrice` in both Places is painted by ONE function,
+`UIKit.UnitCard.paintPrice(root, towerId)` (`nil` HIDES; a unit with no `Costs` entry hides). The price rides in
+`UnitStatsCatalog.Costs` because the Lobby has no `TowerConfig`; the Game's `UnitStatsCatalogValidate` checks it
+against live `TowerConfig.Cost` at boot and errors LOUD, so **a tower `Cost` change = regenerate + re-hash the
+cache in BOTH Places.** `Motion.SHOW_PLACEHOLDER_PRICES` is deleted -- never bring a placeholder price back.

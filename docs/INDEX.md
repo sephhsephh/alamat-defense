@@ -4,6 +4,10 @@
 - `OWNERSHIP.md` — system → owning chat → home Place → canon location (single-writer registry)
 - `ROADMAP.md` — one-glance feature status board: done / partial / planned / ideas (all chats update)
 
+## archive/ (repo root) — HISTORY: never read at bootstrap; grep it for one subject
+- `CHANGELOG-archive.md` — every changelog entry older than the newest 10 (B160 and older at B170), newest first, verbatim
+- `STATE-history.md` · `game-CONTEXT-history.md` · `lobby-CONTEXT-history.md` — the long-form STATE / CONTEXT as of B169, verbatim
+
 ## blueprints/ (implementation law for the meta systems — read before building)
 - `phase-a-foundations.md` — schema v2 exact shape + migration, ItemCatalog, Tier/StatGrade/
   Ascension configs, base-stat ranges + resolver, icon kit, session plan A1–A7
@@ -16,8 +20,8 @@
   it lists the blockers that stop the screen being fillable at all.**
 
 ## contracts/
-- `save-schema.md` — Profile data shape, versions, migration rules (owner: Game). **v5**
-- `teleport.md` — Lobby→Game / Game→Lobby TeleportData payloads (owner: Lobby). **v2**
+- `save-schema.md` — Profile data shape, versions, migration rules (owner: Game). **v11**
+- `teleport.md` — Lobby→Game / Game→Lobby TeleportData payloads (owner: Lobby). **v4**
 
 ## design/
 - `icon-art-style.md` — **THE icon art style** (B137): image-generator prompts — style lock (Block A), family modules (items / symbols / placement), one line per icon, consistency workflow. Reuse for every future icon batch.
@@ -26,6 +30,7 @@
 - `unit-roster.md` — **B106 DRAFT, the unit roadmap**: 27 new Philippine-myth units per tier, balance bands, passive catalogue (C/P/S tags), evolved forms, new systems + build order, and the B106 renames of the 8 old towers.
 
 ## systems/
+- `studio-testing.md` — **both Places, read before verifying in Studio**: execute_luau traps (require dead, inline drift check), input/Play hazards, the shared dev profile, every Dev* harness (B170)
 - `evolution.md` — **B106, AD-Gacha + AD-Game, BOTH Places**: evolved forms, the recipe registry (`Check` = the rule), `GrantService.EvolveUnit` (the write), the Evolve NPC screen, how to add a form.
 - `tower-authoring.md` — **AD-Game canon, READ BEFORE ADDING A TOWER**: attack profiles, the hit list,
   the animation-marker contract, melee movement, five worked examples and the add-a-tower checklist (B78).

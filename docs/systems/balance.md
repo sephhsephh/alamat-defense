@@ -70,6 +70,16 @@ every panel shows), shared `UnitStatPreview.Final` (cards, both Places, `0e269fe
 falloff / element / passives), `EnemyController:TakeDamage` (incoming hit + after armour), DoT ticks (`StatusEffectManager`),
 `EveryNthAttack`, `Nuke`. Only **attack speed (SPA) and range** keep decimals. Tune base damage in whole numbers.
 
+## Settled design calls (user; do NOT "fix")
+- **Lives = 3 for every act** (B59; `ClassicGameMode` fallback 3): 3 leaked enemies lose, ONE leaked boss loses
+  outright (`Damage = 99999`). An act gets harder via `BaseHealthScale` + its waves, never by fewer lives.
+- **Act 3 is a BOSS WALL** (B63): the 15 waves are the warm-up, the boss is the test.
+- **Ascension is THE power axis** (B62/B63): +ascension 3 alone turns an Act 3 loss into a win (+17.7%) while meta
+  level, rolls and count together move ~7%. Intended; never flatten it.
+- **Abort pays nothing** (B41): `MatchDirector.AbortMatch` fires no `MatchEnded`, so a restart is not farmable.
+- **Short rosters:** cash divides by `matchState.PresentUserIds` (who ARRIVED), never the payload roster (B23).
+- L50 = 627,540 XP while `LoadoutConfig` gates slot 6 there -- open balance PENDING (STATE.md).
+
 ## Not built yet
 The end screen's card for a UNIT drop, Lobby display of the pity counter. Boss abilities. Stage 1 Infinite on the new
 roster. A farm-unit role. The generated combat icons (prompts in `docs/design/combat-icons.md`).

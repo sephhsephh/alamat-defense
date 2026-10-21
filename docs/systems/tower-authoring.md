@@ -224,6 +224,9 @@ produced and how it picked its target.
 - **Weights that do not sum to 1** make a tower quietly stronger or weaker than its card. The
   validator catches it at boot.
 - **A hit with neither `Marker` nor `At` never fires.** The validator catches that too.
+- **PRE-EXISTING, UNFIXED (B84): the Knight/Bantong spams `AnimationTrack limit of 64 tracks exceeded`** all match and
+  its later swings stop animating. `RigAnimator` caches per (Animator, id), so suspect a fresh Animator per swing.
+  ASK THE USER before changing it.
 
 
 ---

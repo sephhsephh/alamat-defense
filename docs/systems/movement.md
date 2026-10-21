@@ -95,3 +95,7 @@ Other players: client plays locally, then `RS.Remotes.CharacterFX` -> shared `Ch
 
 **⚠ Walk/Jump/Fall/Idle need `StarterPlayer.AllowCustomAnimations = true`** (Game Settings -> Avatar; not
 script-writable). Off = Animate plays Roblox defaults and ignores our ids; the controller warns once (B93).
+
+**⚠ Before binding ANY key in the shared `MovementController`, grep BOTH Places for it (B66).** A ContextActionService
+bind SINKS the key and marks it `gameProcessed`, silently killing every `UserInputService` handler on it -- the Game's
+Q dash forced tower Ability Q -> V and end-screen Return to Lobby Q -> L. Revert the Game dash with `DashPlaces.Game = nil`.

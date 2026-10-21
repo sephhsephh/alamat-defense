@@ -104,6 +104,11 @@ duplicate `ServerStorage.Maps._Template` + a MapConfig (auto-registers). New tar
 - `pcall` around mode hooks and authored callbacks so one bad config cannot crash the match loop.
 - Dependency rules: Shared depends on nothing project-specific; Configs are data; the client never
   requires a server module; no gameplay module reaches into UI.
+- `Signal:Fire` runs handlers SEQUENTIALLY on one thread: a yielding `MatchEnded` handler blocks every later one,
+  including `MatchEndPresenter`'s reward commit. `task.spawn` any slow body (`studio-testing.md`).
+- MAP SURVIVES A MATCH (B71): CLEANUP never calls `MapLoader.UnloadMap` (the ERROR path does); `LoadMap` reuses the
+  resident map for the same id. That reuse also stops `snapshotLighting()` baking an already-applied grade one layer
+  deeper every replay -- never re-snapshot over a graded map.
 - RIG PIVOT RULE: a moving rig's model pivot must coincide with its PrimaryPart (`PivotOffset =
   identity`) -- controllers read `PrimaryPart.Position` but move with `PivotTo`; a mismatch makes rigs
   climb or sink every frame. Rig prep: `content-howto.md`.

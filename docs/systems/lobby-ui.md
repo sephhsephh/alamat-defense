@@ -235,3 +235,21 @@ Load-bearing: additive is free, breaking needs contract treatment. Fields: `plac
 ClientEvents.Open*), so streamed-out/in prompts keep working. Routes: TraitReroll, StatReroll, Craft, Evolve, Ascension,
 Shop, Challenge. All `Lobby.NPC_*` models are ModelStreamingMode Persistent. A renamed NPC can keep working with a
 `OpensEvent` attribute on its prompt.
+
+## Hazards (moved here from the Lobby CONTEXT at B170; history in `archive/`)
+- **`HUD.ProfileButton` is wired to NOTHING** -- never has been; not a regression (B65).
+- **HUD buttons die two ways** (B65): a click before the controller connects is DROPPED (LocalScript start order is
+  random), and `HUD.ResetOnSpawn = true` re-clones the HUD on respawn. Wire through `StarterPlayerScripts.HudEntry`
+  (`reserve` early, `bind` later; re-binds per HUD). `SettingsUI` (shared) carries the same logic inline.
+- **`StarterChoiceScreen`** has a 100%-screen `Dim`; it is DISABLED when there is no offer -- keep it that way.
+- **Modal `Card` needs `Active = true`** or clicks fall through; **`UIListLayout.SortOrder` defaults to NAME** (B70).
+- Click-outside-to-close is banned (CLAUDE.md); old copies in Ascension/StatReroll/Index controllers also mis-compare
+  `input.Position` (includes the 58px topbar inset) against `AbsolutePosition` -- delete them when touched.
+- **Remote count is unverified:** Edit held 43 authored `Remotes` (B70) vs "47" in older docs, plus `ensure()`d ones
+  created at boot. Recount before quoting a number.
+- **`StageRegistry` mirror** copies names VERBATIM from the Game's StageConfigs; only `Id` is re-validated Game-side,
+  so a rename goes stale SILENTLY (`play-menu.md`).
+- Summon CHIPS unexercised (B68): "Change featured unit" did not open the choice overlay on one profile -- an
+  observation for the user, not a diagnosis.
+- **`ObtainRewardsGUI`'s pop `UIScale` is on runtime CLONES only** -- never add a `UIScale` to hashed canon. Fire
+  `ClientEvents.ShowRewards`, never rebuild the screen (B33).
