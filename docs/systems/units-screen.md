@@ -111,3 +111,28 @@ Three columns + a bottom bar (the user's reference: roster left, hero centre, in
   disables the controls + proximity prompts while UnitsGUI / PlayGUI / EventsGUI (+ `ExtraScreens` attr) is enabled;
   the shared `MovementController` treats it like a focused TextBox.
 - **Inventory Feed** opens through `screenOpened` first (closes Inventory), then the veil, then picks the unit.
+
+## B168/B169: stage camera + the 3D showcase (both Places)
+- **Orbit + zoom** (`UnitsHeroController`, `Hall.orbit` / `applyOrbit` / `orbitBy` / `zoomBy`):
+  - Orbit: right-drag on PC (cursor locked), one-finger swipe on mobile, right stick on console.
+  - Zoom: wheel over the stage on PC, pinch on mobile, R2/L2 held on console (0.4x to 1.8x).
+  - Pitch is clamped to -25..55 degrees. Orbit and zoom reset when a new unit is selected.
+  - The stage ViewportFrame is `Active` so the world camera does not turn as well.
+- **Why the stage is NOT drawn by its ViewportFrame while the screen is open:** Roblox deliberately lowers ViewportFrame
+  redraw rate on low graphics (DevForum staff, 2023; no setting undoes it). The rig still poses every frame, but the
+  viewport is only redrawn now and then.
+- **`StarterGui.UnitsGUI.UnitsShowcase`** (LocalScript) + the authored `RS.UnitShowcase` (Backdrop part with a `Canvas`
+  SurfaceGui, KeyLight, RimLight). While the stage is visible:
+  - A local clone of the stage rig stands at `ORIGIN` (0, 4000, 0).
+  - The player's camera goes Scriptable and copies the stage camera every frame, skewed onto the frame's screen centre at
+    the same pixel scale. The hero controller's framing, orbit and zoom therefore drive it unchanged.
+  - HallBG + the Stage art are drawn as live mirrors on a camera-facing backdrop (rotation, transparency and tints copied
+    every frame).
+  - The originals, `Overlay`, the stage viewport (ImageTransparency 1) and every ScreenGui at or below this one's
+    DisplayOrder are hidden. All of it is restored exactly on close.
+- **Rig anchoring:** Motor6D and AnimationConstraint rigs (most units) are anchored at the ROOT only, because the
+  joints animate them. Bone rigs (Bakunawa) are anchored whole.
+- **Screen coordinates:** `AbsolutePosition` excludes the top-bar inset even on IgnoreGuiInset screens, so
+  `GuiService:GetGuiInset()` is added back.
+- **Studio caveat:** with two Studio windows open, only the FRONT one draws 3D. A background Place shows a grey world
+  with blank viewports, and that is not a bug.
