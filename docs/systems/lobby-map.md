@@ -5,6 +5,9 @@ The Lobby is the user's "Map Concept" image built for real: a night archipelago 
 (`tools/lobby_islands_gen.luau`). Every NPC lives in its own themed district; glowing waystones make the long
 walks optional. **Design canon = this doc + `tools/lobby_map/*.luau`; the built map is Studio (Lobby).**
 
+**B172: a full rebuild is planned** (user layout pending) in the style of `docs/design/stylized-environment.md`
+(terrain + mesh kits, town-haze lighting); the terrain water stays. This doc describes the B134/B139 map until then.
+
 ## Art direction (B139, user: "no bland blocks called a plaza / pole / beam")
 Anime-tower-defense hub look (Anime Vanguards / Anime Expeditions / Anime Defenders lobbies): every landmark is a
 **stylized hand-painted MESH** (Studio AI mesh generator), every light source has **real particle VFX**, district

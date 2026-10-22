@@ -28,6 +28,8 @@
   (`docs/systems/studio-testing.md`).
 
 ## Open threads (not yet PENDINGs)
+- B172 Lobby map rebuild: build style = `docs/design/stylized-environment.md`; WAITING on the user's new layout
+  (scrap the map, keep terrain water, NPCs -> tower models). Reference files rpg map + town hold a backdoor script.
 - B167 kit drift, not caused by B167: `Kit_ItemIconV2` (Lobby 98544bdf vs 1cd8e184), `Kit_HotbarSlotV2` (Lobby
   6f14cfb6, Game f5a7f240, manifest cd5a2aa0). Waiting on the user.
 

@@ -25,6 +25,8 @@
 
 ## design/
 - `icon-art-style.md` — **THE icon art style** (B137): image-generator prompts — style lock (Block A), family modules (items / symbols / placement), one line per icon, consistency workflow. Reuse for every future icon batch.
+- `stylized-environment.md` — **THE map build style (B172)** for every map incl. the Lobby: "town haze" lighting recipe, rock kit + mountains, trees, multi-mesh buildings, terrain+mesh rules, perf, asset reuse, Lobby rebuild checklist. Read before any world-building.
+- `reference-maps.md` — measured facts + asset ids from the user's reference places (town / rpg map / Roman Battleground), B172.
 - `white-tint-art.md` — **user rule B171**: tintable UI art is generated WHITE and coloured in Studio by a `UIGradient` child named `Tint`; split gold vs white layers.
 - `combat-icons.md` — status-effect + enemy-modifier badge icons (B143): the list, one-shot prompt rows, where the ids go (`CombatIconConfig`).
 - `naming-rules.md` — **player-facing names (user rule B143)**: normal enemies / statuses / items in ENGLISH; Filipino / myth names only for towers + bosses.

@@ -1,5 +1,9 @@
 # CHANGELOG (append-only; newest first)
 <!-- Holds the newest 10 entries only. Older: archive/CHANGELOG-archive.md (history -- grep it, never read at bootstrap). Entry budget: 600 chars. -->
+## 2026-10-22 [repo] B172 -- **Reference-map study: the stylized build canon for every map + the Lobby rebuild.**
+- Read-only study of town / rpg map / Roman Battleground (user's style references). New `docs/design/stylized-environment.md`
+  (lighting "town haze" recipe, rock kit, trees, multi-mesh buildings, terrain+mesh rules, Lobby checklist) + `reference-maps.md`.
+- SECURITY: rpg map + town carry a `<null?>` backdoor Script in window1.003 -- strip scripts before copying. No contract impact.
 ## 2026-10-21 [lobby] B171 -- **Play menu v3: ornate AI-painted borders, mode cards, special events, party hex slots, player card.**
 - Built by `tools/playui_v3_build.luau` (backup `_UIBackup_B171`); PlayController: Cards lookup, plate = card click, player
   card, events from EventQuestConfig (ONE template), per-spot poses; `OrnateSliceScaler`; GetPlayState +PlayerXP (additive).
@@ -49,4 +53,3 @@
 - Rig: `Muzzle` bone under Head at the mouth; `AmbientMist` (Root bone), `JawDrips` (Jaw), `HeadGlow` PointLight, glow mesh (Bakunawa_mesh4) Neon cyan.
 - VFX `RS.VFXTemplates.Towers.Bakunawa` (Game): `Release` (Muzzle, Forward: spiral water stream down the lunge, core, droplets, speed lines, flash), `Impact` (fixed size: crescent, splash ring, foam, star, lines, flash), `EclipseSky` + `EclipseRipple` (authored, NOT played yet -- Moon Hunger has no presentation hook). 10 textures uploaded (vfx_* from the export).
 - Verified in Play: Game idle + attack clip load and play, marker fires, Release/Impact render; boot `[TowerValidate] OK`, `[TowerVFX] 2 of 46` own folders. Lobby viewport plays the IdleAnim. Contract impact: none. Open: Eclipse clip/VFX hook on the 7th attack (ask user); `Bakunawa_Eclipse` (evolved form) is still a placeholder in both Places.
-## 2026-10-19 [game+lobby] B163 -- **Mobile is landscape-only (user: portrait breaks the UI).** `StarterGui.ScreenOrientation` Sensor -> **LandscapeSensor** in both Places (Studio property, no script; still flips between the two landscape sides). No script sets ScreenOrientation (grepped both). Contract impact: none.
