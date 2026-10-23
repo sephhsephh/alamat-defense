@@ -13,15 +13,20 @@ local NOCOLLIDE = { AL_Stairs = true, AL_BridgeSpan = true } -- walked via invis
 
 local found, pieces = 0, {}
 local roots = {}
+-- the 3D Importer names each imported file's root Model "Scene" (the glTF scene name)
 for _, c in ipairs(workspace:GetChildren()) do
-	if c.Name:match("^AL_Kit") or c.Name:match("^AL_Sky") then table.insert(roots, c) end
+	if c.Name == "Scene" or c.Name:match("^AL_Kit") or c.Name:match("^AL_Sky") then table.insert(roots, c) end
 end
+-- the sky carrier's planes import under their MESH names: Plane = side, Plane.001 = up, Plane.002 = down
+local SKY_PLANES = { ["Plane"] = "AL_SkySide", ["Plane.001"] = "AL_SkyUp", ["Plane.002"] = "AL_SkyDn" }
 local sky = {}
 for _, root in ipairs(roots) do
 	for _, d in ipairs(root:GetDescendants()) do
 		if d:IsA("MeshPart") then
 			local piece, mat = d.Name:match("^(AL_%w+)__(%a+)")
-			if d.Name:match("^AL_Sky") then
+			if SKY_PLANES[d.Name] then
+				sky[SKY_PLANES[d.Name]] = d.TextureID
+			elseif d.Name:match("^AL_Sky") then
 				sky[d.Name:match("^(AL_Sky%a+)")] = d.TextureID
 			elseif piece then
 				pieces[piece] = pieces[piece] or {}
@@ -68,7 +73,7 @@ for piece, list in pairs(pieces) do
 	m:SetAttribute("KitSize", size)
 	m.Parent = kit
 end
-for _, r in ipairs(roots) do if #r:GetDescendants() == 0 or r.Name:match("^AL_Sky") then r:Destroy() end end
+for _, r in ipairs(roots) do r:Destroy() end -- leftovers: anchor cubes + sky carrier planes
 local s = game.Lighting:FindFirstChild("HolySky")
 if s and sky.AL_SkySide and sky.AL_SkySide ~= "" then
 	s.SkyboxBk = sky.AL_SkySide; s.SkyboxFt = sky.AL_SkySide; s.SkyboxLf = sky.AL_SkySide; s.SkyboxRt = sky.AL_SkySide
