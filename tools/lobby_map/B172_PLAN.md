@@ -62,7 +62,7 @@
 - [x] Harvest run (24 pieces in B172Protos.Kit, HolySky = carrier images) + assemble run (all 11 sections OK)
 - [x] Re-run with DECK=42 / TER=62 (terrain tiers written at 40/60 SURFACE at 42/62); Core decks + spawn +2; plaza mandala visible;
       haze lightened (HolyHaze D .21 H .55 Off .32); sky islands NW/NE removed (orange undersides). Screens: spawn, plaza, aerial OK
-- [ ] Dressing: bushes/leaf piles at structure + rock feet, fountain water, more plaza life; check arena, citadel, colossal close-up
+- [x] Dressing (`B172_dress.luau` -> Map.Dressing): 90 bushes/planters, fountain water + spray, gold motes, station sigils/auras
 - [ ] Twin waterfalls from the plaza sea wall (clone `_OldLobby_B139.Map.Waterfall.MainFalls`, move Source/Plunge)
 - [ ] Plaza dressing (bushes at rock/structure feet, planters, parasols, banners), arena bridge, waystones (optional)
 - [x] Play test 1 (after assembly): spawn on deck (Y 46), walk path continuous (deck/bridge/plaza/stair ramp/terrace/arena
