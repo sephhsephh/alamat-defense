@@ -65,7 +65,11 @@
 - [ ] Dressing: bushes/leaf piles at structure + rock feet, fountain water, more plaza life; check arena, citadel, colossal close-up
 - [ ] Twin waterfalls from the plaza sea wall (clone `_OldLobby_B139.Map.Waterfall.MainFalls`, move Source/Plunge)
 - [ ] Plaza dressing (bushes at rock/structure feet, planters, parasols, banners), arena bridge, waystones (optional)
-- [ ] Play test (spawn, every NPC prompt, Areas travel, water rescue), mobile/perf check (Shift+F2)
+- [x] Play test 1 (after assembly): spawn on deck (Y 46), walk path continuous (deck/bridge/plaza/stair ramp/terrace/arena
+      bridge/arena all stand-able), 9 prompts (8 NPC + Summon). WATCH: first join was slow (7.7k parts + new meshes
+      downloading): ScreenBootWatchdog 24/50 at 15s and SettingsUI/UIKit.Notify printed "not in this Place" (both DO
+      exist in StarterGui) -- re-test; if it repeats, raise those WaitForChild timeouts or cut part count.
+- [ ] Click-test every NPC prompt + Summon prompt + Areas travel + water rescue; mobile/perf check (Shift+F2)
 - [ ] Rewrite `docs/systems/lobby-map.md`, CHANGELOG/STATE/INDEX, commit (no attribution trailers)
 
 ## Assembly layout (B172_assemble.luau)
