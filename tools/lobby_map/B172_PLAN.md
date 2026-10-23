@@ -58,7 +58,8 @@
 - [x] Colossus + 4 sky islands (AI meshes, protos in B172Protos.AIGen)
 - [x] Blender kit A/B/C exported (all meshes < 20k tris) + AL_SkyCarrier.glb (seamless elevation-gradient sky)
 - [ ] USER: import the 4 GLBs with the 3D Importer (asked B172; waiting)
-- [ ] Run B172_harvest.luau, then write+run B172_assemble.luau (layout below), screenshot each area, fix
+- [x] B172_harvest.luau + B172_assemble.luau WRITTEN (not run yet; assemble has SECTIONS list, re-runnable per section)
+- [ ] After import: paste B172_harvest.luau, then B172_assemble.luau; screenshot each area; fix
 - [ ] Twin waterfalls from the plaza sea wall (clone `_OldLobby_B139.Map.Waterfall.MainFalls`, move Source/Plunge)
 - [ ] Plaza dressing (bushes at rock/structure feet, planters, parasols, banners), arena bridge, waystones (optional)
 - [ ] Play test (spawn, every NPC prompt, Areas travel, water rescue), mobile/perf check (Shift+F2)
