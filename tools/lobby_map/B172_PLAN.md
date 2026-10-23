@@ -69,8 +69,10 @@
       bridge/arena all stand-able), 9 prompts (8 NPC + Summon). WATCH: first join was slow (7.7k parts + new meshes
       downloading): ScreenBootWatchdog 24/50 at 15s and SettingsUI/UIKit.Notify printed "not in this Place" (both DO
       exist in StarterGui) -- re-test; if it repeats, raise those WaitForChild timeouts or cut part count.
-- [ ] Click-test every NPC prompt + Summon prompt + Areas travel + water rescue; mobile/perf check (Shift+F2)
-- [ ] Rewrite `docs/systems/lobby-map.md`, CHANGELOG/STATE/INDEX, commit (no attribution trailers)
+- [x] Click-test: all 8 NPC prompts -> StartDialogue, Temple prompt -> OpenSummon; every AreasConfig arrival has a floor;
+      water rescue returns to Plaza. Play 2: Settings/Notify OK; watchdog still 24/50 at 15 s (all finish later), join 9.3 s
+- [ ] FOLLOW-UP perf pass (backdrop LOD/streaming, fewer trees, one shared texture set for the kit); Areas card images; waystones
+- [x] lobby-map.md rewritten, CHANGELOG B172 pt2, STATE/INDEX/ROADMAP updated, committed
 
 ## Assembly layout (B172_assemble.luau)
 - Rotunda: 24 x AL_ArcBayTall around r 53.2 (base Y 0, top 40), skip the 3 bays facing north (bridge) + 2 AL_Pier at

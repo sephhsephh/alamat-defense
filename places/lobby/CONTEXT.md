@@ -1,5 +1,5 @@
 # CONTEXT — Lobby place ("Alamat Defense - Lobby")
-<!-- owner: lobby | last-verified: 2026-10-21 (B171) | BUDGET 6k chars: what the Place IS NOW; history lives in
+<!-- owner: lobby | last-verified: 2026-10-23 (B172) | BUDGET 6k chars: what the Place IS NOW; history lives in
      CHANGELOG + archive/lobby-CONTEXT-history.md -->
 
 The social/meta Place: collection, banners, upgrades, stage select, parties, matchmaking, teleport into the Game.
@@ -22,7 +22,7 @@ The social/meta Place: collection, banners, upgrades, stage select, parties, mat
 - Configs: `RS.Configs.{Gacha, Banners, Evolutions, Meta, StageRegistry (Game mirror), Global}`; canon list
   `shared/manifest.json`.
 - Art: `RS.UnitModels` (full-size rigs, Game names), `RS.AlamatUI`, `RS.CharacterFX`; scene `Workspace.Lobby.Map`
-  (NPCs via `NpcPromptRouter`).
+  (B172 Holy Coast; keepers = tower rigs idled by `Server.Lobby.NpcIdle`, routed by `NpcPromptRouter`).
 - Client glue: `RS.ClientEvents`, `StarterPlayerScripts.HudEntry`, `Client.UI.{ScreenFX, MenuMovementLock, ViewportIdle}`.
 
 ## Screens → docs (authored in StarterGui)
