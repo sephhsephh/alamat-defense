@@ -24,12 +24,14 @@
   `UnitInstance.XP` writer (`docs/proposals/2026-08-20-c4-feeding.md`). B108 pt9 shipped FeedService — confirm closed?
 - **PENDING (USER, B73): paste trait logo asset ids** into `TraitDefinitions.Icon`. B108 pt12 recorded ids
   (`8535ac61`) — confirm, then delete.
+- **PENDING (AD-UI, BOTH, B172): SettingsUI gives up after 10 s** (`WaitForChild("Settings", 10)`) on a slow join -> settings
+  panel dead for the session (hit in 2/3 Lobby Plays after the rebuild). `docs/proposals/2026-10-23-settingsui-boot-timeout.md`.
 - **TOOLING, EVERY SESSION (B64):** `require` from `execute_luau` is dead — paste `tools/hash_shared.luau` inline
   (`docs/systems/studio-testing.md`).
 
 ## Open threads (not yet PENDINGs)
 - B172 Lobby rebuild (Holy Coast) built + verified (`lobby-map.md`); follow-ups in `tools/lobby_map/B172_PLAN.md`:
-  perf pass (join ~9 s, boot watchdog at 15 s), Areas card images to retake, optional waystones. User publishes the Lobby.
+  perf pass done (join 9.3 -> 6.7 s); Areas card images to retake, optional waystones. User publishes the Lobby.
 - B167 kit drift, not caused by B167: `Kit_ItemIconV2` (Lobby 98544bdf vs 1cd8e184), `Kit_HotbarSlotV2` (Lobby
   6f14cfb6, Game f5a7f240, manifest cd5a2aa0). Waiting on the user.
 

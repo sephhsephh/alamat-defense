@@ -76,6 +76,8 @@ decks `AL_HolyMarble2` (AI-generated MaterialVariants); Sand/Pavement/Rock colou
 - Structures: walk surfaces are invisible colliders or Hull floors; decor CanCollide off + Box fidelity; the backdrop
   is CanCollide/CanQuery off, CastShadow off.
 - Strip scripts from anything copied in from reference places (backdoors were found there, B172 study).
-- Perf (B172): ~7.9k BaseParts; first join ~9 s in Studio and the ScreenBootWatchdog flags many screens at 15 s (they
-  all finish after). A perf pass (streaming / LOD for backdrop, fewer trees, shared kit textures) is an open follow-up.
+- Perf (B172 pass): kit = ONE TextureID per material (keep it so when adding pieces: copy from `B172Protos.Kit`);
+  backdrop = 40 Models with `LevelOfDetail = StreamingMesh` (Atomic), far meshes RenderFidelity Performance + no shadows;
+  ~203 trees (far ones shadowless). Studio join veil 6.7 s (was 9.3). SettingsUI's 10 s wait can still expire on a slow
+  join -- PENDING for AD-UI (`docs/proposals/2026-10-23-settingsui-boot-timeout.md`).
 - A new unit still needs its rig in `RS.UnitModels` here; keepers use existing rigs only.

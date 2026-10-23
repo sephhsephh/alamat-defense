@@ -73,7 +73,8 @@
       water rescue returns to Plaza. Play 2: Settings/Notify OK; watchdog still 24/50 at 15 s (all finish later), join 9.3 s
 - [x] Perf pass (inline, B172): kit textures 22 -> 11 unique (one TextureID per material); backdrop grouped into 11 sector
       Models + Holy/Colossal/Citadel = 40 Models with LevelOfDetail StreamingMesh, Atomic; 380 far meshes RenderFidelity
-      Performance + CastShadow off; trees 282 -> 203 (far half thinned, far trees shadowless). Re-measure below.
+      Performance + CastShadow off; trees 282 -> 203 (far half thinned, far trees shadowless). Re-measured: join veil 9.3 s -> 6.7 s; watchdog stragglers 26 -> 11; SettingsUI 10 s wait still
+      expired once -> PENDING (AD-UI) docs/proposals/2026-10-23-settingsui-boot-timeout.md
 - [ ] Areas card images (user); optional waystones
 - [x] lobby-map.md rewritten, CHANGELOG B172 pt2, STATE/INDEX/ROADMAP updated, committed
 
