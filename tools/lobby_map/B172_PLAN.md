@@ -60,7 +60,9 @@
 - [x] USER imported the 4 GLBs (importer names roots "Scene"; sky planes = Plane/.001/.002)
 - [x] B172_harvest.luau + B172_assemble.luau WRITTEN (not run yet; assemble has SECTIONS list, re-runnable per section)
 - [x] Harvest run (24 pieces in B172Protos.Kit, HolySky = carrier images) + assemble run (all 11 sections OK)
-- [ ] Screenshot each area; fix orientation/scale issues; then dressing
+- [x] Re-run with DECK=42 / TER=62 (terrain tiers written at 40/60 SURFACE at 42/62); Core decks + spawn +2; plaza mandala visible;
+      haze lightened (HolyHaze D .21 H .55 Off .32); sky islands NW/NE removed (orange undersides). Screens: spawn, plaza, aerial OK
+- [ ] Dressing: bushes/leaf piles at structure + rock feet, fountain water, more plaza life; check arena, citadel, colossal close-up
 - [ ] Twin waterfalls from the plaza sea wall (clone `_OldLobby_B139.Map.Waterfall.MainFalls`, move Source/Plunge)
 - [ ] Plaza dressing (bushes at rock/structure feet, planters, parasols, banners), arena bridge, waystones (optional)
 - [ ] Play test (spawn, every NPC prompt, Areas travel, water rescue), mobile/perf check (Shift+F2)

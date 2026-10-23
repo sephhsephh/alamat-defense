@@ -10,7 +10,8 @@ local structures = map:FindFirstChild("Structures") or Instance.new("Folder")
 structures.Name = "Structures"; structures.Parent = map
 local S, P = Vector3.new(-300, 0, 420), Vector3.new(-300, 0, 0)
 local ARENA = Vector3.new(140, 0, 400)
-local DECK = 40
+local DECK = 42 -- the terrain's flat tier written at 40 surfaces (renders + collides) at 42
+local TER = 62 -- same for the temple terrace (written at 60)
 local deckVariant = "AL_HolyMarble2"
 
 local rayParams = RaycastParams.new()
@@ -92,10 +93,10 @@ local B = {}
 function B.Rotunda()
 	local f = section("Rotunda")
 	local function gap(th) return angDiff(th, NORTH) < 0.36 or angDiff(th, EAST) < 0.36 end
-	ring(f, "AL_ArcBayTall", S, 53.2, 24, 0, gap)
+	ring(f, "AL_ArcBayTall", S, 53.2, 24, DECK - 40, gap)
 	for _, a in ipairs({ NORTH - 0.40, NORTH + 0.40, EAST - 0.40, EAST + 0.40 }) do
 		local d = Vector3.new(math.sin(a), 0, math.cos(a))
-		put(f, "AL_Pier", faceCF(Vector3.new(S.X, 0, S.Z) + d * 54, d), 1.34)
+		put(f, "AL_Pier", faceCF(Vector3.new(S.X, DECK - 40, S.Z) + d * 54, d), 1.34)
 	end
 	ring(f, "AL_Balustrade", S, 54.6, 28, DECK, function(th) return angDiff(th, NORTH) < 0.3 or angDiff(th, EAST) < 0.3 end)
 	put(f, "AL_Mandala", CFrame.new(S.X, DECK, S.Z), 1.5)
@@ -115,7 +116,7 @@ end
 
 function B.Bridge()
 	local f = section("Bridge")
-	for k = 0, 6 do put(f, "AL_BridgeSpan", CFrame.new(S.X, 4, 349 - 30 * k)) end
+	for k = 0, 6 do put(f, "AL_BridgeSpan", CFrame.new(S.X, DECK - 36, 349 - 30 * k)) end
 	local deck = map.Core:FindFirstChild("BridgeDeck"); if deck then deck.Transparency = 1 end
 	for _, sx in ipairs({ -12.8, 12.8 }) do collider(f, "Rail", Vector3.new(1, 5, 212), CFrame.new(S.X + sx, DECK + 2.5, 259)) end
 end
@@ -170,7 +171,7 @@ function B.Terrace()
 	for x = -613, 13, 14 do
 		local inGap = false
 		for _, g in ipairs(gaps) do if math.abs(x - g) < 22 then inGap = true end end
-		if not inGap then put(f, "AL_WallSeg", faceCF(Vector3.new(x, DECK, -118.4), Vector3.new(0, 0, 1)), 1, 1.7) end
+		if not inGap then put(f, "AL_WallSeg", faceCF(Vector3.new(x, DECK, -118.4), Vector3.new(0, 0, 1)), 1, (TER - DECK + 0.4) / 12) end
 	end
 	for _, g in ipairs(gaps) do
 		put(f, "AL_Stairs", faceCF(Vector3.new(g, DECK, -106.5), Vector3.new(0, 0, 1)), 1.42)
@@ -180,8 +181,8 @@ end
 
 function B.Temple()
 	local f = section("Temple")
-	put(f, "AL_Temple", faceCF(Vector3.new(P.X, 60, -232), Vector3.new(0, 0, 1)))
-	local pp = collider(f, "SummonPoint", Vector3.new(6, 6, 2), CFrame.new(P.X, 64, -199))
+	put(f, "AL_Temple", faceCF(Vector3.new(P.X, TER, -232), Vector3.new(0, 0, 1)))
+	local pp = collider(f, "SummonPoint", Vector3.new(6, 6, 2), CFrame.new(P.X, TER + 4, -199))
 	pp.CanCollide = false
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "SummonPrompt"; prompt.ActionText = "Summon"; prompt.ObjectText = "Temple of Bathala"
@@ -193,10 +194,10 @@ end
 function B.Stations()
 	local f = section("Stations")
 	-- Ascension: Sky Spire behind the keeper
-	put(f, "AL_SpireTower", faceCF(Vector3.new(-520, 60, -234), Vector3.new(0, 0, 1)))
-	put(f, "AL_Dais", CFrame.new(-520, 60, -190))
+	put(f, "AL_SpireTower", faceCF(Vector3.new(-520, TER, -234), Vector3.new(0, 0, 1)))
+	put(f, "AL_Dais", CFrame.new(-520, TER, -190))
 	-- Evolve: the Sun Rotunda (pavilion around the keeper)
-	put(f, "AL_DomePavilion", CFrame.new(-80, 60, -196), 1.6)
+	put(f, "AL_DomePavilion", CFrame.new(-80, TER, -196), 1.6)
 	-- Stat reroll: the Star Forge (dais + halo behind + two columns)
 	local sx, sz = -530, -20
 	local sg = ground(sx, sz)
@@ -227,11 +228,11 @@ function B.Arena()
 	deck.Shape = Enum.PartType.Cylinder; deck.Transparency = 0; deck.Material = Enum.Material.Marble; deck.MaterialVariant = deckVariant
 	deck.Color = Color3.fromRGB(255, 252, 245)
 	local WEST = 3 * math.pi / 2
-	ring(f, "AL_ArcBayTall", ARENA, 53.2, 24, 0, function(th) return angDiff(th, WEST) < 0.36 end)
+	ring(f, "AL_ArcBayTall", ARENA, 53.2, 24, DECK - 40, function(th) return angDiff(th, WEST) < 0.36 end)
 	ring(f, "AL_ArcBay", ARENA, 50, 22, DECK, function(th) return angDiff(th, WEST) < 0.5 end)
 	put(f, "AL_Dais", CFrame.new(ARENA.X, DECK, ARENA.Z), 1.4)
 	-- bridge: rotunda east edge -> arena west edge, deck 40
-	local a, b = Vector3.new(S.X + 56, 4, S.Z), Vector3.new(ARENA.X - 56, 4, ARENA.Z)
+	local a, b = Vector3.new(S.X + 56, DECK - 36, S.Z), Vector3.new(ARENA.X - 56, DECK - 36, ARENA.Z)
 	local dir = (b - a).Unit
 	local len = (b - a).Magnitude
 	local n = math.ceil(len / 30)
