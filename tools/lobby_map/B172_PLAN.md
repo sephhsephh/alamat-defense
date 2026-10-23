@@ -71,7 +71,10 @@
       exist in StarterGui) -- re-test; if it repeats, raise those WaitForChild timeouts or cut part count.
 - [x] Click-test: all 8 NPC prompts -> StartDialogue, Temple prompt -> OpenSummon; every AreasConfig arrival has a floor;
       water rescue returns to Plaza. Play 2: Settings/Notify OK; watchdog still 24/50 at 15 s (all finish later), join 9.3 s
-- [ ] FOLLOW-UP perf pass (backdrop LOD/streaming, fewer trees, one shared texture set for the kit); Areas card images; waystones
+- [x] Perf pass (inline, B172): kit textures 22 -> 11 unique (one TextureID per material); backdrop grouped into 11 sector
+      Models + Holy/Colossal/Citadel = 40 Models with LevelOfDetail StreamingMesh, Atomic; 380 far meshes RenderFidelity
+      Performance + CastShadow off; trees 282 -> 203 (far half thinned, far trees shadowless). Re-measure below.
+- [ ] Areas card images (user); optional waystones
 - [x] lobby-map.md rewritten, CHANGELOG B172 pt2, STATE/INDEX/ROADMAP updated, committed
 
 ## Assembly layout (B172_assemble.luau)
