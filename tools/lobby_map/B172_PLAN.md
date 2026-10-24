@@ -165,8 +165,10 @@ variety of buildings." Earlier same day: Story Areas card -> travel to the gate;
 - [x] USER imported AL_KitE.glb; harvested + "post" run -- then the user found an inside-out pagoda roof + stupa
       z-fighting (NEW RULE: always check z-fighting). kit_summon.py fixed (roof winding, trims, steps, mandala +0.12,
       spire poles), `C.zfight_report` added (0 hits), Kits A-D audited + fixed in Studio (tools/maps/lobby/README.md).
-- [ ] USER: RE-import the fixed AL_KitE.glb (the harvested Kit E protos are the old, flawed ones).
-- [ ] Run B172_harvest.luau, then B172_summon.luau with SECTION "post" -> "sanctum" -> "buildings" (wait out stalls).
-- [ ] Check NPC_Summon stands on the dais top (raycast), screenshots, Play: HUD Summon travels, prompt opens Summon,
-      rings spin / heart floats, join time.
-- [ ] Docs (lobby-map.md: sanctum rig + hooks, Village, GateVFX; CHANGELOG B172 pt5; OWNERSHIP note for the crossing).
+- [x] USER re-imported the fixed AL_KitE.glb.
+- [x] harvest + post + sanctum (scale raised to 1.4 for "huge"; keeper moved to (-908, 54.3), arrival x -826) + buildings
+      (18 placed; viewport test keeps the PlayGUICamera shot unchanged; rock/backdrop AABB test). Lighthouse 1/2 (few coast spots).
+- [x] Verified: keeper feet on the dais floor; Play: Summon travel ok, prompt -> OpenSummon (SummonGUI open), 5 parts
+      animate, player stands on the dais (precise), join veil 2.7 s, no errors.
+- [x] Docs: lobby-map.md, CHANGELOG pt5, OWNERSHIP note, STATE.
+- [ ] Optional next: summon animation (user), Areas card pictures (user), 2nd lighthouse on a sea stack by hand.

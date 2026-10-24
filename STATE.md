@@ -31,7 +31,7 @@
 
 ## Open threads (not yet PENDINGs)
 - B172 Lobby rebuild (Holy Coast) built + verified (`lobby-map.md`); follow-ups in `tools/lobby_map/B172_PLAN.md`:
-  phase 2 done (Story Gate + NPC_Story, sanctuaries, floating shards, precise collision; join 2.6 s);
+  phase 2+3 done (Story Gate, Star Sanctum summon place + NPC_Summon, village kit, z-fight audit; join 2.7 s);
   Areas card images to retake, optional waystones. User publishes the Lobby.
 - B167 kit drift, not caused by B167: `Kit_ItemIconV2` (Lobby 98544bdf vs 1cd8e184), `Kit_HotbarSlotV2` (Lobby
   6f14cfb6, Game f5a7f240, manifest cd5a2aa0). Waiting on the user.

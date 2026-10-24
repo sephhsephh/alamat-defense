@@ -17,7 +17,7 @@ task touches — resolved at bootstrap per the constitution.
 | Teleport payload contract | AD-Lobby | both | `docs/contracts/teleport.md` |
 | Lobby scene & flow (stage select, parties) | AD-Lobby | Lobby | Studio (Lobby) |
 | Alamat UI kit (brand buttons, HUD layout) | AD-UI | Lobby (Game next) | Studio (Lobby) `RS.AlamatUI` + `StarterGui.HUD` + `tools/alamat_ui_build.luau` / `alamat_hud_build.luau` + `docs/systems/alamat-ui.md` (B138) |
-| Lobby map (islands, districts, waystones, lighting) | AD-Lobby | Lobby | Studio (Lobby) `Workspace.Lobby.Map` + `SSS.Server.Lobby.LobbyMapService` + `tools/lobby_map/*.luau` + `docs/systems/lobby-map.md` (B134) |
+| Lobby map (islands, districts, waystones, lighting) | AD-Lobby | Lobby | Studio (Lobby) `Workspace.Lobby.Map` + `SSS.Server.Lobby.LobbyMapService` + `tools/lobby_map/*.luau` + `docs/systems/lobby-map.md` (B134). B172 p3 crossing (user-asked): the HUD Summon hook in AD-UI's `SummonGUIController` travels to `Area_Summon` |
 | Shop catalog (future) | AD-Gacha | Lobby | TBD when built |
 | Gacha: banners / pity / grant pipeline | AD-Gacha | Lobby | Studio (Lobby) `SSS.Server.Meta.{GrantService,SummonEngine,SummonService}` + `RS.Configs.{Gacha.*,Banners.*,Meta.MetaConfig}` + `docs/systems/gacha.md` (built B3, 2026-08-09) |
 | Ascension | AD-Gacha | Lobby | Studio (Lobby) `SSS.Server.Meta.{AscensionRules,AscensionService}` + `StarterPlayerScripts.AscensionController` + `docs/systems/ascension.md` (built B9, 2026-08-09) |

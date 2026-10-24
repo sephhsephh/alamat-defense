@@ -20,7 +20,7 @@ local FLOATING = { AL_SummonRingOuter = true, AL_SummonRingInner = true, AL_Summ
 
 local SITE = Vector3.new(-940, 0, -120) -- Star Sanctum centre (flat, open, far in the PlayGUICamera's haze)
 local FACE = Vector3.new(1, 0, 0) -- front of the sanctum faces east, toward spawn; the halo stands behind (west)
-local SCALE = 1.15
+local SCALE = 1.4 -- "huge" (user): ~185 studs across, halo ~170 tall
 
 local rpT = RaycastParams.new()
 rpT.FilterType = Enum.RaycastFilterType.Include
@@ -129,13 +129,13 @@ local function sanctum(): string
 
 	local dais = place("AL_SummonDais", root, look(C), s); dais.Name = "Dais"
 	-- heights keep the vertical inner ring (+ its crystal studs) clear of the floor and inside the crown/pylons
-	local heartBase = Vector3.new(C.X, TOP + 22, C.Z)
+	local heartBase = Vector3.new(C.X, TOP + 19 * s, C.Z)
 	local heart = place("AL_SummonHeart", root, look(heartBase), s); heart.Name = "Heart"
-	local focusY = TOP + 22 + 12 * s
+	local focusY = TOP + 19 * s + 12 * s
 	local inner = place("AL_SummonRingInner", root, look(Vector3.new(C.X, focusY - 25 * s, C.Z)), s); inner.Name = "RingInner"
 	local outer = place("AL_SummonRingOuter", root, look(Vector3.new(C.X, focusY - 2.6 * s, C.Z)), s); outer.Name = "RingOuter"
-	local crown = place("AL_SummonCrown", root, look(Vector3.new(C.X, TOP + 80 - 6 * s, C.Z)), s); crown.Name = "Crown"
-	local haloPos = C - FACE * 84
+	local crown = place("AL_SummonCrown", root, look(Vector3.new(C.X, TOP + 70 * s - 6 * s, C.Z)), s); crown.Name = "Crown"
+	local haloPos = C - FACE * 73 * s -- just behind the west stairs (r 66 * s)
 	local halo = place("AL_SummonHalo", root, look(Vector3.new(haloPos.X, ground(haloPos.X, haloPos.Z) - 1, haloPos.Z)), s); halo.Name = "Halo"
 
 	local spin = { [outer] = { 3, "Y" }, [inner] = { -5, "Look" }, [crown] = { -2, "Y" }, [halo] = { 1, "Look" } }
@@ -147,8 +147,8 @@ local function sanctum(): string
 	-- ===== VFX
 	local vfx = Instance.new("Folder"); vfx.Name = "VFX"; vfx.Parent = root
 	local GOLD, CYAN, WHITE = Color3.fromRGB(255, 214, 130), Color3.fromRGB(150, 232, 255), Color3.fromRGB(235, 250, 255)
-	runeDisc(vfx, "FloorRune", Vector3.new(C.X, TOP + 0.25, C.Z), 78, GOLD, 1.5)
-	runeDisc(vfx, "AltarRune", Vector3.new(C.X, TOP + 3.6 * s + 0.15, C.Z), 22, CYAN, -4)
+	runeDisc(vfx, "FloorRune", Vector3.new(C.X, TOP + 0.5, C.Z), 78, GOLD, 1.5) -- decal >= 0.25 over the mandala (z-fight rule)
+	runeDisc(vfx, "AltarRune", Vector3.new(C.X, TOP + 3.6 * s + 0.35, C.Z), 22, CYAN, -4)
 
 	-- altar point: the light pillar + rising sparkles; SummonPoint = where a summoned unit appears
 	local altar = Instance.new("Part"); altar.Name = "Altar"; altar.Size = Vector3.new(2, 2, 2)
@@ -212,7 +212,7 @@ local function sanctum(): string
 	for _, m in ipairs(root:GetDescendants()) do
 		if m:IsA("Model") then m.LevelOfDetail = Enum.ModelLevelOfDetail.Disabled end
 	end
-	local cleared = removeTreesNear(C, 92) + removeTreesNear(haloPos, 72)
+	local cleared = removeTreesNear(C, 80 * s) + removeTreesNear(haloPos, 62 * s)
 	return ("sanctum at %.0f,%.2f,%.0f top %.2f; heart focus y %.1f; %d tethers; %d trees cleared"):format(C.X, G, C.Z, TOP, focusY, tips, cleared)
 end
 
@@ -229,14 +229,17 @@ local PLAN = {
 -- never build here: spawn isle, bridge, plaza, temple, the sanctum, arena, citadel, Story Gate, PlayGUI camera foreground
 local KEEP = {
 	{ Vector3.new(-300, 0, 420), 110 }, { Vector3.new(-300, 0, 260), 70 }, { Vector3.new(-300, 0, 0), 200 },
-	{ Vector3.new(-300, 0, -232), 150 }, { SITE, 150 }, { Vector3.new(140, 0, 400), 90 }, { Vector3.new(300, 0, -330), 150 },
+	{ Vector3.new(-300, 0, -232), 150 }, { SITE, 190 }, { Vector3.new(140, 0, 400), 90 }, { Vector3.new(300, 0, -330), 150 },
 	{ Vector3.new(-640, 0, 20), 90 },
 }
 
 local function buildings(): string
 	local old = St:FindFirstChild("Village"); if old then old:Destroy() end
 	local folder = Instance.new("Folder"); folder.Name = "Village"; folder.Parent = St
-	local cam = (workspace:FindFirstChild("PersistentScene") :: any).PlayGUICamera.CFrame :: CFrame
+	local vcam = workspace.CurrentCamera
+	local saved = vcam.CFrame
+	vcam.FieldOfView = 70
+	vcam.CFrame = (workspace:FindFirstChild("PersistentScene") :: any).PlayGUICamera.CFrame :: CFrame
 	local blocks = {}
 	for _, f in ipairs(St:GetChildren()) do
 		for _, m in ipairs(f:GetChildren()) do
@@ -257,8 +260,13 @@ local function buildings(): string
 		for _, b in ipairs(blocks) do
 			if (Vector3.new(p.X, 0, p.Z) - Vector3.new(b[1].X, 0, b[1].Z)).Magnitude < b[2] + r + 12 then return false end
 		end
-		local rel = cam:PointToObjectSpace(p)
-		if rel.Z < 0 and -rel.Z < 450 and math.abs(rel.X) < -rel.Z * 0.9 then return false end -- camera foreground
+		-- the user's PlayGUI framing: nothing new may show on screen within 700 studs (centre, top and 4 edges tested
+		-- through the real viewport with the camera parked on PlayGUICamera)
+		for _, o in ipairs({ Vector3.new(0, 0, 0), Vector3.new(0, 90, 0), Vector3.new(r, 20, 0), Vector3.new(-r, 20, 0), Vector3.new(0, 20, r), Vector3.new(0, 20, -r) }) do
+			local q = p + o
+			local v, onScreen = vcam:WorldToViewportPoint(q)
+			if onScreen and v.Z < 700 then return false end
+		end
 		return true
 	end
 	local function flat(p: Vector3, r: number): (boolean, number)
@@ -278,6 +286,20 @@ local function buildings(): string
 		end
 		return false
 	end
+	-- rock / cliff / backdrop AABBs (backdrop is CanQuery off, so no spatial query -- plain box overlap)
+	local rocks = {}
+	for _, f in ipairs({ Map.Nature.CoastRocks, Map:FindFirstChild("Backdrop") }) do
+		for _, d in ipairs(f and f:GetDescendants() or {}) do
+			if d:IsA("BasePart") then
+				local c, e = d.CFrame, d.Size / 2
+				local ext = Vector3.new(
+					math.abs(c.RightVector.X) * e.X + math.abs(c.UpVector.X) * e.Y + math.abs(c.LookVector.X) * e.Z,
+					math.abs(c.RightVector.Y) * e.X + math.abs(c.UpVector.Y) * e.Y + math.abs(c.LookVector.Y) * e.Z,
+					math.abs(c.RightVector.Z) * e.X + math.abs(c.UpVector.Z) * e.Y + math.abs(c.LookVector.Z) * e.Z)
+				table.insert(rocks, { c.Position - ext * 0.8, c.Position + ext * 0.8 }) -- 0.8: meshes are rounder than boxes
+			end
+		end
+	end
 	local rnd = Random.new(1172)
 	local made, trees, report = 0, 0, {}
 	for _, row in ipairs(PLAN) do
@@ -292,6 +314,14 @@ local function buildings(): string
 				-- face the plaza (houses/aqueducts read best side-on to the spawn view)
 				local toPlaza = (Vector3.new(-300, p.Y, 0) - p)
 				local m = place(name, folder, CFrame.lookAt(p, p + toPlaza.Unit), scale)
+				-- never into a rock / cliff / backdrop mesh (box test on the placed model, a little shrunk)
+				local cf, sz = m:GetBoundingBox()
+				local lo, hi = cf.Position - sz * 0.42 + Vector3.new(0, 3, 0), cf.Position + sz * 0.42
+				local hit = false
+				for _, rk in ipairs(rocks) do
+					if lo.X < rk[2].X and hi.X > rk[1].X and lo.Y < rk[2].Y and hi.Y > rk[1].Y and lo.Z < rk[2].Z and hi.Z > rk[1].Z then hit = true; break end
+				end
+				if hit then m:Destroy(); continue end
 				table.insert(blocks, { p, r })
 				trees += removeTreesNear(p, r + 6)
 				n += 1; made += 1
@@ -299,6 +329,7 @@ local function buildings(): string
 		end
 		table.insert(report, ("%s %d/%d"):format(name, n, count))
 	end
+	vcam.CFrame = saved
 	return ("buildings: %d placed (%s); %d trees cleared"):format(made, table.concat(report, ", "), trees)
 end
 

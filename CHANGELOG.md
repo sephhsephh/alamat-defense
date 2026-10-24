@@ -1,5 +1,9 @@
 # CHANGELOG (append-only; newest first)
 <!-- Holds the newest 10 entries only. Older: archive/CHANGELOG-archive.md (history -- grep it, never read at bootstrap). Entry budget: 600 chars. -->
+## 2026-10-24 [lobby] B172 pt5 -- **Star Sanctum (summon) + keeper, HUD Summon travels there, new building kit, z-fight rule.**
+- Kit E: 6-part animatable sanctum (dais, gyro rings, heart, crown, halo; SummonPoint/SummonFocus hooks, AmbientPaused) +
+  pagoda/bahay/observatory/stupa/aqueduct/lighthouse (18 placed). NPC_Summon (Tala). HUD Summon + Areas Summon/Story = Travel
+  (SummonGUIController crossing, user-asked). Gate rune/ray VFX. C.zfight_report; Kits A-D flush faces fixed in Studio.
 ## 2026-10-24 [lobby] B172 pt4 -- **Lobby phase 2: Story Gate + keeper, grove sanctuaries, floating shards, precise collision.**
 - Blender Kit D (10 wonders) + VFX textures. Story Gate (portal ring/veil spin, glow) + `NPC_Story` (Apolaki; OpensEvent
   OpenStageSelect, verified). 22 groves/160 trees + 63 sanctuaries; 41 lit AL_Float shards; client `LobbyAmbient` animates
@@ -39,11 +43,3 @@
 - ORBIT (Units stage, both Places' `UnitsHeroController`): right-drag (cursor locked like the Roblox camera), one-finger swipe, right stick; yaw free, pitch -25..55 deg, resets per unit; stage ViewportFrame `Active = true` so the world camera does not turn too. Proven by a right-drag (camera moved, drag up = look up).
 - Summon `Chances` / `Auto Sell`: label icon is a left square (`SizeConstraint RelativeYY`) and the text pads past it.
 - No contract change. Game boots clean (0 errors).
-## 2026-10-21 [game+lobby+shared] B167 -- **The user's generated art is in: 44 icons + 19 illustrations uploaded and wired in both Places.**
-- Uploaded 63 images (icons resized to 512, illustrations to 1024 long side) via Studio's uploader; ids in `docs/design/uploaded-art-ids.txt` (copy beside the source PNGs).
-- Shared canon: `IconCatalog` 521beba2 -> 78b478a6 (all 32 symbol ids replaced + new keys `Filter`, `Discard`, `Stat_DMG/SPA/RNG`; the Lobby copy had drifted to 65838966 by ONE stray space before `Placement_Ground` -- reconciled by the rewrite), `ItemCatalog` 47a514f6 -> 1cfc5061 (BattlepassXP, EventCoin, InfernalChest, BannerTicket, GoldenSeed icons), `Kit_UnitPreviewTemplate` 2b423401 -> 133946dc (stat icons). All deployed to BOTH Places, hash-checked in each.
-- Authored images that hard-coded the old placeholders were swapped in place: Lobby 90 + Game 64 (the old shared Star/Favorite id splits by name: `*Fav*` -> Favorite). Stat pills (Units hall, CardHover, Starter Choice, hotbar hover, Stat Reroll rows): Lobby 22 + Game 13. `Emblem_Sun` replaces the frame-built sun (rays + core hidden, `SunEmblem` ImageLabel added) on LoadingScreen (both) and ObtainRewardsGUI's header (Lobby).
-- Lobby illustrations: PlayGUI `Card_*.Art` (7 modes), `PlayConfig.Maps[Farm].Art`, `EventQuestConfig` Art x4, `Configs.Banners.<id>.Art` (new field -- `SummonGUIController` already reads `cfg.Art`), `AreasConfig` Story/Events/Index/Summon `Image` + category icons, `InventoryConfig` Reward Boxes icon -> InfernalChest. `HUD_Areas` on the HUD Areas button + the Areas header emblem.
-- Verified: Lobby Play boots clean (no errors); the Summon stage and tabs show the banner art.
-- Not changed: the two DialogueGUI arrows (still toolbox). ⚠ **Kit drift found and NOT caused by this change:** `Kit_ItemIconV2` (Lobby 98544bdf vs manifest/Game 1cd8e184) and `Kit_HotbarSlotV2` (Lobby 6f14cfb6, Game f5a7f240, manifest cd5a2aa0). Neither template holds an image touched here; manifest left as-is, the user is asked about it.
-- Notes: the new `Unlock` art reads the same as `Lock` (the shackle is not visibly open). The Summon `Chances`/`Auto Sell` label icons now overlap their text (the new art fills its box more than the toolbox one did).
