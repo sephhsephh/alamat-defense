@@ -133,6 +133,8 @@ overall; create + import all new structures and VFX.
 
 ## PHASE 2 STATUS
 - [x] Kit D exported (kit_wonders.py; 10 pieces 28k tris; veil UVs striped -> Studio puts the portal VFX texture on it) + AL_VfxCarrier.glb (parts named AL_Vfx_portal|glow|sparkle|ray|rune)
-- [ ] user import
+- [x] user import; Kit D harvested (shared textures, solids PreciseConvexDecomposition); VFX ids in B172Protos.VFXTex
+- [x] Story Gate x1.8 (218 tall) at (-660,~42,20) facing east, PortalRing/Veil tagged AL_Spin (attr RPM, Axis=Look), decal swirl,
+      sparkles, glow, PointLight; NPC_Story (Apolaki rig, TalkPrompt OpensEvent=OpenStageSelect), Travel.Area_Story
 - [ ] harvest D, Story NPC + gate, grove sanctuaries + tree spread, VFX, LobbyAmbient script, precise collision
 - [ ] verify + docs + commit
