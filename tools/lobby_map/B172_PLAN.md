@@ -132,7 +132,7 @@ overall; create + import all new structures and VFX.
 4. Verify in Play (Story prompt opens stage select, animations run, perf join time), docs (lobby-map.md), changelog, commit.
 
 ## PHASE 2 STATUS
-- [ ] Kit D Blender script written + exported (+ VFX carrier)
+- [x] Kit D exported (kit_wonders.py; 10 pieces 28k tris; veil UVs striped -> Studio puts the portal VFX texture on it) + AL_VfxCarrier.glb (parts named AL_Vfx_portal|glow|sparkle|ray|rune)
 - [ ] user import
 - [ ] harvest D, Story NPC + gate, grove sanctuaries + tree spread, VFX, LobbyAmbient script, precise collision
 - [ ] verify + docs + commit
