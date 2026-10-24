@@ -193,7 +193,7 @@ def watchtower(col, man, origin):
     C.drum(MB, (0, 0), 2.5, 44.0, 7.0, r_top=6.4, sides=32, bevel=0.3)
     for z in (16.0, 32.0):
         C.torus(G, (0, 0, z), 6.8 if z < 30 else 6.6, 0.4, seg=64, sides=8, uv=4.0)
-    C.drum(CZ, (0, 0), 38.0, 5.0, 6.45, sides=32, bevel=0.1)
+    C.drum(CZ, (0, 0), 38.0, 5.0, 6.66, sides=32, bevel=0.1)  # proud of the shaft (r ~6.5): 6.45 was buried (B172 p3)
     C.drum(Mb, (0, 0), 46.5, 3.0, 8.4, sides=32, bevel=0.4)
     for x, y, a in C.polar(10, 7.8):
         C.block(Mb, (x, y, 50.6), (2.2, 1.6, 2.2), bevel=0.25, rot=(0, 0, a))

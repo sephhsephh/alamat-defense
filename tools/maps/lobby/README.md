@@ -62,3 +62,12 @@ with the Studio 3D Importer, then copied/scaled/rotated in Studio. Same pipeline
   **AL_Banner** post + hanging cloth 3W x 10H (white, gold sun, blue trim).
 - **AL_MarketStall** 14W x 10D x 12H: marble counter, 4 posts, striped Cloth canopy, 2 capiz lanterns.
 - **AL_Fountain** d18 x 10H: basin, pedestal, upper bowl, gold sun finial (water added in Studio).
+
+## Z-fighting rule (user, 2026-10-24)
+Every kit script returns `C.zfight_report(col)` and must show **0 hits** before export (same-facing coplanar overlapping
+faces within a piece; buried contacts and ground bottoms are skipped). Also render close-ups of new pieces: a lathe
+profile that does not run bottom -> outside -> top comes out inside-out (Kit E pagoda roof, fixed).
+Older kits were audited (B172 p3) and fixed IN STUDIO on the protos + every placed copy (attribute `ZFightFixed` /
+`CapizRingFixed` guards re-runs): mandala discs +0.12, Temple capiz -0.1 back, Sun Gate marble +0.35 X, lantern-arch
+gold +0.3 X, watchtower capiz ring x1.032. Sources patched for the mandalas + watchtower; Temple/SunGate/LanternArch
+sources still have the flush faces -- fix them in Blender before any re-export of Kits A/B/D.

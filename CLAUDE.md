@@ -91,6 +91,8 @@ AD-Enemies, AD-Traits, ...) per `docs/OWNERSHIP.md`. All mount this repo. Resolv
 - **Every rectangle action button = the Alamat PLATE** (2026-10-14): `DevTools.AlamatPlate` / `Templates.AlamatPlate`.
 - **Tintable art is generated WHITE** (2026-10-21): gems / fills / glows white-on-transparent, coloured in Studio by a
   `UIGradient` child named `Tint`; real-colour parts (gold) on a separate untinted layer (`docs/design/white-tint-art.md`).
+- **Always be wary of Z-FIGHTING in models** (2026-10-24): no coplanar same-facing faces (trims flush with tops, decals/
+  discs < 0.1 stud off a floor); Blender kits run `C.zfight_report` before export, 0 hits. Check lathe winding (inside-out).
 - **Looks changed or unusual? ASK THE USER whether they did it** (2026-08-16); never "fix" it.
 - **Every new feature ships for PC + console + mobile** (2026-09-27; PC is main): no mouse- or key-only input;
   bind via ContextActionService / gamepad UI selection too (foundation: the console batch).

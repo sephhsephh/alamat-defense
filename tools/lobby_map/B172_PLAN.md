@@ -162,7 +162,10 @@ variety of buildings." Earlier same day: Story Areas card -> travel to the gate;
       (-914, 52.08, -120) facing +X; `Map.Travel.Area_Summon` arrival (-844, 46.2, -120).
 - [x] SummonGUIController (AD-UI file, user-asked crossing): HUD Summon button -> AreaAction("Travel","Summon"),
       falls back to opening the screen. LobbyAmbient: `AmbientPaused` attribute skips a model.
-- [ ] USER: 3D-import AL_KitE.glb into the Lobby.
+- [x] USER imported AL_KitE.glb; harvested + "post" run -- then the user found an inside-out pagoda roof + stupa
+      z-fighting (NEW RULE: always check z-fighting). kit_summon.py fixed (roof winding, trims, steps, mandala +0.12,
+      spire poles), `C.zfight_report` added (0 hits), Kits A-D audited + fixed in Studio (tools/maps/lobby/README.md).
+- [ ] USER: RE-import the fixed AL_KitE.glb (the harvested Kit E protos are the old, flawed ones).
 - [ ] Run B172_harvest.luau, then B172_summon.luau with SECTION "post" -> "sanctum" -> "buildings" (wait out stalls).
 - [ ] Check NPC_Summon stands on the dais top (raycast), screenshots, Play: HUD Summon travels, prompt opens Summon,
       rings spin / heart floats, join time.

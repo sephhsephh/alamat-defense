@@ -238,7 +238,7 @@ def build_mandala(row, col, man):
     P = C.Piece("AL_Mandala", row.next(60))
     r_in = 29.3
     C.lathe(P.bm("Marble"), [(0, 0), (r_in, 0), (r_in, 0.38), (0, 0.38)], 64)
-    f = C.lathe(P.bm("Mandala"), [(r_in, 0.4), (0, 0.4)], 96, cap=False)
+    f = C.lathe(P.bm("Mandala"), [(r_in, 0.52), (0, 0.52)], 96, cap=False)  # 0.14 above the core: no z-fight (Studio-fixed B172 p3)
     C.disc_uv(P.bm("Mandala"), f, (0, 0), r_in / 0.988)  # edge lands on the painted gold rim
     ring_solid(P.bm("Gold"), round_loop([(29.0, 0.0), (30.0, 0.0), (30.0, 0.55), (29.0, 0.55)], 0.2), 96)
     for x, y, a in C.polar(8, 29.5, 0.0):

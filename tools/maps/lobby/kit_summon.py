@@ -46,9 +46,10 @@ def finial(bm, cx, cy, z0, h, r):
 
 
 def flared_roof(bm, cx, cy, hw, z0, rise):
-    """4-sided pagoda roof over a square of half-width hw: upturned eaves, closed underside."""
-    p = [(0.0, z0 + rise), (hw + 1.0, z0 + 0.7), (hw + 5.0, z0 + 0.25), (hw + 6.2, z0 + 1.3),
-         (hw + 5.8, z0 - 0.3), (hw, z0 - 0.6), (0.0, z0 - 0.6)]
+    """4-sided pagoda roof over a square of half-width hw: upturned eaves, closed underside. The profile MUST run
+    bottom -> outside -> top (C.lathe's winding); the reverse renders inside-out."""
+    p = [(0.0, z0 - 0.6), (hw, z0 - 0.6), (hw + 5.8, z0 - 0.3), (hw + 6.2, z0 + 1.3), (hw + 5.0, z0 + 0.25),
+         (hw + 1.0, z0 + 0.7), (0.0, z0 + rise)]
     return C.lathe(bm, [(r * S2, z) for r, z in p], 4, center=(cx, cy, 0.0), phase=PI / 4)
 
 
@@ -62,13 +63,13 @@ def summon_dais(col, man, origin):
     for z0, R, bm in tiers:
         C.drum(bm, (0, 0), z0, 3.0, R, sides=64, bevel=0.35)
         C.torus(G, (0, 0, z0 + 2.9), R + 0.05, 0.35, seg=96, sides=6, uv=4.0)
-        for a in (0.0, PI / 2, PI, 3 * PI / 2):  # 3 steps (1 stud each) out from this tier's edge
-            for j in (1, 2, 3):
-                ro = R + (4 - j) * 2.0
+        for a in (0.0, PI / 2, PI, 3 * PI / 2):  # 2 steps (1 stud each), then the tier top (a 3rd step would be flush = z-fight)
+            for j in (1, 2):
+                ro = R + (3 - j) * 2.0
                 C.box(Mb, -9.0, -ro, z0 + j - 1.0, 9.0, -(R - 1.0), z0 + j, bevel=0.12, M=Rz(a))
             for sx in (-1, 1):  # gold stair cheeks
-                C.box(G, sx * 9.0 - 0.5, -(R + 6.2), z0, sx * 9.0 + 0.5, -(R - 1.0), z0 + 3.4, bevel=0.15, M=Rz(a))
-    faces = C.lathe(MD, [(32.0, 9.03), (0.0, 9.03)], 64, cap=False)
+                C.box(G, sx * 9.0 - 0.5, -(R + 4.2), z0, sx * 9.0 + 0.5, -(R - 1.0), z0 + 3.4, bevel=0.15, M=Rz(a))
+    faces = C.lathe(MD, [(32.0, 9.12), (0.0, 9.12)], 64, cap=False)  # 0.12 above the floor: no z-fight at range
     C.disc_uv(MD, faces, (0, 0), 32.0)
     C.drum(MB, (0, 0), 9.0, 3.0, 8.0, sides=32, bevel=0.3)
     C.torus(G, (0, 0, 12.0), 8.0, 0.5, seg=64, sides=8, uv=4.0)
@@ -192,11 +193,12 @@ def pagoda(col, man, origin):
         for sx in (-1, 1):  # corner posts in front of the window band
             for sy in (-1, 1):
                 slab(G, sx * hw, sy * hw, 0.5, 0.5, z + h * 0.4, z + h * 0.8, bevel=0.1)
-        flared_roof(TT, 0, 0, hw, z + h + 0.6, 4.0 - i * 0.3)
+        flared_roof(TT, 0, 0, hw, z + h + 0.9, 4.0 - i * 0.3)  # underside 0.3 into the gold band (no flush faces)
         slab(G, 0, 0, hw + 0.3, hw + 0.3, z + h, z + h + 0.4, bevel=0.1)
         z += h + 3.6
     for k in range(5):
         C.drum(G, (0, 0), z + k * 2.2, 1.2, 1.6 - k * 0.22, sides=16, bevel=0.2)
+    C.drum(G, (0, 0), z - 0.2, 11.6, 0.45, sides=12, bevel=0.05)  # spire pole: the rings sit on it, never float
     finial(G, 0, 0, z + 11.0, 7.0, 1.0)
     return P.done(col, man)
 
@@ -213,7 +215,7 @@ def bahay_na_bato(col, man, origin):
                         M=T(k * 8.66, sy * 8.2, 1.0))
     for sx in (-1, 1):
         C.box(MB, sx * 13.0 - 0.8, -8.2, 1.0, sx * 13.0 + 0.8, 8.2, 11.0, bevel=0.25)
-    C.box(Mb, -13.8, -9.0, 4.0, 13.8, 9.0, 5.0, bevel=0.2)  # floor inside reads as a mezzanine
+    C.box(Mb, -13.4, -8.6, 4.0, 13.4, 8.6, 5.0, bevel=0.2)  # mezzanine floor, edges buried in the walls (no flush faces)
     slab(G, 0, 0, 14.6, 10.6, 11.0, 11.6, bevel=0.15)
     C.box(Mb, -14.5, -10.5, 11.6, 14.5, 10.5, 12.6, bevel=0.3)
     for sy in (-1, 1):  # upper floor walls: marble frame + capiz panels
@@ -224,7 +226,7 @@ def bahay_na_bato(col, man, origin):
             x0 = -13.5 + k * 4.6
             C.box(CZ, x0, y - 0.35, 13.6, x0 + 3.8, y + 0.35, 19.6, bevel=0.05)
             C.box(Mb, x0 + 3.8, y - 0.55, 13.6, x0 + 4.6, y + 0.55, 19.6, bevel=0.1)
-        C.box(G, -14.6, y - 0.9 * sy - 0.4, 13.2, 14.6, y - 0.9 * sy + 0.4, 13.6, bevel=0.1)
+        C.box(G, -14.8, y - 0.9 * sy - 0.4, 13.2, 14.8, y - 0.9 * sy + 0.4, 13.6, bevel=0.1)  # past the side walls (14.6): no flush ends
     for sx in (-1, 1):
         C.box(Mb, sx * 14.0 - 0.6, -10.0, 12.6, sx * 14.0 + 0.6, 10.0, 20.6, bevel=0.15)
     C.prism(TT, [(-16.5, 20.2), (16.5, 20.2), (0.0, 28.0)], -12.0, 12.0, bevel=0.2)
@@ -307,9 +309,9 @@ def stupa(col, man, origin):
     Mb, MB, G, TT = P.bm("Marble"), P.bm("MarbleBlock"), P.bm("Gold"), P.bm("TealTile")
     for i, (hw, z0) in enumerate(((17.0, 0.0), (14.0, 2.5), (11.5, 5.0))):
         slab(MB if i == 1 else Mb, 0, 0, hw, hw, z0, z0 + 2.5, bevel=0.35)
-        slab(G, 0, 0, hw + 0.1, hw + 0.1, z0 + 2.2, z0 + 2.5, bevel=0.05)
+        slab(G, 0, 0, hw + 0.1, hw + 0.1, z0 + 1.9, z0 + 2.25, bevel=0.05)  # below the top: never flush (z-fight)
     for j in range(5):  # front stair
-        C.box(Mb, -4.0, -17.0 - (4 - j) * 1.5 + 0.0, j * 1.5, 4.0, -11.0, (j + 1) * 1.5, bevel=0.1)
+        C.box(Mb, -4.0, -17.0 - (4 - j) * 1.5, j * 1.5, 4.0, -11.5, (j + 1) * 1.5, bevel=0.1)  # ends AT the top terrace face
     C.lathe(Mb, C.round_profile([(0.0, 7.5), (10.0, 7.5), (10.6, 10.0), (10.0, 15.0), (8.2, 19.0), (5.0, 21.8),
                                  (0.0, 22.6)], 0.4), 40)
     C.torus(G, (0, 0, 10.2), 10.6, 0.4, seg=64, sides=8, uv=4.0)
@@ -317,6 +319,7 @@ def stupa(col, man, origin):
     slab(TT, 0, 0, 3.8, 3.8, 25.0, 26.0, bevel=0.3)
     for k in range(9):
         C.drum(G, (0, 0), 26.0 + k * 1.9, 1.0, 2.8 - k * 0.26, sides=20, bevel=0.2)
+    C.drum(G, (0, 0), 25.8, 17.6, 0.55, sides=12, bevel=0.05)  # spire pole
     finial(G, 0, 0, 43.0, 5.0, 0.8)
     for sx in (-1, 1):
         for sy in (-1, 1):
@@ -339,5 +342,5 @@ for build, width in PIECES:
 info = C.export_kit(col, "E", manifest)
 renders = [] if globals().get("SKIP_RENDER") else [C.preview(col, C.render_path("AL_KitE"))]
 bpy.ops.wm.save_mainfile()
-result = {"export": info, "renders": renders,
+result = {"export": info, "renders": renders, "zfight": C.zfight_report(col),
           "pieces": {n: {"size": e["size"], "tris": sum(C.tri_count(bpy.data.objects[o]) for o in e["objects"])} for n, e in manifest.items()}}

@@ -401,6 +401,74 @@ def report(col):
             "over_20k": [k for k, v in tris.items() if v > 20000]}
 
 
+def zfight_report(col, tol=0.06, limit=25):
+    """Z-fighting check (user rule 2026-10-24: always be wary of z-fighting). Within each kit piece (<Piece>__<Mat>),
+    finds axis-aligned faces that face the SAME way, lie within `tol` studs of each other and overlap (one face's centre
+    inside the other). Faces sharing a vertex are skipped (fans, bevels). Returns {"count", "hits": [...]}.
+    Fix every hit before export: lift/sink one face (>= 0.1), or stop a trim short of the face it would sit flush on."""
+    from mathutils import Vector
+
+    def inside(pt, poly):
+        x, y = pt
+        c = False
+        for i in range(len(poly)):
+            x1, y1 = poly[i]
+            x2, y2 = poly[i - 1]
+            if (y1 > y) != (y2 > y) and x < (x2 - x1) * (y - y1) / (y2 - y1 + 1e-12) + x1:
+                c = not c
+        return c
+
+    faces = {}  # (piece, axis, sign) -> [(coord, poly2d, centre2d, obj, vertkeys)]
+    for ob in col.all_objects:
+        if ob.type != "MESH" or "__" not in ob.name:
+            continue
+        piece = ob.name.split("__")[0]
+        mw = ob.matrix_world
+        rot = mw.to_3x3()
+        verts = [mw @ v.co for v in ob.data.vertices]
+        for p in ob.data.polygons:
+            n = (rot @ p.normal).normalized()
+            for axis in range(3):
+                if abs(n[axis]) > 0.999:
+                    o = [i for i in range(3) if i != axis]
+                    pts = [verts[i] for i in p.vertices]
+                    poly = [(q[o[0]], q[o[1]]) for q in pts]
+                    cen = (sum(q[0] for q in poly) / len(poly), sum(q[1] for q in poly) / len(poly))
+                    keys = {(round(q.x, 3), round(q.y, 3), round(q.z, 3)) for q in pts}
+                    faces.setdefault((piece, axis, n[axis] > 0), []).append(
+                        (sum(q[axis] for q in pts) / len(pts), poly, cen, ob.name, keys, p.area))
+                    break
+    def covered(piece, axis, sign, f):
+        # a face pressed against an opposite-facing coplanar face (a block resting on it, the ground under a base) is
+        # buried: its fight can never be seen
+        for c in faces.get((piece, axis, not sign), ()):
+            if abs(c[0] - f[0]) <= tol and inside(f[2], c[1]):
+                return True
+        return False
+
+    zmin = {}
+    for (piece, axis, sign), lst in faces.items():
+        if axis == 2:
+            zmin[piece] = min([zmin.get(piece, 1e9)] + [f[0] for f in lst])
+    hits = []
+    for (piece, axis, sign), lst in faces.items():
+        lst.sort(key=lambda f: f[0])
+        for i, a in enumerate(lst):
+            for b in lst[i + 1:]:
+                if b[0] - a[0] > tol:
+                    break
+                if a[4] & b[4] or min(a[5], b[5]) < 0.02:
+                    continue
+                if axis == 2 and not sign and a[0] - zmin.get(piece, 0.0) < tol:
+                    continue  # bottoms standing on the ground
+                if covered(piece, axis, sign, a) or covered(piece, axis, sign, b):
+                    continue
+                if inside(a[2], b[1]) or inside(b[2], a[1]):
+                    hits.append({"piece": piece, "a": a[3], "b": b[3], "axis": "XYZ"[axis] + ("+" if sign else "-"),
+                                 "at": round(a[0], 3), "gap": round(b[0] - a[0], 3)})
+    return {"count": len(hits), "hits": hits[:limit]}
+
+
 # ================================================================ bmesh primitives
 # All append to `bm` (a bmesh.types.BMesh) and return the new faces. Sizes in studs. Each one is
 # built in a scratch bmesh, optionally transformed by a mathutils Matrix `M`, then copied in.

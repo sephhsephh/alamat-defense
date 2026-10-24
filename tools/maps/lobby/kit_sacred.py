@@ -303,7 +303,7 @@ def dome_pavilion(col, man, origin):
     C.drum(Mb, (0, 0), 0.0, 1.25, 11.0, sides=48, bevel=0.35)
     C.drum(Mb, (0, 0), 1.25, 1.25, 9.9, sides=48, bevel=0.35)
     C.torus(G, (0, 0, 1.25), 10.45, 0.3, seg=64, sides=8, uv=4.0)
-    mf = C.lathe(P.bm("Mandala"), [(7.4, 2.53), (0.0, 2.53)], 48, cap=False)
+    mf = C.lathe(P.bm("Mandala"), [(7.4, 2.65), (0.0, 2.65)], 48, cap=False)  # 0.15 above the floor: no z-fight (Studio-fixed B172 p3)
     C.disc_uv(P.bm("Mandala"), mf, (0, 0), 7.4)
     for x, y, a in C.polar(6, 7.6, 0.0):
         column(P, x, y, 2.5, 14.0, 1.0)
