@@ -144,3 +144,26 @@ overall; create + import all new structures and VFX.
 - [x] Play-verified 2026-10-24: Story prompt -> OpenStageSelect (PlayGUI), floats/spins animate, spawn OK, join veil 2.6 s,
       ScreenBootWatchdog 50/50. 2 hillside shrines removed, 1 colonnade lifted (were buried). Docs + CHANGELOG pt4 landed.
 - [ ] Optional next: AreasConfig Story row -> Travel Area_Story; ray/rune VFX (VFXTex) at gates; retake Areas card images.
+
+## PHASE 3 (user 2026-10-24): Summon sanctum + NPC, HUD Summon -> travel, more building variety, gate VFX
+User: "structure and npc for summon screen ... clicking summon in gui should just teleport the player to the summon npc
+... unique cool animatable structure (summon animation soon), cool vfx, huge ... perfect for summoning rituals ...
+variety of buildings." Earlier same day: Story Areas card -> travel to the gate; light-ray + rune-circle VFX at gates.
+### STATUS
+- [x] AreasConfig: Story -> `Travel = "Area_Story"`; Summon -> `Travel = "Area_Summon"` (Lobby-local config).
+- [x] `B172_gatevfx.luau` run: Map.Structures.GateVFX (Story Gate floor + arch runes, spawn Sun Gate, citadel gate,
+      colossal gate rays). Runes = AL_Spin Models (Axis Y), lifted 1.05 above grass.
+- [x] Kit E built: `tools/maps/lobby/kit_summon.py` -> Downloads\Alamat_Lobby\glb\AL_KitE.glb (12 pieces, 89k tris,
+      max 10k/object): AL_SummonDais/RingOuter/RingInner/Heart/Crown/Halo + AL_Pagoda, AL_BahayNaBato, AL_Observatory,
+      AL_Aqueduct, AL_Lighthouse, AL_Stupa. Render: renders\AL_KitE.png.
+- [x] Site chosen: Star Sanctum centre (-940, 41.7, -120), faces +X (east), scale 1.15, top floor y 52.08.
+      (East site 220,-80 rejected: mid-frame in PersistentScene.PlayGUICamera's shot.)
+- [x] `Workspace.NPC_Summon` (Tala x1.25, prompt "Summon"/"Keeper of the Stars", OpensEvent=OpenSummon) at
+      (-914, 52.08, -120) facing +X; `Map.Travel.Area_Summon` arrival (-844, 46.2, -120).
+- [x] SummonGUIController (AD-UI file, user-asked crossing): HUD Summon button -> AreaAction("Travel","Summon"),
+      falls back to opening the screen. LobbyAmbient: `AmbientPaused` attribute skips a model.
+- [ ] USER: 3D-import AL_KitE.glb into the Lobby.
+- [ ] Run B172_harvest.luau, then B172_summon.luau with SECTION "post" -> "sanctum" -> "buildings" (wait out stalls).
+- [ ] Check NPC_Summon stands on the dais top (raycast), screenshots, Play: HUD Summon travels, prompt opens Summon,
+      rings spin / heart floats, join time.
+- [ ] Docs (lobby-map.md: sanctum rig + hooks, Village, GateVFX; CHANGELOG B172 pt5; OWNERSHIP note for the crossing).
