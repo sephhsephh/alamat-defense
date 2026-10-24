@@ -5,26 +5,43 @@
 -- set CHUNK = 1..CHUNKS and run once per chunk. The sea band (water Y -4..4) and water colours are kept.
 -- Old terrain: ServerStorage._OldLobby_B139.Terrain_B139 (PasteRegion at its CornerCell attribute).
 local CHUNK, CHUNKS = 1, 14
+-- B172 p4: only the WEST half changed (x < -300); WX0..WX1 is the window the chunks cover (the east, incl. the
+-- PlayGUICamera framing, is never rewritten). Set WEST_ONLY = false to rebuild everything.
+local WEST_ONLY = true
+local WX0, WX1 = -2400, -300
 local T = workspace.Terrain
 local M = Enum.Material
 
-local X0, X1, Z0, Z1, Y0, Y1 = -1600, 1000, -1100, 1060, -40, 280
+local X0, X1, Z0, Z1, Y0, Y1 = -2400, 1000, -1100, 1060, -40, 320
+if WEST_ONLY then X0, X1 = WX0, WX1 end
 local PLAZA_C, PLAZA_R = Vector2.new(-300, 0), 178
 local SPAWN_C = Vector2.new(-300, 420)
 local ARENA_C, ARENA_R = Vector2.new(140, 400), 80
 local MESA_C, MESA_R = Vector2.new(300, -330), 105
-local MAIN_C, MAIN_R = Vector2.new(-300, -300), Vector2.new(1250, 760)
+local MAIN_C = Vector2.new(-300, -300)
+-- B172 p4 (user: "move the mountains back, more space"): the mainland ellipse is asymmetric now -- west radius 1800
+-- (was 1250), east 1250; north radius 760, growing to 1000 west of x -700 (the user's own area north of x -700..160,
+-- z < -1450, is never touched); south 760.
+local RX_W, RX_E, RY_S = 1800, 1250, 760
 
 local function smooth(e0, e1, x)
 	local t = math.clamp((x - e0) / (e1 - e0), 0, 1)
 	return t * t * (3 - 2 * t)
 end
 local function lerp(a, b, t) return a + (b - a) * t end
+local function ryN(x: number): number return lerp(760, 1000, smooth(-700, -1100, x)) end
+-- normalised ellipse distance (1 = the rim) + the radius along z there
+local function ell(x: number, z: number): (number, number)
+	local rx = if x < MAIN_C.X then RX_W else RX_E
+	local rz = if z < MAIN_C.Y then ryN(x) else RY_S
+	local ex, ez = (x - MAIN_C.X) / rx, (z - MAIN_C.Y) / rz
+	return math.sqrt(ex * ex + ez * ez), rz
+end
 
 -- inland is SMALLER z (north). coastZ(x) = the shoreline.
 local function coastZ(x: number): number
 	local base = 140
-	if x < -1150 then base = 140 - (-1150 - x) * 1.2 end
+	if x < -1650 then base = 140 - (-1650 - x) * 1.2 end -- B172 p4: was -1150
 	if x > 480 then base = 140 - (x - 480) * 1.6 end
 	base += 30 * math.noise(x / 180, 1.7) + 12 * math.noise(x / 60, 3.1)
 	local dx = x - PLAZA_C.X
@@ -44,10 +61,9 @@ local function land(x: number, z: number): (number?, Enum.Material?)
 	local cz = coastZ(x)
 	if z > cz then return nil, nil end
 	-- the mainland is a rounded ellipse; d = studs inland from the nearest shore (south coast or ellipse rim)
-	local ex, ez = (x - MAIN_C.X) / MAIN_R.X, (z - MAIN_C.Y) / MAIN_R.Y
-	local e = math.sqrt(ex * ex + ez * ez)
+	local e, rz = ell(x, z)
 	if e >= 1 then return nil, nil end
-	local d = math.min(cz - z, (1 - e) * MAIN_R.Y)
+	local d = math.min(cz - z, (1 - e) * rz)
 	local h, mat
 	local dp = (p - PLAZA_C).Magnitude
 	if dp <= PLAZA_R and z > -120 then
@@ -93,8 +109,8 @@ local function land(x: number, z: number): (number?, Enum.Material?)
 end
 
 local function seabed(x: number, z: number): number
-	local ex, ez = (x - MAIN_C.X) / MAIN_R.X, (z - MAIN_C.Y) / MAIN_R.Y
-	local off = math.max(z - coastZ(x), (math.sqrt(ex * ex + ez * ez) - 1) * MAIN_R.Y)
+	local e, rz = ell(x, z)
+	local off = math.max(z - coastZ(x), (e - 1) * rz)
 	local near = math.min(off, (Vector2.new(x, z) - SPAWN_C).Magnitude - 60, (Vector2.new(x, z) - ARENA_C).Magnitude - ARENA_R)
 	return lerp(-2, -34, smooth(20, 220, near))
 end
@@ -103,15 +119,16 @@ local cols = (X1 - X0) / 4
 local per = math.ceil(cols / CHUNKS)
 local cx0 = X0 + (CHUNK - 1) * per * 4
 local cx1 = math.min(X1, cx0 + per * 4)
-local region = Region3.new(Vector3.new(cx0, Y0, Z0), Vector3.new(cx1, Y1, Z1)):ExpandToGrid(4)
-local nx, ny, nz = (cx1 - cx0) / 4, (Y1 - Y0) / 4, (Z1 - Z0) / 4
+local Z0c = if cx1 <= -700 then -1400 else Z0 -- the north-west grew; never write north of z -1100 at x >= -700
+local region = Region3.new(Vector3.new(cx0, Y0, Z0c), Vector3.new(cx1, Y1, Z1)):ExpandToGrid(4)
+local nx, ny, nz = (cx1 - cx0) / 4, (Y1 - Y0) / 4, (Z1 - Z0c) / 4
 local mats, occs = table.create(nx), table.create(nx)
 for i = 1, nx do
 	local x = cx0 + (i - 0.5) * 4
 	local mi, oi = table.create(ny), table.create(ny)
 	for j = 1, ny do mi[j] = table.create(nz, M.Air); oi[j] = table.create(nz, 0) end
 	for k = 1, nz do
-		local z = Z0 + (k - 0.5) * 4
+		local z = Z0c + (k - 0.5) * 4
 		local h, top = land(x, z)
 		local sb = seabed(x, z)
 		local solidTop = h or sb

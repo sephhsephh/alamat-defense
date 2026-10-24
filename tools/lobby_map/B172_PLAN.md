@@ -179,8 +179,14 @@ up (houses, pagodas, pavilions too small). move the mountains back and further, 
 cramped map, massive buildings. more cooler vfx everywhere, create/browse different kinds (Blender ok), make all vfx
 noticeable. improve lighting. trees look tip-toeing: bury them deeper. then we proceed with summon cutscene animation."
 ### STATUS
-- [ ] 1 mountains/backdrop pushed out + land band widened (terrain)
-- [ ] 2 Story Gate moved to a framed spot (end of an avenue / at the edge), NPC_Story + Area_Story + GateVFX follow
+- [x] 1 terrain WEST half rewritten (B172_terrain.luau: asymmetric ellipse RX_W 1800, north radius -> 1000 west of
+      x -700, west coast to -1650; east + user's north area untouched); 690 objects re-grounded via _G0 stamps (91 moved,
+      8 inland beach rocks removed). Backdrop: Range_1/10/2 moved west, Range_6 +260x, Range_7 +180/+180, SkyIsland_W
+      -500x, Stacks_5 -300x; Range_3/4 (user's area) + Range_5 (PlayGUI shot) kept.
+- [x] 2 Story Gate -> (-1500, 40.6, -200), x2.2, faces east at the end of the west plain, mountains behind; keeper
+      (-1458,-200), arrival (-1427,-200), GateVFX scaled along. Rune circles (all 6, gates + sanctum) are now GLOWING
+      PARTICLES (flat VelocityPerpendicular, Speed 0.25, Size = width, LightEmission 1, 2 counter-rotating) -- decals went
+      dark in shadow.
 - [ ] 3 scale up Village + Sanctuaries + pavilions/gazebos (re-place where crowded; trees cleared)
 - [ ] 4 trees sunk (~5% height + 1)
 - [ ] 5 VFX kit 2 (Blender/numpy textures) + map-wide noticeable VFX
