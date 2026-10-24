@@ -213,6 +213,11 @@ left/right) for more space, more variety of buildings, and cool paths". North: u
       Bathhouse, ClockTower, CityFountain -> imported MYSELF (computer-use: Home > Import, type the path, Import), harvested
       (canon textures, solids precise). GOTCHA: open_application("Roblox Studio") runs the INSTALLER when an update is
       pending and closed Studio -- never call it while Studio is open; just click into the window.
+- [!] 2026-10-24 ~09:50: running B172_city.luau SECTIONS {clear, roads} CLOSED the Lobby (Studio stayed open, place
+      unloaded) -- the road paint = ReplaceMaterial x6 materials per 4x4 cell over thousands of cells in ONE call. ON
+      RESUME: user reopens the Lobby; VERIFY first (Kit F protos in B172Protos.Kit? Village still there? City folder?
+      roads painted?) -- autosave may have lost the Kit F harvest (re-import AL_KitF.glb + harvest if missing). Then
+      run "clear" alone, and paint roads ONE ROAD PER CALL (add a ROAD filter) with fewer source materials.
 - [ ] C city plan (tools/lobby_map/B172_city.luau, data-driven): boulevard plaza -> market square -> sanctum -> Story
       Gate; side streets + blocks of row houses facing streets; civic square (clock tower, market hall, library);
       temple-hill quarter (pagodas/stupas/observatory) on a north road; aqueduct along the north edge; coastal
