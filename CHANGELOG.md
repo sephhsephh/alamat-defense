@@ -3,7 +3,8 @@
 ## 2026-10-24 [lobby] B172 pt6 -- **Bigger map + Lumina city + map-wide VFX + summon cutscene.**
 - West/NW terrain pushed out, Story Gate to the plain's end, builds scaled up, trees sunk. Planned city: cobbled streets,
   Kit F (row/corner houses, market hall, library, bathhouse, clock tower, arches, fountain), Moon Shrine moved. VFX kit 2.
-- SummonCutscene: camera takeover + hidden GUI before SummonReveal (SummonGUIController crossing). No contract impact.
+- SummonCutscene: camera takeover + hidden GUI before SummonReveal (SummonGUIController crossing). Lighting pass
+  (natural grass, depth haze, env light, no blur). No contract impact.
 ## 2026-10-24 [lobby] B172 pt5 -- **Star Sanctum (summon) + keeper, HUD Summon travels there, new building kit, z-fight rule.**
 - Kit E: 6-part animatable sanctum (dais, gyro rings, heart, crown, halo; SummonPoint/SummonFocus hooks, AmbientPaused) +
   pagoda/bahay/observatory/stupa/aqueduct/lighthouse (18 placed). NPC_Summon (Tala). HUD Summon + Areas Summon/Story = Travel

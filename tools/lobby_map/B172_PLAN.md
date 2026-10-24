@@ -238,5 +238,7 @@ left/right) for more space, more variety of buildings, and cool paths". North: u
 - [x] Play-verified (fake Legendary pull): Scriptable camera, 15 ScreenGuis hidden, heart rises, AmbientPaused, all
       restored after (camera Custom/Humanoid, GUIs back, pivots + beams + flash reset), 8.6 s, no errors. Stills posed in
       Edit (orbit + hero angle) look right.
-- [ ] OPEN: the lighting pass (phase 4 step 6); SummonCharge/SummonBurst SoundIds are empty (user fills); real summon
+- [x] Lighting pass (lobby-map.md "Lighting"; backup ServerStorage.Lighting_B172pre): grass un-neon'd, haze for depth,
+      env diffuse/specular, warmer lower sun, no full-screen blur. Checked: plaza, city, spawn, PlayGUI shot.
+- [ ] OPEN: SummonCharge/SummonBurst SoundIds are empty (user fills); real summon
       through the HUD button not clicked (needs a currency spend) -- the hook path is the same function.

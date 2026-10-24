@@ -105,13 +105,16 @@ Kit F = `tools/maps/lobby/kit_city.py` (z-fight 0). Map pushed back: west radius
 - No travel waystones yet (`LobbyMapService` reports 0 travel prompts); travel = the HUD Areas screen.
 - Water rescue unchanged: swimming 4 s below Y 6 -> `Plaza` arrival ("ISLE OF LIGHT"). Verified B172.
 
-## Lighting (holy golden-hour haze)
-LightingStyle Realistic (by hand). ClockTime 16.2, latitude 22, Brightness 2.4, Ambient 92,84,96, OutdoorAmbient
-168,150,140, EnvDiffuse/Specular 0, ShadowSoftness 0.15. `HolyHaze` Density 0.21, Offset 0.32, Haze 0.55, Glare 0.15,
-Color 222,232,242, Decay 255,236,214. `HolyGrade` C 0.15 / S 0.18 / tint 255,238,212. `HolyBloom` 0.45 / 36 / 2.2.
-SunRays 0.18 / 0.8. `DistanceSoftness` DoF far 0.12, radius 140. `HolySoftness` Blur 2. `HolySky` = the seamless
-elevation-gradient sky (carrier images) + `Terrain.Clouds` (cover 0.55). Terrain: Pavement override `AL_HolyPlaza2`,
-decks `AL_HolyMarble2` (AI-generated MaterialVariants); Sand/Pavement/Rock colours brightened.
+## Lighting (holy golden-hour haze; B172 p6 pass)
+LightingStyle Realistic (by hand). ClockTime 16.45, latitude 22, Brightness 2.8, Ambient 70,64,80, OutdoorAmbient
+136,122,114, EnvDiffuse 0.35 / EnvSpecular 0.6, ShadowSoftness 0.35, ColorShift_Top 48,30,10. `HolyHaze` Density 0.24,
+Offset 0.36, Haze 0.6, Glare 0.3, Color 226,228,238, Decay 255,214,168 (the far mountains fade into warm light).
+`HolyGrade` Contrast 0.2 / Saturation 0.15 / tint 255,242,224. `HolyBloom` 0.6 / 40 / threshold 1.8 (self-lit VFX bloom).
+SunRays 0.22 / 0.7. `DistanceSoftness` DoF far 0.18, radius 220. `HolySoftness` (full-screen blur) DISABLED.
+`SummonFlash` = the summon cutscene's flash (Brightness 0 at rest). Terrain colours: Grass 112,160,72, LeafyGrass
+124,170,80, Ground 132,106,76 (was pure 0,177,0), Cobblestone 214,198,172. Pre-pass backup: ServerStorage.Lighting_B172pre.
+`HolySky` = the seamless elevation-gradient sky (carrier images) + `Terrain.Clouds` (cover 0.55). Terrain: Pavement
+override `AL_HolyPlaza2`, decks `AL_HolyMarble2` (AI-generated MaterialVariants).
 
 ## Rules
 - **`PersistentScene.PlayGUICamera` is the USER'S framing -- never move it**; keep its foreground clear (groves there removed).
