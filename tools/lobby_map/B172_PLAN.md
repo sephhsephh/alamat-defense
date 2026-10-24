@@ -197,3 +197,23 @@ noticeable. improve lighting. trees look tip-toeing: bury them deeper. then we p
 - [ ] 6 lighting pass
 - [ ] 7 Play verify (join time, prompts, travel), docs, CHANGELOG pt6, commit
 - NEXT after phase 4: summon cutscene animation (hooks: SummonSanctum SummonPoint/SummonFocus, AmbientPaused).
+- [x] 5a VFX kit 2: tools/maps/lobby/vfx_kit2.py (12 textures, uploaded via local http + upload_image; ids in
+      B172Protos.VFXTex) + tools/lobby_map/B172_vfx2.luau (map-wide: tree petals/leaves, fireflies, butterflies, gulls,
+      god rays, station beacons, falls mist, shard auras, sanctum/story wisps + mist, holy snow, sea glints; ~7.7k live
+      particles after trimming). 43 trees planted in the west; canopies re-tinted (41 pink, 20 white-gold, greens lighter).
+
+## PHASE 5 (user 2026-10-24, mid phase 4): a REAL CITY layout + paths + more building variety + mountains back
+User: "arrange them properly like a real city / reasonable layout, think like an actual architect, don't just place them
+randomly, then create actual paths via textures or real models, push the mountains further at the back (not just
+left/right) for more space, more variety of buildings, and cool paths". North: user chose "push AROUND my area"
+(back mountains out in the NW/NE; the stretch behind the temple, x -700..160, stays).
+### STATUS
+- [ ] A NW terrain pushed back (north radius up to ~1250 west of x -1000) + Range_2/Range_1 moved NW; re-ground
+- [ ] B Kit F (Blender, zfight 0): row house, corner house, market hall, library, street arch, bathhouse, clock tower, well
+      -> import AL_KitF.glb MYSELF via computer-use (user allowed), harvest + post
+- [ ] C city plan (tools/lobby_map/B172_city.luau, data-driven): boulevard plaza -> market square -> sanctum -> Story
+      Gate; side streets + blocks of row houses facing streets; civic square (clock tower, market hall, library);
+      temple-hill quarter (pagodas/stupas/observatory) on a north road; aqueduct along the north edge; coastal
+      promenade to the lighthouses. Village (random) replaced by the plan.
+- [ ] D paths: terrain ReplaceMaterial (Cobblestone/Pavement) along streets + lamp posts, tree rows, street arches
+- [ ] E lighting pass; F verify (PlayGUI shot unchanged, prompts, travel, join time), docs, CHANGELOG, commit
