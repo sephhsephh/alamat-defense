@@ -172,3 +172,18 @@ variety of buildings." Earlier same day: Story Areas card -> travel to the gate;
       animate, player stands on the dais (precise), join veil 2.7 s, no errors.
 - [x] Docs: lobby-map.md, CHANGELOG pt5, OWNERSHIP note, STATE.
 - [ ] Optional next: summon animation (user), Areas card pictures (user), 2nd lighthouse on a sea stack by hand.
+
+## PHASE 4 (user 2026-10-24): space + scale + VFX + lighting (then the summon cutscene)
+User: "story gate feels so out of place, placed in the middle, find new spot where it fits perfectly. scale all the builds
+up (houses, pagodas, pavilions too small). move the mountains back and further, more space, decently massive not
+cramped map, massive buildings. more cooler vfx everywhere, create/browse different kinds (Blender ok), make all vfx
+noticeable. improve lighting. trees look tip-toeing: bury them deeper. then we proceed with summon cutscene animation."
+### STATUS
+- [ ] 1 mountains/backdrop pushed out + land band widened (terrain)
+- [ ] 2 Story Gate moved to a framed spot (end of an avenue / at the edge), NPC_Story + Area_Story + GateVFX follow
+- [ ] 3 scale up Village + Sanctuaries + pavilions/gazebos (re-place where crowded; trees cleared)
+- [ ] 4 trees sunk (~5% height + 1)
+- [ ] 5 VFX kit 2 (Blender/numpy textures) + map-wide noticeable VFX
+- [ ] 6 lighting pass
+- [ ] 7 Play verify (join time, prompts, travel), docs, CHANGELOG pt6, commit
+- NEXT after phase 4: summon cutscene animation (hooks: SummonSanctum SummonPoint/SummonFocus, AmbientPaused).
