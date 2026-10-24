@@ -187,7 +187,9 @@ noticeable. improve lighting. trees look tip-toeing: bury them deeper. then we p
       (-1458,-200), arrival (-1427,-200), GateVFX scaled along. Rune circles (all 6, gates + sanctum) are now GLOWING
       PARTICLES (flat VelocityPerpendicular, Speed 0.25, Size = width, LightEmission 1, 2 counter-rotating) -- decals went
       dark in shadow.
-- [ ] 3 scale up Village + Sanctuaries + pavilions/gazebos (re-place where crowded; trees cleared)
+- [x] 3 Sanctuaries x1.6 in place (31 bases; 30 shards ride their base, offset scaled); Village re-placed x1.8 (B172_summon
+      buildings: 4 pagoda, 8 bahay, 3 observatory, 4 stupa) + a 3-segment aqueduct at z -345 (x -1400..-1050, level y 45.2)
+      + 2 lighthouses on beaches (-1625,125) (-900,100); pavilions: Rotunda 0.75->1.1 (+6 out), Plaza 1.2->1.8.
 - [ ] 4 trees sunk (~5% height + 1)
 - [ ] 5 VFX kit 2 (Blender/numpy textures) + map-wide noticeable VFX
 - [ ] 6 lighting pass

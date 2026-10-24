@@ -232,19 +232,19 @@ end
 
 -- ===================================================================== buildings
 -- Each type: count, footprint radius, scale, where ("land" = flat open ground, "coast" = land within 45 studs of water).
-local PLAN = {
-	{ "AL_Pagoda", 3, 22, 1.0, "land" },
-	{ "AL_BahayNaBato", 6, 22, 1.0, "land" },
-	{ "AL_Observatory", 2, 24, 1.0, "land" },
-	{ "AL_Stupa", 3, 24, 1.0, "land" },
-	{ "AL_Lighthouse", 2, 16, 1.0, "coast" },
-	{ "AL_Aqueduct", 3, 36, 1.0, "land" },
+local PLAN = { -- B172 p4 (user: "scale all the builds up"): x1.8, footprint radius scaled with it; more of each
+	{ "AL_Pagoda", 4, 22 * 1.8, 1.8, "land" },
+	{ "AL_BahayNaBato", 8, 22 * 1.8, 1.8, "land" },
+	{ "AL_Observatory", 3, 24 * 1.8, 1.8, "land" },
+	{ "AL_Stupa", 4, 24 * 1.8, 1.8, "land" },
+	{ "AL_Lighthouse", 2, 16 * 1.8, 1.8, "coast" },
+	{ "AL_Aqueduct", 4, 36 * 1.8, 1.8, "land" },
 }
 -- never build here: spawn isle, bridge, plaza, temple, the sanctum, arena, citadel, Story Gate, PlayGUI camera foreground
 local KEEP = {
 	{ Vector3.new(-300, 0, 420), 110 }, { Vector3.new(-300, 0, 260), 70 }, { Vector3.new(-300, 0, 0), 200 },
 	{ Vector3.new(-300, 0, -232), 150 }, { SITE, 190 }, { Vector3.new(140, 0, 400), 90 }, { Vector3.new(300, 0, -330), 150 },
-	{ Vector3.new(-640, 0, 20), 90 },
+	{ Vector3.new(-1500, 0, -200), 170 }, { Vector3.new(-1350, 0, -200), 120 }, -- Story Gate (B172 p4) + its approach
 }
 
 local function buildings(): string
@@ -272,7 +272,7 @@ local function buildings(): string
 			if (Vector3.new(p.X, 0, p.Z) - Vector3.new(k[1].X, 0, k[1].Z)).Magnitude < k[2] + r then return false end
 		end
 		for _, b in ipairs(blocks) do
-			if (Vector3.new(p.X, 0, p.Z) - Vector3.new(b[1].X, 0, b[1].Z)).Magnitude < b[2] + r + 12 then return false end
+			if (Vector3.new(p.X, 0, p.Z) - Vector3.new(b[1].X, 0, b[1].Z)).Magnitude < b[2] + r + 6 then return false end
 		end
 		-- the user's PlayGUI framing: nothing new may show on screen within 700 studs (centre, top and 4 edges tested
 		-- through the real viewport with the camera parked on PlayGUICamera)
@@ -290,7 +290,7 @@ local function buildings(): string
 			if m == Enum.Material.Water or y < 30 then return false, 0 end
 			lo = math.min(lo, y); hi = math.max(hi, y)
 		end
-		return hi - lo < 4, lo
+		return hi - lo < 8, lo -- B172 p4: bigger footprints; the base sits at the low point (foundation buried on gentle slopes)
 	end
 	local function nearWater(p: Vector3): boolean
 		for a = 0, 7 do
@@ -319,9 +319,9 @@ local function buildings(): string
 	for _, row in ipairs(PLAN) do
 		local name, count, r, scale, where = row[1], row[2], row[3], row[4], row[5]
 		local n, tries = 0, 0
-		while n < count and tries < 4000 do
+		while n < count and tries < 8000 do
 			tries += 1
-			local p = Vector3.new(rnd:NextNumber(-1150, 750), 0, rnd:NextNumber(-850, 650))
+			local p = Vector3.new(rnd:NextNumber(-1850, 750), 0, rnd:NextNumber(-1000, 650)) -- B172 p4: the wider west
 			local ok, y = flat(p, r)
 			if ok and free(p, r) and (where ~= "coast" or nearWater(p)) then
 				p = Vector3.new(p.X, y - 0.3, p.Z)
