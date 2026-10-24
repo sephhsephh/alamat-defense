@@ -94,3 +94,45 @@
   rotunda's east edge; NPC_Challenge + Stone_Arena arrival onto the deck.
 - Citadel: AL_SpireTower x2.2 + 4 x1.0 + AL_HaloRing x5 on the mesa.
 - Colossal: AL_SunGate x8 far south sea (-300, -40, 2100) facing north; ~14 AL_Column x8-16 broken arc r ~1500.
+
+---------------------------------------------------------------------------------------------------------------
+# PHASE 2 (user, 2026-10-24) -- "more life": variety, massive structures, own VFX, animations, Story NPC, precise collision
+User ask (verbatim gist): more variety of structures + cooler buildings; own VFX (portals, gates, glow, point lights);
+more MASSIVE structures; spread trees across the map and put structures in the groves; fix collision = PRECISE collision;
+animate buildings (floating gem shards, etc.); a "Story" mode NPC with its own structure (massive portal / gate); more life
+overall; create + import all new structures and VFX.
+
+## Plan
+1. Blender Kit D (`tools/maps/lobby/kit_wonders.py`, reuse common.py + textures; split-by-material; <20k tris/object):
+   - AL_StoryGate: MASSIVE portal gate ~90W x 120H: twin pylons, pointed arch, a free ring `AL_StoryGate__Ring`-style
+     separate piece AL_PortalRing (torus R30 with runes) to SPIN, an inner disc plane AL_PortalVeil (gets portal texture).
+   - AL_ShardObelisk (tall obelisk with sockets) + AL_GemShard (separate crystal shard mesh to FLOAT/SPIN, Crystal mat).
+   - AL_HolyPagoda / AL_BellTower (tiered tower with open bell arch), AL_Colonnade (ruined 3-column + lintel, broken var),
+     AL_Watchtower, AL_LanternArch (gate arch over paths with hanging capiz lanterns), AL_StatuePlinth (pedestal + sun),
+     AL_GardenShrine (small grove shrine: roof on 4 posts + altar), AL_SkyBridgeRing (halo arch for groves).
+   - VFX textures (white, tintable, alpha PNG 512-1024) exported in a carrier GLB like the sky: portal_swirl, glow_soft,
+     sparkle_star, light_ray, rune_circle, mist. Carrier planes named by MESH name order -> map in harvest.
+2. USER imports AL_KitD.glb + AL_VfxCarrier.glb (3D Importer; desktop control blocked while Valorant/Vanguard runs).
+3. Studio:
+   - harvest D (extend B172_harvest: Kit D pieces; VFX carrier -> `B172Protos.VFXTex` StringValues of image ids).
+   - **Story NPC**: new `Workspace.NPC_Story` (Root/Body/TalkPrompt like others; rig e.g. Apolaki or Tala_MorningStar
+     if real) at the Story Gate; prompt attribute OpensEvent = "OpenStageSelect" (router fallback). Add NpcPromptRouter
+     ROUTES/DialogueConfig only if owner rules allow (AD-Lobby owns router? check OWNERSHIP); else OpensEvent attribute.
+     Story Gate placement: massive, visible from spawn -- e.g. west headland (-900, ~40, -150) or north meadow behind the
+     colossus; plus an Areas row "Story" Travel target (AreasConfig is Lobby-owned).
+   - Grove sanctuaries: spread trees across the WHOLE map (re-run groves with wider area, ~250-300 trees but LOD-safe) and
+     put Kit D structures inside groves (garden shrines, colonnade ruins, bell tower, pagoda, obelisks, lantern arches).
+   - Own VFX: ParticleEmitters/Beams using the VFX textures: portal swirl (spinning disc + particles), glow halos,
+     sparkles, light rays; PointLights (Shadows OFF, range 16-30) on crystals/lanterns/portal.
+   - Animations: client LocalScript `StarterPlayerScripts.LobbyAmbient` (Lobby-local): CollectionService tags
+     `AL_Float` (bob + slow spin, attrs Amp/Speed), `AL_Spin` (rotate about Y, attr RPM); runs only on client, uses
+     anchored-CFrame tweens via RenderStepped with distance culling (skip > 400 studs).
+   - Precise collision: kit solids CollisionFidelity = PreciseConvexDecomposition (set in Edit, applies async -- read back),
+     decor stays Box/non-colliding; keep invisible colliders for stairs/bridges.
+4. Verify in Play (Story prompt opens stage select, animations run, perf join time), docs (lobby-map.md), changelog, commit.
+
+## PHASE 2 STATUS
+- [ ] Kit D Blender script written + exported (+ VFX carrier)
+- [ ] user import
+- [ ] harvest D, Story NPC + gate, grove sanctuaries + tree spread, VFX, LobbyAmbient script, precise collision
+- [ ] verify + docs + commit
