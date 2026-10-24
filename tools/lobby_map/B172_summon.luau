@@ -50,9 +50,10 @@ local function ghost(p: BasePart)
 end
 
 local function removeTreesNear(pos: Vector3, r: number): number
+	-- a TREE = a Model that directly holds parts (Trunk + Canopy); most sit loose under Groves (B172 p4 finding)
 	local n = 0
-	for _, g in ipairs(Map.Nature.Groves:GetChildren()) do
-		for _, t in ipairs(g:GetChildren()) do
+	for _, t in ipairs(Map.Nature.Groves:GetDescendants()) do
+		if t:IsA("Model") and t.Parent and t:FindFirstChildWhichIsA("BasePart") then
 			local p = t:GetPivot().Position
 			if (Vector3.new(p.X, 0, p.Z) - Vector3.new(pos.X, 0, pos.Z)).Magnitude < r then t:Destroy(); n += 1 end
 		end

@@ -190,7 +190,9 @@ noticeable. improve lighting. trees look tip-toeing: bury them deeper. then we p
 - [x] 3 Sanctuaries x1.6 in place (31 bases; 30 shards ride their base, offset scaled); Village re-placed x1.8 (B172_summon
       buildings: 4 pagoda, 8 bahay, 3 observatory, 4 stupa) + a 3-segment aqueduct at z -345 (x -1400..-1050, level y 45.2)
       + 2 lighthouses on beaches (-1625,125) (-900,100); pavilions: Rotunda 0.75->1.1 (+6 out), Plaza 1.2->1.8.
-- [ ] 4 trees sunk (~5% height + 1)
+- [x] 4 trees sunk as wholes (6% height + 1.5, attr `Sunk` guards re-runs). GOTCHA: trees are Models holding Trunk +
+      Canopy parts, mostly LOOSE under Groves -- iterate models that hold parts, never grove:GetChildren() (that split
+      trees into parts once; repaired). 28 empty shells removed; 132 trees left -> the new west needs more trees (step 5).
 - [ ] 5 VFX kit 2 (Blender/numpy textures) + map-wide noticeable VFX
 - [ ] 6 lighting pass
 - [ ] 7 Play verify (join time, prompts, travel), docs, CHANGELOG pt6, commit
