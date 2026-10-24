@@ -8,7 +8,7 @@ local CHUNK, CHUNKS = 1, 14
 -- B172 p4: only the WEST half changed (x < -300); WX0..WX1 is the window the chunks cover (the east, incl. the
 -- PlayGUICamera framing, is never rewritten). Set WEST_ONLY = false to rebuild everything.
 local WEST_ONLY = true
-local WX0, WX1 = -2400, -300
+local WX0, WX1 = -2400, -300 -- B172 p5 NW pass used -2400..-700
 local T = workspace.Terrain
 local M = Enum.Material
 
@@ -29,7 +29,7 @@ local function smooth(e0, e1, x)
 	return t * t * (3 - 2 * t)
 end
 local function lerp(a, b, t) return a + (b - a) * t end
-local function ryN(x: number): number return lerp(760, 1000, smooth(-700, -1100, x)) end
+local function ryN(x: number): number return lerp(760, 1250, smooth(-700, -1150, x)) end -- B172 p5: NW back to 1250 (x -700 stays 760: user's area)
 -- normalised ellipse distance (1 = the rim) + the radius along z there
 local function ell(x: number, z: number): (number, number)
 	local rx = if x < MAIN_C.X then RX_W else RX_E
@@ -119,7 +119,7 @@ local cols = (X1 - X0) / 4
 local per = math.ceil(cols / CHUNKS)
 local cx0 = X0 + (CHUNK - 1) * per * 4
 local cx1 = math.min(X1, cx0 + per * 4)
-local Z0c = if cx1 <= -700 then -1400 else Z0 -- the north-west grew; never write north of z -1100 at x >= -700
+local Z0c = if cx1 <= -700 then -1600 else Z0 -- the north-west grew; never write north of z -1100 at x >= -700
 local region = Region3.new(Vector3.new(cx0, Y0, Z0c), Vector3.new(cx1, Y1, Z1)):ExpandToGrid(4)
 local nx, ny, nz = (cx1 - cx0) / 4, (Y1 - Y0) / 4, (Z1 - Z0c) / 4
 local mats, occs = table.create(nx), table.create(nx)

@@ -208,9 +208,11 @@ randomly, then create actual paths via textures or real models, push the mountai
 left/right) for more space, more variety of buildings, and cool paths". North: user chose "push AROUND my area"
 (back mountains out in the NW/NE; the stretch behind the temple, x -700..160, stays).
 ### STATUS
-- [ ] A NW terrain pushed back (north radius up to ~1250 west of x -1000) + Range_2/Range_1 moved NW; re-ground
-- [ ] B Kit F (Blender, zfight 0): row house, corner house, market hall, library, street arch, bathhouse, clock tower, well
-      -> import AL_KitF.glb MYSELF via computer-use (user allowed), harvest + post
+- [x] A NW terrain: ryN -> 1250 west of x -1150 (B172_terrain.luau, chunks x -2400..-700, z from -1600); Range_2 -> (-1353,-1225), Range_1 -> (-2105,-1077) (east edges clear of x -700)
+- [x] B Kit F (tools/maps/lobby/kit_city.py, zfight 0, 55k tris): RowHouse, CornerHouse, MarketHall, Library, StreetArch,
+      Bathhouse, ClockTower, CityFountain -> imported MYSELF (computer-use: Home > Import, type the path, Import), harvested
+      (canon textures, solids precise). GOTCHA: open_application("Roblox Studio") runs the INSTALLER when an update is
+      pending and closed Studio -- never call it while Studio is open; just click into the window.
 - [ ] C city plan (tools/lobby_map/B172_city.luau, data-driven): boulevard plaza -> market square -> sanctum -> Story
       Gate; side streets + blocks of row houses facing streets; civic square (clock tower, market hall, library);
       temple-hill quarter (pagodas/stupas/observatory) on a north road; aqueduct along the north edge; coastal
