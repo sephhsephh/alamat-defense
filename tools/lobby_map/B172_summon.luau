@@ -147,8 +147,8 @@ local function sanctum(): string
 	-- ===== VFX
 	local vfx = Instance.new("Folder"); vfx.Name = "VFX"; vfx.Parent = root
 	local GOLD, CYAN, WHITE = Color3.fromRGB(255, 214, 130), Color3.fromRGB(150, 232, 255), Color3.fromRGB(235, 250, 255)
-	runeDisc(vfx, "FloorRune", Vector3.new(C.X, TOP + 0.5, C.Z), 78, GOLD, 1.5) -- decal >= 0.25 over the mandala (z-fight rule)
-	runeDisc(vfx, "AltarRune", Vector3.new(C.X, TOP + 3.6 * s + 0.35, C.Z), 22, CYAN, -4)
+	runeDisc(vfx, "FloorRune", Vector3.new(C.X, TOP + 0.5, C.Z), 78 * s / 1.15, GOLD, 1.5) -- decal >= 0.25 over the mandala (z-fight rule)
+	runeDisc(vfx, "AltarRune", Vector3.new(C.X, TOP + 3.6 * s + 0.35, C.Z), 22 * s / 1.15, CYAN, -4)
 
 	-- altar point: the light pillar + rising sparkles; SummonPoint = where a summoned unit appears
 	local altar = Instance.new("Part"); altar.Name = "Altar"; altar.Size = Vector3.new(2, 2, 2)
@@ -213,6 +213,20 @@ local function sanctum(): string
 		if m:IsA("Model") then m.LevelOfDetail = Enum.ModelLevelOfDetail.Disabled end
 	end
 	local cleared = removeTreesNear(C, 80 * s) + removeTreesNear(haloPos, 62 * s)
+	-- keeper on the top floor facing the east stairs; travel arrival just past those stairs
+	local npc = workspace:FindFirstChild("NPC_Summon")
+	if npc then
+		local kp = Vector3.new(C.X + 32, TOP, C.Z)
+		local face = CFrame.lookAt(kp, kp + FACE)
+		local dy = npc.Unit:GetPivot().Y - npc.Root.Position.Y
+		local by = npc.Body.Position.Y - npc.Root.Position.Y
+		npc.Root.CFrame = face + Vector3.new(0, 0.5, 0)
+		npc.Body.CFrame = face * CFrame.new(0, 0.5 + by, 0)
+		npc.Unit:PivotTo(face * CFrame.new(0, 0.5 + dy, 0))
+	end
+	local ax = C.X + 66 * s + 22
+	local ay = ground(ax, C.Z) + 3.5
+	Map.Travel.Area_Summon:PivotTo(CFrame.lookAt(Vector3.new(ax, ay, C.Z), Vector3.new(ax - 1, ay, C.Z)))
 	return ("sanctum at %.0f,%.2f,%.0f top %.2f; heart focus y %.1f; %d tethers; %d trees cleared"):format(C.X, G, C.Z, TOP, focusY, tips, cleared)
 end
 
