@@ -218,7 +218,12 @@ left/right) for more space, more variety of buildings, and cool paths". North: u
       RESUME: user reopens the Lobby; VERIFY first (Kit F protos in B172Protos.Kit? Village still there? City folder?
       roads painted?) -- autosave may have lost the Kit F harvest (re-import AL_KitF.glb + harvest if missing). Then
       run "clear" alone, and paint roads ONE ROAD PER CALL (add a ROAD filter) with fewer source materials.
-- [ ] C city plan (tools/lobby_map/B172_city.luau, data-driven): boulevard plaza -> market square -> sanctum -> Story
+- [x] Lobby reopened (all prior work survived). City BUILT via B172_city.luau (inline per section): clear (19 village
+      pieces, 28 city-zone shrines/shards), roads painted with ReadVoxels/WriteVoxels per segment (no stall), 14 landmarks
+      + 3 street arches, Moon Shrine (13 pieces + keeper + Stone_Shrine + beacon) -> civic square S side (-650,64),
+      33 houses lining Sun Road / Pilgrim Way / Harbor Street, 99 lamps, 14 avenue blossom trees, 18 Gate Avenue obelisks.
+      NOT YET LOOKED AT (the viewport rendered blank while Studio was in the background).
+- [ ] C (done above) city plan (tools/lobby_map/B172_city.luau, data-driven): boulevard plaza -> market square -> sanctum -> Story
       Gate; side streets + blocks of row houses facing streets; civic square (clock tower, market hall, library);
       temple-hill quarter (pagodas/stupas/observatory) on a north road; aqueduct along the north edge; coastal
       promenade to the lighthouses. Village (random) replaced by the plan.

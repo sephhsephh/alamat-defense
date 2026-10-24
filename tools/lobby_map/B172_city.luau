@@ -158,49 +158,61 @@ local function clear()
 end
 
 -- ===================================================================== roads: paint terrain + clear trees off them
-local SOFT = { M.Grass, M.LeafyGrass, M.Ground, M.Sand, M.Mud, M.Rock }
-local function paintCell(x: number, z: number, mat: Enum.Material)
-	local y = ground(x + 2, z + 2)
-	if y < 2 then return end
-	local reg = Region3.new(Vector3.new(x, y - 12, z), Vector3.new(x + 4, y + 8, z + 4)):ExpandToGrid(4)
-	for _, src in ipairs(SOFT) do workspace.Terrain:ReplaceMaterial(reg, 4, src, mat) end
-end
-local function roads()
-	local cells = {}
-	local function mark(x: number, z: number, mat: Enum.Material)
-		local cx, cz = math.floor(x / 4) * 4, math.floor(z / 4) * 4
-		cells[cx .. "," .. cz] = { cx, cz, mat }
+-- Painting = ONE ReadVoxels + WriteVoxels per street segment (B172 p5: per-cell ReplaceMaterial over thousands of cells
+-- in one call CLOSED the place). Yield between segments.
+local SOFT = { [M.Grass] = true, [M.LeafyGrass] = true, [M.Ground] = true, [M.Sand] = true, [M.Mud] = true, [M.Rock] = true }
+local function paint(lo: Vector2, hi: Vector2, test: (Vector2) -> boolean, mat: Enum.Material): number
+	local T = workspace.Terrain
+	local ymin, ymax = math.huge, -math.huge
+	for x = lo.X, hi.X, 12 do
+		for z = lo.Y, hi.Y, 12 do
+			local y = ground(x, z)
+			if y > 2 then ymin = math.min(ymin, y); ymax = math.max(ymax, y) end
+		end
 	end
-	for _, r in ipairs(ROADS) do
-		for i = 1, #r.pts - 1 do
-			local a, b = r.pts[i], r.pts[i + 1]
-			local lo, hi = V2(math.min(a.X, b.X) - r.w, math.min(a.Y, b.Y) - r.w), V2(math.max(a.X, b.X) + r.w, math.max(a.Y, b.Y) + r.w)
-			for x = lo.X, hi.X, 4 do
-				for z = lo.Y, hi.Y, 4 do
-					if segDist(V2(x + 2, z + 2), a, b) <= r.w / 2 then mark(x, z, r.mat) end
+	if ymin > ymax then return 0 end
+	local region = Region3.new(Vector3.new(lo.X, ymin - 10, lo.Y), Vector3.new(hi.X, ymax + 6, hi.Y)):ExpandToGrid(4)
+	local mats, occ = T:ReadVoxels(region, 4)
+	local size = mats.Size
+	local corner = region.CFrame.Position - region.Size / 2
+	local n = 0
+	for i = 1, size.X do
+		local x = corner.X + (i - 0.5) * 4
+		for k = 1, size.Z do
+			local z = corner.Z + (k - 0.5) * 4
+			if test(V2(x, z)) then
+				for j = 1, size.Y do
+					if SOFT[mats[i][j][k]] then mats[i][j][k] = mat; n += 1 end
 				end
 			end
 		end
 	end
-	for x = RING.c.X - RING.r - RING.w, RING.c.X + RING.r + RING.w, 4 do
-		for z = RING.c.Y - RING.r - RING.w, RING.c.Y + RING.r + RING.w, 4 do
-			if math.abs((V2(x + 2, z + 2) - RING.c).Magnitude - RING.r) <= RING.w / 2 then mark(x, z, RING.mat) end
+	T:WriteVoxels(region, 4, mats, occ)
+	return n
+end
+local function roads()
+	local out = {}
+	for _, r in ipairs(ROADS) do
+		for i = 1, #r.pts - 1 do
+			local a, b = r.pts[i], r.pts[i + 1]
+			local lo = V2(math.min(a.X, b.X) - r.w, math.min(a.Y, b.Y) - r.w)
+			local hi = V2(math.max(a.X, b.X) + r.w, math.max(a.Y, b.Y) + r.w)
+			table.insert(out, r.name .. i .. ":" .. paint(lo, hi, function(p) return segDist(p, a, b) <= r.w / 2 end, r.mat))
+			task.wait()
 		end
 	end
+	local e = V2(RING.r + RING.w, RING.r + RING.w)
+	table.insert(out, "Circus:" .. paint(RING.c - e, RING.c + e, function(p) return math.abs((p - RING.c).Magnitude - RING.r) <= RING.w / 2 end, RING.mat))
+	task.wait()
 	for _, s in ipairs(SQUARES) do
 		local lo = if s.rect then s.rect[1] else s.circle[1] - V2(s.circle[2], s.circle[2])
 		local hi = if s.rect then s.rect[2] else s.circle[1] + V2(s.circle[2], s.circle[2])
-		for x = lo.X, hi.X, 4 do
-			for z = lo.Y, hi.Y, 4 do
-				if inSquare(V2(x + 2, z + 2)) then mark(x, z, s.mat) end
-			end
-		end
+		table.insert(out, s.name .. ":" .. paint(lo, hi, function(p) return inSquare(p) == s end, s.mat))
+		task.wait()
 	end
-	local n = 0
-	for _, c in pairs(cells) do paintCell(c[1], c[2], c[3]); n += 1 end
 	workspace.Terrain:SetMaterialColor(M.Cobblestone, Color3.fromRGB(214, 198, 172))
 	local t = removeTrees(function(p) return roadDist(p) < 4 or inSquare(p) ~= nil end)
-	table.insert(report, ("roads: %d cells painted, %d trees off the streets"):format(n, t))
+	table.insert(report, ("roads: %s; %d trees off the streets"):format(table.concat(out, ", "), t))
 end
 
 -- ===================================================================== landmarks + arches + the Moon Shrine move
