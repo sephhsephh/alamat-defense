@@ -1,5 +1,5 @@
 # Lobby map -- the Holy Coast (Lobby)
-<!-- owner: AD-Lobby | scope: Lobby | last-verified: 2026-10-23 (B172 rebuild) -->
+<!-- owner: AD-Lobby | scope: Lobby | last-verified: 2026-10-24 (B172 phase 2) -->
 
 B172 rebuild of the user's coastline + island reference (Anime-Vanguards-style lobby) as a **holy** Alamat version:
 white marble, painted gold, turquoise scale tile, sun halos, golden-hour haze. Build method = the canon in
@@ -18,6 +18,8 @@ white marble, painted gold, turquoise scale tile, sun halos, golden-hour haze. B
 | Arena of Dawn | deck (140, 42, 400) r 56 | colosseum ring on an arcade + bridge from the rotunda's east side |
 | Sun Citadel | NE mesa (300, ~78, -330) | spire x2.2 + 4 spires + halo + gate; framed by `PersistentScene.PlayGUICamera` |
 | Colossus | (-300, ~62, -640), 433 tall | winged sun goddess (AI mesh) behind the temple |
+| Story Gate | (-660, 40.5, 20), faces east, 218 tall | AL_StoryGate x1.8 + spinning AL_PortalRing/Veil (cyan Neon + portal decals), sparkles, glow, light; `NPC_Story` in front |
+| Sanctuaries | in the groves map-wide | `Structures.Sanctuaries`: shrines, colonnades, bell towers, shard obelisks, watchtowers, lantern arches; floating gem shards |
 | Map end | rim of ellipse C (-300,-300) R (1250,760) | near white cliffs (warm tint) + far peaks (lavender), sea stacks, colossal Sun Gate + column ruins in the far sea |
 
 **Terrain gotcha:** tiers written at Y 40 / 60 SURFACE (render + collide) at **42 / 62**. Everything sits on 42 / 62.
@@ -32,6 +34,7 @@ white marble, painted gold, turquoise scale tile, sun halos, golden-hour haze. B
 | `NPC_TraitReroll` | Lakapati | (-700, ~40, -110) | Moon Shrine: dais, column ring, crystals, azure sigil + aura |
 | `NPC_Shop` / `NPC_Craft` | Magwayen / Handyong | (-70, ~41, 10) / (-70, ~41, -40) | Bay Bazaar: 4 market stalls, parasols, planters |
 | `NPC_Challenge` | Urduja | arena deck | Arena of Dawn |
+| `NPC_Story` | Apolaki | (-626, ~41, 20) | Story Gate; no ROUTES row -- prompt attribute `OpensEvent = OpenStageSelect` (router fallback) |
 - Each `NPC_*` = `Root` + `Body` (now invisible; holds the prompt + `NameTag`) + `Unit` (rig clone x1.25, anchored root,
   no collision). `NpcPromptRouter` routes by the MODEL NAME (unchanged), so keep the names. Rigs idle via
   `SSS.Server.Lobby.NpcIdle` (the rig's `IdleAnim`, else the stock R15 idle).
@@ -40,7 +43,7 @@ white marble, painted gold, turquoise scale tile, sun halos, golden-hour haze. B
 ## Where things live
 - `Workspace.Lobby.Map`: `Core` (SpawnDeck, BridgeDeck colliders), `Travel` (arrivals), `Structures.{Rotunda, Bridge,
   SeaWall, Plaza, Terrace, Temple, Stations, Arena, Citadel, Colossal, Falls}`, `Backdrop.{Mountains, SeaStacks, Holy}`,
-  `Nature.{Groves (~282 Yasu trees), CoastRocks (215)}`, `Dressing` (bushes, planters, fountain water, VFX anchors).
+  `Nature.{Groves (22 groves, 160 Yasu trees), CoastRocks (215)}`, `Dressing` (bushes, planters, fountain water, VFX anchors).
   `Workspace.Lobby` MUST stay (SettingsConfig.Place() detects the Lobby by it).
 - Prototypes: `ServerStorage.DevTools.LobbyMap.B172Protos.{Kit (24 holy kit pieces), Rocks (29), YasuTreePack (Creator
   Store 79689531752352), AIGen (M_Colossus, M_SkyIsland)}`; old `LobbyMap.VFX` presets are reused.
@@ -54,10 +57,17 @@ sea stacks), `B172_groves.luau`, `B172_harvest.luau` (imported GLBs -> `B172Prot
 `blender.exe -b <blend> --python-expr "exec(open(r'<script>').read())"`; outputs in `Downloads\Alamat_Lobby`).
 The 3D Importer names each imported root `Scene`; the sky carrier planes arrive as `Plane`, `Plane.001`, `Plane.002`.
 
+## Animation + VFX (B172 phase 2)
+- `StarterPlayerScripts.LobbyAmbient` (client, Lobby-local): CollectionService tags, RenderStepped, culled past 600 studs.
+  `AL_Float` = bob + slow yaw (attrs `Amp`, `Speed`); `AL_Spin` = turn (attrs `RPM`, `Axis` "Look" | "Y"). Base = the pivot
+  when tagged, so tagged Models need a CENTRED pivot (`PrimaryPart.PivotOffset`, not `WorldPivot`).
+- 41 floating `AL_GemShard`s (sanctuaries, 3 over the fountain, 6 round the temple dome), each with a PointLight (range 18,
+  no shadows). New lights: Shadows off, range <= 60.
+
 ## Travel, Areas, water rescue
 - `Map.Travel` keeps every AreasConfig target name (`Plaza`, `Stone_Temple`, `Stone_RuneCircle`, `Stone_Forge`,
   `Stone_Shrine`, `Stone_Village`, `Stone_Arena`, `Area_SunAltar`, `Area_Waterfall`, `Area_BlueBeacon`, `Area_Jungle`,
-  `Area_Lighthouse`), each an invisible `Arrival` part at its new place; AreasConfig names/descs were renamed to the new
+  `Area_Lighthouse`, `Area_Story` = in front of the Story Gate), each an invisible `Arrival` part at its new place; AreasConfig names/descs were renamed to the new
   places (Isle of Light, Temple of Bathala, Sun Citadel, Blossom Groves, Grand Bridge, ...). The card IMAGES still show the
   old map -- the user retakes them.
 - No travel waystones yet (`LobbyMapService` reports 0 travel prompts); travel = the HUD Areas screen.
@@ -73,11 +83,12 @@ decks `AL_HolyMarble2` (AI-generated MaterialVariants); Sand/Pavement/Rock colou
 
 ## Rules
 - **`PersistentScene.PlayGUICamera` is the USER'S framing -- never move it**; keep its foreground clear (groves there removed).
-- Structures: walk surfaces are invisible colliders or Hull floors; decor CanCollide off + Box fidelity; the backdrop
+- Structures: walk surfaces are invisible colliders or Hull floors; solid kit meshes PreciseConvexDecomposition (465;
+  setting it stalls Studio ~3 min -- batch it, then wait); small decor CanCollide off; the backdrop
   is CanCollide/CanQuery off, CastShadow off.
 - Strip scripts from anything copied in from reference places (backdoors were found there, B172 study).
 - Perf (B172 pass): kit = ONE TextureID per material (keep it so when adding pieces: copy from `B172Protos.Kit`);
   backdrop = 40 Models with `LevelOfDetail = StreamingMesh` (Atomic), far meshes RenderFidelity Performance + no shadows;
-  ~203 trees (far ones shadowless). Studio join veil 6.7 s (was 9.3). SettingsUI's 10 s wait can still expire on a slow
+  160 trees (shadowless). Studio join veil 2.6 s after phase 2 (6.7 s pt3, 9.3 s before). SettingsUI's 10 s wait can still expire on a slow
   join -- PENDING for AD-UI (`docs/proposals/2026-10-23-settingsui-boot-timeout.md`).
 - A new unit still needs its rig in `RS.UnitModels` here; keepers use existing rigs only.

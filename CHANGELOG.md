@@ -1,5 +1,9 @@
 # CHANGELOG (append-only; newest first)
 <!-- Holds the newest 10 entries only. Older: archive/CHANGELOG-archive.md (history -- grep it, never read at bootstrap). Entry budget: 600 chars. -->
+## 2026-10-24 [lobby] B172 pt4 -- **Lobby phase 2: Story Gate + keeper, grove sanctuaries, floating shards, precise collision.**
+- Blender Kit D (10 wonders) + VFX textures. Story Gate (portal ring/veil spin, glow) + `NPC_Story` (Apolaki; OpensEvent
+  OpenStageSelect, verified). 22 groves/160 trees + 63 sanctuaries; 41 lit AL_Float shards; client `LobbyAmbient` animates
+  AL_Float/AL_Spin. 465 kit meshes precise collision. Join veil 2.6 s, 50/50 boot. No contract impact.
 ## 2026-10-23 [lobby] B172 pt3 -- **Lobby perf pass: join veil 9.3 s -> 6.7 s (Studio).**
 - Kit textures 22 -> 11 (one TextureID per material); backdrop = 40 StreamingMesh-LOD Models, far meshes Performance
   fidelity + no shadows; trees 282 -> 203. New PENDING (AD-UI): SettingsUI's 10 s GUI wait expires on slow joins.
@@ -43,9 +47,3 @@
 - Verified: Lobby Play boots clean (no errors); the Summon stage and tabs show the banner art.
 - Not changed: the two DialogueGUI arrows (still toolbox). ⚠ **Kit drift found and NOT caused by this change:** `Kit_ItemIconV2` (Lobby 98544bdf vs manifest/Game 1cd8e184) and `Kit_HotbarSlotV2` (Lobby 6f14cfb6, Game f5a7f240, manifest cd5a2aa0). Neither template holds an image touched here; manifest left as-is, the user is asked about it.
 - Notes: the new `Unlock` art reads the same as `Lock` (the shackle is not visibly open). The Summon `Chances`/`Auto Sell` label icons now overlap their text (the new art fills its box more than the toolbox one did).
-## 2026-10-20 [game] B166 -- **Stage 1 map: Apolaki Sun Terraces (Blender-built stylized map), real stone geometry, VFX + golden-hour lighting, precise collision.**
-- New map `ServerStorage.Maps.Stage1.ApolakiSunTerraces` + config `RS.Configs.Maps.Stage1.ApolakiSunTerraces`; `Stage1_Act1..Act5` + `Stage1_Infinite` switched `MapId` TestMap -> ApolakiSunTerraces (TestMap + its config KEPT, unused). Golden-hour sun meadow, 8 rice terraces of stacked fieldstones, mesas (Hill zones), river valley, waterfall, painted mountains + cubemap sky; path 206 studs / 76 waypoints (TestMap ~155 -- re-check act balance).
-- Built by scripts in `tools/maps/apolaki/` (textures -> terrain -> assets -> masonry -> layout -> sky -> export), imported with the 3D Importer. User round 2: stones/bricks are REAL stacked geometry (terrace walls, gate, shrine drums, rock piles, raised path rims), god-ray Beams, torches/motes/petals/waterfall VFX, tuned Lighting (Atmosphere, grade, bloom, sun rays, DOF).
-- Collision (user: "precise collision"): terrain walls + every solid prop part `PreciseConvexDecomposition`; `AST_MeadowTop` and the mesa tops are now SOLID (the 2-stud zone strips left gaps at the mesas and the back rim -- a dash dropped the player under the map); zone strips + mesa Hill blocks sit 0.05 ABOVE the solid surface so `SurfaceZoneAt` still meets the zone first; mesa Hill zones = a cross of 2 blocks inside the rounded outline (`<Mesa>` + `<Mesa>_B`); bushes get an invisible upright cylinder `Collider` (a hull let the humanoid climb onto them). Proven in Play: no hole in a 1-stud scan, drops on the old holes land, pushes stop at cliffs/edges/bushes, placement survey ~640-670 Ground + 16 Hill.
-- Gotchas recorded in `docs/systems/maps-apolaki.md`: the importer turns scenes 180 deg (Roblox = (-x, z, y)); MeshPart TextureID ignores alpha (SurfaceAppearance AlphaMode Transparency); Baseplate -> map at Y 30; CollisionFidelity applies async.
-- Contract impact: none. Shared canon: none. Lobby: unaffected. Open: act balance on the longer path; first-pass gate/shrine/rock meshes uploaded but unused.

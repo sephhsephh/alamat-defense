@@ -141,3 +141,6 @@ overall; create + import all new structures and VFX.
       StarterPlayerScripts.LobbyAmbient (client; AL_Float/AL_Spin; cull 600); pivots centred via PrimaryPart.PivotOffset;
       465 solid kit meshes -> PreciseConvexDecomposition (Studio stalls ~3 min recomputing)
 - [ ] verify + docs + commit
+- [x] Play-verified 2026-10-24: Story prompt -> OpenStageSelect (PlayGUI), floats/spins animate, spawn OK, join veil 2.6 s,
+      ScreenBootWatchdog 50/50. 2 hillside shrines removed, 1 colonnade lifted (were buried). Docs + CHANGELOG pt4 landed.
+- [ ] Optional next: AreasConfig Story row -> Travel Area_Story; ray/rune VFX (VFXTex) at gates; retake Areas card images.
