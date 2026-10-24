@@ -229,3 +229,14 @@ left/right) for more space, more variety of buildings, and cool paths". North: u
       promenade to the lighthouses. Village (random) replaced by the plan.
 - [ ] D paths: terrain ReplaceMaterial (Cobblestone/Pavement) along streets + lamp posts, tree rows, street arches
 - [ ] E lighting pass; F verify (PlayGUI shot unchanged, prompts, travel, join time), docs, CHANGELOG, commit
+- [x] Arches cleared of trees/lamps; city looked at (aerial + Sun Road) -- reads as a planned city.
+
+## PHASE 6 (user 2026-10-24): SUMMON CUTSCENE
+- [x] StarterPlayerScripts.SummonCutscene (ModuleScript) + 7-line hook in SummonGUIController.doPull (before
+      SummonReveal; SkipSummonAnim skips both). Sanctum ModelStreamingMode Persistent; VFX2 sanctum mist/wisps + the
+      summon beacon moved into SummonSanctum.AmbientFX (B172_vfx2.luau updated); Lighting.SummonFlash (ColorCorrection).
+- [x] Play-verified (fake Legendary pull): Scriptable camera, 15 ScreenGuis hidden, heart rises, AmbientPaused, all
+      restored after (camera Custom/Humanoid, GUIs back, pivots + beams + flash reset), 8.6 s, no errors. Stills posed in
+      Edit (orbit + hero angle) look right.
+- [ ] OPEN: the lighting pass (phase 4 step 6); SummonCharge/SummonBurst SoundIds are empty (user fills); real summon
+      through the HUD button not clicked (needs a currency spend) -- the hook path is the same function.

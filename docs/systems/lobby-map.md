@@ -1,5 +1,5 @@
 # Lobby map -- the Holy Coast (Lobby)
-<!-- owner: AD-Lobby | scope: Lobby | last-verified: 2026-10-24 (B172 phase 3) -->
+<!-- owner: AD-Lobby | scope: Lobby | last-verified: 2026-10-24 (B172 phase 5) -->
 
 B172 rebuild of the user's coastline + island reference (Anime-Vanguards-style lobby) as a **holy** Alamat version:
 white marble, painted gold, turquoise scale tile, sun halos, golden-hour haze. Build method = the canon in
@@ -14,13 +14,13 @@ white marble, painted gold, turquoise scale tile, sun halos, golden-hour haze. B
 | Coast plaza | disc (-300, 42, 0) r 178 | arched sea wall + balustrade, twin waterfalls (+-24 deg), fountain on a mandala, gazebos, lamps |
 | Temple terrace | Y 62 for z <= -120 | terrace wall + 3 stairways (invisible wedge ramps) at x -520 / -300 / -80 |
 | Temple of Bathala | (-300, 62, -232) | old Summon prompt at the door still works (`OpensEvent = OpenSummon`) |
-| Star Sanctum | (-940, 41.7, -120), faces east, x1.4 | THE summon place: `Structures.SummonSanctum` + `NPC_Summon`; ~185 wide, halo ~170 tall |
-| Village | map-wide | `Structures.Village`: 3 pagodas, 6 bahay na bato, 2 observatories, 3 stupas, 3 aqueducts, 1 lighthouse |
+| Star Sanctum | (-940, 41.7, -120), faces east, x1.4 | THE summon place: `Structures.SummonSanctum` (Persistent streaming) + `NPC_Summon` |
+| Lumina (city) | x -1460..-470, z -640..100 | `Map.City.{Landmarks, Rows, Street}` -- see "Lumina" below; `Structures.Village` keeps only the aqueduct + 2 lighthouses |
 | Stations | see the table below | each keeper = a tower rig |
 | Arena of Dawn | deck (140, 42, 400) r 56 | colosseum ring on an arcade + bridge from the rotunda's east side |
 | Sun Citadel | NE mesa (300, ~78, -330) | spire x2.2 + 4 spires + halo + gate; framed by `PersistentScene.PlayGUICamera` |
 | Colossus | (-300, ~62, -640), 433 tall | winged sun goddess (AI mesh) behind the temple |
-| Story Gate | (-660, 40.5, 20), faces east, 218 tall | AL_StoryGate x1.8 + spinning AL_PortalRing/Veil (cyan Neon + portal decals), sparkles, glow, light; `NPC_Story` in front |
+| Story Gate | (-1500, 40.6, -200), faces east, ~266 tall | end of Gate Avenue, mountains behind; AL_StoryGate x2.2 + spinning AL_PortalRing/Veil (cyan Neon + portal decals), sparkles, glow, light; `NPC_Story` in front |
 | Sanctuaries | in the groves map-wide | `Structures.Sanctuaries`: shrines, colonnades, bell towers, shard obelisks, watchtowers, lantern arches; floating gem shards |
 | Map end | rim of ellipse C (-300,-300) R (1250,760) | near white cliffs (warm tint) + far peaks (lavender), sea stacks, colossal Sun Gate + column ruins in the far sea |
 
@@ -33,11 +33,11 @@ white marble, painted gold, turquoise scale tile, sun halos, golden-hour haze. B
 | `NPC_Ascension` | Bathala_Ascended | (-520, 62, -190) | Sky Spire + dais |
 | `NPC_Evolve` | Apolaki_Zenith | (-80, 62, -190) | Sun Rotunda (pavilion x1.6) + gold sigil |
 | `NPC_StatReroll` | Babaylan | (-530, ~43, -20) | Star Forge: dais, halo, columns, gold aura |
-| `NPC_TraitReroll` | Lakapati | (-700, ~40, -110) | Moon Shrine: dais, column ring, crystals, azure sigil + aura |
+| `NPC_TraitReroll` | Lakapati | (-650, ~42, 64) | Moon Shrine on the civic square's S side (moved B172 p5: Sun Road runs through its old spot) |
 | `NPC_Shop` / `NPC_Craft` | Magwayen / Handyong | (-70, ~41, 10) / (-70, ~41, -40) | Bay Bazaar: 4 market stalls, parasols, planters |
 | `NPC_Challenge` | Urduja | arena deck | Arena of Dawn |
 | `NPC_Summon` | Tala | (-908, 54.3, -120) | Star Sanctum top floor; `OpensEvent = OpenSummon` (router fallback) |
-| `NPC_Story` | Apolaki | (-626, ~41, 20) | Story Gate; no ROUTES row -- prompt attribute `OpensEvent = OpenStageSelect` (router fallback) |
+| `NPC_Story` | Apolaki | (-1458, ~41, -200) | Story Gate; no ROUTES row -- prompt attribute `OpensEvent = OpenStageSelect` (router fallback) |
 - Each `NPC_*` = `Root` + `Body` (now invisible; holds the prompt + `NameTag`) + `Unit` (rig clone x1.25, anchored root,
   no collision). `NpcPromptRouter` routes by the MODEL NAME (unchanged), so keep the names. Rigs idle via
   `SSS.Server.Lobby.NpcIdle` (the rig's `IdleAnim`, else the stock R15 idle).
@@ -76,6 +76,25 @@ pillar + rising sparkles; `FloorRune`/`AltarRune` spinning decals; 8 `PylonTip` 
 set false to resume. Builder: `tools/lobby_map/B172_summon.luau` (SECTION post / sanctum / buildings).
 - HUD Summon button (+ hotkey) and the Areas Summon card TRAVEL to `Area_Summon`; the screen opens at the keeper. The
   HUD hook lives in AD-UI's `SummonGUIController` (user-asked crossing, B172 p3; falls back to opening the screen).
+
+## Summon cutscene (B172 p5)
+`StarterPlayerScripts.SummonCutscene` (ModuleScript, client, AD-Lobby): `Play(result)` yields ~7 s (+1.6 s Legendary+),
+tinted by the pull's BEST tier (TierConfig colour). Called by AD-UI's `SummonGUIController.doPull` BEFORE SummonReveal,
+skipped with it by the `SkipSummonAnim` setting (user-asked crossing). Shots: approach -> orbit -> low hero angle ->
+BURST (Lighting `SummonFlash` ColorCorrection, pulse rings, camera kick + shake) -> crane out. Hides every ScreenGui,
+CoreGui and world BillboardGui; disables controls; Scriptable camera; sets `AmbientPaused` on the 5 moving parts and
+restores every pivot + property after. Skip: tap / click / Space / Enter / gamepad A,B after 0.8 s (no button).
+Sanctum FX that the cutscene drives live in `SummonSanctum.{VFX, AmbientFX (Wisps, Halo mist, Beacon)}`.
+
+## Lumina, the holy city (B172 p5, `tools/lobby_map/B172_city.luau`)
+Planned layout west of the plaza: Sun Road boulevard (w36) plaza -> Sanctum Circus (ring road r115 round the sanctum);
+Gate Avenue (w32, obelisks) -> Story Gate; Pilgrim Way (x -760) from the shore up to the Pagoda Terrace + observatory;
+Harbor Street; shore Promenade between the lighthouses; civic square (clock tower, city fountain, market hall, Moon
+Shrine). Streets are TERRAIN (Cobblestone tinted 214,198,172 / Pavement squares) painted with ONE ReadVoxels +
+WriteVoxels per segment -- per-cell ReplaceMaterial over thousands of cells closed the place once. Rows of Kit F row
+houses / corner houses + bahay na bato face the streets; 99 lamps, Sun Road blossom trees, Gate Avenue obelisks.
+Kit F = `tools/maps/lobby/kit_city.py` (z-fight 0). Map pushed back: west radius 1800, NW north radius 1250
+(`B172_terrain.luau`); the user's own area north of x -700..160 is never touched.
 
 ## Travel, Areas, water rescue
 - `Map.Travel` keeps every AreasConfig target name (`Plaza`, `Stone_Temple`, `Stone_RuneCircle`, `Stone_Forge`,

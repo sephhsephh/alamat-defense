@@ -208,6 +208,11 @@ local function beacons()
 				Transparency = NS(0, 1), Rotation = NumberRange.new(0, 360), RotSpeed = NumberRange.new(-90, 90),
 			})
 			a.Size = Vector3.new(14, 1, 14) -- the Rise cylinder's radius
+			if name == "NPC_Summon" then -- B172 p5: the summon beacon streams with the sanctum (the cutscene pulses it)
+				local S = Map.Structures:FindFirstChild("SummonSanctum")
+				local fx = S and S:FindFirstChild("AmbientFX")
+				if fx then local old = fx:FindFirstChild("Beacon"); if old then old:Destroy() end; a.Name = "Beacon"; a.Parent = fx end
+			end
 			local sky = Instance.new("Attachment"); sky.Name = "Sky"; sky.Position = Vector3.new(0, 300, 0); sky.Parent = a
 			local foot = Instance.new("Attachment"); foot.Name = "Foot"; foot.Parent = a
 			local b = Instance.new("Beam")
@@ -271,9 +276,12 @@ end
 
 -- ===================================================================== sanctum: spirit wisps spiralling up the dais
 local function sanctum()
-	local f = folder("Sanctum")
+	-- B172 p5: lives INSIDE the sanctum (AmbientFX) so it streams with it (Persistent) for the summon cutscene
 	local S = Map.Structures:FindFirstChild("SummonSanctum")
 	if not S then return end
+	local f = S:FindFirstChild("AmbientFX") or Instance.new("Folder")
+	f.Name = "AmbientFX"; f.Parent = S
+	for _, n in ipairs({ "Wisps", "Halo" }) do local o = f:FindFirstChild(n); if o then o:Destroy() end end
 	local cf, sz = (S:FindFirstChild("Dais") :: Model):GetBoundingBox()
 	local a = anchor(f, "Wisps", CFrame.new(cf.X, cf.Y - sz.Y / 2 + 14, cf.Z), Vector3.new(110, 1, 110))
 	emitter(a, "Wisps", {

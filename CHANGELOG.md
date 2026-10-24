@@ -1,5 +1,9 @@
 # CHANGELOG (append-only; newest first)
 <!-- Holds the newest 10 entries only. Older: archive/CHANGELOG-archive.md (history -- grep it, never read at bootstrap). Entry budget: 600 chars. -->
+## 2026-10-24 [lobby] B172 pt6 -- **Bigger map + Lumina city + map-wide VFX + summon cutscene.**
+- West/NW terrain pushed out, Story Gate to the plain's end, builds scaled up, trees sunk. Planned city: cobbled streets,
+  Kit F (row/corner houses, market hall, library, bathhouse, clock tower, arches, fountain), Moon Shrine moved. VFX kit 2.
+- SummonCutscene: camera takeover + hidden GUI before SummonReveal (SummonGUIController crossing). No contract impact.
 ## 2026-10-24 [lobby] B172 pt5 -- **Star Sanctum (summon) + keeper, HUD Summon travels there, new building kit, z-fight rule.**
 - Kit E: 6-part animatable sanctum (dais, gyro rings, heart, crown, halo; SummonPoint/SummonFocus hooks, AmbientPaused) +
   pagoda/bahay/observatory/stupa/aqueduct/lighthouse (18 placed). NPC_Summon (Tala). HUD Summon + Areas Summon/Story = Travel
@@ -36,10 +40,3 @@
 - Proven: showcase rig poses 120/121 frames (Bakunawa bones and Aswang AnimationConstraint rig); layout identical to the viewport version once the 58px top-bar inset is added; close restores Custom camera + Humanoid subject + HUD. Game verified with its window in front (Studio draws 3D only in the front window).
 - Zoom: wheel over the stage / pinch / R2-L2, 0.4-1.8x (`Hall.zoomBy`). `ViewportIdle` budget skips a viewport with ImageTransparency 1.
 - Place-local only, no shared canon, no contract change. Docs: `docs/systems/units-screen.md` B168/B169.
-## 2026-10-21 [game+lobby+shared] B168 -- **Range ring = real range, smooth viewports on low graphics, Bakunawa framed whole, orbit camera on the Units stage, Summon icon overlap.**
-- RANGE (user: units hit enemies outside the ring): the client drew the ring from `TowerStatResolver.Resolve` WITHOUT stat rolls / ascension / the match `RangeMult` / live range buffs; the server targets with all of them. `TowerController:PublishRange` writes `EffectiveRange` (the range targeting uses, on change); `TowerSelectionUI` draws it; `PlacementController.Start` takes `statRolls, ascension` (HotbarController passes `entry.StatRolls/Ascension`) and applies `RS.TowerRangeMult` (set by `SetStatScales`). Proven live: Bantong ring 12.061 -> 12.476 = server 12.476, Handyong 21.780 -> 22.176 = server 22.176. Targeting itself was already XZ <= Range (unchanged).
-- LOW GRAPHICS (user's saved quality is Level 1): measured -- rigs still POSE every frame; Roblox redraws fewer changing ViewportFrames on low graphics. `ViewportIdle` (both Places): at saved quality 1-3 only the 2 largest visible portraits animate, everything else holds its pose. Proven: 2 animate, others 0 updates.
-- BAKUNAWA: rig attribute `ViewportFit = true` (Lobby `UnitModels` + Game `TowerModels`, Bakunawa + _Eclipse) -> `UnitCard.fitWhole` frames the bounding sphere from the same angle (cards, hover cards, hotbar; the hotbar restores its baked camera for other units via `HotbarBakedCam`) and the Units stage fits the sphere. `UIKitUnitCard` e8a4316f -> 4812e5b8, `UIKitHotbar` 4c3073d3 -> 0fc6619b, both Places. Proven: hotbar slot max |x| 0.81 |y| 0.74.
-- ORBIT (Units stage, both Places' `UnitsHeroController`): right-drag (cursor locked like the Roblox camera), one-finger swipe, right stick; yaw free, pitch -25..55 deg, resets per unit; stage ViewportFrame `Active = true` so the world camera does not turn too. Proven by a right-drag (camera moved, drag up = look up).
-- Summon `Chances` / `Auto Sell`: label icon is a left square (`SizeConstraint RelativeYY`) and the text pads past it.
-- No contract change. Game boots clean (0 errors).
