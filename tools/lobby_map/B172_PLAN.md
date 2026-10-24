@@ -136,5 +136,8 @@ overall; create + import all new structures and VFX.
 - [x] user import; Kit D harvested (shared textures, solids PreciseConvexDecomposition); VFX ids in B172Protos.VFXTex
 - [x] Story Gate x1.8 (218 tall) at (-660,~42,20) facing east, PortalRing/Veil tagged AL_Spin (attr RPM, Axis=Look), decal swirl,
       sparkles, glow, PointLight; NPC_Story (Apolaki rig, TalkPrompt OpensEvent=OpenStageSelect), Travel.Area_Story
-- [ ] harvest D, Story NPC + gate, grove sanctuaries + tree spread, VFX, LobbyAmbient script, precise collision
+- [x] Groves rebuilt map-wide: 22 groves / 160 trees + Structures.Sanctuaries (65 models: shrines, colonnades, bell towers,
+      shard obelisks, watchtowers, lantern arches w/ lights); 41 AL_Float shards (+fountain, +temple dome ring) with PointLights;
+      StarterPlayerScripts.LobbyAmbient (client; AL_Float/AL_Spin; cull 600); pivots centred via PrimaryPart.PivotOffset;
+      465 solid kit meshes -> PreciseConvexDecomposition (Studio stalls ~3 min recomputing)
 - [ ] verify + docs + commit
