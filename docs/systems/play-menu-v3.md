@@ -37,6 +37,9 @@ Every white layer has a `UIGradient` named `Tint`: card/ribbon fills, gems (`Bor
 - **`StarterPlayerScripts.OrnateSliceScaler`**: tag `OrnateSlice` + attribute `BaseSliceScale` (1080p value) →
   SliceScale = base × screenHeight/1080. Art detail only; never Position/Size/parent. New ornate frames reuse it.
 
+## Story page (B174)
+The island list is replaced by the stage carousel: `story-carousel.md` (`StoryMap.Carousel` + `PlayController.StoryCarousel`).
+
 ## Hazards
 - `PlayController` sits at Luau's **200-local limit** ("Out of local registers" killed boot once): add new state
   to the `V3` table or inside `do` blocks, never as new top-level locals.

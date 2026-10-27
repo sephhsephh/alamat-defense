@@ -1,5 +1,8 @@
 # CHANGELOG ARCHIVE (newest first) -- B161 and older, verbatim
 <!-- History only: NEVER read at bootstrap; grep it. Moved out of ../CHANGELOG.md by B170. Newer entries live there. -->
+## 2026-10-21 [repo] B170 pt2 -- **Bootstrap tightened again: CLAUDE.md ~9.5k, STATE/CONTEXTs ~4.1-4.3k.**
+- Wording only; every rule kept (keyword parity checked vs the pre-B170 CLAUDE.md). Ownership merged into sync;
+  UI rules grouped; contract protocol one line. Bootstrap ~31.5k -> ~24.2k chars. Docs only, no contract impact.
 ## 2026-10-21 [repo] B170 -- **Slim bootstrap: history archived, char budgets.**
 - STATE/CONTEXT rewritten as current state; old versions + changelog B160 and older moved verbatim to `archive/`.
 - CLAUDE.md: char budgets (12k/6k/6k/600), history rule, read newest 3 entries. Bootstrap ~118k -> ~31k chars.

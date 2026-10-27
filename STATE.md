@@ -1,5 +1,5 @@
 # STATE — Alamat Defense
-<!-- owner: all | last-verified: 2026-10-27 (B173) | BUDGET 6k chars, CURRENT state only (history: CHANGELOG +
+<!-- owner: all | last-verified: 2026-10-28 (B174) | BUDGET 6k chars, CURRENT state only (history: CHANGELOG +
      archive/). A resolved PENDING is DELETED, never struck through. -->
 
 ## Snapshot
@@ -28,7 +28,8 @@
   panel dead for the session (hit in 2/3 Lobby Plays after the rebuild). `docs/proposals/2026-10-23-settingsui-boot-timeout.md`.
 - **PENDING (AD-Game + AD-Integration, BOTH, B173): Stage 2 content.** Map `BakunawaCove` is in the Game; no Stage 2
   acts/waves/enemies use it. Needs StageConfigs (`MapId = "BakunawaCove"`), waves for a 556-stud path, the Skeleton
-  Pirate enemy (model in `BakunawaCove_Characters.blend`, unrigged), Bakunawa boss, + the Lobby `StageRegistry` mirror.
+  Pirate enemy (model in `BakunawaCove_Characters.blend`, unrigged), Bakunawa boss, + the Lobby `StageRegistry` mirror;
+  then move its `PlayConfig.UpcomingMaps` row (carousel card, B174) into `PlayConfig.Maps` with the acts.
 - **TOOLING, EVERY SESSION (B64):** `require` from `execute_luau` is dead — paste `tools/hash_shared.luau` inline
   (`docs/systems/studio-testing.md`).
 

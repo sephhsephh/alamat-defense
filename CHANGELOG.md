@@ -1,5 +1,10 @@
 # CHANGELOG (append-only; newest first)
 <!-- Holds the newest 10 entries only. Older: archive/CHANGELOG-archive.md (history -- grep it, never read at bootstrap). Entry budget: 600 chars. -->
+## 2026-10-28 [lobby] B174 -- **Story stage carousel ("UI Scroller") replaces the island list.**
+- `StoryMap.Carousel` (tools/story_carousel_build.luau) + `PlayController.StoryCarousel`: ornate cards (Figma AI art, white-tint
+  layers), Idle/Hover/Selected fake glow + flame, slots, parallax, arrows, track studs, ENTER plate; PC/console/mobile input.
+- `PlayConfig` Maps `CardArt`/`CardTheme` + display-only `UpcomingMaps` (Bakunawa Cove, ??? teaser). No contract impact.
+  `story-carousel.md`. Figma board node 23:1420.
 ## 2026-10-27 [game+lobby] B173 pt2 -- **9 real tower rigs replace placeholders (user's "modeled npcs").**
 - Duwende, Santelmo, Mayari, Mayari_LunarEclipse, Sidapa, Sidapa_LastMeasure, Magwayen, Magwayen_Soulferry,
   AmanSinaya: `RS.TowerModels` (Game) + `RS.UnitModels` (Lobby), GameScale kept, Placeholder flags gone, Humanoid
@@ -37,6 +42,3 @@
   card, events from EventQuestConfig (ONE template), per-spot poses; `OrnateSliceScaler`; GetPlayState +PlayerXP (additive).
 - New user rule: tintable art is WHITE + UIGradient `Tint` (`docs/design/white-tint-art.md`). Verified live. No contract impact.
 - Doc: `play-menu-v3.md`. Art/scripts in `Claude outputs/play-ui-v3/` (untracked).
-## 2026-10-21 [repo] B170 pt2 -- **Bootstrap tightened again: CLAUDE.md ~9.5k, STATE/CONTEXTs ~4.1-4.3k.**
-- Wording only; every rule kept (keyword parity checked vs the pre-B170 CLAUDE.md). Ownership merged into sync;
-  UI rules grouped; contract protocol one line. Bootstrap ~31.5k -> ~24.2k chars. Docs only, no contract impact.

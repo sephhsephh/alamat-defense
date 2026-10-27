@@ -61,3 +61,7 @@ Mode_Raid 139186007557004
 Mode_Expedition 85433318692378
 Mode_Leaderboards 97395435461081
 Mode_Story 83610033311574
+# B174 Story stage carousel (layers + split scripts: Claude outputs/story-carousel/roblox/asset_ids.txt)
+Card_StageArt_ApolakisSunTerraces 134492129988475
+Card_StageArt_BakunawaCove 140706450964434
+Card_StageArt_Teaser 139922478341496

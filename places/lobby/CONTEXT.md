@@ -1,5 +1,5 @@
 # CONTEXT — Lobby place ("Alamat Defense - Lobby")
-<!-- owner: lobby | last-verified: 2026-10-23 (B172) | BUDGET 6k chars: what the Place IS NOW; history lives in
+<!-- owner: lobby | last-verified: 2026-10-28 (B174) | BUDGET 6k chars: what the Place IS NOW; history lives in
      CHANGELOG + archive/lobby-CONTEXT-history.md -->
 
 The social/meta Place: collection, banners, upgrades, stage select, parties, matchmaking, teleport into the Game.
@@ -26,7 +26,7 @@ The social/meta Place: collection, banners, upgrades, stage select, parties, mat
 - Client glue: `RS.ClientEvents`, `StarterPlayerScripts.HudEntry`, `Client.UI.{ScreenFX, MenuMovementLock, ViewportIdle}`.
 
 ## Screens → docs (authored in StarterGui)
-HUD `alamat-ui.md` · Play `play-menu.md` + `play-menu-v3.md` (ornate skin, B171) · Units `units-screen.md` · Summon `summon-screen.md` · Index
+HUD `alamat-ui.md` · Play `play-menu.md` + `play-menu-v3.md` (ornate skin, B171) + `story-carousel.md` (Story page, B174) · Units `units-screen.md` · Summon `summon-screen.md` · Index
 `collection-index.md` · Items `inventory.md` · Ascension · Evolve `evolution.md` · Feed `exp-food.md` · Crafting ·
 Trait/Stat reroll · Shop · Quests · Achievements · Events · Daily `daily-rewards.md` · Codes `redeem-codes.md` ·
 Inbox · Battlepass · Leaderboards · Buffs · Areas · Settings · Loading `loading-screen.md` · Rewards

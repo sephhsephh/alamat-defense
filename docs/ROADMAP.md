@@ -163,6 +163,7 @@ everything untradeable at launch).
 - ✅ v1: shared-module deploy + boot (drift-free; profile from PlayerData_Dev)
 - ✅ v1: blockout hub (`Workspace.Lobby`) · ✅ collection screen (read-only, end-to-end)
 - ✅ v1: stage select + difficulty slider
+- ✅ B174: Story stage carousel (ornate cards, Idle/Hover/Selected glow, PC/console/mobile) — `story-carousel.md`
 - ✅ v1: Play → teleport (contract v1, reserved-server-per-party; `GamePlaceId` set 2026-07-18)
 - ✅ v1: MatchReturn handling (welcome-back banner + next-act pre-select in stage select)
 - ✅ v1: auto-loadout in launch payload (owned towers, cap 6; interim until loadout picker UI)

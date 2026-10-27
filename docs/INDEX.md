@@ -146,6 +146,7 @@
   `Sound` under `SoundService`, never a code change** (name a Sound after an act id for stage music);
   `UIKit.Confirm`'s 2s grey→green gate; and the `optionalSibling` rule — a bare `WaitForChild` on a
   sibling module blocks FOREVER and froze the whole UI mid-deploy. Split from `ui-kit.md` at B32.
+- `story-carousel.md` — **B174, LOBBY**: the Story stage carousel (ornate cards, Idle/Hover/Selected fake glow, slots, themes, `UpcomingMaps`, PC/console/mobile input, adding a stage card).
 - `play-menu-v3.md` — **B171, LOBBY**: the ornate Play menu skin (mode cards, special events template, party hex slots, player card), tint layers, `OrnateSliceScaler`, PlayController's 200-local hazard.
 - `play-menu.md` — **AD-UI canon for `PlayGUI` + `LoadingScreen`** (P2/B15): the Play-button entry
   and GUI hide/restore, the veil's `Show`/`Hide` module API, the menu camera + cursor parallax and
