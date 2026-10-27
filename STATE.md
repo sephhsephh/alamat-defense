@@ -1,5 +1,5 @@
 # STATE — Alamat Defense
-<!-- owner: all | last-verified: 2026-10-28 (B174) | BUDGET 6k chars, CURRENT state only (history: CHANGELOG +
+<!-- owner: all | last-verified: 2026-10-28 (B175) | BUDGET 6k chars, CURRENT state only (history: CHANGELOG +
      archive/). A resolved PENDING is DELETED, never struck through. -->
 
 ## Snapshot
@@ -7,7 +7,7 @@
 - **Game** = match Place (entry `MatchEntryService`; configs, combat, stat resolver) — `places/game/CONTEXT.md`.
 - **Lobby** = meta Place; ONE read path `GetUnitViews` (ADR-0004), ONE grant/spend path `GrantService` —
   `places/lobby/CONTEXT.md`.
-- Content: Stage 1 (3 acts, map ApolakiSunTerraces); Stage 2 MAP BakunawaCove built (no acts yet); ~49 tower configs over 9 tiers incl. evolved forms
+- Content: Stage 1 (3 acts, map ApolakiSunTerraces); Stage 2 Bakunawa Cove (5 acts + Infinite, B175, `stage2-bakunawa.md`); ~49 tower configs over 9 tiers incl. evolved forms
   (`docs/design/unit-roster.md`); the full meta loop (gacha, ascension, rerolls, evolution, crafting, shop, quests,
   battlepass, events, inbox, leaderboards, admin). Status board: `docs/ROADMAP.md`.
 - Contracts: save schema **v11** (`save-schema.md`), teleport **v4** (`teleport.md`;
@@ -26,10 +26,13 @@
   (`8535ac61`) — confirm, then delete.
 - **PENDING (AD-UI, BOTH, B172): SettingsUI gives up after 10 s** (`WaitForChild("Settings", 10)`) on a slow join -> settings
   panel dead for the session (hit in 2/3 Lobby Plays after the rebuild). `docs/proposals/2026-10-23-settingsui-boot-timeout.md`.
-- **PENDING (AD-Game + AD-Integration, BOTH, B173): Stage 2 content.** Map `BakunawaCove` is in the Game; no Stage 2
-  acts/waves/enemies use it. Needs StageConfigs (`MapId = "BakunawaCove"`), waves for a 556-stud path, the Skeleton
-  Pirate enemy (model in `BakunawaCove_Characters.blend`, unrigged), Bakunawa boss, + the Lobby `StageRegistry` mirror;
-  then move its `PlayConfig.UpcomingMaps` row (carousel card, B174) into `PlayConfig.Maps` with the acts.
+- **PENDING (USER then AD-Game, GAME, B175): Stage 2 real enemy rigs.** Skeleton Pirate / Pirate Brute / Cursed Gull
+  run on STAND-IN rigs. Import `Downloads\BakunawaCove_Map\glb\BC_EnemyRigs.glb` into the GAME Place (root
+  `BC_EnemyRigs`), then run `tools/enemy_rigs/build_stage2_rigs.luau` (`stage2-bakunawa.md`).
+- **PENDING (AD-Game, GAME, B175): Stage 2 balance pass** -- no Stage 2 act has been played to the end (556-stud path,
+  ~2x speeds, first flyers). Play each act (smoke `DevStageId`) and tune WAVE_HP / counts / missions.
+- **PENDING (AD-Lobby, LOBBY, B175): `MatchmakingService.enqueue` checks no act/map unlocks** (PartyService does) --
+  any act, Stage 1 included, can be queued directly. Share PartyService's unlock check.
 - **TOOLING, EVERY SESSION (B64):** `require` from `execute_luau` is dead — paste `tools/hash_shared.luau` inline
   (`docs/systems/studio-testing.md`).
 

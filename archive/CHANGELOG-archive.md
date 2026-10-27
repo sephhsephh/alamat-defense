@@ -1,5 +1,10 @@
 # CHANGELOG ARCHIVE (newest first) -- B161 and older, verbatim
 <!-- History only: NEVER read at bootstrap; grep it. Moved out of ../CHANGELOG.md by B170. Newer entries live there. -->
+## 2026-10-21 [lobby] B171 -- **Play menu v3: ornate AI-painted borders, mode cards, special events, party hex slots, player card.**
+- Built by `tools/playui_v3_build.luau` (backup `_UIBackup_B171`); PlayController: Cards lookup, plate = card click, player
+  card, events from EventQuestConfig (ONE template), per-spot poses; `OrnateSliceScaler`; GetPlayState +PlayerXP (additive).
+- New user rule: tintable art is WHITE + UIGradient `Tint` (`docs/design/white-tint-art.md`). Verified live. No contract impact.
+- Doc: `play-menu-v3.md`. Art/scripts in `Claude outputs/play-ui-v3/` (untracked).
 ## 2026-10-21 [repo] B170 pt2 -- **Bootstrap tightened again: CLAUDE.md ~9.5k, STATE/CONTEXTs ~4.1-4.3k.**
 - Wording only; every rule kept (keyword parity checked vs the pre-B170 CLAUDE.md). Ownership merged into sync;
   UI rules grouped; contract protocol one line. Bootstrap ~31.5k -> ~24.2k chars. Docs only, no contract impact.

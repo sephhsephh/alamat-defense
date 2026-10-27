@@ -1,5 +1,5 @@
 # CONTEXT — Game place ("Alamat Defense - Game")
-<!-- owner: game | last-verified: 2026-10-21 (B170) | BUDGET 6k chars: what the Place IS NOW; history lives in
+<!-- owner: game | last-verified: 2026-10-28 (B175) | BUDGET 6k chars: what the Place IS NOW; history lives in
      CHANGELOG + archive/game-CONTEXT-history.md -->
 
 The match Place: load a map, run waves, towers fight, rewards commit to the profile, teleport back.
@@ -31,7 +31,7 @@ script that knows clients exist. `match-architecture.md`, `match-modules.md`.
 Towers `tower-authoring.md` · VFX `tower-vfx.md` · hotbar `hotbar.md` · HUD `match-hud.md` · selection
 `unit-selection.md` · manager `unit-manager.md` · stage info `stage-info.md` · audio `match-audio.md` · rewards
 `rewards.md` · balance `balance.md` · challenges `challenges.md` · maps `maps-apolaki.md` (Stage 1), `maps-bakunawa.md`
-(Stage 2, no acts yet; smoke knob `DevMapId`) · movement `movement.md`.
+(Stage 2 map; smoke knob `DevMapId`) · Stage 2 acts/roster `stage2-bakunawa.md` · movement `movement.md`.
 
 ## Hazards (detail in the linked doc)
 - `execute_luau` can't `require` or press 1-6 and has its own service copies (`studio-testing.md`).

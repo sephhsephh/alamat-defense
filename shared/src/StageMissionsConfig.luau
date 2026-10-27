@@ -25,6 +25,12 @@ local DEFAULT_STAR_REWARDS = {
 	{ Stars = 2, ItemId = "TraitRerollToken", Qty = 1 },
 	{ Stars = 3, ItemId = "TraitRerollToken", Qty = 1 },
 }
+-- B175: Stage 2 pays a little more per star (a Banner Ticket, then the sea's Blue Mutya)
+local STAGE2_STAR_REWARDS = {
+	{ Stars = 1, ItemId = "TraitRerollToken", Qty = 1 },
+	{ Stars = 2, ItemId = "BannerTicket", Qty = 1 },
+	{ Stars = 3, ItemId = "MutyaBlue", Qty = 1 },
+}
 
 StageMissionsConfig.Acts = {
 	Stage1_Act1 = {
@@ -46,6 +52,27 @@ StageMissionsConfig.Acts = {
 	Stage1_Act5 = {
 		Missions = { { Type = "Clear" }, { Type = "NoLivesLost" }, { Type = "MaxUnits", Count = 3 } },
 		StarRewards = DEFAULT_STAR_REWARDS,
+	},
+	-- B175: Stage 2, Bakunawa Cove. Time limits are ~1.35x Stage 1's: the cove path is 556 studs (Stage 1: 206).
+	Stage2_Act1 = {
+		Missions = { { Type = "Clear" }, { Type = "NoLivesLost" }, { Type = "TimeUnder", Seconds = 840 } },
+		StarRewards = STAGE2_STAR_REWARDS,
+	},
+	Stage2_Act2 = {
+		Missions = { { Type = "Clear" }, { Type = "NoLivesLost" }, { Type = "MaxUnits", Count = 5 } },
+		StarRewards = STAGE2_STAR_REWARDS,
+	},
+	Stage2_Act3 = {
+		Missions = { { Type = "Clear" }, { Type = "TimeUnder", Seconds = 960 }, { Type = "MaxUnits", Count = 4 } },
+		StarRewards = STAGE2_STAR_REWARDS,
+	},
+	Stage2_Act4 = {
+		Missions = { { Type = "Clear" }, { Type = "NoLivesLost" }, { Type = "TimeUnder", Seconds = 1020 } },
+		StarRewards = STAGE2_STAR_REWARDS,
+	},
+	Stage2_Act5 = {
+		Missions = { { Type = "Clear" }, { Type = "NoLivesLost" }, { Type = "MaxUnits", Count = 4 } },
+		StarRewards = STAGE2_STAR_REWARDS,
 	},
 }
 

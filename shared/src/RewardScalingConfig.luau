@@ -47,6 +47,11 @@ RewardScalingConfig.Curves = {
 		GoldMin = { 100, 300 },
 		GoldMax = { 300, 500 },
 	},
+	-- B175: Stage 2 (Bakunawa Cove) -- x1.75 the Standard bands (enemies are x4.5 HP, matches ~1.35x longer).
+	Stage2 = {
+		GoldMin = { 175, 525 },
+		GoldMax = { 525, 875 },
+	},
 }
 
 RewardScalingConfig.DefaultCurve = "Standard"

@@ -1,5 +1,9 @@
 # CHANGELOG (append-only; newest first)
 <!-- Holds the newest 10 entries only. Older: archive/CHANGELOG-archive.md (history -- grep it, never read at bootstrap). Entry budget: 600 chars. -->
+## 2026-10-28 [game+lobby] B175 -- **Stage 2 Bakunawa Cove: 5 acts + Infinite, roster, bosses, Lobby mirror.**
+- Game: Stage2 StageConfigs/waves, Skeleton Pirate/Pirate Brute/Bilge Rat/Cursed Gull (first flyers), bosses Magwayen ->
+  Bakunawa (headliner, pity 30). Real rigs await a GLB import (stand-ins now). Lobby: mirror, PlayConfig map, PartyService map gate.
+- Shared: StageMissionsConfig 21b05f5a, RewardScalingConfig d39c3d6d (`Stage2` curve), both Places. `stage2-bakunawa.md`.
 ## 2026-10-28 [lobby] B174 -- **Story stage carousel ("UI Scroller") replaces the island list.**
 - `StoryMap.Carousel` (tools/story_carousel_build.luau) + `PlayController.StoryCarousel`: ornate cards (Figma AI art, white-tint
   layers), Idle/Hover/Selected fake glow + flame, slots, parallax, arrows, track studs, ENTER plate; PC/console/mobile input.
@@ -37,8 +41,3 @@
 - Read-only study of town / rpg map / Roman Battleground (user's style references). New `docs/design/stylized-environment.md`
   (lighting "town haze" recipe, rock kit, trees, multi-mesh buildings, terrain+mesh rules, Lobby checklist) + `reference-maps.md`.
 - SECURITY: rpg map + town carry a `<null?>` backdoor Script in window1.003 -- strip scripts before copying. No contract impact.
-## 2026-10-21 [lobby] B171 -- **Play menu v3: ornate AI-painted borders, mode cards, special events, party hex slots, player card.**
-- Built by `tools/playui_v3_build.luau` (backup `_UIBackup_B171`); PlayController: Cards lookup, plate = card click, player
-  card, events from EventQuestConfig (ONE template), per-spot poses; `OrnateSliceScaler`; GetPlayState +PlayerXP (additive).
-- New user rule: tintable art is WHITE + UIGradient `Tint` (`docs/design/white-tint-art.md`). Verified live. No contract impact.
-- Doc: `play-menu-v3.md`. Art/scripts in `Claude outputs/play-ui-v3/` (untracked).

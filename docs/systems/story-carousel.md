@@ -16,7 +16,8 @@ It replaced the vertical island list (backup: `ServerStorage._UIBackup_B174.Stor
   `PlayController` STORY MAP block only builds the entry list (`V3.carousel`, no new top-level locals — the 200-local
   hazard, `play-menu-v3.md`).
 - **Data**: `RS.Configs.PlayConfig.Maps[i].CardArt` / `.CardTheme`; `PlayConfig.UpcomingMaps` = DISPLAY-ONLY locked
-  cards after the real maps (Bakunawa Cove "Coming soon", then the `Teaser` "???" card). Never read by the server.
+  cards after the real maps (now only the `Teaser` "???" card; Bakunawa Cove moved into `Maps` at B175).
+  Never read by the server.
 - **Art**: `Claude outputs/story-carousel/` — `raw/` (Figma AI originals), `roblox/` (upload set + `asset_ids.txt`),
   scripts `split_card.py`, `split_parts.py`, `plain_track.py`, `make_card_art.py`, `compose_board.py`, `board.html`.
 

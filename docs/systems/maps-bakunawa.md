@@ -5,8 +5,8 @@ boss of Stage 2 = Bakunawa (rig already in `RS.TowerModels`). Built in **Blender
 (`tools/maps/pirate/`, README there = full pipeline + resume notes), imported with the Studio **3D Importer**,
 assembled in the GAME Place from `glb/studio_data.json`. Same conventions as Stage 1 (`maps-apolaki.md`).
 
-**Status:** map + config are in the Game Place and verified in Play via the smoke harness (`DevMapId`). **No Stage 2
-acts exist yet** -- `MapId = "BakunawaCove"` is used by nothing until Stage 2 content lands (see STATE PENDING).
+**Status:** map + config are in the Game Place and verified in Play via the smoke harness (`DevMapId`). Stage 2's
+five acts + Infinite use it since B175 (`stage2-bakunawa.md`).
 
 ## Where it lives
 
@@ -64,7 +64,5 @@ acts exist yet** -- `MapId = "BakunawaCove"` is used by nothing until Stage 2 co
 act on another map, e.g. `BakunawaCove`, before its stage exists. Leave it EMPTY when done (CLAUDE.md: Dev* off).
 
 ## Open threads
-- Stage 2 acts / waves / enemies (Skeleton Pirate model is in `BakunawaCove_Characters.blend`, unrigged) and the
-  Lobby `StageRegistry` mirror -- AD-Integration.
-- Balance: 556-stud path (Stage 1: 206) -- wave timings need a pass once Stage 2 waves exist.
+- Stage 2 content is built (B175, `stage2-bakunawa.md`); its real enemy rigs + balance pass are STATE PENDINGs.
 - Optional VFX: waterfall Beams/scroll, campfire + chimney smoke, lantern lights, sea foam (map has none yet).

@@ -310,14 +310,14 @@
     },
     "RewardScalingConfig": {
       "file": "shared/src/RewardScalingConfig.luau",
-      "hash": "e0a3bc2d",
+      "hash": "d39c3d6d",
       "owner": "game",
       "deployPath": "ReplicatedStorage.Configs.Global.RewardScalingConfig",
       "deployed": {
-        "Game": "e0a3bc2d",
-        "Lobby": "e0a3bc2d"
+        "Game": "d39c3d6d",
+        "Lobby": "d39c3d6d"
       },
-      "comment": "Difficulty->gold curve + the Insane item table (PlayGUI blueprint section 8). Added P5 2026-08-13 (owner AD-Game). SHARED because section 8 requires the Lobby's reward PREVIEW and the server's actual payout to read the SAME curve -- the preview must not invent numbers. It could NOT live in StageConfig.Rewards: the Lobby's StageRegistry is a hand-maintained MIRROR carrying structure only, with no reward table and no drift check, so gold numbers there would be two uncheckable copies. WorthinessConfig is the counter-example and does not apply (the Lobby reads worthiness as a STORED result; a pre-match preview has nothing stored to read). Owns the Game's ONE wire->t conversion, TFromWire: the wire scale is 100-1000 while the UI scale is 1-100 (ADR-0011), and confusing them pays maximum gold for a normal match. Clamps, never extrapolates. DEPLOYED TO BOTH PLACES since B20 2026-08-14 (AD-Integration): copied BYTE-IDENTICAL from the Game (6870 bytes, re-hashed in the Lobby to 1d789978), never re-authored. The Lobby's deployPath needed a new RS.Configs.Global FOLDER, which did not exist in that Place. The reward PREVIEW is still not wired -- StoryModeController's renderRewards() cannot express a min-max band and only re-runs on act selection, while P4 republishes DifficultyWire on every slider move, so wiring it honestly needs more than the one call AD-UI's canon allows: see docs/proposals/2026-08-14-reward-preview-wiring.md. 1d789978 -> 5a4cf793 at B43 2026-08-29 (AD-Game): COMMENT-ONLY re-hash, 6870 -> 7437 bytes, no behaviour change. Its header had claimed since P5 that the MatchLaunch payload '(v2) carries NO mode field' so Insane could not fire in production -- untrue since B20's v3 bump, and it had been read and believed by later sessions. Correcting a comment in shared canon costs a re-hash plus a both-Place redeploy, which is precisely why it was deferred three times; done deliberately here. Mirrored byte-identical repo/Game/Lobby, 7437 bytes each. 5a4cf793 -> e0a3bc2d at B45 2026-08-30 (AD-Game): StatRerolls added to InsaneItems as its ONE source -- the same faucet TraitRerollToken already uses. Also documents that every InsaneItems id must exist in ItemCatalog and that a Currency-kind drop is credited to Data.Currencies, not Data.Items: RewardCalculator now routes each drop by the catalogue's Kind (before B45 every drop went to AddItem, so a currency drop would have landed in a field nothing reads).",
+      "comment": "Difficulty->gold curve + the Insane item table (PlayGUI blueprint section 8). Added P5 2026-08-13 (owner AD-Game). SHARED because section 8 requires the Lobby's reward PREVIEW and the server's actual payout to read the SAME curve -- the preview must not invent numbers. It could NOT live in StageConfig.Rewards: the Lobby's StageRegistry is a hand-maintained MIRROR carrying structure only, with no reward table and no drift check, so gold numbers there would be two uncheckable copies. WorthinessConfig is the counter-example and does not apply (the Lobby reads worthiness as a STORED result; a pre-match preview has nothing stored to read). Owns the Game's ONE wire->t conversion, TFromWire: the wire scale is 100-1000 while the UI scale is 1-100 (ADR-0011), and confusing them pays maximum gold for a normal match. Clamps, never extrapolates. DEPLOYED TO BOTH PLACES since B20 2026-08-14 (AD-Integration): copied BYTE-IDENTICAL from the Game (6870 bytes, re-hashed in the Lobby to 1d789978), never re-authored. The Lobby's deployPath needed a new RS.Configs.Global FOLDER, which did not exist in that Place. The reward PREVIEW is still not wired -- StoryModeController's renderRewards() cannot express a min-max band and only re-runs on act selection, while P4 republishes DifficultyWire on every slider move, so wiring it honestly needs more than the one call AD-UI's canon allows: see docs/proposals/2026-08-14-reward-preview-wiring.md. 1d789978 -> 5a4cf793 at B43 2026-08-29 (AD-Game): COMMENT-ONLY re-hash, 6870 -> 7437 bytes, no behaviour change. Its header had claimed since P5 that the MatchLaunch payload '(v2) carries NO mode field' so Insane could not fire in production -- untrue since B20's v3 bump, and it had been read and believed by later sessions. Correcting a comment in shared canon costs a re-hash plus a both-Place redeploy, which is precisely why it was deferred three times; done deliberately here. Mirrored byte-identical repo/Game/Lobby, 7437 bytes each. 5a4cf793 -> e0a3bc2d at B45 2026-08-30 (AD-Game): StatRerolls added to InsaneItems as its ONE source -- the same faucet TraitRerollToken already uses. Also documents that every InsaneItems id must exist in ItemCatalog and that a Currency-kind drop is credited to Data.Currencies, not Data.Items: RewardCalculator now routes each drop by the catalogue's Kind (before B45 every drop went to AddItem, so a currency drop would have landed in a field nothing reads). e0a3bc2d -> d39c3d6d at B175: + named gold curve `Stage2` (x1.75 Standard) for Bakunawa Cove.",
       "kind": "module"
     },
     "Kit_UnitIconV2": {
@@ -643,14 +643,14 @@
     },
     "StageMissionsConfig": {
       "file": "shared/src/StageMissionsConfig.luau",
-      "hash": "b0a9abfe",
+      "hash": "21b05f5a",
       "owner": "game",
       "deployPath": "ReplicatedStorage.Configs.Global.StageMissionsConfig",
       "deployed": {
-        "Game": "b0a9abfe",
-        "Lobby": "b0a9abfe"
+        "Game": "21b05f5a",
+        "Lobby": "21b05f5a"
       },
-      "comment": "NEW at B108 pt17 (user: 3 star missions per act, easy to edit; star rewards 1x trait reroll per star, claimable once). Game evaluates missions at match end (RewardCalculator -> PlayerInventoryService.RecordStageProgress); Lobby shows them (PlayConfig.Acts = this) and pays star rewards (StarRewardService).",
+      "comment": "NEW at B108 pt17 (user: 3 star missions per act, easy to edit; star rewards 1x trait reroll per star, claimable once). Game evaluates missions at match end (RewardCalculator -> PlayerInventoryService.RecordStageProgress); Lobby shows them (PlayConfig.Acts = this) and pays star rewards (StarRewardService). b0a9abfe -> 21b05f5a at B175: Stage 2 (Bakunawa Cove) acts Stage2_Act1..5 + STAGE2_STAR_REWARDS (Trait token / Banner Ticket / Blue Mutya).",
       "kind": "module"
     },
     "InfernalHuntConfig": {
