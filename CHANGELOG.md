@@ -1,5 +1,9 @@
 # CHANGELOG (append-only; newest first)
 <!-- Holds the newest 10 entries only. Older: archive/CHANGELOG-archive.md (history -- grep it, never read at bootstrap). Entry budget: 600 chars. -->
+## 2026-10-27 [game] B173 -- **Stage 2 map Bakunawa Cove (pirate cove) built in Blender + assembled in the Game.**
+- `tools/maps/pirate`: smooth painted textures, 7 kits (53 pieces: harbour + galleon hero, village + tavern, fortress,
+  Skull Rock, islets), arena + village terrace, 556-stud path. `ServerStorage.Maps.Stage2.BakunawaCove` + config;
+  verified in Play via new smoke knob `DevMapId`. No Stage 2 acts yet. No contract impact. `maps-bakunawa.md`.
 ## 2026-10-24 [lobby] B172 pt6 -- **Bigger map + Lumina city + map-wide VFX + summon cutscene.**
 - West/NW terrain pushed out, Story Gate to the plain's end, builds scaled up, trees sunk. Planned city: cobbled streets,
   Kit F (row/corner houses, market hall, library, bathhouse, clock tower, arches, fountain), Moon Shrine moved. VFX kit 2.
@@ -36,8 +40,3 @@
 - STATE/CONTEXT rewritten as current state; old versions + changelog B160 and older moved verbatim to `archive/`.
 - CLAUDE.md: char budgets (12k/6k/6k/600), history rule, read newest 3 entries. Bootstrap ~118k -> ~31k chars.
 - Orphan hazards moved to system docs; new `studio-testing.md`. All 5 PENDINGs kept. Docs only.
-## 2026-10-21 [game+lobby] B169 -- **Units stage: smooth at graphics 1 (rendered in the 3D world, not a ViewportFrame) + zoom.**
-- Research: Roblox staff confirm ViewportFrames redraw at a reduced rate on low graphics by design ("not optimized for ... serving as the main component of a scene"); RenderStepped stepping / camera nudges do not undo it. So the user's second option was built: while the Units screen shows the stage, `UnitsGUI.UnitsShowcase` draws the selected unit with the REAL camera (local clone at y 4000, camera copies the stage ViewportFrame's camera skewed onto the frame, HallBG + stage art mirrored live onto a camera-facing backdrop `RS.UnitShowcase`, lower ScreenGuis hidden, everything restored on close). Both Places.
-- Proven: showcase rig poses 120/121 frames (Bakunawa bones and Aswang AnimationConstraint rig); layout identical to the viewport version once the 58px top-bar inset is added; close restores Custom camera + Humanoid subject + HUD. Game verified with its window in front (Studio draws 3D only in the front window).
-- Zoom: wheel over the stage / pinch / R2-L2, 0.4-1.8x (`Hall.zoomBy`). `ViewportIdle` budget skips a viewport with ImageTransparency 1.
-- Place-local only, no shared canon, no contract change. Docs: `docs/systems/units-screen.md` B168/B169.

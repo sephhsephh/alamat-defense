@@ -30,7 +30,8 @@ script that knows clients exist. `match-architecture.md`, `match-modules.md`.
 ## Docs
 Towers `tower-authoring.md` · VFX `tower-vfx.md` · hotbar `hotbar.md` · HUD `match-hud.md` · selection
 `unit-selection.md` · manager `unit-manager.md` · stage info `stage-info.md` · audio `match-audio.md` · rewards
-`rewards.md` · balance `balance.md` · challenges `challenges.md` · map `maps-apolaki.md` · movement `movement.md`.
+`rewards.md` · balance `balance.md` · challenges `challenges.md` · maps `maps-apolaki.md` (Stage 1), `maps-bakunawa.md`
+(Stage 2, no acts yet; smoke knob `DevMapId`) · movement `movement.md`.
 
 ## Hazards (detail in the linked doc)
 - `execute_luau` can't `require` or press 1-6 and has its own service copies (`studio-testing.md`).
