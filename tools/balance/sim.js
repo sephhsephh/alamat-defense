@@ -5,10 +5,15 @@
 // crits, the match economy (800 start, per-wave StartCash, split kill cash) with a simple buy policy
 // (place up to the limit, then upgrade the lowest tier), waves overlapping exactly like WaveDirector
 // (5 s countdown; next wave after the field clears or 45 s), 3 lives, a leaked boss = instant loss.
-// It does NOT model: stuns/slows, melee dash travel, meta levels/traits/rolls (all = unit level 1 base).
+// It does NOT model: stuns/slows, melee dash travel, meta levels/traits/rolls (all = unit level 1 base), flyers.
+// B175: SIM_PATH=stage2 runs on the Bakunawa Cove path (path_stage2.json, Path_Main corners from Studio) and SPEED=2
+// scales every enemy speed (Stage 2 enemies walk ~2x Stage 1's). e.g. SIM_PATH=stage2 SPEED=2 node sim.js ceiling
 'use strict';
 
-const PATH = [[-19.5,71.8],[-8.7,71.8],[-8.0,71.2],[-8.0,58.6],[-7.4,58.0],[5.2,57.9],[5.9,58.5],[5.9,71.1],[6.5,71.8],[19.1,71.8],[19.8,71.2],[19.8,58.6],[20.4,58.0],[33.0,57.9],[33.7,58.5],[33.7,71.1],[34.3,71.8],[46.9,71.8],[47.6,71.3],[47.6,58.6],[48.2,58.0],[60.8,57.9],[61.5,58.5],[61.5,71.1],[62.1,71.8]];
+const STAGE1_PATH = [[-19.5,71.8],[-8.7,71.8],[-8.0,71.2],[-8.0,58.6],[-7.4,58.0],[5.2,57.9],[5.9,58.5],[5.9,71.1],[6.5,71.8],[19.1,71.8],[19.8,71.2],[19.8,58.6],[20.4,58.0],[33.0,57.9],[33.7,58.5],[33.7,71.1],[34.3,71.8],[46.9,71.8],[47.6,71.3],[47.6,58.6],[48.2,58.0],[60.8,57.9],[61.5,58.5],[61.5,71.1],[62.1,71.8]];
+
+const PATH = process.env.SIM_PATH ? require('./path_' + process.env.SIM_PATH + '.json') : STAGE1_PATH;
+const SPEED = Number(process.env.SPEED || 1); // multiplies every enemy speed
 
 // ---------- path helpers
 const seg = []; let PATH_LEN = 0;
@@ -20,7 +25,8 @@ function coverage(p, R) { let n = 0; for (const [, q] of SAMPLES) if (Math.hypot
 
 // candidate spots: a 1-stud grid around the path, 3.5+ studs from the path centre line (PathDesigns clearance)
 const CANDIDATES = [];
-for (let x = -30; x <= 72; x += 1) for (let z = 45; z <= 85; z += 1) { const d = distToPath([x, z]); if (d >= 3.5 && d <= 20) CANDIDATES.push([x, z]); }
+const XS = PATH.map(p => p[0]), ZS = PATH.map(p => p[1]);
+for (let x = Math.floor(Math.min(...XS)) - 20; x <= Math.max(...XS) + 20; x += 1) for (let z = Math.floor(Math.min(...ZS)) - 20; z <= Math.max(...ZS) + 20; z += 1) { const d = distToPath([x, z]); if (d >= 3.5 && d <= 20) CANDIDATES.push([x, z]); }
 function placeSpots(n, R) { // greedy: best coverage, 2.5-stud footprint apart
   const spots = []; const scored = CANDIDATES.map(p => [p, coverage(p, R)]).sort((a, b) => b[1] - a[1]);
   for (const [p] of scored) { if (spots.length >= n) break; if (spots.every(q => Math.hypot(q[0] - p[0], q[1] - p[1]) >= 2.5)) spots.push(p); }
@@ -57,7 +63,7 @@ function simulate(sc) {
     if (waveIdx < waves.length && t >= nextWaveAt) { launchWave(waveIdx); waveStartAt = t; waveIdx++; nextWaveAt = t + 45 + 5; }
     if (waveIdx < waves.length && waveIdx > 0 && waveAlive[waveIdx - 1] === 0 && nextWaveAt > t + 5) nextWaveAt = t + 5;
     // spawns
-    for (let i = spawnQ.length - 1; i >= 0; i--) if (spawnQ[i].at <= t) { const q = spawnQ[i]; enemies.push({ s: 0, hp: q.hp, max: q.hp, speed: q.def.speed, boss: q.boss, wave: q.wave, cash: q.def.cash, dmg: q.boss ? 99999 : 1 }); spawnQ.splice(i, 1); }
+    for (let i = spawnQ.length - 1; i >= 0; i--) if (spawnQ[i].at <= t) { const q = spawnQ[i]; enemies.push({ s: 0, hp: q.hp, max: q.hp, speed: q.def.speed * SPEED, boss: q.boss, wave: q.wave, cash: q.def.cash, dmg: q.boss ? 99999 : 1 }); spawnQ.splice(i, 1); }
     // move
     for (let i = enemies.length - 1; i >= 0; i--) { const e = enemies[i]; e.s += e.speed * dt; if (e.s >= PATH_LEN) { lives -= e.dmg; leaks++; if (e.boss) { bossLeak = true; bossInfo = { leakedWithHp: e.hp, max: e.max }; } waveAlive[e.wave]--; enemies.splice(i, 1); } }
     if (lives <= 0) return { win: false, wave: waveIdx, leaks, t, cash, towers: towers.map(x => x.tier + 1), bossInfo, bossLeak };

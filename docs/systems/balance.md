@@ -32,7 +32,7 @@ Wired in `MatchDirector` (ContentScale into EnemyHealthScale; `BalanceConfig.Sca
   Pre-B141 configs: `ServerStorage._TowerConfigs_PreB141`.
 
 ## Tools
-`node tools/balance/sim.js` (one act, every starter) · `node tools/balance/sim.js ceiling` · `node tools/balance/tune.js '<json>'`
+`node tools/balance/sim.js` (one act, every starter; B175: `SIM_PATH=stage2 SPEED=1.3` = Bakunawa Cove) · `node tools/balance/sim.js ceiling` · `node tools/balance/tune.js '<json>'`
 (try tier tables). The sim models the real Stage 1 path, targeting, splash, crits, the economy + buy policy, overlapping
 waves, lives. It does NOT model stuns/slows/melee travel/meta levels. Verify with a Play run (MatchLifecycleSmokeTest +
 AutoPlaceForEndScreenTest `DevSeed*`).

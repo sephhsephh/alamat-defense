@@ -1,5 +1,9 @@
 # CHANGELOG ARCHIVE (newest first) -- B161 and older, verbatim
 <!-- History only: NEVER read at bootstrap; grep it. Moved out of ../CHANGELOG.md by B170. Newer entries live there. -->
+## 2026-10-22 [repo] B172 -- **Reference-map study: the stylized build canon for every map + the Lobby rebuild.**
+- Read-only study of town / rpg map / Roman Battleground (user's style references). New `docs/design/stylized-environment.md`
+  (lighting "town haze" recipe, rock kit, trees, multi-mesh buildings, terrain+mesh rules, Lobby checklist) + `reference-maps.md`.
+- SECURITY: rpg map + town carry a `<null?>` backdoor Script in window1.003 -- strip scripts before copying. No contract impact.
 ## 2026-10-21 [lobby] B171 -- **Play menu v3: ornate AI-painted borders, mode cards, special events, party hex slots, player card.**
 - Built by `tools/playui_v3_build.luau` (backup `_UIBackup_B171`); PlayController: Cards lookup, plate = card click, player
   card, events from EventQuestConfig (ONE template), per-spot poses; `OrnateSliceScaler`; GetPlayState +PlayerXP (additive).

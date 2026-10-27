@@ -19,12 +19,20 @@ Act 5 headliner: `HeadlinerDrop = { TowerId = "Bakunawa", 0.5% / 1.5% Hard, Pity
 ## Roster (`RS.Configs.Enemies.Stage2.*`, English names; rigs `ServerStorage.Enemies.Stage2.*`)
 | Id | Name | Role | HpRatio | Speed | Rig |
 |---|---|---|---|---|---|
-| SkeletonPirate | Skeleton Pirate | Grunt | 1.0 | 2.0 | **stand-in** (recoloured Grunt, `Placeholder` attr) |
-| PirateBrute | Pirate Brute | Tank | 1.6 | 1.5 | **stand-in** (recoloured Iron Ox) |
-| BilgeRat | Bilge Rat | Sprinter (Run) | 0.7 | 3.4 | final: Field Rat rig, hue-shifted |
-| CursedGull | Cursed Gull | Flyer (FlyHeight 7) | 0.8 | 2.4 | **stand-in** (Manananggal copy) |
-Bosses: `Stage2Bosses` (one line each; Bakunawa walks on its own Idle clip). **Speeds are ~2x Stage 1's**: the
-path is 556 studs (Stage 1: 206) -- a grunt crosses in ~4.6 min (Stage 1 ~3.4). `StageScale[2] = 4.5` does the HP.
+| SkeletonPirate | Skeleton Pirate | Grunt | 1.0 | 1.3 | **stand-in** (recoloured Grunt, `Placeholder` attr) |
+| PirateBrute | Pirate Brute | Tank | 1.6 | 1.0 | **stand-in** (recoloured Iron Ox) |
+| BilgeRat | Bilge Rat | Sprinter (Run) | 0.7 | 2.3 | final: Field Rat rig, hue-shifted |
+| CursedGull | Cursed Gull | Flyer (FlyHeight 7) | 0.8 | 1.6 | **stand-in** (Manananggal copy) |
+Bosses: `Stage2Bosses` (speed 0.65-0.8; Bakunawa walks on its own Idle clip). `StageScale[2] = 4.5` does the HP.
+
+## Balance pass (B175, `tools/balance/sim.js`, `SIM_PATH=stage2 SPEED=x node tools/balance/sim.js ceiling`)
+The cove path is 556 studs of LONG STRAIGHT lanes (Stage 1: 206, tightly folded), so each unit covers less of it.
+4-tower starter ceilings (max act HP multiplier beaten): Stage 1 x2.7-3.6; Stage 2 at 2x speed x1.25-1.5 (would make
+Stage 2 ~10x Stage 1, not the planned 4.5x); 1x speed x2.6-3.1 but clears take 22+ min. **Chosen: 1.3x Stage 1
+speeds** -- ceilings x2.0-2.4 (~75% of Stage 1: x4.5 stage scale becomes ~6x effective = "Rares + an Epic",
+`BalanceConfig`), a solid clear ~1.46x Stage 1's time (~19-20 min) -> TimeUnder missions 880 / 1050 / 1140 s.
+Not modelled: flyers (starters are Ground: a Stage 2 team NEEDS a Hill/Hybrid unit from Act 1 wave 6, by design),
+modifiers, real Rare/Epic stats. A full-act Play run is still the final check.
 
 ## Real rigs (pending one USER import)
 The Blender models (Skeleton Pirate, Captain = Pirate Brute) + a new **Cursed Gull** are split per R15 part by
@@ -37,7 +45,7 @@ replaces the stand-ins. The gull's shoulder frames are turned +-90 deg so the wa
 ## Rewards + missions
 - Gold: named curve **`Stage2`** (shared `RewardScalingConfig`, x1.75 Standard). Victory XP 180/270/450/570/720.
 - Drops add `MutyaBlue` (Purple on Act 4, Mayari) at 4-12% -- Mutya are Legendary evolution mats; keep it rare.
-- Star missions (shared `StageMissionsConfig`): time limits ~1.35x Stage 1's; stars pay Trait token / Banner
+- Star missions (shared `StageMissionsConfig`, eaabd4d1): time limits ~1.46x Stage 1's (sim); stars pay Trait token / Banner
   Ticket / Blue Mutya (`STAGE2_STAR_REWARDS`).
 
 ## Lobby side
@@ -45,7 +53,9 @@ replaces the stand-ins. The gull's shoulder frames are turned +-90 deg so the wa
   optional field `GoldCurve` (PlayController's reward preview passes the act's curve to `GoldBand`).
 - `PlayConfig.Maps[2]` = BakunawaCove (acts, Infinite, card art/theme); `UpcomingMaps` keeps only the ??? teaser.
 - `PartyService`: maps chain server-side -- a map's Act 1 needs the previous map's last act cleared.
-- ⚠ `MatchmakingService.enqueue` checks no unlocks at all (any act, Stage 1 too) -- STATE PENDING.
+- ONE unlock rule `PlayConfig.LockReason(stageId, difficulty, clears)` (maps chain, act chain, Infinite, Hard): used
+  by `PartyService` (launch) AND `MatchmakingService.enqueue` (B175; it checked nothing before). Verified: queueing
+  Stage2_Act5 -> "Clear Act 4 first.", Stage2_Act1 -> "Clear Apolaki's Sun Terraces first."
 
 ## Verified (B175, Play)
 Game: `DevStageId = "Stage2_Act1"` -- map loads, `Balance: stage x act = 4.50`, wave 1 skeletons walk the pier at

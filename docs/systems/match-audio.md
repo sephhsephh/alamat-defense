@@ -46,3 +46,8 @@ one place and Volume is tuned in Studio) or an **asset id** (number, `"123"` or 
 positional sounds in the SFX group, capped at 6 overlapping copies each. **Sounds play even with the
 VFX setting off** — turning off particles must not mute the fight. The Mage carries all three as the
 worked example.
+
+## Generating sounds (B175) -- `tools/audio/sfx_gen.py`, skill `.claude/skills/game-sfx`
+Offline procedural synth presets (`synth`, `pack` = one .ogg per SoundService slot of BOTH Places) or AI
+text-to-sound (`eleven`, env `ELEVENLABS_API_KEY`); optional Roblox Open Cloud `upload` (env `ROBLOX_API_KEY` +
+`ROBLOX_CREATOR_ID`). Output `Claude outputs/sfx/` + `index.html` audition page. Ids are still pasted by hand.

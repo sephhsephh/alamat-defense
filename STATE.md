@@ -29,10 +29,8 @@
 - **PENDING (USER then AD-Game, GAME, B175): Stage 2 real enemy rigs.** Skeleton Pirate / Pirate Brute / Cursed Gull
   run on STAND-IN rigs. Import `Downloads\BakunawaCove_Map\glb\BC_EnemyRigs.glb` into the GAME Place (root
   `BC_EnemyRigs`), then run `tools/enemy_rigs/build_stage2_rigs.luau` (`stage2-bakunawa.md`).
-- **PENDING (AD-Game, GAME, B175): Stage 2 balance pass** -- no Stage 2 act has been played to the end (556-stud path,
-  ~2x speeds, first flyers). Play each act (smoke `DevStageId`) and tune WAVE_HP / counts / missions.
-- **PENDING (AD-Lobby, LOBBY, B175): `MatchmakingService.enqueue` checks no act/map unlocks** (PartyService does) --
-  any act, Stage 1 included, can be queued directly. Share PartyService's unlock check.
+- **PENDING (AD-Game, GAME, B175): Stage 2 full-act Play check.** Speeds/missions set by the sim (1.3x Stage 1 speeds,
+  `stage2-bakunawa.md`); no act has been played to the end in Studio yet (flyers + modifiers are not simulated).
 - **TOOLING, EVERY SESSION (B64):** `require` from `execute_luau` is dead — paste `tools/hash_shared.luau` inline
   (`docs/systems/studio-testing.md`).
 

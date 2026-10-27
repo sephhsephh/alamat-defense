@@ -1,5 +1,9 @@
 # CHANGELOG (append-only; newest first)
 <!-- Holds the newest 10 entries only. Older: archive/CHANGELOG-archive.md (history -- grep it, never read at bootstrap). Entry budget: 600 chars. -->
+## 2026-10-28 [game+lobby] B175 pt2 -- **Stage 2 balance (sim), matchmaking unlocks, SFX generator.**
+- Sim on the cove path (`SIM_PATH=stage2`): 2x speeds made Stage 2 ~10x Stage 1 -> enemies 1.3x Stage 1 speed, bosses
+  0.65-0.8; StageMissionsConfig eaabd4d1 (TimeUnder 880/1050/1140), both Places. `PlayConfig.LockReason` = ONE unlock
+  rule for PartyService + MatchmakingService. `tools/audio/sfx_gen.py` (synth/ElevenLabs/upload) + skill game-sfx.
 ## 2026-10-28 [game+lobby] B175 -- **Stage 2 Bakunawa Cove: 5 acts + Infinite, roster, bosses, Lobby mirror.**
 - Game: Stage2 StageConfigs/waves, Skeleton Pirate/Pirate Brute/Bilge Rat/Cursed Gull (first flyers), bosses Magwayen ->
   Bakunawa (headliner, pity 30). Real rigs await a GLB import (stand-ins now). Lobby: mirror, PlayConfig map, PartyService map gate.
@@ -37,7 +41,3 @@
 - Terrain coast/terrace/mesa/rim + seabed; Blender holy kit (24 pieces, 3D-imported) assembled: rotunda spawn, bridge, plaza
   sea wall + twin falls, Temple (Summon prompt), stations, arena, citadel; mountain ring + colossus; groves, rocks, dressing.
 - Keepers = tower rigs (NpcIdle). Old map archived (_OldLobby_B139). Verified: 9 prompts, travel, rescue. No contract impact.
-## 2026-10-22 [repo] B172 -- **Reference-map study: the stylized build canon for every map + the Lobby rebuild.**
-- Read-only study of town / rpg map / Roman Battleground (user's style references). New `docs/design/stylized-environment.md`
-  (lighting "town haze" recipe, rock kit, trees, multi-mesh buildings, terrain+mesh rules, Lobby checklist) + `reference-maps.md`.
-- SECURITY: rpg map + town carry a `<null?>` backdoor Script in window1.003 -- strip scripts before copying. No contract impact.

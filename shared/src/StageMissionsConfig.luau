@@ -53,9 +53,9 @@ StageMissionsConfig.Acts = {
 		Missions = { { Type = "Clear" }, { Type = "NoLivesLost" }, { Type = "MaxUnits", Count = 3 } },
 		StarRewards = DEFAULT_STAR_REWARDS,
 	},
-	-- B175: Stage 2, Bakunawa Cove. Time limits are ~1.35x Stage 1's: the cove path is 556 studs (Stage 1: 206).
+	-- B175: Stage 2, Bakunawa Cove. Time limits are ~1.46x Stage 1's (balance sim: a Stage 2 clear takes ~1.46x as long).
 	Stage2_Act1 = {
-		Missions = { { Type = "Clear" }, { Type = "NoLivesLost" }, { Type = "TimeUnder", Seconds = 840 } },
+		Missions = { { Type = "Clear" }, { Type = "NoLivesLost" }, { Type = "TimeUnder", Seconds = 880 } },
 		StarRewards = STAGE2_STAR_REWARDS,
 	},
 	Stage2_Act2 = {
@@ -63,11 +63,11 @@ StageMissionsConfig.Acts = {
 		StarRewards = STAGE2_STAR_REWARDS,
 	},
 	Stage2_Act3 = {
-		Missions = { { Type = "Clear" }, { Type = "TimeUnder", Seconds = 960 }, { Type = "MaxUnits", Count = 4 } },
+		Missions = { { Type = "Clear" }, { Type = "TimeUnder", Seconds = 1050 }, { Type = "MaxUnits", Count = 4 } },
 		StarRewards = STAGE2_STAR_REWARDS,
 	},
 	Stage2_Act4 = {
-		Missions = { { Type = "Clear" }, { Type = "NoLivesLost" }, { Type = "TimeUnder", Seconds = 1020 } },
+		Missions = { { Type = "Clear" }, { Type = "NoLivesLost" }, { Type = "TimeUnder", Seconds = 1140 } },
 		StarRewards = STAGE2_STAR_REWARDS,
 	},
 	Stage2_Act5 = {

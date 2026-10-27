@@ -643,14 +643,14 @@
     },
     "StageMissionsConfig": {
       "file": "shared/src/StageMissionsConfig.luau",
-      "hash": "21b05f5a",
+      "hash": "eaabd4d1",
       "owner": "game",
       "deployPath": "ReplicatedStorage.Configs.Global.StageMissionsConfig",
       "deployed": {
-        "Game": "21b05f5a",
-        "Lobby": "21b05f5a"
+        "Game": "eaabd4d1",
+        "Lobby": "eaabd4d1"
       },
-      "comment": "NEW at B108 pt17 (user: 3 star missions per act, easy to edit; star rewards 1x trait reroll per star, claimable once). Game evaluates missions at match end (RewardCalculator -> PlayerInventoryService.RecordStageProgress); Lobby shows them (PlayConfig.Acts = this) and pays star rewards (StarRewardService). b0a9abfe -> 21b05f5a at B175: Stage 2 (Bakunawa Cove) acts Stage2_Act1..5 + STAGE2_STAR_REWARDS (Trait token / Banner Ticket / Blue Mutya).",
+      "comment": "NEW at B108 pt17 (user: 3 star missions per act, easy to edit; star rewards 1x trait reroll per star, claimable once). Game evaluates missions at match end (RewardCalculator -> PlayerInventoryService.RecordStageProgress); Lobby shows them (PlayConfig.Acts = this) and pays star rewards (StarRewardService). b0a9abfe -> 21b05f5a at B175: Stage 2 (Bakunawa Cove) acts Stage2_Act1..5 + STAGE2_STAR_REWARDS (Trait token / Banner Ticket / Blue Mutya). 21b05f5a -> eaabd4d1 (B175 balance pass): Stage 2 TimeUnder 880/1050/1140 (sim: clears take ~1.46x Stage 1's).",
       "kind": "module"
     },
     "InfernalHuntConfig": {
