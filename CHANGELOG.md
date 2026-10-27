@@ -1,5 +1,9 @@
 # CHANGELOG (append-only; newest first)
 <!-- Holds the newest 10 entries only. Older: archive/CHANGELOG-archive.md (history -- grep it, never read at bootstrap). Entry budget: 600 chars. -->
+## 2026-10-27 [game+lobby] B173 pt2 -- **9 real tower rigs replace placeholders (user's "modeled npcs").**
+- Duwende, Santelmo, Mayari, Mayari_LunarEclipse, Sidapa, Sidapa_LastMeasure, Magwayen, Magwayen_Soulferry,
+  AmanSinaya: `RS.TowerModels` (Game) + `RS.UnitModels` (Lobby), GameScale kept, Placeholder flags gone, Humanoid
+  names hidden. Old rigs in `ServerStorage.Archive.*_Replaced_B173`. Scaled render checked in Play. No contract impact.
 ## 2026-10-27 [game] B173 -- **Stage 2 map Bakunawa Cove (pirate cove) built in Blender + assembled in the Game.**
 - `tools/maps/pirate`: smooth painted textures, 7 kits (53 pieces: harbour + galleon hero, village + tavern, fortress,
   Skull Rock, islets), arena + village terrace, 556-stud path. `ServerStorage.Maps.Stage2.BakunawaCove` + config;
@@ -36,7 +40,3 @@
 ## 2026-10-21 [repo] B170 pt2 -- **Bootstrap tightened again: CLAUDE.md ~9.5k, STATE/CONTEXTs ~4.1-4.3k.**
 - Wording only; every rule kept (keyword parity checked vs the pre-B170 CLAUDE.md). Ownership merged into sync;
   UI rules grouped; contract protocol one line. Bootstrap ~31.5k -> ~24.2k chars. Docs only, no contract impact.
-## 2026-10-21 [repo] B170 -- **Slim bootstrap: history archived, char budgets.**
-- STATE/CONTEXT rewritten as current state; old versions + changelog B160 and older moved verbatim to `archive/`.
-- CLAUDE.md: char budgets (12k/6k/6k/600), history rule, read newest 3 entries. Bootstrap ~118k -> ~31k chars.
-- Orphan hazards moved to system docs; new `studio-testing.md`. All 5 PENDINGs kept. Docs only.

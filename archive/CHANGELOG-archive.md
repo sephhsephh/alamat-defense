@@ -1,5 +1,9 @@
 # CHANGELOG ARCHIVE (newest first) -- B161 and older, verbatim
 <!-- History only: NEVER read at bootstrap; grep it. Moved out of ../CHANGELOG.md by B170. Newer entries live there. -->
+## 2026-10-21 [repo] B170 -- **Slim bootstrap: history archived, char budgets.**
+- STATE/CONTEXT rewritten as current state; old versions + changelog B160 and older moved verbatim to `archive/`.
+- CLAUDE.md: char budgets (12k/6k/6k/600), history rule, read newest 3 entries. Bootstrap ~118k -> ~31k chars.
+- Orphan hazards moved to system docs; new `studio-testing.md`. All 5 PENDINGs kept. Docs only.
 ## 2026-10-21 [game+lobby] B169 -- **Units stage: smooth at graphics 1 (rendered in the 3D world, not a ViewportFrame) + zoom.**
 - Research: Roblox staff confirm ViewportFrames redraw at a reduced rate on low graphics by design ("not optimized for ... serving as the main component of a scene"); RenderStepped stepping / camera nudges do not undo it. So the user's second option was built: while the Units screen shows the stage, `UnitsGUI.UnitsShowcase` draws the selected unit with the REAL camera (local clone at y 4000, camera copies the stage ViewportFrame's camera skewed onto the frame, HallBG + stage art mirrored live onto a camera-facing backdrop `RS.UnitShowcase`, lower ScreenGuis hidden, everything restored on close). Both Places.
 - Proven: showcase rig poses 120/121 frames (Bakunawa bones and Aswang AnimationConstraint rig); layout identical to the viewport version once the 58px top-bar inset is added; close restores Custom camera + Humanoid subject + HUD. Game verified with its window in front (Studio draws 3D only in the front window).
